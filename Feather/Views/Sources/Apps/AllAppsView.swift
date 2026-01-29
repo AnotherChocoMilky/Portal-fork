@@ -32,15 +32,15 @@ struct DidYouKnowFacts {
 	}
 }
 
-// MARK: - All Apps View (iOS 26 Style with Bottom Search)
+// MARK: - All Apps View (Modern Integrated Style)
 struct AllAppsView: View {
+    @Environment(\.dismiss) private var dismiss
     @AppStorage("Feather.useGradients") private var _useGradients: Bool = true
     @AppStorage("Feather.allApps.showSorting") private var _showSorting: Bool = true
     
     @State private var _searchText = ""
     @State private var _selectedRoute: SourceAppRoute?
     @FocusState private var _searchFieldFocused: Bool
-    @State private var _showSearchSheet = false
 
     @AppStorage("Feather.allApps.sortOption") private var _sortOption: AppSortOption = .name
     @AppStorage("Feather.allApps.sortAscending") private var _sortAscending: Bool = true
@@ -71,7 +71,6 @@ struct AllAppsView: View {
     // Optimized State for Large Datasets
     @State private var _allApps: [(source: ASRepository, app: ASRepository.App)] = []
     @State private var _filteredApps: [(source: ASRepository, app: ASRepository.App)] = []
-    @State private var _searchCancellable: AnyCancellable?
     
     private var _totalAppCount: Int {
         _allApps.count
@@ -79,206 +78,196 @@ struct AllAppsView: View {
     
     // MARK: Body
     var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .bottom) {
-                // Background
-                Color(uiColor: .systemGroupedBackground)
-                    .ignoresSafeArea()
-                
-                if _isLoading {
-                    // Modern Loading Screen
-                    loadingScreen
-                } else if let _sources, !_sources.isEmpty {
-                    // Main content
-                    ScrollView {
-                        LazyVStack(spacing: 0) {
-                            // Header with app count
-                            HStack {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("\(_totalAppCount)")
-                                        .font(.system(size: 34, weight: .bold, design: .rounded))
-                                        .foregroundStyle(.primary)
-                                    Text("Apps Available")
-                                        .font(.system(size: 15, weight: .medium))
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer()
+        ZStack(alignment: .bottom) {
+            // Background
+            Color(uiColor: .systemGroupedBackground)
+                .ignoresSafeArea()
 
-                                if _showSorting {
-                                    Menu {
-                                        ForEach(AppSortOption.allCases) { option in
-                                            Button {
+            if _isLoading {
+                // Modern Loading Screen
+                loadingScreen
+            } else if let _sources, !_sources.isEmpty {
+                // Main content
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        // Header with app count
+                        HStack(spacing: 16) {
+                            Button {
+                                HapticsManager.shared.softImpact()
+                                dismiss()
+                            } label: {
+                                Image(systemName: "chevron.left")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundStyle(Color.accentColor)
+                                    .frame(width: 40, height: 40)
+                                    .background(Color.accentColor.opacity(0.1))
+                                    .clipShape(Circle())
+                            }
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("\(_totalAppCount)")
+                                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                                    .foregroundStyle(.primary)
+                                Text("Apps Available")
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+
+                            if _showSorting {
+                                Menu {
+                                    ForEach(AppSortOption.allCases) { option in
+                                        Button {
+                                            if _sortOption == option {
+                                                _sortAscending.toggle()
+                                            } else {
+                                                _sortOption = option
+                                                _sortAscending = true
+                                            }
+                                            _filterApps()
+                                        } label: {
+                                            HStack {
+                                                Label(option.rawValue, systemImage: option.icon)
                                                 if _sortOption == option {
-                                                    _sortAscending.toggle()
-                                                } else {
-                                                    _sortOption = option
-                                                    _sortAscending = true
-                                                }
-                                                _filterApps()
-                                            } label: {
-                                                HStack {
-                                                    Label(option.rawValue, systemImage: option.icon)
-                                                    if _sortOption == option {
-                                                        Image(systemName: _sortAscending ? "chevron.up" : "chevron.down")
-                                                    }
+                                                    Image(systemName: _sortAscending ? "chevron.up" : "chevron.down")
                                                 }
                                             }
                                         }
-                                    } label: {
-                                        Image(systemName: "line.3.horizontal.decrease.circle.fill")
-                                            .font(.system(size: 22))
-                                            .foregroundStyle(Color.accentColor)
-                                            .padding(8)
-                                            .background(Color.accentColor.opacity(0.1))
-                                            .clipShape(Circle())
                                     }
+                                } label: {
+                                    Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                                        .font(.system(size: 22))
+                                        .foregroundStyle(Color.accentColor)
+                                        .padding(8)
+                                        .background(Color.accentColor.opacity(0.1))
+                                        .clipShape(Circle())
                                 }
+                            }
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.top, 16)
+                        .padding(.bottom, 10)
+
+                        // Modern Integrated Search Bar
+                        HStack(spacing: 12) {
+                            Image(systemName: "magnifyingglass")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(.secondary)
+
+                            TextField("Search \(_totalAppCount) Apps", text: $_searchText)
+                                .font(.system(size: 16))
+                                .focused($_searchFieldFocused)
+                                .submitLabel(.search)
+                                .autocorrectionDisabled()
+                                .textInputAutocapitalization(.never)
+                                .onChange(of: _searchText) { _ in
+                                    _filterApps()
+                                }
+
+                            if !_searchText.isEmpty {
+                                Button {
+                                    _searchText = ""
+                                    _filterApps()
+                                    HapticsManager.shared.softImpact()
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 18))
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(.ultraThinMaterial)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
+                                )
+                        )
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 16)
+
+                        // Results count when searching
+                        if !_searchText.isEmpty {
+                            HStack {
+                                Text("\(_filteredApps.count) Result\(_filteredApps.count == 1 ? "" : "s")")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
                             }
                             .padding(.horizontal, 20)
-                            .padding(.top, 16)
-                            .padding(.bottom, 20)
-                            
-                            // Results count when searching
-                            if !_searchText.isEmpty {
-                                HStack {
-                                    Text("\(_filteredApps.count) Result\(_filteredApps.count == 1 ? "" : "s")")
-                                        .font(.system(size: 13, weight: .medium))
+                            .padding(.bottom, 12)
+                        }
+                        
+                        // Apps list
+                        if _filteredApps.isEmpty && !_searchText.isEmpty {
+                            VStack(spacing: 20) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.secondary.opacity(0.1))
+                                        .frame(width: 80, height: 80)
+                                    Image(systemName: "magnifyingglass")
+                                        .font(.system(size: 32, weight: .medium))
+                                        .foregroundStyle(.tertiary)
+                                }
+                                VStack(spacing: 6) {
+                                    Text("No Results Found")
+                                        .font(.system(size: 18, weight: .semibold))
+                                        .foregroundStyle(.primary)
+                                    Text("Try a different search term")
+                                        .font(.system(size: 14))
                                         .foregroundStyle(.secondary)
-                                    Spacer()
                                 }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 80)
+                        } else {
+                            ForEach(_filteredApps, id: \.app.currentUniqueId) { entry in
+                                AllAppsRowView(
+                                    source: entry.source,
+                                    app: entry.app,
+                                    onTap: {
+                                        HapticsManager.shared.softImpact()
+                                        _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
+                                    }
+                                )
                                 .padding(.horizontal, 20)
-                                .padding(.bottom, 12)
+                                .padding(.vertical, 6)
                             }
-                            
-                            // Apps list
-                            if _filteredApps.isEmpty && !_searchText.isEmpty {
-                                VStack(spacing: 20) {
-                                    ZStack {
-                                        Circle()
-                                            .fill(Color.secondary.opacity(0.1))
-                                            .frame(width: 80, height: 80)
-                                        Image(systemName: "magnifyingglass")
-                                            .font(.system(size: 32, weight: .medium))
-                                            .foregroundStyle(.tertiary)
-                                    }
-                                    VStack(spacing: 6) {
-                                        Text("No Results Found")
-                                            .font(.system(size: 18, weight: .semibold))
-                                            .foregroundStyle(.primary)
-                                        Text("Try a different search term")
-                                            .font(.system(size: 14))
-                                            .foregroundStyle(.secondary)
-                                    }
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 80)
-                            } else {
-                                ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
-                                    AllAppsRowView(
-                                        source: entry.source,
-                                        app: entry.app,
-                                        onTap: {
-                                            _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
-                                        }
-                                    )
-                                    
-                                    if index < _filteredApps.count - 1 {
-                                        Divider()
-                                            .padding(.leading, 76)
-                                    }
-                                }
-                            }
-                            
-                            // Bottom padding for search bar
-                            Color.clear.frame(height: 100)
                         }
-                    }
-                } else {
-                    // Empty state
-                    VStack(spacing: 20) {
-                        Spacer()
-                        ZStack {
-                            Circle()
-                                .fill(Color.secondary.opacity(0.1))
-                                .frame(width: 100, height: 100)
-                            Image(systemName: "tray")
-                                .font(.system(size: 40))
-                                .foregroundStyle(.secondary)
-                        }
-                        Text("No Sources")
-                            .font(.system(size: 20, weight: .bold))
-                            .foregroundStyle(.primary)
-                        Text("Add sources to view all your apps here")
-                            .font(.system(size: 15))
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                        Spacer()
+
+                        // Bottom padding
+                        Color.clear.frame(height: 30)
                     }
                 }
-                
-                // iOS 26 Style Bottom Search Bar (Custom, not default search bar)
-                if !_isLoading {
-                    VStack(spacing: 0) {
-                        Rectangle()
-                            .fill(.ultraThinMaterial)
-                            .frame(height: 1)
-                        
-                        HStack(spacing: 12) {
-                            Button {
-                                _showSearchSheet = true
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "magnifyingglass")
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundStyle(.secondary)
-
-                                    Text(_searchText.isEmpty ? "Search \(_totalAppCount) Apps" : _searchText)
-                                        .font(.system(size: 16))
-                                        .foregroundStyle(_searchText.isEmpty ? .secondary : .primary)
-                                        .lineLimit(1)
-
-                                    Spacer()
-
-                                    if !_searchText.isEmpty {
-                                        Button {
-                                            _searchText = ""
-                                            _filterApps()
-                                        } label: {
-                                            Image(systemName: "xmark.circle.fill")
-                                                .font(.system(size: 18))
-                                                .foregroundStyle(.tertiary)
-                                        }
-                                    }
-                                }
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .fill(.ultraThinMaterial)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
-                                        )
-                                )
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .padding(.bottom, geometry.safeAreaInsets.bottom > 0 ? 0 : 8)
-                        .background(.ultraThinMaterial)
-                        .shadow(color: .black.opacity(0.05), radius: 10, y: -5)
+            } else {
+                // Empty state
+                VStack(spacing: 20) {
+                    Spacer()
+                    ZStack {
+                        Circle()
+                            .fill(Color.secondary.opacity(0.1))
+                            .frame(width: 100, height: 100)
+                        Image(systemName: "tray")
+                            .font(.system(size: 40))
+                            .foregroundStyle(.secondary)
                     }
+                    Text("No Sources")
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(.primary)
+                    Text("Add sources to view all your apps here")
+                        .font(.system(size: 15))
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                    Spacer()
                 }
             }
-        }
-        .sheet(isPresented: $_showSearchSheet) {
-            SearchSheetView(searchText: $_searchText)
-                .presentationDetents([.medium, .large])
+
         }
         .navigationBarHidden(true)
         .onAppear {
-            _setupSearchDebounce()
             _loadAllSources()
         }
         .onChange(of: object) { _ in
@@ -359,16 +348,6 @@ struct AllAppsView: View {
 		.frame(maxWidth: .infinity, maxHeight: .infinity)
 	}
 	
-	// MARK: - Setup Search Debounce
-	private func _setupSearchDebounce() {
-		_searchCancellable = NotificationCenter.default
-			.publisher(for: UITextField.textDidChangeNotification)
-			.debounce(for: .milliseconds(300), scheduler: RunLoop.main)
-			.sink { _ in
-				_filterApps()
-			}
-	}
-
 	private func _filterApps() {
 		let apps: [(source: ASRepository, app: ASRepository.App)]
 
@@ -384,7 +363,7 @@ struct AllAppsView: View {
 			}
 		}
 
-		_filteredApps = apps.sorted { entry1, entry2 in
+		let sortedApps = apps.sorted { entry1, entry2 in
 			let result: Bool
 			switch _sortOption {
 			case .name:
@@ -401,6 +380,10 @@ struct AllAppsView: View {
 				result = size1 < size2
 			}
 			return _sortAscending ? result : !result
+		}
+
+		withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+			_filteredApps = sortedApps
 		}
 	}
 
@@ -518,24 +501,30 @@ struct AllAppsRowView: View {
 	
 	var body: some View {
 		Button(action: onTap) {
-			VStack(spacing: 8) {
-				HStack(spacing: 12) {
+			VStack(spacing: 12) {
+				HStack(spacing: 14) {
 					// App Icon
 					appIcon
-						.frame(width: 50, height: 50)
+						.frame(width: 54, height: 54)
 						.padding(.leading, iconPadding)
+						.shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
 					
 					// Center column with app info
 					VStack(alignment: .leading, spacing: 4) {
 						// App name
 						Text(app.currentName)
-							.font(.system(size: 16, weight: .semibold))
+							.font(.system(size: 17, weight: .semibold))
 							.foregroundStyle(.primary)
 							.lineLimit(1)
 						
-						// Subtitle (status)
+						// Subtitle (status/developer)
 						if !statusText.isEmpty {
 							Text(statusText)
+								.font(.system(size: 13, weight: .medium))
+								.foregroundStyle(Color.accentColor)
+								.lineLimit(1)
+						} else if let developer = app.developer {
+							Text(developer)
 								.font(.system(size: 13))
 								.foregroundStyle(.secondary)
 								.lineLimit(1)
@@ -567,7 +556,7 @@ struct AllAppsRowView: View {
 					
 					// Action button
 					actionButton
-						.frame(width: 40, height: 40)
+						.frame(width: 34, height: 34)
 				}
 				
 				// Progress bar when downloading
@@ -599,9 +588,12 @@ struct AllAppsRowView: View {
 					.transition(.opacity.combined(with: .scale(scale: 0.9)))
 				}
 			}
-			.padding(.vertical, 8)
+			.padding(14)
+			.background(Color(uiColor: .secondarySystemGroupedBackground))
+			.cornerRadius(16)
+			.shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
 		}
-		.buttonStyle(.plain)
+		.buttonStyle(ScaleButtonStyle())
 		.onAppear(perform: setupObserver)
 		.onDisappear { cancellable?.cancel() }
 		.onChange(of: downloadManager.downloads.description) { _ in
@@ -708,60 +700,14 @@ struct AllAppsRowView: View {
 	}
 }
 
-// MARK: - Search Sheet View
-struct SearchSheetView: View {
-	@Binding var searchText: String
-	@Environment(\.dismiss) private var dismiss
-	
-	var body: some View {
-		NavigationView {
-			VStack(spacing: 16) {
-				// Search bar
-				HStack(spacing: 12) {
-					Image(systemName: "magnifyingglass")
-						.foregroundStyle(.secondary)
-						.font(.system(size: 16))
-					
-					TextField("Search Apps", text: $searchText)
-						.foregroundStyle(.primary)
-						.autocorrectionDisabled()
-						.textInputAutocapitalization(.never)
-					
-					if !searchText.isEmpty {
-						Button {
-							searchText = ""
-						} label: {
-							Image(systemName: "xmark.circle.fill")
-								.foregroundStyle(.secondary)
-						}
-					}
-				}
-				.padding(.horizontal, 16)
-				.padding(.vertical, 12)
-				.background(
-					Capsule()
-						.fill(Color.secondary.opacity(0.15))
-				)
-				.padding(.horizontal, 20)
-				.padding(.top, 10)
-				
-				Spacer()
-			}
-			.navigationTitle("Search")
-			.navigationBarTitleDisplayMode(.inline)
-			.toolbar {
-				ToolbarItem(placement: .topBarTrailing) {
-					Button("Done") {
-						dismiss()
-					}
-				}
-			}
-		}
+// MARK: - Scale Button Style
+struct ScaleButtonStyle: ButtonStyle {
+	func makeBody(configuration: Configuration) -> some View {
+		configuration.label
+			.scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+			.animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
 	}
 }
-
-// MARK: - Import Combine for Publishers
-import Combine
 
 // MARK: - AllAppsWrapperView
 /// Wrapper view that switches between AllAppsView and SourceAppsView based on settings
