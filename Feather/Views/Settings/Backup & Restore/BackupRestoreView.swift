@@ -786,12 +786,12 @@ struct BackupOptionsView: View {
                 }.listRowBackground(Color.clear).listRowInsets(EdgeInsets())
 
                 Section {
-                    backupOptionToggle(icon: "checkmark.seal.fill", iconColor: .blue, title: .localized("Certificates"), description: .localized("Your signing certificates and provisioning profiles."), isOn: $options.includeCertificates)
-                    backupOptionToggle(icon: "app.badge.fill", iconColor: .green, title: .localized("Signed Apps"), description: .localized("Apps you have signed with your certificates."), isOn: $options.includeSignedApps)
-                    backupOptionToggle(icon: "square.and.arrow.down.fill", iconColor: .orange, title: .localized("Imported Apps"), description: .localized("Apps imported from files or other sources."), isOn: $options.includeImportedApps)
-                    backupOptionToggle(icon: "globe.fill", iconColor: .purple, title: .localized("Sources"), description: .localized("Your configured app sources and repositories."), isOn: $options.includeSources)
-                    backupOptionToggle(icon: "puzzlepiece.extension.fill", iconColor: .cyan, title: .localized("Default Frameworks"), description: .localized("Your automatically injected frameworks (.dylib, .deb)".), isOn: $options.includeDefaultFrameworks)
-                    backupOptionToggle(icon: "archivebox.fill", iconColor: .indigo, title: .localized("Archives"), description: .localized("Your saved app archives and backups."), isOn: $options.includeArchives)
+                    backupOptionToggle(icon: "checkmark.seal.fill", iconColor: .blue, title: .localized("Certificates"), description: .localized("Your signing certificates and provisioning profiles"), isOn: $options.includeCertificates)
+                    backupOptionToggle(icon: "app.badge.fill", iconColor: .green, title: .localized("Signed Apps"), description: .localized("Apps you have signed with your certificates"), isOn: $options.includeSignedApps)
+                    backupOptionToggle(icon: "square.and.arrow.down.fill", iconColor: .orange, title: .localized("Imported Apps"), description: .localized("Apps imported from files or other sources"), isOn: $options.includeImportedApps)
+                    backupOptionToggle(icon: "globe.fill", iconColor: .purple, title: .localized("Sources"), description: .localized("Your configured app sources and repositories"), isOn: $options.includeSources)
+                    backupOptionToggle(icon: "puzzlepiece.extension.fill", iconColor: .cyan, title: .localized("Default Frameworks"), description: .localized("Your automatically injected frameworks (.dylib, .deb)"), isOn: $options.includeDefaultFrameworks)
+                    backupOptionToggle(icon: "archivebox.fill", iconColor: .indigo, title: .localized("Archives"), description: .localized("Your saved app archives and backups"), isOn: $options.includeArchives)
                 } header: { AppearanceSectionHeader(title: String.localized("Backup Content"), icon: "list.bullet.indent") }
                 .listRowBackground(Color.clear).listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
 
