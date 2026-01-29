@@ -214,7 +214,7 @@ struct LibraryView: View {
                     deleteSelectedApps()
                 }
             } message: {
-                Text("Are you sure you want to delete \(_selectedApps.count) selected app(s)? This action cannot be undone.")
+                Text("Are you sure you want to delete \(_selectedApps.count) selected app(s)?")
             }
 			// Listen for import success notifications
 			.onReceive(NotificationCenter.default.publisher(for: DownloadManager.importDidSucceedNotification)) { notification in
@@ -1122,7 +1122,7 @@ struct BatchSigningView: View {
                 Text("Batch Signing")
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                 
-                Text("\(apps.count) app\(apps.count == 1 ? "" : "s") selected")
+                Text("\(apps.count) App\(apps.count == 1 ? "" : "s") Selected")
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
             }
@@ -1364,7 +1364,7 @@ struct BatchSigningView: View {
     
     private func startBatchSigning() {
         guard !certificates.isEmpty, certificates.indices.contains(selectedCertificateIndex) else { 
-            AppLogManager.shared.error("No certificates available for batch signing", category: "BatchSign")
+            AppLogManager.shared.error("No certificates available for batch signing. Please add one to start", category: "BatchSign")
             return 
         }
         
@@ -1534,10 +1534,10 @@ struct BatchSigningView: View {
                         viewModel.status = .ready
                         
                         if serverMethod == 0 {
-                            // Direct iTunes link
+                            // fully local server method
                             UIApplication.shared.open(URL(string: installer.iTunesLink)!)
                         } else {
-                            // Web page method
+                            // cloud server install method
                             UIApplication.shared.open(installer.pageEndpoint)
                         }
                     }

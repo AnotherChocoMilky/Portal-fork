@@ -51,7 +51,7 @@ struct SearchReplaceView: View {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundStyle(.green)
-                            Text("\(matchCount) match\(matchCount == 1 ? "" : "es") found")
+                            Text("\(matchCount) Match\(matchCount == 1 ? "" : "es") Found")
                         }
                     }
                 }

@@ -3,7 +3,8 @@ import Foundation
 // MARK: - GitHub Guides Service
 class GitHubGuidesService {
     static let shared = GitHubGuidesService()
-    
+
+    // api endpoints for guides
     private let baseURL = "https://api.github.com/repos/WSF-Team/WSF/contents/portal/guides"
     private let rawBaseURL = "https://raw.githubusercontent.com/WSF-Team/WSF/main/portal/guides"
     private let plistURL = "https://raw.githubusercontent.com/WSF-Team/WSF/main/portal/guides/markdown_filenames.plist"

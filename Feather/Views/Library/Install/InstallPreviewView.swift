@@ -211,7 +211,7 @@ struct InstallPreviewView: View {
         }
     }
     
-    // MARK: - Install Logic
+    // MARK: - Install logic to avoid signing the app with the same app
     private func _install() {
         guard isSharing || app.identifier != Bundle.main.bundleIdentifier! || _installationMethod == 1 else {
             UIAlertController.showAlertWithOk(

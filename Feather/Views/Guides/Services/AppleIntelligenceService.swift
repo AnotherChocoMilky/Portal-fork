@@ -1,3 +1,7 @@
+// AppleIntelligenceService is for Guides that lets users use this to explain, translate, or give more info on the guide
+// this also has safeguards so for older iPhone models, OpenRouter service will be selected as fallback
+
+
 import Foundation
 import UIKit
 import SwiftUI
@@ -65,8 +69,6 @@ final class AppleIntelligenceService {
         let identifier = deviceIdentifier
         AppLogManager.shared.info("Device identifier: \(identifier)", category: "AppleIntelligence")
         
-        // Apple Intelligence requires iPhone 15 Pro/Pro Max (A17 Pro) or later
-        // or iPad/Mac with M1 or later
         let supportedPrefixes = [
             "iPhone16,", // iPhone 15 Pro, Pro Max
             "iPhone17,", // iPhone 16 series
@@ -107,8 +109,6 @@ final class AppleIntelligenceService {
         
         AppLogManager.shared.info("Presenting Writing Tools interface...", category: "AppleIntelligence")
         
-        // Apple Intelligence Writing Tools requires user interaction through the system UI
-        // We'll present a modal with a text view that has Writing Tools enabled
         return try await withCheckedThrowingContinuation { continuation in
             Task { @MainActor in
                 presentWritingToolsInterface(
@@ -231,7 +231,6 @@ class WritingToolsViewController: UIViewController {
             action: #selector(doneTapped)
         )
         
-        // Instructions label
         let instructionLabel = UILabel()
         instructionLabel.text = getInstructionText()
         instructionLabel.font = .preferredFont(forTextStyle: .subheadline)
@@ -240,7 +239,6 @@ class WritingToolsViewController: UIViewController {
         instructionLabel.translatesAutoresizingMaskIntoConstraints = false
         view.addSubview(instructionLabel)
         
-        // Text view with Writing Tools support
         textView = UITextView()
         textView.text = originalText
         textView.font = .preferredFont(forTextStyle: .body)
@@ -260,7 +258,6 @@ class WritingToolsViewController: UIViewController {
         
         view.addSubview(textView)
         
-        // Tip label
         let tipLabel = UILabel()
         tipLabel.text = "Tip: Select text and use the Writing Tools menu, or tap the ✨ button in the keyboard toolbar."
         tipLabel.font = .preferredFont(forTextStyle: .caption1)
@@ -284,7 +281,7 @@ class WritingToolsViewController: UIViewController {
             tipLabel.bottomAnchor.constraint(equalTo: view.keyboardLayoutGuide.topAnchor, constant: -12)
         ])
         
-        // Select all text to make it easy to apply Writing Tools
+
         textView.becomeFirstResponder()
         textView.selectedRange = NSRange(location: 0, length: textView.text.count)
         AppLogManager.shared.debug("Text selected, ready for Writing Tools", category: "AppleIntelligence")

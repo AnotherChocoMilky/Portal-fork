@@ -882,7 +882,7 @@ struct DeveloperControlPanelView: View {
                 .padding(.vertical, 12)
             }
             .background(Color(UIColor.systemGroupedBackground))
-            .searchable(text: $searchText, prompt: "Search developer tools...")
+            .searchable(text: $searchText, prompt: "Search Developer")
         }
         .withToast()
         .onChange(of: scenePhase) { newPhase in

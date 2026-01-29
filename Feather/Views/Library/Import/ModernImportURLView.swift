@@ -96,7 +96,7 @@ struct ModernImportURLView: View {
                                     .foregroundStyle(.secondary)
                                     .font(.system(size: 18))
                                 
-                                TextField(.localized("Enter IPA Link Here"), text: $urlText)
+                                TextField(.localized("https://example.com/test.ipa"), text: $urlText)
                                     .textInputAutocapitalization(.never)
                                     .autocorrectionDisabled()
                                     .keyboardType(.URL)

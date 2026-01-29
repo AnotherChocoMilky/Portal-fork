@@ -75,7 +75,7 @@ struct TextViewerView: View {
                         VStack(spacing: 16) {
                             ProgressView()
                                 .scaleEffect(1.5)
-                            Text("Loading file...")
+                            Text("Loading File...")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }

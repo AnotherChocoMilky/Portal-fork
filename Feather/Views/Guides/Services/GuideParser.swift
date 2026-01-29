@@ -1,5 +1,9 @@
 
-// parses all guides fetched from the GitHUb repo
+// parses all guides fetched from the GitHub repo
+// Uses a (accent://) parameter/pattern to make the headings that have this string show on the custom accent color
+// parses all markdown content into the view including codeblocks
+// made by dylan and claude 4.5 sonnet
+
 import Foundation
 
 // MARK: - Guide Parser
@@ -306,7 +310,7 @@ class GuideParser {
                 // Skip the (accent://) marker itself
                 let afterMarker = accentMarkerRange.upperBound
                 
-                // Find the end of text to apply accent to (until next space or end)
+
                 var accentTextEnd = afterMarker
                 while accentTextEnd < remainingText.endIndex {
                     let char = remainingText[accentTextEnd]
@@ -316,13 +320,13 @@ class GuideParser {
                     accentTextEnd = remainingText.index(after: accentTextEnd)
                 }
                 
-                // Extract the text that should have accent color
+
                 let accentText = String(remainingText[afterMarker..<accentTextEnd])
                 if !accentText.isEmpty {
                     result.append(.accentText(accentText))
                 }
                 
-                // Continue with the rest
+
                 if accentTextEnd < remainingText.endIndex {
                     remainingText = String(remainingText[accentTextEnd...])
                 } else {
@@ -339,11 +343,11 @@ class GuideParser {
                     result.append(.text(beforeAccent))
                 }
                 
-                // Find the end of the accent text (next space, punctuation, or end of string)
+
                 let afterPrefix = accentRange.upperBound
                 var accentTextEnd = afterPrefix
                 
-                // Continue until we hit a space, newline, or end of string
+
                 while accentTextEnd < remainingText.endIndex {
                     let char = remainingText[accentTextEnd]
                     if char.isWhitespace || char.isPunctuation {
@@ -358,7 +362,7 @@ class GuideParser {
                     result.append(.accentText(accentText))
                 }
                 
-                // Continue with the rest of the text
+
                 if accentTextEnd < remainingText.endIndex {
                     remainingText = String(remainingText[accentTextEnd...])
                 } else {
@@ -367,7 +371,7 @@ class GuideParser {
                 }
             }
             
-            // Add any remaining text after all accent:// occurrences
+
             if !remainingText.isEmpty {
                 result.append(.text(remainingText))
             }
@@ -396,7 +400,6 @@ class GuideParser {
     }
     
     private static func parseImage(_ line: String) -> GuideElement? {
-        // Pattern: ![alt text](url)
         let trimmed = line.trimmingCharacters(in: .whitespaces)
         guard let altStart = trimmed.range(of: "!["),
               let altEnd = trimmed.range(of: "](", range: altStart.upperBound..<trimmed.endIndex),
@@ -407,7 +410,6 @@ class GuideParser {
         let altText = String(trimmed[altStart.upperBound..<altEnd.lowerBound])
         var url = String(trimmed[altEnd.upperBound..<urlEnd.lowerBound])
         
-        // Clean up URL
         url = url.trimmingCharacters(in: .whitespaces)
         url = url.replacingOccurrences(of: " ", with: "")
         
