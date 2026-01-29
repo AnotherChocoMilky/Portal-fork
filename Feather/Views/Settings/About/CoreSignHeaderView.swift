@@ -112,7 +112,7 @@ struct CoreSignHeaderView: View {
                 .font(.system(size: 8))
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(Color.accentColor)
-            Text("2.0")
+            Text("2.0.1")
                 .font(.system(size: 10, weight: .semibold, design: .rounded))
             Text("Release")
                 .font(.system(size: 9, weight: .bold))
@@ -196,6 +196,10 @@ enum HeaderSubtitle {
         "no competition",
         "Are you using the latest Portal version?",
         "Built with Swift",
+        "what feature would you like to see here?",
+        "listen to Junior H",
+        "latinas on top",
+        "OTRA RUPTURA MAS AL CORAZON",
         "Kravashit are a scam",
         "Just Works™",
         "Portal in full Spanish?? maybe...",
@@ -206,6 +210,8 @@ enum HeaderSubtitle {
         "easter eggs hidden",
         "Porque la vida es asi -Peso Pluma",
         "made with some crashouts",
+        "When is DRUNK releasing omg",
+        "girls want girls -drake",
         "this Portal is WAY better",
         "vibe coded project lol",
         "playing hard to get is NOT cool S...",

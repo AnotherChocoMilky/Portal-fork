@@ -90,7 +90,7 @@ struct CertificatesView: View {
 				Image(systemName: "person.badge.shield.checkmark.fill")
 					.font(.system(size: 14, weight: .semibold))
 					.foregroundStyle(.blue)
-				Text("CERTIFICATE TYPE")
+				Text("Certificate Type")
 					.font(.system(size: 12, weight: .semibold, design: .rounded))
 					.foregroundStyle(.secondary)
 			}
@@ -383,7 +383,7 @@ struct CertificatesView: View {
 	
 	@ViewBuilder
 	private func _contextActions(for cert: CertificatePair) -> some View {
-		Button(.localized("Details"), systemImage: "info.circle") {
+		Button(.localized("View Details"), systemImage: "info.circle") {
 			_isSelectedInfoPresenting = cert
 		}
 		Button(.localized("Export Entitlements"), systemImage: "square.and.arrow.up") {

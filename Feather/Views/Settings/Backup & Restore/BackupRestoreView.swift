@@ -107,7 +107,7 @@ struct BackupRestoreView: View {
                             VStack(spacing: 6) {
                                 Text(.localized("Backup"))
                                     .font(.system(.headline, design: .rounded, weight: .bold))
-                                Text(.localized("Save your data"))
+                                Text(.localized("Save Your Data"))
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundStyle(.secondary)
                             }
@@ -166,7 +166,7 @@ struct BackupRestoreView: View {
                             VStack(spacing: 6) {
                                 Text(.localized("Restore"))
                                     .font(.system(.headline, design: .rounded, weight: .bold))
-                                Text(.localized("Load a backup"))
+                                Text(.localized("Load A Backup"))
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundStyle(.secondary)
                             }
@@ -322,7 +322,7 @@ struct BackupRestoreView: View {
         .alert(.localized("Invalid Backup File"), isPresented: $showInvalidBackupError) {
             Button(.localized("OK"), role: .cancel) { }
         } message: {
-            Text(.localized("Not a valid Backup file because Portal couldn't find the checker inside the file. Please upload an actual .zip file of a backup."))
+            Text(.localized("Not a valid Backup file because Portal couldn't find the internal checker inside this uploaded file. Please upload an actual .zip file of a backup."))
         }
         .overlay {
             if isRestoring {
@@ -786,12 +786,12 @@ struct BackupOptionsView: View {
                 }.listRowBackground(Color.clear).listRowInsets(EdgeInsets())
 
                 Section {
-                    backupOptionToggle(icon: "checkmark.seal.fill", iconColor: .blue, title: .localized("Certificates"), description: .localized("Your signing certificates and provisioning profiles"), isOn: $options.includeCertificates)
-                    backupOptionToggle(icon: "app.badge.fill", iconColor: .green, title: .localized("Signed Apps"), description: .localized("Apps you have signed with your certificates"), isOn: $options.includeSignedApps)
-                    backupOptionToggle(icon: "square.and.arrow.down.fill", iconColor: .orange, title: .localized("Imported Apps"), description: .localized("Apps imported from files or other sources"), isOn: $options.includeImportedApps)
-                    backupOptionToggle(icon: "globe.fill", iconColor: .purple, title: .localized("Sources"), description: .localized("Your configured app sources and repositories"), isOn: $options.includeSources)
-                    backupOptionToggle(icon: "puzzlepiece.extension.fill", iconColor: .cyan, title: .localized("Default Frameworks"), description: .localized("Your automatically injected frameworks (.dylib, .deb)"), isOn: $options.includeDefaultFrameworks)
-                    backupOptionToggle(icon: "archivebox.fill", iconColor: .indigo, title: .localized("Archives"), description: .localized("Your saved app archives and backups"), isOn: $options.includeArchives)
+                    backupOptionToggle(icon: "checkmark.seal.fill", iconColor: .blue, title: .localized("Certificates"), description: .localized("Your signing certificates and provisioning profiles."), isOn: $options.includeCertificates)
+                    backupOptionToggle(icon: "app.badge.fill", iconColor: .green, title: .localized("Signed Apps"), description: .localized("Apps you have signed with your certificates."), isOn: $options.includeSignedApps)
+                    backupOptionToggle(icon: "square.and.arrow.down.fill", iconColor: .orange, title: .localized("Imported Apps"), description: .localized("Apps imported from files or other sources."), isOn: $options.includeImportedApps)
+                    backupOptionToggle(icon: "globe.fill", iconColor: .purple, title: .localized("Sources"), description: .localized("Your configured app sources and repositories."), isOn: $options.includeSources)
+                    backupOptionToggle(icon: "puzzlepiece.extension.fill", iconColor: .cyan, title: .localized("Default Frameworks"), description: .localized("Your automatically injected frameworks (.dylib, .deb)".), isOn: $options.includeDefaultFrameworks)
+                    backupOptionToggle(icon: "archivebox.fill", iconColor: .indigo, title: .localized("Archives"), description: .localized("Your saved app archives and backups."), isOn: $options.includeArchives)
                 } header: { AppearanceSectionHeader(title: String.localized("Backup Content"), icon: "list.bullet.indent") }
                 .listRowBackground(Color.clear).listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
 
@@ -809,7 +809,7 @@ struct BackupOptionsView: View {
 
                 Section {
                     Button { onConfirm() } label: {
-                        HStack { Image(systemName: "checkmark.circle.fill"); Text(.localized("Create Backup")).font(.headline) }.frame(maxWidth: .infinity).padding(.vertical, 16).background(LinearGradient(gradient: Gradient(colors: [.blue, .purple]), startPoint: .leading, endPoint: .trailing)).foregroundStyle(.white).cornerRadius(12)
+                        HStack { Image(systemName: "checkmark.circle.fill"); Text(.localized("Create Portal Backup")).font(.headline) }.frame(maxWidth: .infinity).padding(.vertical, 16).background(LinearGradient(gradient: Gradient(colors: [.blue, .purple]), startPoint: .leading, endPoint: .trailing)).foregroundStyle(.white).cornerRadius(12)
                     }.buttonStyle(.plain)
                     Button { dismiss() } label: { Text(.localized("Cancel")).font(.subheadline).foregroundStyle(.secondary).frame(maxWidth: .infinity) }.buttonStyle(.plain).padding(.top, 8)
                 }.listRowBackground(Color.clear).listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 20, trailing: 16))
@@ -844,7 +844,7 @@ struct RestoreLoadingOverlay: View {
                     Circle().stroke(Color.green.opacity(0.3), lineWidth: 4).frame(width: 100, height: 100).rotationEffect(.degrees(rotation))
                     Image(systemName: "arrow.down.circle.fill").font(.system(size: 50)).foregroundStyle(LinearGradient(colors: [.green, .mint], startPoint: .topLeading, endPoint: .bottomTrailing))
                 }
-                VStack(spacing: 8) { Text("Restoring Backup").font(.title2.bold()); Text("Please wait while we restore your data...").font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center) }
+                VStack(spacing: 8) { Text("Restoring Backup").font(.title2.bold()); Text("Please wait while Portal restores your data...").font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center) }
                 VStack(spacing: 8) { ProgressView(value: progress).tint(.green); Text("\(Int(progress * 100))%").font(.caption).foregroundStyle(.secondary) }
             }.padding(32).background(.ultraThinMaterial).cornerRadius(24).padding(.horizontal, 40).shadow(color: .black.opacity(0.2), radius: 20)
         }.onAppear { withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) { rotation = 360 } }

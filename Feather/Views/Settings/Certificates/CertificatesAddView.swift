@@ -565,7 +565,7 @@ extension CertificatesAddView {
 							.foregroundStyle(.secondary)
 							.lineLimit(1)
 					} else {
-						Text(.localized("Tap to select"))
+						Text(.localized("Tap To Select"))
 							.font(.caption2)
 							.foregroundStyle(.secondary)
 					}
@@ -596,7 +596,7 @@ extension CertificatesAddView {
 		else {
 			UIAlertController.showAlertWithOk(
 				title: .localized("Error"),
-				message: .localized("The password you entered is wrong, please try again to add this certificate")
+				message: .localized("The password you entered is wrong, please try again to add this certificate. If the password from this certificate is WSF, restart Portal and try again.")
 			)
 			return
 		}
@@ -679,7 +679,7 @@ extension CertificatesAddView {
 			// Show success message
 			UIAlertController.showAlertWithOk(
 				title: .localized("Success"),
-				message: .localized("Certificate files extracted successfully from ZIP. Please enter the password.")
+				message: .localized("Certificate files extracted successfully from ZIP. Please enter the password now.")
 			)
 			
 		} catch let error as CertificateImportError {

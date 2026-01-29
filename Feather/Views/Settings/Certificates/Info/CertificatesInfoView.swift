@@ -3,7 +3,7 @@ import NimbleViews
 import ZsignSwift
 import OSLog
 
-// MARK: - Entitlement Mapping Helper
+// MARK: - Entitlement strings so users can better understand what each entitlement is
 struct EntitlementMapping {
     static func humanReadableName(for entitlement: String) -> String {
         let mappings: [String: String] = [
@@ -379,7 +379,7 @@ struct CertificatesInfoView: View {
                     }
                     
                     if devices.count > 10 {
-                        Text("+ \(devices.count - 10) more devices")
+                        Text("+ \(devices.count - 10) More Devices")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(.secondary)
                             .padding(.vertical, 8)
@@ -491,7 +491,7 @@ struct CertificatesInfoView: View {
                     .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(.indigo)
                 
-                Text("Export as .portalcert")
+                Text("Export As .portalcert")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.primary)
                 

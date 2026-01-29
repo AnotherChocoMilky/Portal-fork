@@ -74,7 +74,7 @@ struct FilesSettingsView: View {
                         ConditionalLabel(title: .localized("Enable Breadcrumbs"), systemImage: "arrow.turn.down.right")
                     }
                 } footer: {
-                    Text(.localized("Show breadcrumb navigation at the top of the Files tab for quick folder navigation."))
+                    Text(.localized("Show breadcrumb navigation at the top of the Files tab for quick folder navigation. This is recommended to stay on since default navigation does not work well."))
                 }
                 
                 // MARK: - Smart Actions Section
@@ -91,7 +91,7 @@ struct FilesSettingsView: View {
                         ConditionalLabel(title: .localized("Fix Structure"), systemImage: "wrench.and.screwdriver")
                     }
                 } footer: {
-                    Text(.localized("Enable or disable smart context actions in the Files tab. Quick Inspect shows detailed file information, Open in Signer opens IPA files in the signer, and Fix Structure attempts to repair corrupted file structures."))
+                    Text(.localized("Enable or disable smart context actions in the Files tab. Quick Inspect shows detailed file information, Open in Signer opens IPA files in Library, and Fix Structure attempts to repair corrupted file structures."))
                 }
                 
                 // MARK: - Reset Section

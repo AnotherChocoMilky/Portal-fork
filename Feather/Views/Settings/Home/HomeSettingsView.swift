@@ -455,7 +455,7 @@ struct HomeSettingsView: View {
         } header: {
             Text(.localized("Appearance"))
         } footer: {
-            Text(.localized("Customize how the Home Screen looks."))
+            Text(.localized("Customize how the Home Screen looks with widgets etc."))
         }
     }
     
@@ -865,7 +865,7 @@ struct AppUpdateTrackingSettingsView: View {
         } header: {
             Text("Source Data")
         } footer: {
-            Text("Sources are automatically fetched every hour. Tap to manually refresh all sources and update the app cache. Having the apps cached helps to load the apps faster.")
+            Text("Sources are automatically fetched every hour as long as the app remains open in the background. You can manually refresh all sources and update the app cache. Having the apps cached helps to load the apps faster.")
         }
     }
     
@@ -983,7 +983,7 @@ private struct TrackedAppRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 
-                Text("v\(app.lastKnownVersion)")
+                Text("Version \(app.lastKnownVersion)")
                     .font(.caption2)
                     .foregroundStyle(.tertiary)
             }
@@ -1128,7 +1128,7 @@ struct SelectAppToTrackView: View {
                 ProgressView()
                     .scaleEffect(1.2)
                 
-                Text("Loading Apps...")
+                Text("Loading Apps")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -1247,7 +1247,7 @@ private struct CachedAppRow: View {
             
             HStack(spacing: 4) {
                 if let version = app.version {
-                    Text("v\(version)")
+                    Text("Version \(version)")
                         .font(.caption2)
                         .foregroundStyle(.blue)
                 }

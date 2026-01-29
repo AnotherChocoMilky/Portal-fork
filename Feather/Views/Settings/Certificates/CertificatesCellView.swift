@@ -24,7 +24,7 @@ struct CertificatesCellView: View {
 						
 						// Debug badge
 						if let getTaskAllow = data?.Entitlements?["get-task-allow"]?.value as? Bool, getTaskAllow == true {
-							Text("DEBUG")
+							Text("JiT")
 								.font(.system(size: 9, weight: .bold))
 								.foregroundStyle(.white)
 								.padding(.horizontal, 5)
