@@ -409,7 +409,7 @@ struct AppearanceContentPanel: View {
             } header: {
                 Label("Network Status", systemImage: "wifi")
             } footer: {
-                Text("Shows current network connectivity status.")
+                Text("Shows current Network Connectivity status.")
             }
         }
         
@@ -426,7 +426,7 @@ struct AppearanceContentPanel: View {
             } header: {
                 Label("Memory Usage", systemImage: "memorychip")
             } footer: {
-                Text("Shows current app memory usage.")
+                Text("Shows current App Memory usage.")
             }
         }
     }
@@ -494,7 +494,7 @@ struct AppearanceContentPanel: View {
                 }
                 
                 Toggle(isOn: $viewModel.showOnTap) {
-                    Label("Show on Tap", systemImage: "hand.tap")
+                    Label("Show On Tap", systemImage: "hand.tap")
                 }
             }
         } header: {

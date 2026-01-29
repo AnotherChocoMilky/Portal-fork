@@ -41,13 +41,13 @@ struct ConfigureLayoutsView: View {
         
         var description: String {
             switch self {
-            case .text: return "Custom text display"
+            case .text: return "Custom Text Display"
             case .sfSymbol: return "SF Symbol icons"
-            case .time: return "Current time"
-            case .battery: return "Battery status"
-            case .network: return "Network connectivity"
-            case .memory: return "Memory usage"
-            case .date: return "Current date"
+            case .time: return "Current Time"
+            case .battery: return "Battery Status"
+            case .network: return "Network Connectivity"
+            case .memory: return "Memory Usage"
+            case .date: return "Current Date"
             }
         }
     }
@@ -336,7 +336,7 @@ struct ConfigureLayoutsView: View {
         VStack(alignment: .leading, spacing: 14) {
             sectionHeader("Text Options", icon: "textformat", color: .blue)
             
-            TextField("Enter custom text", text: $viewModel.customText)
+            TextField("Enter Custom Text", text: $viewModel.customText)
                 .textFieldStyle(.roundedBorder)
             
             Toggle("Enable Custom Text", isOn: $viewModel.showCustomText)
@@ -374,7 +374,7 @@ struct ConfigureLayoutsView: View {
             
             if viewModel.showTime {
                 Toggle("Show Seconds", isOn: $viewModel.showSeconds)
-                Toggle("24-Hour Format", isOn: $viewModel.use24HourClock)
+                Toggle("24 Hour Format", isOn: $viewModel.use24HourClock)
                 Toggle("Animate Changes", isOn: $viewModel.animateTime)
             }
         }
@@ -397,7 +397,7 @@ struct ConfigureLayoutsView: View {
                 }
                 .pickerStyle(.segmented)
                 
-                Toggle("Auto Color by Level", isOn: $viewModel.batteryUseAutoColor)
+                Toggle("Auto Color By Level", isOn: $viewModel.batteryUseAutoColor)
             }
         }
         .padding(16)

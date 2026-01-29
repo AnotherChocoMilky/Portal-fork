@@ -49,7 +49,7 @@ struct OfflineView: View {
                     .fontWeight(.bold)
                     .foregroundStyle(.primary)
                 
-                Text("You're not connected to the internet.\nPlease check your Wi-Fi or cellular data connection.")
+                Text("You're not connected to the internet.\nPlease check your Wi-Fi or cellular data connection to use Portal.")
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

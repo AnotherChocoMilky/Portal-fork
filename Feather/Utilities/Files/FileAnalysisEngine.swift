@@ -1,9 +1,10 @@
+// made by dylan, if you are doing a fork, DO NOT REMOVE THIS
+// this was hard to make so please leave the credits, or idc what yall do atp
 import Foundation
 import CryptoKit
 import UniformTypeIdentifiers
 
-// MARK: - File Analysis Engine
-/// Pure Swift implementation for file analysis and operations
+/// Pure Swift implementation for file analysis and operations because fuck C++
 class FileAnalysisEngine {
     
     // MARK: - File Type Enum
