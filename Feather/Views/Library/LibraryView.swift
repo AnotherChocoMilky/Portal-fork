@@ -121,83 +121,83 @@ struct LibraryView: View {
                 }
             }
             .navigationBarHidden(true)
-			.sheet(item: $_selectedInfoAppPresenting) { app in
-				LibraryInfoView(app: app.base)
-			}
-			.sheet(item: $_selectedInstallAppPresenting) { app in
-				InstallPreviewView(app: app.base, isSharing: app.archive)
-					.presentationDetents([.height(200)])
-					.presentationDragIndicator(.visible)
-					.compatPresentationRadius(21)
-			}
-			.fullScreenCover(item: $_selectedSigningAppPresenting) { app in
-				ModernSigningView(app: app.base)
-			}
-			.sheet(item: $_selectedInstallModifyAppPresenting) { app in
-				InstallModifyDialogView(app: app.base)
-					.presentationDetents([.medium, .large])
-					.presentationDragIndicator(.visible)
-			}
-			.sheet(isPresented: $_isImportingPresenting) {
-				FileImporterRepresentableView(
-					allowedContentTypes:  [.ipa, .tipa],
-					allowsMultipleSelection: true,
-					onDocumentsPicked: { urls in
-						guard !urls.isEmpty else { return }
-						
-						for url in urls {
-							let id = "FeatherManualDownload_\(UUID().uuidString)"
-							let dl = downloadManager.startArchive(from: url, id: id)
-							
-							// Show loading animation
-							_importedAppName = url.deletingPathExtension().lastPathComponent
-							_currentDownloadId = id
-							_importStatus = .processing
-							_importErrorMessage = ""
-							withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-								_showImportAnimation = true
-							}
-							
-							// Start the import - completion will be handled via notifications
-							do {
-								try downloadManager.handlePachageFile(url: url, dl: dl)
-							} catch {
-								// This catch is for synchronous errors only (rare)
-								_importErrorMessage = error.localizedDescription
-								withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-									_importStatus = .failed
-								}
-								DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-									withAnimation(.easeOut(duration: 0.3)) {
-										_showImportAnimation = false
-									}
-								}
-							}
-						}
-					}
-				)
-				.ignoresSafeArea()
-			}
-			.sheet(isPresented: $_isDownloadingPresenting) {
-				ModernImportURLView { url in
-					// Start URL download with proper tracking
-					let downloadId = "FeatherManualDownload_\(UUID().uuidString)"
-					_currentDownloadId = downloadId
-					_importedAppName = url.deletingPathExtension().lastPathComponent
-					_downloadProgress = 0.0
-					_importStatus = .downloading
-					_importErrorMessage = ""
-					
-					withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-						_showImportAnimation = true
-					}
-					
-					// Start the download - progress and completion handled via notifications
-					_ = downloadManager.startDownload(from: url, id: downloadId)
-				}
-				.presentationDetents([.medium, .large])
-				.presentationDragIndicator(.visible)
-			}
+                        .sheet(item: $_selectedInfoAppPresenting) { app in
+                                LibraryInfoView(app: app.base)
+                        }
+                        .sheet(item: $_selectedInstallAppPresenting) { app in
+                                InstallPreviewView(app: app.base, isSharing: app.archive)
+                                        .presentationDetents([.height(200)])
+                                        .presentationDragIndicator(.visible)
+                                        .compatPresentationRadius(21)
+                        }
+                        .fullScreenCover(item: $_selectedSigningAppPresenting) { app in
+                                ModernSigningView(app: app.base)
+                        }
+                        .sheet(item: $_selectedInstallModifyAppPresenting) { app in
+                                InstallModifyDialogView(app: app.base)
+                                        .presentationDetents([.medium, .large])
+                                        .presentationDragIndicator(.visible)
+                        }
+                        .sheet(isPresented: $_isImportingPresenting) {
+                                FileImporterRepresentableView(
+                                        allowedContentTypes:  [.ipa, .tipa],
+                                        allowsMultipleSelection: true,
+                                        onDocumentsPicked: { urls in
+                                                guard !urls.isEmpty else { return }
+                                                
+                                                for url in urls {
+                                                        let id = "FeatherManualDownload_\(UUID().uuidString)"
+                                                        let dl = downloadManager.startArchive(from: url, id: id)
+                                                        
+                                                        // Show loading animation
+                                                        _importedAppName = url.deletingPathExtension().lastPathComponent
+                                                        _currentDownloadId = id
+                                                        _importStatus = .processing
+                                                        _importErrorMessage = ""
+                                                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                                                                _showImportAnimation = true
+                                                        }
+                                                        
+                                                        // Start the import - completion will be handled via notifications
+                                                        do {
+                                                                try downloadManager.handlePachageFile(url: url, dl: dl)
+                                                        } catch {
+                                                                // This catch is for synchronous errors only (rare)
+                                                                _importErrorMessage = error.localizedDescription
+                                                                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                                                                        _importStatus = .failed
+                                                                }
+                                                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                                                                        withAnimation(.easeOut(duration: 0.3)) {
+                                                                                _showImportAnimation = false
+                                                                        }
+                                                                }
+                                                        }
+                                                }
+                                        }
+                                )
+                                .ignoresSafeArea()
+                        }
+                        .sheet(isPresented: $_isDownloadingPresenting) {
+                                ModernImportURLView { url in
+                                        // Start URL download with proper tracking
+                                        let downloadId = "FeatherManualDownload_\(UUID().uuidString)"
+                                        _currentDownloadId = downloadId
+                                        _importedAppName = url.deletingPathExtension().lastPathComponent
+                                        _downloadProgress = 0.0
+                                        _importStatus = .downloading
+                                        _importErrorMessage = ""
+                                        
+                                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+                                                _showImportAnimation = true
+                                        }
+                                        
+                                        // Start the download - progress and completion handled via notifications
+                                        _ = downloadManager.startDownload(from: url, id: downloadId)
+                                }
+                                .presentationDetents([.medium, .large])
+                                .presentationDragIndicator(.visible)
+                        }
             .fullScreenCover(isPresented: $_showBatchSigningSheet) {
                 BatchSigningView(
                     apps: getSelectedUnsignedApps(),
@@ -216,283 +216,268 @@ struct LibraryView: View {
             } message: {
                 Text("Are you sure you want to delete \(_selectedApps.count) selected app(s)?")
             }
-			// Listen for import success notifications
-			.onReceive(NotificationCenter.default.publisher(for: DownloadManager.importDidSucceedNotification)) { notification in
-				guard let userInfo = notification.userInfo,
-					  let downloadId = userInfo["downloadId"] as? String,
-					  downloadId == _currentDownloadId else { return }
-				
-				withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-					_importStatus = .success
-				}
-				
-				// Auto-dismiss after showing success
-				DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-					withAnimation(.easeOut(duration: 0.3)) {
-						_showImportAnimation = false
-						_currentDownloadId = ""
-					}
-				}
-			}
-			// Listen for import failure notifications
-			.onReceive(NotificationCenter.default.publisher(for: DownloadManager.importDidFailNotification)) { notification in
-				guard let userInfo = notification.userInfo,
-					  let downloadId = userInfo["downloadId"] as? String,
-					  downloadId == _currentDownloadId else { return }
-				
-				_importErrorMessage = userInfo["error"] as? String ?? "Unknown error"
-				withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-					_importStatus = .failed
-				}
-				
-				// Auto-dismiss after showing error
-				DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-					withAnimation(.easeOut(duration: 0.3)) {
-						_showImportAnimation = false
-						_currentDownloadId = ""
-					}
-				}
-			}
-			// Listen for download failure notifications
-			.onReceive(NotificationCenter.default.publisher(for: DownloadManager.downloadDidFailNotification)) { notification in
-				guard let userInfo = notification.userInfo,
-					  let downloadId = userInfo["downloadId"] as? String,
-					  downloadId == _currentDownloadId else { return }
-				
-				_importErrorMessage = userInfo["error"] as? String ?? "Download failed"
-				withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-					_importStatus = .failed
-				}
-				
-				// Auto-dismiss after showing error
-				DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-					withAnimation(.easeOut(duration: 0.3)) {
-						_showImportAnimation = false
-						_currentDownloadId = ""
-					}
-				}
-			}
-			// Listen for download progress notifications
-			.onReceive(NotificationCenter.default.publisher(for: DownloadManager.downloadDidProgressNotification)) { notification in
-				guard let userInfo = notification.userInfo,
-					  let downloadId = userInfo["downloadId"] as? String,
-					  downloadId == _currentDownloadId,
-					  let progress = userInfo["progress"] as? Double else { return }
-				
-				_downloadProgress = progress
-				
-				// Switch to processing status when download is complete (progress >= 0.99)
-				if progress >= 0.99 && _importStatus == .downloading {
-					withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-						_importStatus = .processing
-					}
-				}
-			}
-			.onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.installApp"))) { _ in
-				if let latest = _signedApps.first {
-					_selectedInstallAppPresenting = AnyApp(base: latest)
-				}
-			}
-			.onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.openSigningView"))) { notification in
-				if let app = notification.object as? AppInfoPresentable {
-					_selectedSigningAppPresenting = AnyApp(base: app)
-				}
-			}
-			.onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.showInstallModifyPopup"))) { notification in
-				// When app is downloaded from Sources view, show Install/Modify dialog
-				if let _ = notification.object as? URL {
-					// Get the latest imported app (just downloaded)
-					if let latestApp = Storage.shared.getLatestImportedApp() {
-						_selectedInstallModifyAppPresenting = AnyApp(base: latestApp)
-					}
-				}
-			}
-			.overlay {
-				if _showImportAnimation {
-					ZStack {
-						Color.black.opacity(0.5)
-							.ignoresSafeArea()
-							.transition(.opacity)
-						
-						VStack(spacing: 20) {
-							ZStack {
-								// Background circle with status color
-								Circle()
-									.fill(
-										_importStatus == .success 
-											? Color.green
-											: _importStatus == .failed
-											? Color.red
-											: Color.blue
-									)
-									.frame(width: 100, height: 100)
-									.scaleEffect(_showImportAnimation ? 1.0 : 0.5)
-									.animation(.spring(response: 0.6, dampingFraction: 0.6), value: _showImportAnimation)
-								
-								// Progress ring for downloading state
-								if _importStatus == .downloading {
-									Circle()
-										.stroke(Color.white.opacity(0.3), lineWidth: 6)
-										.frame(width: 90, height: 90)
-									
-									Circle()
-										.trim(from: 0, to: _downloadProgress)
-										.stroke(Color.white, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-										.frame(width: 90, height: 90)
-										.rotationEffect(.degrees(-90))
-										.animation(.easeInOut(duration: 0.2), value: _downloadProgress)
-								}
-								
-								Group {
-									switch _importStatus {
-									case .loading, .processing:
-										ProgressView()
-											.progressViewStyle(CircularProgressViewStyle(tint: .white))
-											.scaleEffect(1.5)
-									case .downloading:
-										VStack(spacing: 2) {
-											Image(systemName: "arrow.down")
-												.font(.system(size: 28, weight: .bold))
-												.foregroundStyle(.white)
-											Text("\(Int(_downloadProgress * 100))%")
-												.font(.system(size: 14, weight: .bold))
-												.foregroundStyle(.white)
-										}
-									case .success:
-										Image(systemName: "checkmark")
-											.font(.system(size: 50, weight: .bold))
-											.foregroundStyle(.white)
-									case .failed:
-										Image(systemName: "xmark")
-											.font(.system(size: 50, weight: .bold))
-											.foregroundStyle(.white)
-									}
-								}
-								.scaleEffect(_showImportAnimation && (_importStatus == .success || _importStatus == .failed) ? 1.0 : (_importStatus == .downloading ? 1.0 : 0.8))
-								.animation(.spring(response: 0.6, dampingFraction: 0.6).delay((_importStatus == .success || _importStatus == .failed) ? 0.1 : 0), value: _importStatus)
-							}
-							
-							VStack(spacing: 8) {
-								Text(_statusTitle)
-									.font(.title2)
-									.fontWeight(.bold)
-									.foregroundStyle(.white)
-								
-								Text(_importedAppName)
-									.font(.subheadline)
-									.foregroundStyle(.white.opacity(0.8))
-									.lineLimit(2)
-									.multilineTextAlignment(.center)
-									.padding(.horizontal, 40)
-								
-								// Show error message if failed
-								if _importStatus == .failed && !_importErrorMessage.isEmpty {
-									Text(_importErrorMessage)
-										.font(.caption)
-										.foregroundStyle(.white.opacity(0.6))
-										.lineLimit(3)
-										.multilineTextAlignment(.center)
-										.padding(.horizontal, 20)
-										.padding(.top, 4)
-								}
-							}
-							.opacity(_showImportAnimation ? 1.0 : 0.0)
-							.offset(y: _showImportAnimation ? 0 : 20)
-							.animation(.easeOut(duration: 0.4).delay(0.2), value: _showImportAnimation)
-						}
-						.padding(40)
-						.background(
-							RoundedRectangle(cornerRadius: 30, style: .continuous)
-								.fill(Color(uiColor: .systemBackground))
-								.shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)
-						)
-						.scaleEffect(_showImportAnimation ? 1.0 : 0.8)
-						.animation(.spring(response: 0.6, dampingFraction: 0.7), value: _showImportAnimation)
-					}
-				}
-			}
-		}
-	}
-	
-	private var _statusTitle: String {
-		switch _importStatus {
-		case .loading:
-			return String.localized("Loading")
-		case .downloading:
-			return String.localized("Downloading")
-		case .processing:
-			return String.localized("Processing")
-		case .success:
-			return String.localized("Import Successful!")
-		case .failed:
-			return String.localized("Import Failed")
-		}
-	}
+                        // Listen for import success notifications
+                        .onReceive(NotificationCenter.default.publisher(for: DownloadManager.importDidSucceedNotification)) { notification in
+                                guard let userInfo = notification.userInfo,
+                                          let downloadId = userInfo["downloadId"] as? String,
+                                          downloadId == _currentDownloadId else { return }
+                                
+                                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                                        _importStatus = .success
+                                }
+                                
+                                // Auto-dismiss after showing success
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                        withAnimation(.easeOut(duration: 0.3)) {
+                                                _showImportAnimation = false
+                                                _currentDownloadId = ""
+                                        }
+                                }
+                        }
+                        // Listen for import failure notifications
+                        .onReceive(NotificationCenter.default.publisher(for: DownloadManager.importDidFailNotification)) { notification in
+                                guard let userInfo = notification.userInfo,
+                                          let downloadId = userInfo["downloadId"] as? String,
+                                          downloadId == _currentDownloadId else { return }
+                                
+                                _importErrorMessage = userInfo["error"] as? String ?? "Unknown error"
+                                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                                        _importStatus = .failed
+                                }
+                                
+                                // Auto-dismiss after showing error
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                                        withAnimation(.easeOut(duration: 0.3)) {
+                                                _showImportAnimation = false
+                                                _currentDownloadId = ""
+                                        }
+                                }
+                        }
+                        // Listen for download failure notifications
+                        .onReceive(NotificationCenter.default.publisher(for: DownloadManager.downloadDidFailNotification)) { notification in
+                                guard let userInfo = notification.userInfo,
+                                          let downloadId = userInfo["downloadId"] as? String,
+                                          downloadId == _currentDownloadId else { return }
+                                
+                                _importErrorMessage = userInfo["error"] as? String ?? "Download failed"
+                                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                                        _importStatus = .failed
+                                }
+                                
+                                // Auto-dismiss after showing error
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                                        withAnimation(.easeOut(duration: 0.3)) {
+                                                _showImportAnimation = false
+                                                _currentDownloadId = ""
+                                        }
+                                }
+                        }
+                        // Listen for download progress notifications
+                        .onReceive(NotificationCenter.default.publisher(for: DownloadManager.downloadDidProgressNotification)) { notification in
+                                guard let userInfo = notification.userInfo,
+                                          let downloadId = userInfo["downloadId"] as? String,
+                                          downloadId == _currentDownloadId,
+                                          let progress = userInfo["progress"] as? Double else { return }
+                                
+                                _downloadProgress = progress
+                                
+                                // Switch to processing status when download is complete (progress >= 0.99)
+                                if progress >= 0.99 && _importStatus == .downloading {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                                _importStatus = .processing
+                                        }
+                                }
+                        }
+                        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.installApp"))) { _ in
+                                if let latest = _signedApps.first {
+                                        _selectedInstallAppPresenting = AnyApp(base: latest)
+                                }
+                        }
+                        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.openSigningView"))) { notification in
+                                if let app = notification.object as? AppInfoPresentable {
+                                        _selectedSigningAppPresenting = AnyApp(base: app)
+                                }
+                        }
+                        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.showInstallModifyPopup"))) { notification in
+                                // When app is downloaded from Sources view, show Install/Modify dialog
+                                if let _ = notification.object as? URL {
+                                        // Get the latest imported app (just downloaded)
+                                        if let latestApp = Storage.shared.getLatestImportedApp() {
+                                                _selectedInstallModifyAppPresenting = AnyApp(base: latestApp)
+                                        }
+                                }
+                        }
+                        .overlay {
+                                if _showImportAnimation {
+                                        ZStack {
+                                                Color.black.opacity(0.5)
+                                                        .ignoresSafeArea()
+                                                        .transition(.opacity)
+                                                
+                                                VStack(spacing: 20) {
+                                                        ZStack {
+                                                                // Background circle with status color
+                                                                Circle()
+                                                                        .fill(
+                                                                                _importStatus == .success 
+                                                                                        ? Color.green
+                                                                                        : _importStatus == .failed
+                                                                                        ? Color.red
+                                                                                        : Color.blue
+                                                                        )
+                                                                        .frame(width: 100, height: 100)
+                                                                        .scaleEffect(_showImportAnimation ? 1.0 : 0.5)
+                                                                        .animation(.spring(response: 0.6, dampingFraction: 0.6), value: _showImportAnimation)
+                                                                
+                                                                // Progress ring for downloading state
+                                                                if _importStatus == .downloading {
+                                                                        Circle()
+                                                                                .stroke(Color.white.opacity(0.3), lineWidth: 6)
+                                                                                .frame(width: 90, height: 90)
+                                                                        
+                                                                        Circle()
+                                                                                .trim(from: 0, to: _downloadProgress)
+                                                                                .stroke(Color.white, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                                                                                .frame(width: 90, height: 90)
+                                                                                .rotationEffect(.degrees(-90))
+                                                                                .animation(.easeInOut(duration: 0.2), value: _downloadProgress)
+                                                                }
+                                                                
+                                                                Group {
+                                                                        switch _importStatus {
+                                                                        case .loading, .processing:
+                                                                                ProgressView()
+                                                                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                                                                        .scaleEffect(1.5)
+                                                                        case .downloading:
+                                                                                VStack(spacing: 2) {
+                                                                                        Image(systemName: "arrow.down")
+                                                                                                .font(.system(size: 28, weight: .bold))
+                                                                                                .foregroundStyle(.white)
+                                                                                        Text("\(Int(_downloadProgress * 100))%")
+                                                                                                .font(.system(size: 14, weight: .bold))
+                                                                                                .foregroundStyle(.white)
+                                                                                }
+                                                                        case .success:
+                                                                                Image(systemName: "checkmark")
+                                                                                        .font(.system(size: 50, weight: .bold))
+                                                                                        .foregroundStyle(.white)
+                                                                        case .failed:
+                                                                                Image(systemName: "xmark")
+                                                                                        .font(.system(size: 50, weight: .bold))
+                                                                                        .foregroundStyle(.white)
+                                                                        }
+                                                                }
+                                                                .scaleEffect(_showImportAnimation && (_importStatus == .success || _importStatus == .failed) ? 1.0 : (_importStatus == .downloading ? 1.0 : 0.8))
+                                                                .animation(.spring(response: 0.6, dampingFraction: 0.6).delay((_importStatus == .success || _importStatus == .failed) ? 0.1 : 0), value: _importStatus)
+                                                        }
+                                                        
+                                                        VStack(spacing: 8) {
+                                                                Text(_statusTitle)
+                                                                        .font(.title2)
+                                                                        .fontWeight(.bold)
+                                                                        .foregroundStyle(.white)
+                                                                
+                                                                Text(_importedAppName)
+                                                                        .font(.subheadline)
+                                                                        .foregroundStyle(.white.opacity(0.8))
+                                                                        .lineLimit(2)
+                                                                        .multilineTextAlignment(.center)
+                                                                        .padding(.horizontal, 40)
+                                                                
+                                                                // Show error message if failed
+                                                                if _importStatus == .failed && !_importErrorMessage.isEmpty {
+                                                                        Text(_importErrorMessage)
+                                                                                .font(.caption)
+                                                                                .foregroundStyle(.white.opacity(0.6))
+                                                                                .lineLimit(3)
+                                                                                .multilineTextAlignment(.center)
+                                                                                .padding(.horizontal, 20)
+                                                                                .padding(.top, 4)
+                                                                }
+                                                        }
+                                                        .opacity(_showImportAnimation ? 1.0 : 0.0)
+                                                        .offset(y: _showImportAnimation ? 0 : 20)
+                                                        .animation(.easeOut(duration: 0.4).delay(0.2), value: _showImportAnimation)
+                                                }
+                                                .padding(40)
+                                                .background(
+                                                        RoundedRectangle(cornerRadius: 30, style: .continuous)
+                                                                .fill(Color(uiColor: .systemBackground))
+                                                                .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)
+                                                )
+                                                .scaleEffect(_showImportAnimation ? 1.0 : 0.8)
+                                                .animation(.spring(response: 0.6, dampingFraction: 0.7), value: _showImportAnimation)
+                                        }
+                                }
+                        }
+                }
+        }
+        
+        private var _statusTitle: String {
+                switch _importStatus {
+                case .loading:
+                        return String.localized("Loading")
+                case .downloading:
+                        return String.localized("Downloading")
+                case .processing:
+                        return String.localized("Processing")
+                case .success:
+                        return String.localized("Import Successful!")
+                case .failed:
+                        return String.localized("Import Failed")
+                }
+        }
 }
 
 // MARK: - Extension: View Components
 extension LibraryView {
     // MARK: - Custom Navigation Bar
     private var customNavigationBar: some View {
-        HStack(spacing: 16) {
-            Spacer()
-            
+        HStack {
             Text("Library")
-                .font(.system(size: 20, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
+                .font(.system(size: 34, weight: .bold))
+                .foregroundStyle(.primary)
             
             Spacer()
-        }
-        .overlay(alignment: .trailing) {
+            
             Menu {
                 _importActions()
             } label: {
-                ZStack {
-                    Circle()
-                        .fill(Color.green.opacity(0.2))
-                        .frame(width: 40, height: 40)
-                    
-                    Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.green)
-                }
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 28))
+                    .foregroundStyle(.accentColor)
+                    .symbolRenderingMode(.hierarchical)
             }
-            .padding(.trailing, 20)
         }
-        .padding(.top, 16)
-        .padding(.bottom, 20)
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+        .padding(.bottom, 16)
     }
     
-    // MARK: - Filter Chips (Modern Compact Design)
+    // MARK: - Filter Chips (Modern Minimal Design)
     private var filterChips: some View {
-        HStack(spacing: 8) {
-            // Modern segmented filter
-            HStack(spacing: 2) {
-                ForEach(FilterMode.allCases, id: \.self) { mode in
-                    CompactFilterChip(
-                        title: mode.rawValue,
-                        icon: mode.icon,
-                        isSelected: _filterMode == mode,
-                        namespace: _namespace
-                    ) {
-                        withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                            _filterMode = mode
-                        }
-                        HapticsManager.shared.softImpact()
+        HStack(spacing: 0) {
+            ForEach(FilterMode.allCases, id: \.self) { mode in
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        _filterMode = mode
                     }
+                    HapticsManager.shared.softImpact()
+                } label: {
+                    Text(mode.rawValue)
+                        .font(.system(size: 15, weight: _filterMode == mode ? .semibold : .regular))
+                        .foregroundStyle(_filterMode == mode ? .primary : .secondary)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
                 }
+                .buttonStyle(.plain)
             }
-            .padding(3)
-            .background(
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(Color(UIColor.tertiarySystemBackground))
-            )
             
             Spacer()
             
-            // Selection mode toggle
             Button {
-                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                     _isSelectionMode.toggle()
                     if !_isSelectionMode {
                         _selectedApps.removeAll()
@@ -500,15 +485,11 @@ extension LibraryView {
                 }
                 HapticsManager.shared.softImpact()
             } label: {
-                Image(systemName: _isSelectionMode ? "checkmark.circle.fill" : "checklist")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(_isSelectionMode ? .white : .primary)
-                    .frame(width: 32, height: 32)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(_isSelectionMode ? Color.accentColor : Color(UIColor.tertiarySystemBackground))
-                    )
+                Image(systemName: _isSelectionMode ? "checkmark.circle.fill" : "ellipsis.circle")
+                    .font(.system(size: 22))
+                    .foregroundStyle(_isSelectionMode ? .accentColor : .secondary)
             }
+            .buttonStyle(.plain)
         }
     }
     
@@ -516,56 +497,35 @@ extension LibraryView {
     @ViewBuilder
     private var selectionActionBar: some View {
         if _isSelectionMode && !_selectedApps.isEmpty {
-            HStack(spacing: 12) {
-                // Selected count
+            HStack(spacing: 16) {
                 Text("\(_selectedApps.count) selected")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(.secondary)
                 
                 Spacer()
                 
-                // Sign All button (only for unsigned apps)
                 let unsignedSelectedApps = getSelectedUnsignedApps()
                 if !unsignedSelectedApps.isEmpty {
                     Button {
                         _showBatchSigningSheet = true
                     } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "signature")
-                                .font(.system(size: 14, weight: .semibold))
-                            Text("Sign (\(unsignedSelectedApps.count))")
-                                .font(.system(size: 14, weight: .semibold))
-                        }
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(Color.accentColor, in: Capsule())
+                        Text("Sign \(unsignedSelectedApps.count)")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(.accentColor)
                     }
+                    .buttonStyle(.plain)
                 }
                 
-                // Delete button
                 Button {
                     _showBatchDeleteConfirmation = true
                 } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "trash")
-                            .font(.system(size: 14, weight: .semibold))
-                        Text("Delete")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .background(Color.red, in: Capsule())
+                    Text("Delete")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(.red)
                 }
+                .buttonStyle(.plain)
             }
-            .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
-                    .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
-            )
             .transition(.move(edge: .bottom).combined(with: .opacity))
         }
     }
@@ -600,43 +560,47 @@ extension LibraryView {
         if displayedApps.isEmpty {
             emptyStateView
         } else {
-            LazyVStack(spacing: 14) {
-                ForEach(displayedApps, id: \.uuid) { app in
-                    HStack(spacing: 12) {
-                        // Selection checkmark - always visible when in selection mode
-                        if _isSelectionMode {
-                            Button {
-                                guard let uuid = app.uuid else { return }
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    if _selectedApps.contains(uuid) {
-                                        _selectedApps.remove(uuid)
-                                    } else {
-                                        _selectedApps.insert(uuid)
+            LazyVStack(spacing: 0) {
+                ForEach(Array(displayedApps.enumerated()), id: \.element.uuid) { index, app in
+                    VStack(spacing: 0) {
+                        HStack(spacing: 12) {
+                            if _isSelectionMode {
+                                Button {
+                                    guard let uuid = app.uuid else { return }
+                                    withAnimation(.easeInOut(duration: 0.2)) {
+                                        if _selectedApps.contains(uuid) {
+                                            _selectedApps.remove(uuid)
+                                        } else {
+                                            _selectedApps.insert(uuid)
+                                        }
                                     }
+                                    HapticsManager.shared.softImpact()
+                                } label: {
+                                    Image(systemName: app.uuid != nil && _selectedApps.contains(app.uuid!) ? "checkmark.circle.fill" : "circle")
+                                        .font(.system(size: 22))
+                                        .foregroundStyle(app.uuid != nil && _selectedApps.contains(app.uuid!) ? Color.accentColor : Color.secondary.opacity(0.4))
                                 }
-                                HapticsManager.shared.softImpact()
-                            } label: {
-                                Image(systemName: app.uuid != nil && _selectedApps.contains(app.uuid!) ? "checkmark.circle.fill" : "circle")
-                                    .font(.system(size: 24))
-                                    .foregroundStyle(app.uuid != nil && _selectedApps.contains(app.uuid!) ? Color.accentColor : Color.secondary.opacity(0.5))
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
+                            
+                            PremiumAppCard(
+                                app: app,
+                                selectedInfoAppPresenting: $_selectedInfoAppPresenting,
+                                selectedSigningAppPresenting: $_selectedSigningAppPresenting,
+                                selectedInstallAppPresenting: $_selectedInstallAppPresenting
+                            )
+                            .allowsHitTesting(!_isSelectionMode)
                         }
                         
-                        // App card
-                        PremiumAppCard(
-                            app: app,
-                            selectedInfoAppPresenting: $_selectedInfoAppPresenting,
-                            selectedSigningAppPresenting: $_selectedSigningAppPresenting,
-                            selectedInstallAppPresenting: $_selectedInstallAppPresenting
-                        )
-                        .allowsHitTesting(!_isSelectionMode)
+                        if index < displayedApps.count - 1 {
+                            Divider()
+                                .padding(.leading, _isSelectionMode ? 90 : 70)
+                        }
                     }
                     .id(app.uuid)
                 }
             }
             
-            // Selection action bar at the bottom
             selectionActionBar
                 .padding(.top, 16)
         }
@@ -645,50 +609,33 @@ extension LibraryView {
     // MARK: - Empty State View
     @ViewBuilder
     private var emptyStateView: some View {
-        VStack(spacing: 24) {
-            Spacer(minLength: 60)
+        VStack(spacing: 20) {
+            Spacer(minLength: 80)
             
-            ZStack {
-                Circle()
-                    .fill(Color.accentColor.opacity(0.12))
-                    .frame(width: 100, height: 100)
-                
-                Image(systemName: "questionmark.app.fill")
-                    .font(.system(size: 50, weight: .medium))
-                    .foregroundStyle(Color.accentColor)
-            }
+            Image(systemName: "square.stack.3d.up.slash")
+                .font(.system(size: 56, weight: .thin))
+                .foregroundStyle(.secondary.opacity(0.6))
             
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 Text("No Apps")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.system(size: 22, weight: .semibold))
                     .foregroundStyle(.primary)
                 
-                Text("Get started by importing and installing your first IPA file.")
-                    .font(.system(size: 16, weight: .medium))
+                Text("Import an IPA file to get started")
+                    .font(.system(size: 15))
                     .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
             }
             
             Menu {
                 _importActions()
             } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                    Text("Import")
-                        .font(.system(size: 16, weight: .semibold))
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 28)
-                .padding(.vertical, 14)
-                .background(
-                    Capsule()
-                        .fill(Color.accentColor)
-                )
-                .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+                Text("Import")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.accentColor)
             }
+            .padding(.top, 8)
             
-            Spacer(minLength: 60)
+            Spacer(minLength: 80)
         }
     }
     
@@ -709,54 +656,41 @@ extension LibraryView {
     }
 }
 
-// MARK: - Premium App Card (Glassy Dark Gradient)
+// MARK: - Modern Minimal App Row (No Cards)
 struct PremiumAppCard: View {
     let app: AppInfoPresentable
     @Binding var selectedInfoAppPresenting: AnyApp?
     @Binding var selectedSigningAppPresenting: AnyApp?
     @Binding var selectedInstallAppPresenting: AnyApp?
     
-    @State private var dominantColor: Color = .cyan
-    
     var body: some View {
-        HStack(spacing: 16) {
-            // Elevated app icon container
-            ZStack {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(dominantColor.opacity(0.12))
-                    .frame(width: 60, height: 60)
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-                
-                FRAppIconView(app: app, size: 48)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            }
+        HStack(spacing: 14) {
+            FRAppIconView(app: app, size: 56)
+                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
             
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(app.name ?? String.localized("Unknown"))
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                 
-                if let identifier = app.identifier {
-                    Text(identifier)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     if let version = app.version {
-                        Text("v\(version)")
-                            .font(.system(size: 11, weight: .semibold))
-                            .foregroundStyle(dominantColor)
+                        Text(version)
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
                     }
                     
                     if app.isSigned {
-                        HStack(spacing: 4) {
+                        Text("•")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary.opacity(0.5))
+                        
+                        HStack(spacing: 3) {
                             Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 10))
+                                .font(.system(size: 11))
                             Text("Signed")
-                                .font(.system(size: 11, weight: .semibold))
+                                .font(.system(size: 13, weight: .medium))
                         }
                         .foregroundStyle(.green)
                     }
@@ -765,7 +699,6 @@ struct PremiumAppCard: View {
             
             Spacer()
             
-            // Action button
             Button {
                 if app.isSigned {
                     selectedInstallAppPresenting = AnyApp(base: app)
@@ -774,28 +707,12 @@ struct PremiumAppCard: View {
                 }
             } label: {
                 Text(app.isSigned ? "Install" : "Sign")
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 18)
-                    .padding(.vertical, 10)
-                    .background(
-                        Capsule()
-                            .fill(app.isSigned ? Color.green : Color.accentColor)
-                    )
-                    .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(app.isSigned ? .green : .accentColor)
             }
             .buttonStyle(.plain)
         }
-        .padding(18)
-        .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
-                )
-        )
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .padding(.vertical, 12)
         .contentShape(Rectangle())
         .onTapGesture {
             selectedInfoAppPresenting = AnyApp(base: app)
@@ -804,14 +721,14 @@ struct PremiumAppCard: View {
             Button {
                 selectedInfoAppPresenting = AnyApp(base: app)
             } label: {
-                Label(String.localized("Details"), systemImage: "info.circle.fill")
+                Label(String.localized("Details"), systemImage: "info.circle")
             }
             
             if app.isSigned {
                 Button {
                     selectedInstallAppPresenting = AnyApp(base: app)
                 } label: {
-                    Label(String.localized("Install"), systemImage: "arrow.down.circle.fill")
+                    Label(String.localized("Install"), systemImage: "arrow.down.circle")
                 }
                 Button {
                     selectedSigningAppPresenting = AnyApp(base: app)
@@ -831,7 +748,14 @@ struct PremiumAppCard: View {
             Button(role: .destructive) {
                 Storage.shared.deleteApp(for: app)
             } label: {
-                Label(String.localized("Delete"), systemImage: "trash.fill")
+                Label(String.localized("Delete"), systemImage: "trash")
+            }
+        }
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            Button(role: .destructive) {
+                Storage.shared.deleteApp(for: app)
+            } label: {
+                Label(String.localized("Delete"), systemImage: "trash")
             }
         }
     }

@@ -39,6 +39,14 @@ To build the actual iOS app, you need:
 - **Landing Page**: Node.js, HTML, CSS
 - **Build System**: Makefile, xcodebuild
 
+## Recent Changes
+- **LibraryView modernization**: Updated to a clean, minimal design without card-based UI or backgrounds. Features include:
+  - Simple list layout with dividers
+  - Large bold navigation title
+  - Text-based filter buttons
+  - Streamlined action buttons (text-only)
+  - Clean empty state with subtle iconography
+
 ## Links
 - [GitHub Repository](https://github.com/aoyn1xw/Portal)
 - [Releases](https://github.com/aoyn1xw/Portal/releases)
