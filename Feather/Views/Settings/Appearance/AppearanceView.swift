@@ -72,7 +72,7 @@ struct AppearanceView: View {
             Section {
                 AppearanceToggle(icon: "paintpalette", title: "Tint App Icons", isOn: $_shouldTintIcons, color: .pink)
             } footer: {
-                Text("Allow Feather to tint your app icons with the current accent color.")
+                Text("Allow Portal to tint your app icons when signing apps with the current accent color set.")
             }
         }
     }
