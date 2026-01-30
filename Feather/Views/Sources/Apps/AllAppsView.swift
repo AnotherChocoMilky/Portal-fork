@@ -38,6 +38,15 @@ struct AllAppsView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("Feather.useGradients") private var _useGradients: Bool = true
     @AppStorage("Feather.allApps.showSorting") private var _showSorting: Bool = true
+    @AppStorage("Feather.allApps.rowSpacing") private var _rowSpacing: Double = 0
+    @AppStorage("Feather.allApps.rowStyle") private var _rowStyle: AllAppsRowStyle = .minimal
+
+    enum AllAppsRowStyle: String, CaseIterable, Identifiable {
+        case minimal = "Minimal"
+        case card = "Card"
+        case flat = "Flat"
+        var id: String { self.rawValue }
+    }
     
     @State private var _searchText = ""
     @State private var _selectedRoute: SourceAppRoute?
@@ -225,17 +234,19 @@ struct AllAppsView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 80)
                         } else {
-                            ForEach(_filteredApps, id: \.app.currentUniqueId) { entry in
-                                AllAppsRowView(
-                                    source: entry.source,
-                                    app: entry.app,
-                                    onTap: {
-                                        HapticsManager.shared.softImpact()
-                                        _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
-                                    }
-                                )
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 6)
+                            LazyVStack(spacing: _rowSpacing) {
+                                ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
+                                    AllAppsRowView(
+                                        source: entry.source,
+                                        app: entry.app,
+                                        onTap: {
+                                            HapticsManager.shared.softImpact()
+                                            _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
+                                        },
+                                        isLast: index == _filteredApps.count - 1
+                                    )
+                                    .padding(.horizontal, 20)
+                                }
                             }
                         }
 
@@ -466,10 +477,17 @@ struct AllAppsRowView: View {
 	let source: ASRepository
 	let app: ASRepository.App
 	let onTap: () -> Void
+	let isLast: Bool
 	
 	@AppStorage("Feather.allApps.showVersion") private var showVersion: Bool = true
 	@AppStorage("Feather.allApps.showSize") private var showSize: Bool = true
+	@AppStorage("Feather.allApps.showDeveloper") private var showDeveloper: Bool = true
+	@AppStorage("Feather.allApps.showStatus") private var showStatus: Bool = true
+	@AppStorage("Feather.allApps.showSourceIcon") private var showSourceIcon: Bool = true
+	@AppStorage("Feather.allApps.iconSize") private var iconSize: Double = 54.0
+	@AppStorage("Feather.allApps.iconCornerRadius") private var iconCornerRadius: Double = 12.0
 	@AppStorage("Feather.allApps.iconPadding") private var iconPadding: Double = 0
+	@AppStorage("Feather.allApps.rowStyle") private var rowStyle: AllAppsView.AllAppsRowStyle = .minimal
 
 	@ObservedObject private var downloadManager = DownloadManager.shared
 	@State private var downloadProgress: Double = 0
@@ -501,38 +519,54 @@ struct AllAppsRowView: View {
 	}
 	
 	var body: some View {
-		Button(action: onTap) {
-			VStack(spacing: 12) {
-				HStack(spacing: 14) {
-					// App Icon
-					appIcon
-						.frame(width: 54, height: 54)
-						.padding(.leading, iconPadding)
-						.shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
-					
-					// Center column with app info
-					VStack(alignment: .leading, spacing: 4) {
-						// App name
-						Text(app.currentName)
-							.font(.system(size: 17, weight: .semibold))
-							.foregroundStyle(.primary)
-							.lineLimit(1)
+		VStack(spacing: 0) {
+			Button(action: onTap) {
+				VStack(spacing: 12) {
+					HStack(spacing: 14) {
+						// App Icon
+						appIcon
+							.frame(width: iconSize, height: iconSize)
+							.overlay(alignment: .bottomLeading) {
+								if showSourceIcon, let iconURL = source.currentIconURL {
+									AsyncImage(url: iconURL) { phase in
+										if let image = phase.image {
+											image
+												.resizable()
+												.aspectRatio(contentMode: .fit)
+												.frame(width: iconSize * 0.35, height: iconSize * 0.35)
+												.clipShape(Circle())
+												.background(Circle().fill(Color(uiColor: .secondarySystemBackground)))
+												.overlay(Circle().stroke(Color(uiColor: .systemBackground), lineWidth: 1.5))
+												.offset(x: iconSize * 0.75, y: iconSize * 0.05)
+										}
+									}
+								}
+							}
+							.padding(.leading, iconPadding)
 						
-						// Subtitle (status/developer)
-						if !statusText.isEmpty {
-							Text(statusText)
-								.font(.system(size: 13, weight: .medium))
-								.foregroundStyle(Color.accentColor)
+						// Center column with app info
+						VStack(alignment: .leading, spacing: 3) {
+							// App name
+							Text(app.currentName)
+								.font(.system(size: 17, weight: .semibold))
+								.foregroundStyle(.primary)
 								.lineLimit(1)
-						} else if let developer = app.developer {
-							Text(developer)
-								.font(.system(size: 13))
-								.foregroundStyle(.secondary)
-								.lineLimit(1)
-						}
-						
-						// Version and file size
-						HStack(spacing: 6) {
+
+							// Subtitle (status/developer)
+							if showStatus && !statusText.isEmpty {
+								Text(statusText)
+									.font(.system(size: 13, weight: .medium))
+									.foregroundStyle(Color.accentColor)
+									.lineLimit(1)
+							} else if showDeveloper, let developer = app.developer {
+								Text(developer)
+									.font(.system(size: 13))
+									.foregroundStyle(.secondary)
+									.lineLimit(1)
+							}
+
+							// Version and file size
+							HStack(spacing: 6) {
 							if showVersion, let version = app.currentVersion {
 								Text("v\(version)")
 									.font(.system(size: 12))
@@ -560,41 +594,49 @@ struct AllAppsRowView: View {
 						.frame(width: 34, height: 34)
 				}
 				
-				// Progress bar when downloading
-				if isDownloading {
-					VStack(spacing: 4) {
-						GeometryReader { geometry in
-							ZStack(alignment: .leading) {
-								// Background
-								Capsule()
-									.fill(Color.primary.opacity(0.1))
-									.frame(height: 4)
-								
-								// Progress
-								Capsule()
-									.fill(Color.accentColor)
-									.frame(width: geometry.size.width * downloadProgress, height: 4)
+					// Progress bar when downloading
+					if isDownloading {
+						VStack(spacing: 4) {
+							GeometryReader { geometry in
+								ZStack(alignment: .leading) {
+									// Background
+									Capsule()
+										.fill(Color.primary.opacity(0.1))
+										.frame(height: 4)
+
+									// Progress
+									Capsule()
+										.fill(Color.accentColor)
+										.frame(width: geometry.size.width * downloadProgress, height: 4)
+								}
+							}
+							.frame(height: 4)
+
+							// Progress percentage
+							HStack {
+								Spacer()
+								Text("\(Int(downloadProgress * 100))%")
+									.font(.system(size: 11, weight: .medium))
+									.foregroundStyle(.secondary)
 							}
 						}
-						.frame(height: 4)
-						
-						// Progress percentage
-						HStack {
-							Spacer()
-							Text("\(Int(downloadProgress * 100))%")
-								.font(.system(size: 11, weight: .medium))
-								.foregroundStyle(.secondary)
-						}
+						.transition(.opacity.combined(with: .scale(scale: 0.9)))
 					}
-					.transition(.opacity.combined(with: .scale(scale: 0.9)))
 				}
+				.padding(.vertical, rowStyle == .minimal ? 10 : 14)
+				.padding(.horizontal, rowStyle == .minimal ? 4 : 14)
+				.background(rowStyle == .minimal ? Color.clear : Color(uiColor: .secondarySystemGroupedBackground))
+				.cornerRadius(rowStyle == .card || rowStyle == .flat ? 16 : 0)
+				.shadow(color: rowStyle == .card ? Color.black.opacity(0.02) : Color.clear, radius: 10, x: 0, y: 5)
 			}
-			.padding(14)
-			.background(Color(uiColor: .secondarySystemGroupedBackground))
-			.cornerRadius(16)
-			.shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
+			.buttonStyle(AllAppsScaleButtonStyle())
+
+			if rowStyle == .minimal && !isLast {
+				Divider()
+					.padding(.leading, iconSize + iconPadding + 14 + 4)
+					.opacity(0.5)
+			}
 		}
-		.buttonStyle(AllAppsScaleButtonStyle())
 		.onAppear(perform: setupObserver)
 		.onDisappear { cancellable?.cancel() }
 		.onChange(of: downloadManager.downloads.description) { _ in
@@ -614,7 +656,7 @@ struct AllAppsRowView: View {
 					image
 						.resizable()
 						.aspectRatio(contentMode: .fill)
-						.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+						.clipShape(RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous))
 				case .failure:
 					iconPlaceholder
 				@unknown default:
@@ -627,11 +669,11 @@ struct AllAppsRowView: View {
 	}
 	
 	private var iconPlaceholder: some View {
-		RoundedRectangle(cornerRadius: 12, style: .continuous)
+		RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous)
 			.fill(Color.secondary.opacity(0.2))
 			.overlay(
 				Image(systemName: "app.fill")
-					.font(.system(size: 22))
+					.font(.system(size: iconSize * 0.4))
 					.foregroundStyle(.secondary)
 			)
 	}
