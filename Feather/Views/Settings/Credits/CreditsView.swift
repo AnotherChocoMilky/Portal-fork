@@ -242,7 +242,7 @@ struct GitHubCreditCard: View {
 			.scaleEffect(cardScale)
 			.opacity(cardOpacity)
 		}
-		.buttonStyle(ScaleButtonStyle())
+		.buttonStyle(CreditsScaleButtonStyle())
 		.onAppear {
 			// Fetch GitHub user data using the explicit GitHub username
 			viewModel.fetchUser(username: credit.githubUsername)
@@ -262,7 +262,7 @@ struct GitHubCreditCard: View {
 }
 
 // MARK: - Scale Button Style
-struct ScaleButtonStyle: ButtonStyle {
+struct CreditsScaleButtonStyle: ButtonStyle {
 	func makeBody(configuration: Configuration) -> some View {
 		configuration.label
 			.scaleEffect(configuration.isPressed ? 0.95 : 1.0)

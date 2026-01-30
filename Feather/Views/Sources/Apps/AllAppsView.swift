@@ -1,6 +1,7 @@
 import SwiftUI
 import AltSourceKit
 import NimbleViews
+import Combine
 
 // MARK: - Did You Know Facts
 struct DidYouKnowFacts {
@@ -593,7 +594,7 @@ struct AllAppsRowView: View {
 			.cornerRadius(16)
 			.shadow(color: Color.black.opacity(0.02), radius: 10, x: 0, y: 5)
 		}
-		.buttonStyle(ScaleButtonStyle())
+		.buttonStyle(AllAppsScaleButtonStyle())
 		.onAppear(perform: setupObserver)
 		.onDisappear { cancellable?.cancel() }
 		.onChange(of: downloadManager.downloads.description) { _ in
@@ -701,7 +702,7 @@ struct AllAppsRowView: View {
 }
 
 // MARK: - Scale Button Style
-struct ScaleButtonStyle: ButtonStyle {
+struct AllAppsScaleButtonStyle: ButtonStyle {
 	func makeBody(configuration: Configuration) -> some View {
 		configuration.label
 			.scaleEffect(configuration.isPressed ? 0.97 : 1.0)
