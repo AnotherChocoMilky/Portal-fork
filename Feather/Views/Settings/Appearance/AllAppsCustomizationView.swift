@@ -29,7 +29,6 @@ struct AllAppsCustomizationView: View {
     @AppStorage("Feather.allApps.useGrid") private var useGrid: Bool = false
     @AppStorage("Feather.allApps.gridColumns") private var gridColumns: Int = 3
     @AppStorage("Feather.allApps.titleFontSize") private var titleFontSize: Double = 17.0
-    @AppStorage("Feather.allApps.subtitleFontSize") private var subtitleFontSize: Double = 13.0
     @AppStorage("Feather.allApps.boldTitles") private var boldTitles: Bool = true
     @AppStorage("Feather.allApps.useGlassEffects") private var useGlassEffects: Bool = true
     @AppStorage("Feather.allApps.showDescription") private var showDescription: Bool = false
