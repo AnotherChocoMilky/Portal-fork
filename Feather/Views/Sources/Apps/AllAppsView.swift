@@ -43,6 +43,13 @@ struct AllAppsView: View {
     @AppStorage("Feather.allApps.rowHorizontalPadding") private var _rowHorizontalPadding: Double = 20.0
     @AppStorage("Feather.allApps.useSpringAnimations") private var _useSpringAnimations: Bool = true
 
+    // Advanced Customization
+    @AppStorage("Feather.allApps.useGrid") private var _useGrid: Bool = false
+    @AppStorage("Feather.allApps.gridColumns") private var _gridColumns: Int = 3
+    @AppStorage("Feather.allApps.useGlassEffects") private var _useGlassEffects: Bool = true
+    @AppStorage("Feather.allApps.searchBarFloating") private var _searchBarFloating: Bool = false
+    @AppStorage("Feather.allApps.showAppCount") private var _showAppCount: Bool = true
+
     enum AllAppsRowStyle: String, CaseIterable, Identifiable {
         case minimal = "Minimal"
         case card = "Card"
@@ -101,105 +108,13 @@ struct AllAppsView: View {
             } else if let _sources, !_sources.isEmpty {
                 // Main content
                 ScrollView {
-                    LazyVStack(spacing: 0) {
-                        // Header with app count
-                        HStack(spacing: 16) {
-                            Button {
-                                HapticsManager.shared.softImpact()
-                                dismiss()
-                            } label: {
-                                Image(systemName: "chevron.left")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundStyle(Color.accentColor)
-                                    .frame(width: 40, height: 40)
-                                    .background(Color.accentColor.opacity(0.1))
-                                    .clipShape(Circle())
-                            }
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("\(_totalAppCount)")
-                                    .font(.system(size: 34, weight: .bold, design: .rounded))
-                                    .foregroundStyle(.primary)
-                                Text("Apps Available")
-                                    .font(.system(size: 15, weight: .medium))
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-
-                            if _showSorting {
-                                Menu {
-                                    ForEach(AppSortOption.allCases) { option in
-                                        Button {
-                                            if _sortOption == option {
-                                                _sortAscending.toggle()
-                                            } else {
-                                                _sortOption = option
-                                                _sortAscending = true
-                                            }
-                                            _filterApps()
-                                        } label: {
-                                            HStack {
-                                                Label(option.rawValue, systemImage: option.icon)
-                                                if _sortOption == option {
-                                                    Image(systemName: _sortAscending ? "chevron.up" : "chevron.down")
-                                                }
-                                            }
-                                        }
-                                    }
-                                } label: {
-                                    Image(systemName: "line.3.horizontal.decrease.circle.fill")
-                                        .font(.system(size: 22))
-                                        .foregroundStyle(Color.accentColor)
-                                        .padding(8)
-                                        .background(Color.accentColor.opacity(0.1))
-                                        .clipShape(Circle())
-                                }
-                            }
+                    VStack(spacing: 0) {
+                        if !_searchBarFloating {
+                            headerView
+                            searchBar
+                        } else {
+                            headerView
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.top, 16)
-                        .padding(.bottom, 10)
-
-                        // Modern Integrated Search Bar
-                        HStack(spacing: 12) {
-                            Image(systemName: "magnifyingglass")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundStyle(.secondary)
-
-                            TextField("Search \(_totalAppCount) Apps", text: $_searchText)
-                                .font(.system(size: 16))
-                                .focused($_searchFieldFocused)
-                                .submitLabel(.search)
-                                .autocorrectionDisabled()
-                                .textInputAutocapitalization(.never)
-                                .onChange(of: _searchText) { _ in
-                                    _filterApps()
-                                }
-
-                            if !_searchText.isEmpty {
-                                Button {
-                                    _searchText = ""
-                                    _filterApps()
-                                    HapticsManager.shared.softImpact()
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.system(size: 18))
-                                        .foregroundStyle(.tertiary)
-                                }
-                            }
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(.ultraThinMaterial)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                        .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
-                                )
-                        )
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 16)
 
                         // Results count when searching
                         if !_searchText.isEmpty {
@@ -215,26 +130,7 @@ struct AllAppsView: View {
                         
                         // Apps list
                         if _filteredApps.isEmpty && !_searchText.isEmpty {
-                            VStack(spacing: 20) {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.secondary.opacity(0.1))
-                                        .frame(width: 80, height: 80)
-                                    Image(systemName: "magnifyingglass")
-                                        .font(.system(size: 32, weight: .medium))
-                                        .foregroundStyle(.tertiary)
-                                }
-                                VStack(spacing: 6) {
-                                    Text("No Results Found")
-                                        .font(.system(size: 18, weight: .semibold))
-                                        .foregroundStyle(.primary)
-                                    Text("Try a different search term")
-                                        .font(.system(size: 14))
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 80)
+                            emptySearchResultsView
                         } else {
                             LazyVStack(spacing: _rowSpacing) {
                                 ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
@@ -253,30 +149,17 @@ struct AllAppsView: View {
                         }
 
                         // Bottom padding
-                        Color.clear.frame(height: 30)
+                        Color.clear.frame(height: _searchBarFloating ? 100 : 30)
                     }
+                }
+
+                if _searchBarFloating {
+                    searchBar
+                        .padding(.bottom, 20)
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             } else {
-                // Empty state
-                VStack(spacing: 20) {
-                    Spacer()
-                    ZStack {
-                        Circle()
-                            .fill(Color.secondary.opacity(0.1))
-                            .frame(width: 100, height: 100)
-                        Image(systemName: "tray")
-                            .font(.system(size: 40))
-                            .foregroundStyle(.secondary)
-                    }
-                    Text("No Sources")
-                        .font(.system(size: 20, weight: .bold))
-                        .foregroundStyle(.primary)
-                    Text("Add sources to view all your apps here")
-                        .font(.system(size: 15))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                    Spacer()
-                }
+                emptySourcesView
             }
 
         }
@@ -291,6 +174,201 @@ struct AllAppsView: View {
             SourceAppsDetailView(source: route.source, app: route.app)
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: _useGrid)
+        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: _searchBarFloating)
+    }
+
+    // MARK: - Subviews
+
+    private var headerView: some View {
+        HStack(spacing: 16) {
+            Button {
+                HapticsManager.shared.softImpact()
+                dismiss()
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 40, height: 40)
+                    .background(Color.accentColor.opacity(0.1))
+                    .clipShape(Circle())
+            }
+
+            if _showAppCount {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("\(_totalAppCount)")
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                    Text("Apps Available")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                Text("All Apps")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+            }
+
+            Spacer()
+
+            if _showSorting {
+                Menu {
+                    ForEach(AppSortOption.allCases) { option in
+                        Button {
+                            if _sortOption == option {
+                                _sortAscending.toggle()
+                            } else {
+                                _sortOption = option
+                                _sortAscending = true
+                            }
+                            _filterApps()
+                        } label: {
+                            HStack {
+                                Label(option.rawValue, systemImage: option.icon)
+                                if _sortOption == option {
+                                    Image(systemName: _sortAscending ? "chevron.up" : "chevron.down")
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundStyle(Color.accentColor)
+                        .padding(8)
+                        .background(Color.accentColor.opacity(0.1))
+                        .clipShape(Circle())
+                }
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.top, 16)
+        .padding(.bottom, 10)
+    }
+
+    private var searchBar: some View {
+        HStack(spacing: 12) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(.secondary)
+
+            TextField("Search \(_totalAppCount) Apps", text: $_searchText)
+                .font(.system(size: 16))
+                .focused($_searchFieldFocused)
+                .submitLabel(.search)
+                .autocorrectionDisabled()
+                .textInputAutocapitalization(.never)
+                .onChange(of: _searchText) { _ in
+                    _filterApps()
+                }
+
+            if !_searchText.isEmpty {
+                Button {
+                    _searchText = ""
+                    _filterApps()
+                    HapticsManager.shared.softImpact()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.tertiary)
+                }
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(_useGlassEffects ? .ultraThinMaterial : AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground)))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
+                )
+                .shadow(color: _searchBarFloating ? Color.black.opacity(0.1) : Color.clear, radius: 10, x: 0, y: 5)
+        )
+        .padding(.horizontal, 20)
+        .padding(.bottom, _searchBarFloating ? 0 : 16)
+    }
+
+    private var appsListView: some View {
+        Group {
+            if _useGrid {
+                let columns = Array(repeating: GridItem(.flexible(), spacing: 16), count: _useGrid ? _gridColumns : 1)
+                LazyVGrid(columns: columns, spacing: 16) {
+                    ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
+                        AllAppsRowView(
+                            source: entry.source,
+                            app: entry.app,
+                            onTap: {
+                                HapticsManager.shared.softImpact()
+                                _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
+                            },
+                            isLast: index == _filteredApps.count - 1
+                        )
+                    }
+                }
+                .padding(.horizontal, 20)
+            } else {
+                LazyVStack(spacing: _rowSpacing) {
+                    ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
+                        AllAppsRowView(
+                            source: entry.source,
+                            app: entry.app,
+                            onTap: {
+                                HapticsManager.shared.softImpact()
+                                _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
+                            },
+                            isLast: index == _filteredApps.count - 1
+                        )
+                        .padding(.horizontal, 20)
+                    }
+                }
+            }
+        }
+    }
+
+    private var emptySearchResultsView: some View {
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(Color.secondary.opacity(0.1))
+                    .frame(width: 80, height: 80)
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 32, weight: .medium))
+                    .foregroundStyle(.tertiary)
+            }
+            VStack(spacing: 6) {
+                Text("No Results Found")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(.primary)
+                Text("Try a different search term")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 80)
+    }
+
+    private var emptySourcesView: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            ZStack {
+                Circle()
+                    .fill(Color.secondary.opacity(0.1))
+                    .frame(width: 100, height: 100)
+                Image(systemName: "tray")
+                    .font(.system(size: 40))
+                    .foregroundStyle(.secondary)
+            }
+            Text("No Sources")
+                .font(.system(size: 20, weight: .bold))
+                .foregroundStyle(.primary)
+            Text("Add sources to view all your apps here")
+                .font(.system(size: 15))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+            Spacer()
+        }
     }
 	
 	// MARK: - Loading Screen
@@ -508,6 +586,16 @@ struct AllAppsRowView: View {
 	@AppStorage("Feather.allApps.metadataFontSize") private var metadataFontSize: Double = 12.0
 	@AppStorage("Feather.allApps.useBoldTitles") private var useBoldTitles: Bool = true
 
+    // Advanced
+    @AppStorage("Feather.allApps.useGrid") private var useGrid: Bool = false
+    @AppStorage("Feather.allApps.titleFontSize") private var titleFontSize: Double = 17.0
+    @AppStorage("Feather.allApps.subtitleFontSize") private var subtitleFontSize: Double = 13.0
+    @AppStorage("Feather.allApps.boldTitles") private var boldTitles: Bool = true
+    @AppStorage("Feather.allApps.useGlassEffects") private var useGlassEffects: Bool = true
+    @AppStorage("Feather.allApps.showDescription") private var showDescription: Bool = false
+    @AppStorage("Feather.allApps.descriptionLimit") private var descriptionLimit: Int = 2
+    @AppStorage("Feather.allApps.rowDividerOpacity") private var rowDividerOpacity: Double = 0.5
+
 	@ObservedObject private var downloadManager = DownloadManager.shared
 	@State private var downloadProgress: Double = 0
 	@State private var cancellable: AnyCancellable?
@@ -664,6 +752,185 @@ struct AllAppsRowView: View {
 		}
 		.animation(useSpringAnimations ? .spring(response: 0.4, dampingFraction: 0.8) : .easeInOut(duration: 0.25), value: isDownloading)
 	}
+
+    @ViewBuilder
+    private var rowView: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 14) {
+                // App Icon
+                appIcon
+                    .frame(width: iconSize, height: iconSize)
+                    .overlay(alignment: .bottomLeading) {
+                        if showSourceIcon, let iconURL = source.currentIconURL {
+                            AsyncImage(url: iconURL) { phase in
+                                if let image = phase.image {
+                                    image
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: iconSize * 0.35, height: iconSize * 0.35)
+                                        .clipShape(Circle())
+                                        .background(Circle().fill(Color(uiColor: .secondarySystemBackground)))
+                                        .overlay(Circle().stroke(Color(uiColor: .systemBackground), lineWidth: 1.5))
+                                        .offset(x: iconSize * 0.75, y: iconSize * 0.05)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.leading, iconPadding)
+
+                // Center column with app info
+                VStack(alignment: .leading, spacing: 3) {
+                    // App name
+                    Text(app.currentName)
+                        .font(.system(size: titleFontSize, weight: boldTitles ? .bold : .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+
+                    // Subtitle (status/developer)
+                    if showStatus && !statusText.isEmpty {
+                        Text(statusText)
+                            .font(.system(size: subtitleFontSize, weight: .medium))
+                            .foregroundStyle(Color.accentColor)
+                            .lineLimit(1)
+                    } else if showDeveloper, let developer = app.developer {
+                        Text(developer)
+                            .font(.system(size: subtitleFontSize))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
+
+                    // Version and file size
+                    HStack(spacing: 6) {
+                        if showVersion, let version = app.currentVersion {
+                            Text("v\(version)")
+                                .font(.system(size: subtitleFontSize - 1))
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if showSize, !fileSize.isEmpty {
+                            if showVersion && app.currentVersion != nil {
+                                Text("•")
+                                    .font(.system(size: subtitleFontSize - 1))
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Text(fileSize)
+                                .font(.system(size: subtitleFontSize - 1))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    if showDescription, let description = app.localizedDescription {
+                        Text(description)
+                            .font(.system(size: subtitleFontSize - 1))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(descriptionLimit)
+                            .padding(.top, 2)
+                    }
+                }
+
+                Spacer()
+
+                // Action button
+                actionButton
+                    .frame(width: 34, height: 34)
+            }
+
+            // Progress bar when downloading
+            if isDownloading {
+                downloadProgressBar
+            }
+        }
+        .padding(.vertical, rowStyle == .minimal ? 10 : 14)
+        .padding(.horizontal, rowStyle == .minimal ? 4 : 14)
+        .background(rowStyle == .minimal ? Color.clear : (useGlassEffects ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground))))
+        .cornerRadius(rowStyle == .card || rowStyle == .flat ? 16 : 0)
+        .shadow(color: rowStyle == .card ? Color.black.opacity(0.02) : Color.clear, radius: 10, x: 0, y: 5)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.primary.opacity(rowStyle == .flat ? 0.1 : 0), lineWidth: 1)
+        )
+    }
+
+    @ViewBuilder
+    private var gridView: some View {
+        VStack(spacing: 10) {
+            ZStack(alignment: .bottomTrailing) {
+                appIcon
+                    .frame(width: iconSize * 1.2, height: iconSize * 1.2)
+
+                if showSourceIcon, let iconURL = source.currentIconURL {
+                    AsyncImage(url: iconURL) { phase in
+                        if let image = phase.image {
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: iconSize * 0.4, height: iconSize * 0.4)
+                                .clipShape(Circle())
+                                .background(Circle().fill(Color(uiColor: .secondarySystemBackground)))
+                                .overlay(Circle().stroke(Color(uiColor: .systemBackground), lineWidth: 1.5))
+                                .offset(x: 4, y: 4)
+                        }
+                    }
+                }
+
+                actionButton
+                    .frame(width: 28, height: 28)
+                    .offset(x: 8, y: -8)
+            }
+
+            VStack(spacing: 2) {
+                Text(app.currentName)
+                    .font(.system(size: titleFontSize - 2, weight: boldTitles ? .bold : .semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .multilineTextAlignment(.center)
+
+                if showVersion, let version = app.currentVersion {
+                    Text("v\(version)")
+                        .font(.system(size: subtitleFontSize - 2))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+
+            if isDownloading {
+                downloadProgressBar
+            }
+        }
+        .padding(12)
+        .background(useGlassEffects ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground)))
+        .cornerRadius(iconCornerRadius + 4)
+        .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+    }
+
+    private var downloadProgressBar: some View {
+        VStack(spacing: 4) {
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    // Background
+                    Capsule()
+                        .fill(Color.primary.opacity(0.1))
+                        .frame(height: 4)
+
+                    // Progress
+                    Capsule()
+                        .fill(Color.accentColor)
+                        .frame(width: geometry.size.width * downloadProgress, height: 4)
+                }
+            }
+            .frame(height: 4)
+
+            // Progress percentage
+            HStack {
+                Spacer()
+                Text("\(Int(downloadProgress * 100))%")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .transition(.opacity.combined(with: .scale(scale: 0.9)))
+    }
 	
 	@ViewBuilder
 	private var appIcon: some View {

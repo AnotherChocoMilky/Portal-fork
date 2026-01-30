@@ -25,6 +25,19 @@ struct AllAppsCustomizationView: View {
     @AppStorage("Feather.allApps.metadataFontSize") private var metadataFontSize: Double = 12.0
     @AppStorage("Feather.allApps.useBoldTitles") private var useBoldTitles: Bool = true
 
+    // Advanced Customization
+    @AppStorage("Feather.allApps.useGrid") private var useGrid: Bool = false
+    @AppStorage("Feather.allApps.gridColumns") private var gridColumns: Int = 3
+    @AppStorage("Feather.allApps.titleFontSize") private var titleFontSize: Double = 17.0
+    @AppStorage("Feather.allApps.subtitleFontSize") private var subtitleFontSize: Double = 13.0
+    @AppStorage("Feather.allApps.boldTitles") private var boldTitles: Bool = true
+    @AppStorage("Feather.allApps.useGlassEffects") private var useGlassEffects: Bool = true
+    @AppStorage("Feather.allApps.showDescription") private var showDescription: Bool = false
+    @AppStorage("Feather.allApps.descriptionLimit") private var descriptionLimit: Int = 2
+    @AppStorage("Feather.allApps.searchBarFloating") private var searchBarFloating: Bool = false
+    @AppStorage("Feather.allApps.rowDividerOpacity") private var rowDividerOpacity: Double = 0.5
+    @AppStorage("Feather.allApps.showAppCount") private var showAppCount: Bool = true
+
     var body: some View {
         List {
             Section {
@@ -67,6 +80,15 @@ struct AllAppsCustomizationView: View {
 
                 Toggle(isOn: $useBoldTitles) {
                     AppearanceRowLabel(icon: "bold", title: "Bold App Names", color: .purple)
+                }
+                Toggle(isOn: $showDescription) {
+                    AppearanceRowLabel(icon: "text.alignleft", title: "Show App Description", color: .indigo)
+                }
+
+                if showDescription {
+                    Stepper(value: $descriptionLimit, in: 1...5) {
+                        AppearanceRowLabel(icon: "line.3.horizontal", title: "Description Lines: \(descriptionLimit)", color: .indigo)
+                    }
                 }
             } header: {
                 AppearanceSectionHeader(title: "Typography", icon: "textformat")
