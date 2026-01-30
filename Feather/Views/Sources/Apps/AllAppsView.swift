@@ -278,7 +278,7 @@ struct AllAppsView: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(_useGlassEffects ? .ultraThinMaterial : AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground)))
+                .fill(_useGlassEffects ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground)))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
@@ -589,7 +589,6 @@ struct AllAppsRowView: View {
     // Advanced
     @AppStorage("Feather.allApps.useGrid") private var useGrid: Bool = false
     @AppStorage("Feather.allApps.titleFontSize") private var titleFontSize: Double = 17.0
-    @AppStorage("Feather.allApps.subtitleFontSize") private var subtitleFontSize: Double = 13.0
     @AppStorage("Feather.allApps.boldTitles") private var boldTitles: Bool = true
     @AppStorage("Feather.allApps.useGlassEffects") private var useGlassEffects: Bool = true
     @AppStorage("Feather.allApps.showDescription") private var showDescription: Bool = false
@@ -843,7 +842,7 @@ struct AllAppsRowView: View {
         }
         .padding(.vertical, rowStyle == .minimal ? 10 : 14)
         .padding(.horizontal, rowStyle == .minimal ? 4 : 14)
-        .background(rowStyle == .minimal ? Color.clear : (useGlassEffects ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground))))
+        .background(rowStyle == .minimal ? AnyShapeStyle(Color.clear) : (useGlassEffects ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground))))
         .cornerRadius(rowStyle == .card || rowStyle == .flat ? 16 : 0)
         .shadow(color: rowStyle == .card ? Color.black.opacity(0.02) : Color.clear, radius: 10, x: 0, y: 5)
         .overlay(
