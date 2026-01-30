@@ -565,7 +565,7 @@ struct AdvancedFileSearchView: View {
                     Button {
                         searchQuery = ""
                     } label: {
-                        Image(systemName: "xmark.circle.fill")S
+                        Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
                     }
                 }
