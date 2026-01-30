@@ -31,7 +31,7 @@ struct FileTemplatesView: View {
             case .cssBasic: return "style.css"
             case .jsBasic: return "script.js"
             case .pythonBasic: return "script.py"
-            case .swiftBasic: return "MyFile.swift"
+            case .swiftBasic: return "ContentView.swift"
             case .jsonConfig: return "config.json"
             case .yamlConfig: return "config.yaml"
             case .markdownDoc: return "document.md"
@@ -163,7 +163,7 @@ struct FileTemplatesView: View {
                 {
                   "name": "my-project",
                   "version": "1.0.0",
-                  "description": "Project description",
+                  "description": "Project Description",
                   "settings": {
                     "debug": false,
                     "timeout": 30
@@ -375,7 +375,7 @@ struct FileTemplatesView: View {
         
         // Check if file already exists
         if FileManager.default.fileExists(atPath: fileURL.path) {
-            errorMessage = String(localized: "A file with this name already exists")
+            errorMessage = String(localized: "A file with this name already exists, please rename it or delete the current one to proceed.")
             HapticsManager.shared.error()
             return
         }

@@ -556,7 +556,7 @@ struct FilesView: View {
                     .font(.title2)
                     .fontWeight(.bold)
                 
-                Text(.localized("Import files or create new content"))
+                Text(.localized("The File Manager is emmpty. Import files or create new content to get started."))
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -787,7 +787,7 @@ struct FilesView: View {
                 HapticsManager.shared.impact()
                 showClipboardImport = true
             } label: {
-                Label(.localized("Import from Clipboard"), systemImage: "doc.on.clipboard")
+                Label(.localized("Import From Clipboard"), systemImage: "doc.on.clipboard")
             }
         }
         
@@ -970,7 +970,7 @@ struct FilesView: View {
             Button {
                 openInSigner(file)
             } label: {
-                Label(.localized("Open in Signer"), systemImage: "signature")
+                Label(.localized("Open In Signer"), systemImage: "signature")
             }
         }
         
@@ -1544,7 +1544,7 @@ class FileManagerService: ObservableObject {
         let baseName = ext.isEmpty ? nameWithoutExt : "\(nameWithoutExt).\(ext)"
         
         var counter = 1
-        var newURL = targetDir.appendingPathComponent("Copy of \(baseName)")
+        var newURL = targetDir.appendingPathComponent("Copy Of \(baseName)")
         
         while FileManager.default.fileExists(atPath: newURL.path) {
             counter += 1

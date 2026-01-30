@@ -19,7 +19,7 @@ struct CreateJSONFileView: View {
                 } header: {
                     Text(.localized("File Name"))
                 } footer: {
-                    Text(.localized(".json extension will be added automatically"))
+                    Text(.localized(".json extension will be added automatically."))
                 }
                 
                 Section {
@@ -71,7 +71,7 @@ struct CreateXMLFileView: View {
                 } header: {
                     Text(.localized("File Name"))
                 } footer: {
-                    Text(.localized(".xml extension will be added automatically"))
+                    Text(.localized(".xml file extension will be added automatically."))
                 }
                 
                 Section {
@@ -130,7 +130,7 @@ struct URLImportView: View {
                 }
                 
                 Section {
-                    TextField(.localized("Custom file name (optional)"), text: $customFileName)
+                    TextField(.localized("Custom File Name (Optional)"), text: $customFileName)
                         .autocorrectionDisabled()
                 } header: {
                     Text(.localized("File Name"))
@@ -237,7 +237,7 @@ struct ClipboardImportView: View {
                             .font(.system(.caption, design: .monospaced))
                             .foregroundStyle(.secondary)
                     } else {
-                        Text(.localized("No text content in clipboard"))
+                        Text(.localized("No Text Content In Clipboard"))
                             .foregroundStyle(.secondary)
                     }
                 } header: {
@@ -338,7 +338,7 @@ struct FileTerminalView: View {
                         .font(.system(.body, design: .monospaced))
                         .foregroundStyle(.green)
                     
-                    TextField(.localized("Enter command"), text: $currentCommand)
+                    TextField(.localized("Enter Command"), text: $currentCommand)
                         .font(.system(.body, design: .monospaced))
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
@@ -415,13 +415,13 @@ struct FileTerminalView: View {
             if let content = try? String(contentsOf: fileURL, encoding: .utf8) {
                 return (String(content.prefix(5000)), false)
             }
-            return ("cat: \(args): No such file", true)
+            return ("cat: \(args): No Such File", true)
             
         case "mkdir":
             let dirURL = currentDirectory.appendingPathComponent(args)
             do {
                 try FileManager.default.createDirectory(at: dirURL, withIntermediateDirectories: true)
-                return ("Directory created: \(args)", false)
+                return ("Directory Created: \(args)", false)
             } catch {
                 return (error.localizedDescription, true)
             }
@@ -453,7 +453,7 @@ struct FileTerminalView: View {
             return ("Available commands: ls, pwd, cat, mkdir, rm, touch, echo, clear, help", false)
             
         default:
-            return ("Command not found: \(cmd). Type 'help' for available commands.", true)
+            return ("Command not found or its invalid: \(cmd). Type 'help' for available commands.", true)
         }
     }
 }
@@ -557,7 +557,7 @@ struct AdvancedFileSearchView: View {
                     .foregroundStyle(.blue)
                     .frame(width: 24)
                 
-                TextField(.localized("Enter search term..."), text: $searchQuery)
+                TextField(.localized("Enter Search Term"), text: $searchQuery)
                     .font(.body)
                     .autocorrectionDisabled()
                 
@@ -565,7 +565,7 @@ struct AdvancedFileSearchView: View {
                     Button {
                         searchQuery = ""
                     } label: {
-                        Image(systemName: "xmark.circle.fill")
+                        Image(systemName: "xmark.circle.fill")S
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -578,14 +578,14 @@ struct AdvancedFileSearchView: View {
             
             VStack(spacing: 12) {
                 searchModernToggle(
-                    title: .localized("Search in file content"),
+                    title: .localized("Search In File Content"),
                     icon: "doc.text.magnifyingglass",
                     isOn: $searchByContent,
                     color: .purple
                 )
                 
                 searchModernToggle(
-                    title: .localized("Case sensitive"),
+                    title: .localized("Case Sensitive"),
                     icon: "textformat.abc",
                     isOn: $caseSensitive,
                     color: .orange
@@ -965,7 +965,7 @@ struct DiskUsageView: View {
                     .scaleEffect(1.3)
             }
             
-            Text(.localized("Calculating disk usage..."))
+            Text(.localized("Calculating Disk Usage..."))
                 .font(.headline)
                 .foregroundStyle(.primary)
             
@@ -1516,7 +1516,7 @@ struct Base64ToolView: View {
             
             // Character count
             HStack {
-                Text("\(inputText.count) characters")
+                Text("\(inputText.count) Characters")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 
@@ -1565,7 +1565,7 @@ struct Base64ToolView: View {
                         .font(.system(size: 18, weight: .semibold))
                 }
                 
-                Text(mode == .encode ? .localized("Encode to Base64") : .localized("Decode from Base64"))
+                Text(mode == .encode ? .localized("Encode To Base64") : .localized("Decode from Base64"))
                     .font(.system(size: 17, weight: .bold))
             }
             .foregroundStyle(.white)
@@ -1640,7 +1640,7 @@ struct Base64ToolView: View {
             
             // Output info
             HStack {
-                Text("\(outputText.count) characters")
+                Text("\(outputText.count) Characters")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 
@@ -1695,20 +1695,20 @@ struct SymlinkCreatorView: View {
         NavigationStack {
             Form {
                 Section {
-                    TextField(.localized("Link name"), text: $linkName)
+                    TextField(.localized("Link Name"), text: $linkName)
                         .autocorrectionDisabled()
                 } header: {
                     Text(.localized("Symbolic Link Name"))
                 }
                 
                 Section {
-                    TextField(.localized("Target path"), text: $targetPath)
+                    TextField(.localized("Target Path"), text: $targetPath)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                 } header: {
                     Text(.localized("Target Path"))
                 } footer: {
-                    Text(.localized("Enter the full path to the target file or directory"))
+                    Text(.localized("Enter the full path to the target file or directory."))
                 }
                 
                 if let error = errorMessage {

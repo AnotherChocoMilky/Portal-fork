@@ -131,7 +131,7 @@ struct FileAdvancedToolsView: View {
                     AdvancedFileTool(name: "ZIP Inspector", icon: "doc.zipper", description: "Inspect ZIP archive contents"),
                     AdvancedFileTool(name: "Archive Repackager", icon: "shippingbox", description: "Repackage archive files"),
                     AdvancedFileTool(name: "Compression Analyzer", icon: "arrow.down.right.and.arrow.up.left", description: "Analyze compression ratios"),
-                    AdvancedFileTool(name: "Multi-format Extractor", icon: "square.and.arrow.down", description: "Extract various archive formats")
+                    AdvancedFileTool(name: "Multi Format Extractor", icon: "square.and.arrow.down", description: "Extract various archive formats")
                 ]
             )
             
@@ -249,7 +249,7 @@ struct ToolCategoryCard: View {
                             .font(.headline)
                             .foregroundStyle(.primary)
                         
-                        Text("\(tools.count) tools")
+                        Text("\(tools.count) Tools")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -399,7 +399,7 @@ struct AdvancedToolDetailView: View {
                         .foregroundStyle(color)
                     
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(selectedFile?.lastPathComponent ?? "Choose a file")
+                        Text(selectedFile?.lastPathComponent ?? "Choose A File")
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(.primary)
                         
@@ -785,7 +785,7 @@ struct BinaryAnalysisView: View {
                 Section {
                     HStack {
                         Spacer()
-                        ProgressView("Analyzing binary...")
+                        ProgressView("Analyzing Binary...")
                         Spacer()
                     }
                     .padding()
@@ -914,7 +914,7 @@ struct HexEditorAdvancedView: View {
                 
                 Spacer()
                 
-                Picker("Bytes per row", selection: $bytesPerRow) {
+                Picker("Bytes Per Row", selection: $bytesPerRow) {
                     Text("8").tag(8)
                     Text("16").tag(16)
                     Text("32").tag(32)
@@ -935,7 +935,7 @@ struct HexEditorAdvancedView: View {
                 HStack {
                     Image(systemName: "magnifyingglass")
                         .foregroundStyle(.secondary)
-                    TextField("Search hex pattern (e.g., DEADBEEF)", text: $searchPattern)
+                    TextField("Search Hex Pattern (e.g., DEADBEEF)", text: $searchPattern)
                         .textInputAutocapitalization(.characters)
                     Button("Find") {
                         // Search implementation
@@ -969,7 +969,7 @@ struct HexEditorAdvancedView: View {
             HStack {
                 Text("Offset: \(selectedOffset.map { String(format: "0x%08X", $0) } ?? "---")")
                 Spacer()
-                Text("Size: \(hexData.count) bytes")
+                Text("Size: \(hexData.count) Bytes")
             }
             .font(.caption.monospaced())
             .padding(.horizontal)
