@@ -40,6 +40,8 @@ struct AllAppsView: View {
     @AppStorage("Feather.allApps.showSorting") private var _showSorting: Bool = true
     @AppStorage("Feather.allApps.rowSpacing") private var _rowSpacing: Double = 0
     @AppStorage("Feather.allApps.rowStyle") private var _rowStyle: AllAppsRowStyle = .minimal
+    @AppStorage("Feather.allApps.rowHorizontalPadding") private var _rowHorizontalPadding: Double = 20.0
+    @AppStorage("Feather.allApps.useSpringAnimations") private var _useSpringAnimations: Bool = true
 
     // Advanced Customization
     @AppStorage("Feather.allApps.useGrid") private var _useGrid: Bool = false
@@ -130,7 +132,20 @@ struct AllAppsView: View {
                         if _filteredApps.isEmpty && !_searchText.isEmpty {
                             emptySearchResultsView
                         } else {
-                            appsListView
+                            LazyVStack(spacing: _rowSpacing) {
+                                ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
+                                    AllAppsRowView(
+                                        source: entry.source,
+                                        app: entry.app,
+                                        onTap: {
+                                            HapticsManager.shared.softImpact()
+                                            _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
+                                        },
+                                        isLast: index == _filteredApps.count - 1
+                                    )
+                                    .padding(.horizontal, _rowHorizontalPadding)
+                                }
+                            }
                         }
 
                         // Bottom padding
@@ -459,8 +474,14 @@ struct AllAppsView: View {
 			return _sortAscending ? result : !result
 		}
 
-		withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-			_filteredApps = sortedApps
+		if _useSpringAnimations {
+			withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+				_filteredApps = sortedApps
+			}
+		} else {
+			withAnimation(.easeInOut(duration: 0.25)) {
+				_filteredApps = sortedApps
+			}
 		}
 	}
 
@@ -552,7 +573,18 @@ struct AllAppsRowView: View {
 	@AppStorage("Feather.allApps.iconSize") private var iconSize: Double = 54.0
 	@AppStorage("Feather.allApps.iconCornerRadius") private var iconCornerRadius: Double = 12.0
 	@AppStorage("Feather.allApps.iconPadding") private var iconPadding: Double = 0
+	@AppStorage("Feather.allApps.iconShadowRadius") private var iconShadowRadius: Double = 0.0
 	@AppStorage("Feather.allApps.rowStyle") private var rowStyle: AllAppsView.AllAppsRowStyle = .minimal
+	@AppStorage("Feather.allApps.rowHorizontalPadding") private var rowHorizontalPadding: Double = 20.0
+	@AppStorage("Feather.allApps.infoSpacing") private var infoSpacing: Double = 14.0
+	@AppStorage("Feather.allApps.showDividers") private var showDividers: Bool = true
+	@AppStorage("Feather.allApps.dividerOpacity") private var dividerOpacity: Double = 0.5
+	@AppStorage("Feather.allApps.useSpringAnimations") private var useSpringAnimations: Bool = true
+
+	@AppStorage("Feather.allApps.nameFontSize") private var nameFontSize: Double = 17.0
+	@AppStorage("Feather.allApps.subtitleFontSize") private var subtitleFontSize: Double = 13.0
+	@AppStorage("Feather.allApps.metadataFontSize") private var metadataFontSize: Double = 12.0
+	@AppStorage("Feather.allApps.useBoldTitles") private var useBoldTitles: Bool = true
 
     // Advanced
     @AppStorage("Feather.allApps.useGrid") private var useGrid: Bool = false
@@ -596,18 +628,121 @@ struct AllAppsRowView: View {
 	var body: some View {
 		VStack(spacing: 0) {
 			Button(action: onTap) {
-                if useGrid {
-                    gridView
-                } else {
-                    rowView
-                }
+				VStack(spacing: 12) {
+					HStack(spacing: infoSpacing) {
+						// App Icon
+						appIcon
+							.frame(width: iconSize, height: iconSize)
+							.overlay(alignment: .bottomLeading) {
+								if showSourceIcon, let iconURL = source.currentIconURL {
+									AsyncImage(url: iconURL) { phase in
+										if let image = phase.image {
+											image
+												.resizable()
+												.aspectRatio(contentMode: .fit)
+												.frame(width: iconSize * 0.35, height: iconSize * 0.35)
+												.clipShape(Circle())
+												.background(Circle().fill(Color(uiColor: .secondarySystemBackground)))
+												.overlay(Circle().stroke(Color(uiColor: .systemBackground), lineWidth: 1.5))
+												.offset(x: iconSize * 0.75, y: iconSize * 0.05)
+										}
+									}
+								}
+							}
+							.padding(.leading, iconPadding)
+							.shadow(color: Color.black.opacity(iconShadowRadius > 0 ? 0.15 : 0), radius: iconShadowRadius, x: 0, y: iconShadowRadius * 0.5)
+						
+						// Center column with app info
+						VStack(alignment: .leading, spacing: 3) {
+							// App name
+							Text(app.currentName)
+								.font(.system(size: nameFontSize, weight: useBoldTitles ? .bold : .semibold))
+								.foregroundStyle(.primary)
+								.lineLimit(1)
+
+							// Subtitle (status/developer)
+							if showStatus && !statusText.isEmpty {
+								Text(statusText)
+									.font(.system(size: subtitleFontSize, weight: .medium))
+									.foregroundStyle(Color.accentColor)
+									.lineLimit(1)
+							} else if showDeveloper, let developer = app.developer {
+								Text(developer)
+									.font(.system(size: subtitleFontSize))
+									.foregroundStyle(.secondary)
+									.lineLimit(1)
+							}
+
+							// Version and file size
+							HStack(spacing: 6) {
+							if showVersion, let version = app.currentVersion {
+								Text("v\(version)")
+									.font(.system(size: metadataFontSize))
+									.foregroundStyle(.secondary)
+							}
+							
+							if showSize, !fileSize.isEmpty {
+								if showVersion && app.currentVersion != nil {
+									Text("•")
+										.font(.system(size: metadataFontSize))
+										.foregroundStyle(.secondary)
+								}
+								
+								Text(fileSize)
+									.font(.system(size: metadataFontSize))
+									.foregroundStyle(.secondary)
+							}
+						}
+					}
+					
+					Spacer()
+					
+					// Action button
+					actionButton
+						.frame(width: 34, height: 34)
+				}
+				
+					// Progress bar when downloading
+					if isDownloading {
+						VStack(spacing: 4) {
+							GeometryReader { geometry in
+								ZStack(alignment: .leading) {
+									// Background
+									Capsule()
+										.fill(Color.primary.opacity(0.1))
+										.frame(height: 4)
+
+									// Progress
+									Capsule()
+										.fill(Color.accentColor)
+										.frame(width: geometry.size.width * downloadProgress, height: 4)
+								}
+							}
+							.frame(height: 4)
+
+							// Progress percentage
+							HStack {
+								Spacer()
+								Text("\(Int(downloadProgress * 100))%")
+									.font(.system(size: 11, weight: .medium))
+									.foregroundStyle(.secondary)
+							}
+						}
+						.transition(.opacity.combined(with: .scale(scale: 0.9)))
+					}
+				}
+				.padding(.vertical, rowStyle == .minimal ? 10 : 14)
+				.padding(.horizontal, rowStyle == .minimal ? 4 : 14)
+				.background(rowStyle == .minimal ? Color.clear : Color(uiColor: .secondarySystemGroupedBackground))
+				.cornerRadius(rowStyle == .card || rowStyle == .flat ? 16 : 0)
+				.shadow(color: rowStyle == .card ? Color.black.opacity(0.02) : Color.clear, radius: 10, x: 0, y: 5)
 			}
 			.buttonStyle(AllAppsScaleButtonStyle())
 
-			if !useGrid && rowStyle == .minimal && !isLast {
+			if showDividers && rowStyle == .minimal && !isLast {
 				Divider()
-					.padding(.leading, iconSize + iconPadding + 14 + 4)
-					.opacity(rowDividerOpacity)
+					.padding(.leading, iconSize + iconPadding + infoSpacing + 4)
+					.opacity(dividerOpacity)
 			}
 		}
 		.onAppear(perform: setupObserver)
@@ -615,7 +750,7 @@ struct AllAppsRowView: View {
 		.onChange(of: downloadManager.downloads.description) { _ in
 			setupObserver()
 		}
-		.animation(.spring(response: 0.4, dampingFraction: 0.8), value: isDownloading)
+		.animation(useSpringAnimations ? .spring(response: 0.4, dampingFraction: 0.8) : .easeInOut(duration: 0.25), value: isDownloading)
 	}
 
     @ViewBuilder
