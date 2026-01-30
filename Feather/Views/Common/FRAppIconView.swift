@@ -10,6 +10,7 @@ struct FRAppIconView: View {
 	@AppStorage("Feather.userInterfaceStyle") private var _userInterfaceStyle: Int = 0
 
 	@State private var _tintedIcon: UIImage?
+	@State private var _originalIcon: UIImage?
 	
 	init(app: AppInfoPresentable, size: CGFloat = 87) {
 		self._app = app
@@ -24,13 +25,13 @@ struct FRAppIconView: View {
 						.appIconStyle(size: _size)
 				} else {
 					originalIconView
-						.onAppear {
-							loadTintedIcon()
-						}
 				}
 			} else {
 				originalIconView
 			}
+		}
+		.task(id: _app.uuid) {
+			await loadIcons()
 		}
 		.onChange(of: _shouldTintIcons) { newValue in
 			if newValue {
@@ -45,10 +46,7 @@ struct FRAppIconView: View {
 
 	@ViewBuilder
 	private var originalIconView: some View {
-		if
-			let iconFilePath = Storage.shared.getAppDirectory(for: _app)?.appendingPathComponent(_app.icon ?? ""),
-			let uiImage = UIImage(contentsOfFile: iconFilePath.path)
-		{
+		if let uiImage = _originalIcon {
 			Image(uiImage: uiImage)
 				.appIconStyle(size: _size)
 		} else {
@@ -57,11 +55,33 @@ struct FRAppIconView: View {
 		}
 	}
 
-	private func loadTintedIcon() {
+	private func loadIcons() async {
+		guard let bundleURL = await Storage.shared.getAppDirectory(for: _app) else { return }
+
+		let iconFilePath = bundleURL.appendingPathComponent(_app.icon ?? "")
+		if let uiImage = UIImage(contentsOfFile: iconFilePath.path) {
+			await MainActor.run {
+				self._originalIcon = uiImage
+			}
+		}
+
+		if _shouldTintIcons {
+			loadTintedIcon(with: bundleURL)
+		}
+	}
+
+	private func loadTintedIcon(with bundleURL: URL? = nil) {
 		guard _shouldTintIcons else { return }
+
 		Task.detached(priority: .userInitiated) {
-			if let bundleURL = Storage.shared.getAppDirectory(for: _app),
-			   let tinted = iconTest(bundleURL) {
+			let url: URL?
+			if let bundleURL = bundleURL {
+				url = bundleURL
+			} else {
+				url = await Storage.shared.getAppDirectory(for: _app)
+			}
+
+			if let url = url, let tinted = iconTest(url) {
 				await MainActor.run {
 					self._tintedIcon = tinted
 				}

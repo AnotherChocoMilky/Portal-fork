@@ -72,7 +72,7 @@ struct LibraryCellView: View {
         } label: {
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                 .font(.system(size: 22))
-                .foregroundStyle(isSelected ? .accentColor : .secondary.opacity(0.4))
+                .foregroundStyle(isSelected ? Color.accentColor : Color.secondary.opacity(0.4))
         }
         .buttonStyle(.borderless)
     }
@@ -121,7 +121,7 @@ struct LibraryCellView: View {
         } label: {
             Text(app.isSigned ? "Install" : "Sign")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(app.isSigned ? .green : .accentColor)
+                .foregroundStyle(app.isSigned ? Color.green : Color.accentColor)
         }
         .buttonStyle(.plain)
     }

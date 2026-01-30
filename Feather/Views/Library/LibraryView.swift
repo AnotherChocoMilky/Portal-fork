@@ -446,7 +446,7 @@ extension LibraryView {
             } label: {
                 Image(systemName: "plus.circle.fill")
                     .font(.system(size: 28))
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                     .symbolRenderingMode(.hierarchical)
             }
         }
@@ -487,7 +487,7 @@ extension LibraryView {
             } label: {
                 Image(systemName: _isSelectionMode ? "checkmark.circle.fill" : "ellipsis.circle")
                     .font(.system(size: 22))
-                    .foregroundStyle(_isSelectionMode ? .accentColor : .secondary)
+                    .foregroundStyle(_isSelectionMode ? Color.accentColor : Color.secondary)
             }
             .buttonStyle(.plain)
         }
@@ -511,7 +511,7 @@ extension LibraryView {
                     } label: {
                         Text("Sign \(unsignedSelectedApps.count)")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                     }
                     .buttonStyle(.plain)
                 }
@@ -631,7 +631,7 @@ extension LibraryView {
             } label: {
                 Text("Import")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
             }
             .padding(.top, 8)
             
@@ -708,7 +708,7 @@ struct PremiumAppCard: View {
             } label: {
                 Text(app.isSigned ? "Install" : "Sign")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(app.isSigned ? .green : .accentColor)
+                    .foregroundStyle(app.isSigned ? Color.green : Color.accentColor)
             }
             .buttonStyle(.plain)
         }
@@ -1006,7 +1006,7 @@ struct BatchSigningView: View {
                             .frame(width: 8, height: 8)
                         Text(currentPhase == .installing ? "Installing" : (currentPhase == .completed ? "Completed" : "Signing"))
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(currentPhase == .installing ? .green : (currentPhase == .completed ? .green : .accentColor))
+                            .foregroundStyle(currentPhase == .installing ? Color.green : (currentPhase == .completed ? Color.green : Color.accentColor))
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
@@ -1064,7 +1064,7 @@ struct BatchSigningView: View {
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(
                                     LinearGradient(
-                                        colors: currentPhase == .installing ? [.green, .green.opacity(0.8)] : [.accentColor, .accentColor.opacity(0.8)],
+                                        colors: currentPhase == .installing ? [Color.green, Color.green.opacity(0.8)] : [Color.accentColor, Color.accentColor.opacity(0.8)],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )
@@ -1269,13 +1269,13 @@ struct BatchSigningView: View {
                         .padding(.vertical, 16)
                         .background(
                             LinearGradient(
-                                colors: certificates.isEmpty ? [.gray, .gray.opacity(0.85)] : [.accentColor, .accentColor.opacity(0.85)],
+                                colors: certificates.isEmpty ? [Color.gray, Color.gray.opacity(0.85)] : [Color.accentColor, Color.accentColor.opacity(0.85)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .shadow(color: certificates.isEmpty ? .clear : .accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
+                        .shadow(color: certificates.isEmpty ? Color.clear : Color.accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
                     }
                     .disabled(certificates.isEmpty)
                 }
