@@ -40,9 +40,18 @@ enum FR {
 		completion: @escaping (Error?) -> Void
 	) {
 		Task.detached {
+			let shouldTint = UserDefaults.standard.bool(forKey: "Feather.shouldTintIcons")
+			var finalIcon = icon
+
+			if finalIcon == nil && shouldTint {
+				if let bundleURL = await MainActor.run(body: { Storage.shared.getAppDirectory(for: app) }) {
+					finalIcon = await MainActor.run(body: { iconTest(bundleURL) })
+				}
+			}
+
 			let handler = SigningHandler(app: app, options: options)
 			handler.appCertificate = certificate
-			handler.appIcon = icon
+			handler.appIcon = finalIcon
 			
 			do {
 				try await handler.copy()
