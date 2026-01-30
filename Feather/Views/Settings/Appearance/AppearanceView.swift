@@ -18,6 +18,7 @@ struct AppearanceView: View {
         List {
             themeSection
             accentColorSection
+            tintIconsSection
             displaySection
             hapticsSection
             personalizationSection
@@ -62,20 +63,17 @@ struct AppearanceView: View {
             AppearanceSectionHeader(title: "Accent Color", icon: "paintpalette.fill")
         }
     }
-
-if #available(iOS 18.0, *) {
-Section {
-    Toggle("Tint App Icons", isOn: $_shouldTintIcons)
-}
-
-}
-
-
-
-
-
-
-
+    
+    // MARK: - Tint Icons Section
+    
+    @ViewBuilder
+    private var tintIconsSection: some View {
+        if #available(iOS 18.0, *) {
+            Section {
+                Toggle("Tint App Icons", isOn: $_shouldTintColors)
+            }
+        }
+    }
     
     // MARK: - Display Section
     
