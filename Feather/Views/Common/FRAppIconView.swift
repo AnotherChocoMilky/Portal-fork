@@ -4,6 +4,11 @@ struct FRAppIconView: View {
 	private var _app: AppInfoPresentable
 	private var _size: CGFloat
 	@AppStorage("Feather.shouldTintIcons") private var _shouldTintIcons: Bool = false
+	@AppStorage("Feather.userTintColor") private var _userTintColor: String = "#0077BE"
+	@AppStorage("Feather.userTintColorType") private var _colorType: String = "solid"
+	@AppStorage("Feather.userTintGradientStart") private var _gradientStartHex: String = "#0077BE"
+	@AppStorage("Feather.userInterfaceStyle") private var _userInterfaceStyle: Int = 0
+
 	@State private var _tintedIcon: UIImage?
 	
 	init(app: AppInfoPresentable, size: CGFloat = 87) {
@@ -32,6 +37,10 @@ struct FRAppIconView: View {
 				loadTintedIcon()
 			}
 		}
+		.onChange(of: _userTintColor) { _ in loadTintedIcon() }
+		.onChange(of: _colorType) { _ in loadTintedIcon() }
+		.onChange(of: _gradientStartHex) { _ in loadTintedIcon() }
+		.onChange(of: _userInterfaceStyle) { _ in loadTintedIcon() }
 	}
 
 	@ViewBuilder

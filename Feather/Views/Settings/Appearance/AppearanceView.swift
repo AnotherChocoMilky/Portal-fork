@@ -5,7 +5,7 @@ import UIKit
 // MARK: - Appearance View
 struct AppearanceView: View {
     @AppStorage("Feather.userInterfaceStyle") private var userInterfaceStyle: Int = UIUserInterfaceStyle.unspecified.rawValue
-    @AppStorage("Feather.shouldTintIcons") private var _shouldTintColors: Bool = false
+    @AppStorage("Feather.shouldTintIcons") private var _shouldTintIcons: Bool = false
     @AppStorage("Feather.storeCellAppearance") private var storeCellAppearance: Int = 0
     @AppStorage("com.apple.SwiftUI.IgnoreSolariumLinkedOnCheck") private var ignoreSolariumLinkedOnCheck: Bool = false
     @AppStorage("Feather.showNews") private var showNews: Bool = true
@@ -70,7 +70,9 @@ struct AppearanceView: View {
     private var tintIconsSection: some View {
         if #available(iOS 18.0, *) {
             Section {
-                Toggle("Tint App Icons", isOn: $_shouldTintColors)
+                AppearanceToggle(icon: "paintpalette", title: "Tint App Icons", isOn: $_shouldTintIcons, color: .pink)
+            } footer: {
+                Text("Allow Feather to tint your app icons with the current accent color.")
             }
         }
     }

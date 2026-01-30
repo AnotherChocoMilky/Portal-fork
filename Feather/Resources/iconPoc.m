@@ -246,9 +246,18 @@ UIImage* iconTest(NSURL *bundleURL) {
 }
 
 static CGColorRef FRCreateCGColorFromHex(void) {
+	NSString *type =
+		[NSUserDefaults.standardUserDefaults
+			stringForKey:@"Feather.userTintColorType"];
+
+	NSString *key = @"Feather.userTintColor";
+	if ([type isEqualToString:@"gradient"]) {
+		key = @"Feather.userTintGradientStart";
+	}
+
 	NSString *hex =
 		[NSUserDefaults.standardUserDefaults
-			stringForKey:@"Feather.userTintColor"];
+			stringForKey:key];
 
 	if (hex.length == 0) {
 		return UIColor.systemGreenColor.CGColor;
