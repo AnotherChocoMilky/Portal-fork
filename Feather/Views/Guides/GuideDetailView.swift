@@ -95,7 +95,7 @@ struct GuideDetailView: View {
                             .font(.system(size: 50))
                             .foregroundStyle(.red)
                         
-                        Text("Failed to load guide")
+                        Text("Failed To Load Guide")
                             .font(.title2)
                             .fontWeight(.semibold)
                         
@@ -285,7 +285,7 @@ struct GuideDetailView: View {
                     
                     if let engine = aiEngineUsed {
                         HStack(spacing: 4) {
-                            Image(systemName: engine == .appleIntelligence ? "apple.logo" : "cloud.fill")
+                            Image(systemName: engine == .appleIntelligence ? "apple.intelligence" : "cloud.fill")
                                 .font(.caption2)
                             Text(engine.displayName)
                                 .font(.caption)
@@ -912,11 +912,11 @@ struct AIActionsSheet: View {
                         }
                         
                         VStack(spacing: 4) {
-                            Text("AI Actions")
+                            Text("Guide AI Helper")
                                 .font(.title)
                                 .fontWeight(.bold)
                             
-                            Text("Transform your guide with AI")
+                            Text("Use AI to process this guide.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
@@ -1099,7 +1099,7 @@ struct CustomPromptSheet: View {
                 
                 // Text Input
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Your instruction")
+                    Text("Your Instruction")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(.secondary)
@@ -1119,7 +1119,7 @@ struct CustomPromptSheet: View {
                 } label: {
                     HStack {
                         Image(systemName: "sparkles")
-                        Text("Process with AI")
+                        Text("Process With AI")
                             .fontWeight(.semibold)
                     }
                     .frame(maxWidth: .infinity)
@@ -1208,7 +1208,7 @@ struct AIErrorSheet: View {
                             HStack(spacing: 12) {
                                 Image(systemName: "2.circle.fill")
                                     .foregroundStyle(.blue)
-                                Text("Add your OpenRouter API key")
+                                Text("Add Your OpenRouter API Key")
                                     .font(.subheadline)
                                 Spacer()
                             }
@@ -1234,7 +1234,7 @@ struct AIErrorSheet: View {
                 Button {
                     onDismiss()
                 } label: {
-                    Text("Got it")
+                    Text("Got It")
                         .fontWeight(.semibold)
                         .frame(maxWidth: .infinity)
                         .padding()
@@ -1412,7 +1412,7 @@ struct TranslateSheet: View {
                         }
                     } label: {
                         HStack {
-                            Image(systemName: "sparkles")
+                            Image(systemName: "globe")
                             Text("Translate To \(selectedLanguage.isEmpty ? "..." : selectedLanguage)")
                                 .fontWeight(.semibold)
                         }
@@ -1535,7 +1535,7 @@ struct GlassmorphicAIActionsSheet: View {
                         )
                 }
                 
-                Text("AI Actions")
+                Text("Guide AI Helper")
                     .font(.title2)
                     .fontWeight(.bold)
                 
@@ -1563,7 +1563,7 @@ struct GlassmorphicAIActionsSheet: View {
                     HStack(spacing: 10) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
-                        Text("Configure API key in Settings")
+                        Text("Configure API Key In Settings")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -1871,7 +1871,7 @@ struct GlassmorphicTranslateSheet: View {
                 }
             } label: {
                 HStack {
-                    Image(systemName: "sparkles")
+                    Image(systemName: "globe")
                     Text("Translate To \(selectedLanguage.isEmpty ? "..." : selectedLanguage)")
                         .fontWeight(.semibold)
                 }

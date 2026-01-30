@@ -176,7 +176,7 @@ struct DeveloperAuthView: View {
                 )
             
             // Subtitle
-            Text("Secure authentication required")
+            Text("Secure Authentication Required")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .padding(.horizontal, 40)
@@ -398,7 +398,7 @@ struct DeveloperAuthView: View {
             )
             
             // Token hint
-            Text("Enter your authorized Developer Token")
+            Text("Enter your authorized Developer Token.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
             
@@ -782,7 +782,7 @@ struct ModernPasscodeSetupView: View {
         errorMessage = nil
         
         if newPasscode.count < 6 {
-            errorMessage = "Passcode must be at least 6 characters"
+            errorMessage = "Passcode Must Be At Least 6 Characters"
             HapticsManager.shared.error()
             return
         }
@@ -802,7 +802,7 @@ struct ModernPasscodeSetupView: View {
                 onComplete(true)
                 dismiss()
             } else {
-                errorMessage = "Failed to set passcode"
+                errorMessage = "Failed To Set Passcode"
                 HapticsManager.shared.error()
             }
             isSettingUp = false
@@ -1167,7 +1167,7 @@ struct HomeUITestingView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Show Simulated Update Banner")
                                 .font(.system(size: 15, weight: .medium))
-                            Text("Display a fake app update banner on Home")
+                            Text("Display a fake app update banner on Home view.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -1236,7 +1236,7 @@ struct HomeUITestingView: View {
                         bundleIdentifier: "com.test.simulatedapp.\(UUID().uuidString.prefix(8))",
                         appName: "Test App \(Int.random(in: 1...100))",
                         sourceURL: "https://example.com/repo.json",
-                        sourceName: "Test Source",
+                        sourceName: "DEBUG",
                         lastKnownVersion: "1.0.0",
                         iconURL: nil,
                         isEnabled: true
@@ -1568,7 +1568,7 @@ struct AppLogsView: View {
         .onAppear {
             // Add initial log
             if logManager.logs.isEmpty {
-                logManager.info("App Logs view initialized", category: "Developer")
+                logManager.info("App Logs View Initialized", category: "Developer")
             }
         }
     }
@@ -2020,7 +2020,7 @@ struct MachOAnalyzer {
             case LC_ENCRYPTION_INFO:
                 let cryptid = data.withUnsafeBytes { $0.load(fromByteOffset: offset + 12, as: UInt32.self) }
                 isEncrypted = (swapped ? cryptid.byteSwapped : cryptid) != 0
-                encryptionInfo = isEncrypted ? "Encrypted (FairPlay DRM)" : "Not encrypted"
+                encryptionInfo = isEncrypted ? "Encrypted (FairPlay DRM)" : "Not Encrypted"
             default:
                 break
             }
@@ -2280,7 +2280,7 @@ struct CodeSignatureAnalyzer {
     private static func parseCodeDirectoryFlags(_ flags: UInt32) -> [String] {
         var result: [String] = []
         if flags & 0x0001 != 0 { result.append("Host") }
-        if flags & 0x0002 != 0 { result.append("Adhoc") }
+        if flags & 0x0002 != 0 { result.append("Ad-Hoc") }
         if flags & 0x0004 != 0 { result.append("Force Hard") }
         if flags & 0x0008 != 0 { result.append("Force Kill") }
         if flags & 0x0010 != 0 { result.append("Force Expiration") }
@@ -2450,7 +2450,7 @@ struct IPAInspectorView: View {
                                 HStack {
                                     Image(systemName: "iphone")
                                         .foregroundStyle(.blue)
-                                    Text("\(devices.count) devices")
+                                    Text("\(devices.count) Devices")
                                         .font(.subheadline)
                                 }
                             }
@@ -2550,7 +2550,7 @@ struct IPAInspectorView: View {
                 
                 // File Structure Section
                 if !info.fileStructure.isEmpty {
-                    Section(header: Text("File Structure (\(info.fileStructure.count) files)")) {
+                    Section(header: Text("File Structure (\(info.fileStructure.count) Files)")) {
                         ForEach(info.fileStructure.prefix(15), id: \.self) { file in
                             HStack {
                                 Image(systemName: fileIcon(for: file))
@@ -2563,7 +2563,7 @@ struct IPAInspectorView: View {
                         }
                         if info.fileStructure.count > 15 {
                             NavigationLink(destination: ListDetailView(items: info.fileStructure, title: "All Files")) {
-                                Text("View all \(info.fileStructure.count) files")
+                                Text("View All \(info.fileStructure.count) Files")
                                     .font(.caption)
                                     .foregroundStyle(.blue)
                             }
@@ -2577,7 +2577,7 @@ struct IPAInspectorView: View {
                         HStack(spacing: 8) {
                             Image(systemName: "info.circle.fill")
                                 .foregroundStyle(.orange)
-                            Text("iOS On-Device Limitations")
+                            Text("iOS On Device Limitations")
                                 .font(.subheadline.bold())
                         }
                         
@@ -2929,7 +2929,7 @@ struct ListDetailView: View {
                     .font(.caption.monospaced())
             }
         }
-        .searchable(text: $searchText, prompt: "Search...")
+        .searchable(text: $searchText, prompt: "Search")
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -2963,7 +2963,7 @@ struct PlistViewer: View {
                 .padding(.vertical, 4)
             }
         }
-        .searchable(text: $searchText, prompt: "Search Keys...")
+        .searchable(text: $searchText, prompt: "Search Keys")
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -3827,7 +3827,7 @@ struct TestNotificationsView: View {
     private func sendTestNotification() {
         let content = UNMutableNotificationContent()
         content.title = "Test Notification"
-        content.body = "This is a test notification from Feather Developer Tools."
+        content.body = "This is a test notification from Portal Developer Tools."
         content.sound = .default
         content.badge = 1
         
@@ -4026,7 +4026,7 @@ struct UpdatesReleasesView: View {
                         } else {
                             Image(systemName: "arrow.clockwise")
                         }
-                        Text("Check for Updates")
+                        Text("Check For Updates")
                     }
                 }
                 .disabled(isCheckingUpdates)
@@ -4162,7 +4162,7 @@ struct UpdatesReleasesView: View {
                     }
                 }
                 
-                Text("Simulates an available update to test the Check for Updates view and update banner.")
+                Text("Simulates an available update to test the CheckForUpdatesView and update banner.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -4212,7 +4212,7 @@ struct UpdatesReleasesView: View {
                     let releases = try decoder.decode([GitHubRelease].self, from: data)
                     allReleases = showPrereleases ? releases : releases.filter { !$0.prerelease }
                     latestRelease = allReleases.first
-                    AppLogManager.shared.success("Fetched \(releases.count) releases", category: "Developer")
+                    AppLogManager.shared.success("Fetched \(releases.count) Releases", category: "Developer")
                 } catch {
                     errorMessage = "Failed to parse releases: \(error.localizedDescription)"
                     AppLogManager.shared.error("Failed to parse releases: \(error.localizedDescription)", category: "Developer")
@@ -4238,7 +4238,7 @@ struct UpdatesReleasesView: View {
             body: """
             ## 🧪 Test Release
             
-            This is a **fake update** generated for testing purposes.
+            This is a **FAKE UPDATE** generated for debugging the CheckForUpdatesView.
             
             ### What's New
             - ✨ Amazing new features
@@ -4422,7 +4422,7 @@ struct SourcesLibraryDevView: View {
                 Button {
                     refetchMetadata()
                 } label: {
-                    Label("Re-fetch All Metadata", systemImage: "arrow.triangle.2.circlepath")
+                    Label("ReFetch All Metadata", systemImage: "arrow.triangle.2.circlepath")
                 }
             }
             
@@ -4440,7 +4440,7 @@ struct SourcesLibraryDevView: View {
                                     .lineLimit(1)
                             }
                             if let repo = viewModel.sources[source] {
-                                Text("\(repo.apps.count) apps")
+                                Text("\(repo.apps.count) Apps")
                                     .font(.caption2)
                                     .foregroundStyle(.tertiary)
                             }
@@ -4454,7 +4454,7 @@ struct SourcesLibraryDevView: View {
                 Button {
                     forceLibraryRerender()
                 } label: {
-                    Label("Force Library Re-render", systemImage: "arrow.counterclockwise")
+                    Label("Force Library ReRender", systemImage: "arrow.counterclockwise")
                 }
                 
                 Button {
@@ -4621,7 +4621,7 @@ struct SourceInspectorView: View {
                        let prettyString = String(data: prettyData, encoding: .utf8) {
                         rawJSON = prettyString
                     } else {
-                        rawJSON = String(data: data, encoding: .utf8) ?? "Unable to decode"
+                        rawJSON = String(data: data, encoding: .utf8) ?? "Unable To Decode"
                     }
                 } else if let error = error {
                     rawJSON = "Error: \(error.localizedDescription)"
@@ -4648,7 +4648,7 @@ struct InstallIPADevView: View {
             // Install Queue
             Section(header: Text("Download Queue (\(downloadManager.downloads.count))")) {
                 if downloadManager.downloads.isEmpty {
-                    Text("No active downloads")
+                    Text("No Active Downloads")
                         .foregroundStyle(.secondary)
                 } else {
                     ForEach(downloadManager.downloads, id: \.id) { download in
@@ -4657,9 +4657,9 @@ struct InstallIPADevView: View {
                                 .font(.system(.body, design: .monospaced))
                             ProgressView(value: download.overallProgress)
                             HStack {
-                                Text("\(Int(download.progress * 100))% downloaded")
+                                Text("\(Int(download.progress * 100))% Downloaded")
                                 Spacer()
-                                Text("\(Int(download.unpackageProgress * 100))% processed")
+                                Text("\(Int(download.unpackageProgress * 100))% Processed")
                             }
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -4691,7 +4691,7 @@ struct InstallIPADevView: View {
                         showInstallModifyDialog = true
                     }
                 } else {
-                    Text("No imported apps available for testing")
+                    Text("No Imported Apps Available For Testing")
                         .foregroundStyle(.secondary)
                 }
                 
@@ -4728,8 +4728,8 @@ struct InstallIPADevView: View {
             downloadManager.cancelDownload(download)
         }
         HapticsManager.shared.success()
-        ToastManager.shared.show("✅ Pending installs cleared", type: .success)
-        AppLogManager.shared.info("Pending installs cleared", category: "Developer")
+        ToastManager.shared.show("✅ Pending Installs Cleared", type: .success)
+        AppLogManager.shared.info("Pending Installs Cleared", category: "Developer")
     }
     
     private func loadInstallLogs() {
@@ -4767,7 +4767,7 @@ struct UILayoutDevView: View {
                         applyAppearanceOverride()
                     }
                 
-                Button("Reset to System") {
+                Button("Reset To System") {
                     forceDarkMode = false
                     forceLightMode = false
                     applyAppearanceOverride()
@@ -4862,26 +4862,26 @@ struct UILayoutDevView: View {
         NotificationCenter.default.post(
             name: Notification.Name("Feather.showBanner"),
             object: nil,
-            userInfo: ["type": "update", "message": "A new version is available!"]
+            userInfo: ["type": "update", "message": "A new Portal version is now available!"]
         )
-        ToastManager.shared.show("✅ Update banner injected", type: .success)
-        AppLogManager.shared.info("Update banner injected", category: "Developer")
+        ToastManager.shared.show("✅ Update Banner Injected", type: .success)
+        AppLogManager.shared.info("Update Banner Injected", category: "Developer")
     }
     
     private func injectErrorBanner() {
         NotificationCenter.default.post(
             name: Notification.Name("Feather.showBanner"),
             object: nil,
-            userInfo: ["type": "error", "message": "Test error banner"]
+            userInfo: ["type": "error", "message": "Test Error Banner"]
         )
-        ToastManager.shared.show("✅ Error banner injected", type: .success)
-        AppLogManager.shared.info("Error banner injected", category: "Developer")
+        ToastManager.shared.show("✅ Error Banner Injected", type: .success)
+        AppLogManager.shared.info("Error Banner Injected", category: "Developer")
     }
     
     private func clearBanners() {
         NotificationCenter.default.post(name: Notification.Name("Feather.clearBanners"), object: nil)
-        ToastManager.shared.show("✅ Banners cleared", type: .success)
-        AppLogManager.shared.info("Banners cleared", category: "Developer")
+        ToastManager.shared.show("✅ Banners Cleared", type: .success)
+        AppLogManager.shared.info("Banners Cleared", category: "Developer")
     }
 }
 
@@ -4900,7 +4900,7 @@ struct NetworkSystemDevView: View {
             Section(header: Text("Network Simulation")) {
                 Toggle("Simulate Offline Mode", isOn: $simulateOffline)
                     .onChange(of: simulateOffline) { newValue in
-                        AppLogManager.shared.info("Offline simulation: \(newValue ? "enabled" : "disabled")", category: "Developer")
+                        AppLogManager.shared.info("Offline Simulation: \(newValue ? "Enabled" : "Disabled")", category: "Developer")
                     }
                 
                 VStack(alignment: .leading) {
@@ -4965,7 +4965,7 @@ struct NetworkSystemDevView: View {
         systemInfo = [
             "Device": UIDevice.current.model,
             "iOS Version": UIDevice.current.systemVersion,
-            "App Version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown",
+            "Portal Version": Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "Unknown",
             "Build": Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "Unknown",
             "Memory": getMemoryUsage(),
             "Disk Free": getDiskSpace(),
@@ -5183,7 +5183,7 @@ struct StatePersistenceDevView: View {
         }
         calculateCacheSize()
         HapticsManager.shared.success()
-        AppLogManager.shared.success("Image cache cleared", category: "Developer")
+        AppLogManager.shared.success("Image Cache Cleared", category: "Developer")
     }
     
     private func performClear() {
@@ -5489,7 +5489,7 @@ struct EnvironmentInspectorView: View {
                 Button {
                     exportEnvironment()
                 } label: {
-                    Label("Copy Environment to Clipboard", systemImage: "doc.on.clipboard")
+                    Label("Copy Environment To Clipboard", systemImage: "doc.on.clipboard")
                 }
             }
         }
@@ -5786,7 +5786,7 @@ struct QuickActionsDevView: View {
                 try? FileManager.default.removeItem(at: cacheURL.appendingPathComponent("com.github.kean.Nuke.Cache"))
             }
             HapticsManager.shared.success()
-            ToastManager.shared.show("✅ Image cache cleared", type: .success)
+            ToastManager.shared.show("✅ Image Cache Cleared", type: .success)
             AppLogManager.shared.info("Image cache cleared via Quick Actions", category: "Developer")
         }
     }
@@ -5873,7 +5873,7 @@ struct IPASigningDashboardView: View {
                 Text("Configure external APIs and webhook notifications.")
             }
         }
-        .navigationTitle("IPA Signing Dashboard")
+        .navigationTitle("IPA Signing Debugging")
     }
 }
 
@@ -6005,7 +6005,7 @@ struct CertificateProfileManagerView: View {
                 Text("Actions")
             }
         }
-        .searchable(text: $searchText, prompt: "Search certificates...")
+        .searchable(text: $searchText, prompt: "Search Certificates")
         .navigationTitle("Certificate Manager")
         .sheet(isPresented: $showAddCertificate) {
             CertificatesAddView()
@@ -6204,7 +6204,7 @@ struct SigningLogsView: View {
                 }
             }
         }
-        .searchable(text: $searchText, prompt: "Search logs...")
+        .searchable(text: $searchText, prompt: "Search Logs")
         .navigationTitle("Signing Logs")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
@@ -6252,7 +6252,7 @@ struct SigningLogsView: View {
     private func clearSigningLogs() {
         // Note: This clears from UI view only
         HapticsManager.shared.success()
-        ToastManager.shared.show("✅ Signing logs cleared", type: .success)
+        ToastManager.shared.show("✅ Signing Logs Cleared", type: .success)
     }
 }
 
@@ -6339,7 +6339,7 @@ struct DeveloperBatchSigningView: View {
             // Certificate Selection
             Section {
                 if certificates.isEmpty {
-                    Text("No certificates available")
+                    Text("No Certificates Available")
                         .foregroundStyle(.secondary)
                 } else {
                     Picker("Signing Certificate", selection: $selectedCertificateIndex) {
@@ -6371,7 +6371,7 @@ struct DeveloperBatchSigningView: View {
                 }
             } header: {
                 HStack {
-                    Text("Select Apps (\(selectedApps.count) selected)")
+                    Text("Select Apps (\(selectedApps.count) Selected)")
                     Spacer()
                     if !importedApps.isEmpty {
                         Button(selectedApps.count == importedApps.count ? "Deselect All" : "Select All") {
@@ -6474,7 +6474,7 @@ struct DeveloperBatchSigningView: View {
                     let result = DeveloperBatchSignResult(
                         appName: app.name ?? "Unknown",
                         success: true,
-                        message: "Signed successfully"
+                        message: "Signed Successfully"
                     )
                     batchResults.append(result)
                 }
@@ -6605,13 +6605,13 @@ struct EntitlementsEditorTab: View {
                 Button {
                     exportEntitlements()
                 } label: {
-                    Label("Export as XML", systemImage: "square.and.arrow.up")
+                    Label("Export As XML", systemImage: "square.and.arrow.up")
                 }
                 
                 Button {
                     copyEntitlements()
                 } label: {
-                    Label("Copy to Clipboard", systemImage: "doc.on.clipboard")
+                    Label("Copy To Clipboard", systemImage: "doc.on.clipboard")
                 }
             } header: {
                 Text("Export")
@@ -6947,7 +6947,7 @@ struct SigningSecurityView: View {
         
         for cert in certificates {
             if let expiration = cert.expiration, expiration <= Date() {
-                issues.append("Certificate '\(cert.nickname ?? "Unknown")' has expired")
+                issues.append("Certificate '\(cert.nickname ?? "Unknown")' Has Expired")
             } else if let expiration = cert.expiration, expiration <= Date().addingTimeInterval(Double(expiryWarningDays) * 86400) {
                 issues.append("Certificate '\(cert.nickname ?? "Unknown")' Expires Soon")
             }
@@ -6955,24 +6955,24 @@ struct SigningSecurityView: View {
         
         if issues.isEmpty {
             HapticsManager.shared.success()
-            ToastManager.shared.show("✅ Security audit passed - no issues found", type: .success)
+            ToastManager.shared.show("✅ Security Audit Passed - No Issues Found", type: .success)
         } else {
             HapticsManager.shared.warning()
-            ToastManager.shared.show("⚠️ Found \(issues.count) security issue(s)", type: .warning)
+            ToastManager.shared.show("⚠️ Found \(issues.count) Security Issue(s)", type: .warning)
         }
         
-        AppLogManager.shared.info("Security audit complete: \(issues.count) issues found", category: "Security")
+        AppLogManager.shared.info("Security Audit Complete: \(issues.count) issues found", category: "Security")
     }
     
     private func checkAllRevocations() {
-        AppLogManager.shared.info("Checking certificate revocations", category: "Security")
+        AppLogManager.shared.info("Checking Certificate Revocations", category: "Security")
         
         for cert in certificates {
             Storage.shared.revokagedCertificate(for: cert)
         }
         
         HapticsManager.shared.success()
-        ToastManager.shared.show("✅ Revocation check initiated", type: .success)
+        ToastManager.shared.show("✅ Revocation Check Initiated", type: .success)
     }
 }
 
@@ -7206,7 +7206,7 @@ struct SigningPerformanceMetricsView: View {
         metrics = SigningMetrics()
         HapticsManager.shared.success()
         ToastManager.shared.show("✅ Statistics Reset", type: .success)
-        AppLogManager.shared.info("Performance metrics reset", category: "Metrics")
+        AppLogManager.shared.info("Performance Metrics Reset", category: "Metrics")
     }
 }
 
@@ -7377,18 +7377,18 @@ struct APIWebhookIntegrationView: View {
         isTestingAPI = true
         apiTestResult = nil
         
-        AppLogManager.shared.info("Testing API connection to \(apiEndpoint)", category: "API")
+        AppLogManager.shared.info("Testing API Connection To \(apiEndpoint)", category: "API")
         
         // Simulate API test
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             isTestingAPI = false
             
             if apiEndpoint.hasPrefix("http") {
-                apiTestResult = "✅ Success - API connection established"
+                apiTestResult = "✅ Success - API Connection Established"
                 HapticsManager.shared.success()
                 AppLogManager.shared.success("API connection test successful", category: "API")
             } else {
-                apiTestResult = "❌ Failed - Invalid endpoint URL"
+                apiTestResult = "❌ Failed - Invalid Endpoint URL"
                 HapticsManager.shared.error()
                 AppLogManager.shared.error("API connection test failed - invalid URL", category: "API")
             }
@@ -7399,7 +7399,7 @@ struct APIWebhookIntegrationView: View {
         isTestingWebhook = true
         webhookTestResult = nil
         
-        AppLogManager.shared.info("Testing webhook to \(webhookURL)", category: "Webhook")
+        AppLogManager.shared.info("Testing Webhook To \(webhookURL)", category: "Webhook")
         
         // Simulate webhook test
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
@@ -7412,7 +7412,7 @@ struct APIWebhookIntegrationView: View {
             } else {
                 webhookTestResult = "❌ Failed - Invalid Webhook URL"
                 HapticsManager.shared.error()
-                AppLogManager.shared.error("Webhook test failed - invalid URL", category: "Webhook")
+                AppLogManager.shared.error("Webhook Test Failed - Invalid URL", category: "Webhook")
             }
         }
     }

@@ -135,7 +135,7 @@ struct GuidesView: View {
                     } header: {
                         Text("Available Guides")
                     } footer: {
-                        Text("Read guides on how to use ESign, Feather, setting up VPNs, certificate info, and more.")
+                        Text("Read helpful tips, guides, and more.")
                     }
                 }
                 .refreshable {

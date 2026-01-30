@@ -72,7 +72,7 @@ struct TabBarCustomizationView: View {
             } header: {
                 Text(.localized("Appearance"))
             } footer: {
-                Text(.localized("Hide the labels under tab bar icons for a cleaner look."))
+                Text(.localized("Hide the labels under tab bar icons for a cleaner and nicer look."))
             }
             
             // Reorder Section
@@ -117,7 +117,7 @@ struct TabBarCustomizationView: View {
                 if isReordering {
                     Text(.localized("Drag tabs to reorder them. Settings will always appear last."))
                 } else {
-                    Text(.localized("Tap to customize the order of tabs in the tab bar."))
+                    Text(.localized("Tap to customize the order of tabs in the Tab Bar."))
                 }
             }
             .environment(\.editMode, .constant(isReordering ? .active : .inactive))
