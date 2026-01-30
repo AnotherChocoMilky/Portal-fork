@@ -46,3 +46,8 @@ copilot-messages.log
 # System files
 .DS_Store
 .project/attachments/files/**
+
+# Node.js
+node_modules/
+npm-debug.log*
+.npm
