@@ -14,7 +14,7 @@ Portal is a powerful iOS/iPadOS app signer and installer that lets you sign, man
 
 ### Features
 
-- **Modern SwiftUI Interface** — Clean, intuitive UI with support for light, dark, and tinted app icons.
+- **Modern Swift Interface** — Clean, intuitive UI with support for light, dark, and tinted app icons.
 - **Sign & Install Apps** — Sign IPA files using your `.p12` certificate and `.mobileprovision` profile, then install directly to your device.
 - **Multiple Installation Methods** — Choose between local server installation or pairing-based installation via VPN for more reliable installs.
 - **Certificate Management** — Import, view, and manage multiple certificates with PPQ check status indicators.
