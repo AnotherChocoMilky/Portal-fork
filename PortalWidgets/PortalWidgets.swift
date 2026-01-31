@@ -3,6 +3,7 @@ import SwiftUI
 import AppIntents
 
 @main
+@available(iOS 17.0, *)
 struct PortalWidgetsBundle: WidgetBundle {
     var body: some Widget {
         QuickActionsWidget()
@@ -122,6 +123,7 @@ struct QuickActionsIntent: AppIntent {
     }
 }
 
+@available(iOS 17.0, *)
 struct PortalConfigurationIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "Portal"
     static var description = IntentDescription("Customize your Portal widget.")
@@ -134,6 +136,7 @@ struct PortalConfigurationIntent: WidgetConfigurationIntent {
 }
 
 // MARK: - Timeline Entry
+@available(iOS 17.0, *)
 struct WidgetEntry: TimelineEntry {
     let date: Date
     let certName: String
@@ -151,6 +154,7 @@ struct WidgetEntry: TimelineEntry {
 }
 
 // MARK: - Timeline Provider
+@available(iOS 17.0, *)
 struct WidgetTimelineProvider: AppIntentTimelineProvider {
     private let appGroupID = "group.ayon1xw.Portal"
     
@@ -194,6 +198,7 @@ struct WidgetTimelineProvider: AppIntentTimelineProvider {
 }
 
 // MARK: - Quick Actions Widget
+@available(iOS 17.0, *)
 struct QuickActionsWidget: Widget {
     let kind: String = "QuickActionsWidget"
     
@@ -207,6 +212,7 @@ struct QuickActionsWidget: Widget {
     }
 }
 
+@available(iOS 17.0, *)
 struct QuickActionsWidgetThumbnailView: View {
     var entry: WidgetEntry
     @Environment(\.widgetFamily) var family
@@ -290,6 +296,7 @@ struct QuickActionsWidgetThumbnailView: View {
 }
 
 // MARK: - All In One Widget
+@available(iOS 17.0, *)
 struct AllInOneWidget: Widget {
     let kind: String = "AllInOneWidget"
 
@@ -303,6 +310,7 @@ struct AllInOneWidget: Widget {
     }
 }
 
+@available(iOS 17.0, *)
 struct AllInOneWidgetView: View {
     var entry: WidgetEntry
     @Environment(\.widgetFamily) var family
@@ -373,6 +381,7 @@ struct AllInOneWidgetView: View {
     }
 }
 
+@available(iOS 17.0, *)
 struct QuickToolButton<I: AppIntent>: View {
     let intent: I
     let icon: String
@@ -401,6 +410,7 @@ struct QuickToolButton<I: AppIntent>: View {
 }
 
 // MARK: - Certificate Status Widget
+@available(iOS 17.0, *)
 struct CertificateStatusWidget: Widget {
     let kind: String = "CertificateStatusWidget"
     
@@ -414,6 +424,7 @@ struct CertificateStatusWidget: Widget {
     }
 }
 
+@available(iOS 17.0, *)
 struct CertificateStatusWidgetView: View {
     var entry: WidgetEntry
     @Environment(\.widgetFamily) var family
@@ -495,6 +506,7 @@ struct CertificateStatusWidgetView: View {
 }
 
 // MARK: - Interactive Components
+@available(iOS 17.0, *)
 struct ActionButton<I: AppIntent, Content: View>: View {
     let intent: I
     let url: String
@@ -514,6 +526,7 @@ struct ActionButton<I: AppIntent, Content: View>: View {
     }
 }
 
+@available(iOS 17.0, *)
 struct ActionRow<I: AppIntent>: View {
     let intent: I
     let icon: String
@@ -540,6 +553,7 @@ struct ActionRow<I: AppIntent>: View {
     }
 }
 
+@available(iOS 17.0, *)
 struct ActionCard<I: AppIntent>: View {
     let intent: I
     let icon: String
