@@ -71,6 +71,14 @@
 			);
 			target = 3379C1B82DA869A1004372DA /* Feather */;
 		};
+		33F0000E2DA869A1004372DA /* Exceptions for "PortalWidgets" folder in "PortalWidgets" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+				PortalWidgets.entitlements,
+			);
+			target = 33F000012DA869A1004372DA /* PortalWidgets */;
+		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
@@ -100,6 +108,9 @@
 		};
 		33F000022DA869A1004372DA /* PortalWidgets */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				33F0000E2DA869A1004372DA /* Exceptions for "PortalWidgets" folder in "PortalWidgets" target */,
+			);
 			path = PortalWidgets;
 			sourceTree = "<group>";
 		};
@@ -275,6 +286,9 @@
 					AABA5D182DB3C87800BFCD2C = {
 						CreatedOnToolsVersion = 16.3;
 						TestTargetID = 3379C1B82DA869A1004372DA;
+					};
+					33F000012DA869A1004372DA = {
+						CreatedOnToolsVersion = 16.3;
 					};
 				};
 			};
