@@ -494,7 +494,6 @@ struct BackupRestoreView: View {
                 // 3c. Imported Apps
                 let importedSourceDir = tempRestoreDir.appendingPathComponent("imported_apps")
                 if fileManager.fileExists(atPath: importedSourceDir.path) {
-                    let importedDestDir = fileManager.unsigned
                     let contents = (try? fileManager.contentsOfDirectory(at: importedSourceDir, includingPropertiesForKeys: nil)) ?? []
                     for file in contents {
                         let uuid = file.deletingPathExtension().lastPathComponent
@@ -662,7 +661,7 @@ struct BackupRestoreView: View {
                 UIApplication.shared.suspendAndReopen()
             }
         })
-        alert.present(animated: true, completion: nil)
+        UIApplication.topViewController()?.present(alert, animated: true, completion: nil)
     }
 
     private func handleExportLogs() {
