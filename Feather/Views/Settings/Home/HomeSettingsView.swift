@@ -42,6 +42,11 @@ enum HomeWidgetType: String, CaseIterable, Codable, Identifiable {
     case appStats = "appStats"
     case favoriteApps = "favoriteApps"
     case signingHistory = "signingHistory"
+    case activeDownloads = "activeDownloads"
+    case systemHealth = "systemHealth"
+    case diskSpace = "diskSpace"
+    case latestGuides = "latestGuides"
+    case quickSettings = "quickSettings"
     
     var id: String { rawValue }
     
@@ -60,6 +65,11 @@ enum HomeWidgetType: String, CaseIterable, Codable, Identifiable {
         case .appStats: return String.localized("App Statistics")
         case .favoriteApps: return String.localized("Favorite Apps")
         case .signingHistory: return String.localized("Signing History")
+        case .activeDownloads: return String.localized("Active Downloads")
+        case .systemHealth: return String.localized("System Health")
+        case .diskSpace: return String.localized("Device Storage")
+        case .latestGuides: return String.localized("Latest Guides")
+        case .quickSettings: return String.localized("Quick Settings")
         }
     }
     
@@ -78,6 +88,11 @@ enum HomeWidgetType: String, CaseIterable, Codable, Identifiable {
         case .appStats: return "chart.pie.fill"
         case .favoriteApps: return "star.fill"
         case .signingHistory: return "clock.arrow.circlepath"
+        case .activeDownloads: return "arrow.down.circle.fill"
+        case .systemHealth: return "heart.text.square.fill"
+        case .diskSpace: return "sdcard.fill"
+        case .latestGuides: return "book.fill"
+        case .quickSettings: return "gearshape.fill"
         }
     }
     
@@ -96,6 +111,11 @@ enum HomeWidgetType: String, CaseIterable, Codable, Identifiable {
         case .appStats: return .pink
         case .favoriteApps: return .yellow
         case .signingHistory: return .teal
+        case .activeDownloads: return .blue
+        case .systemHealth: return .red
+        case .diskSpace: return .gray
+        case .latestGuides: return .orange
+        case .quickSettings: return .purple
         }
     }
     
@@ -114,11 +134,16 @@ enum HomeWidgetType: String, CaseIterable, Codable, Identifiable {
         case .appStats: return String.localized("Statistics about your signed and imported apps")
         case .favoriteApps: return String.localized("Quick access to your favorite apps")
         case .signingHistory: return String.localized("Complete history of all signed apps with details")
+        case .activeDownloads: return String.localized("Monitor current IPA downloads and progress")
+        case .systemHealth: return String.localized("View battery level, thermal state, and memory status")
+        case .diskSpace: return String.localized("Total and free storage on your device")
+        case .latestGuides: return String.localized("Quick access to helpful guides and documentation")
+        case .quickSettings: return String.localized("Toggle common app settings directly from the Home screen")
         }
     }
     
     static var defaultOrder: [HomeWidgetType] {
-        [.quickActions, .status, .signingHistory, .atAGlance, .recentApps, .storageInfo, .certificateStatus, .sourcesOverview, .networkStatus, .tips, .deviceInfo, .appStats, .favoriteApps]
+        [.quickActions, .status, .activeDownloads, .signingHistory, .atAGlance, .recentApps, .storageInfo, .certificateStatus, .sourcesOverview, .networkStatus, .tips, .deviceInfo, .appStats, .favoriteApps, .systemHealth, .diskSpace, .latestGuides, .quickSettings]
     }
 }
 

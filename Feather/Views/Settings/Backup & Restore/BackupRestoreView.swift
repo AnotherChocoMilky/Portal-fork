@@ -19,21 +19,19 @@ struct BackupRestoreView: View {
     @Environment(\.dismiss) var dismiss
 
     // UI State
-    @State private var isRestoreFilePickerPresented = false
+    @State private var isImportIPAPresented = false
     @State private var isVerifyFilePickerPresented = false
     @State private var isBackupOptionsPresented = false
     @State private var showExporter = false
-    @State private var showRestoreDialog = false
     @State private var showInvalidBackupError = false
 
     // Logic State
     @State private var backupOptions = BackupOptions()
     @State private var backupDocument: BackupDocument?
-    @State private var pendingRestoreURL: URL?
-    @State private var isRestoring = false
     @State private var isVerifying = false
     @State private var isPreparingBackup = false
-    @State private var restoreProgress: Double = 0.0
+    @State private var isShowingPairingStatus = false
+    @State private var pairingInfo: String = ""
 
     @AppStorage("feature_advancedBackupTools") var advancedBackupTools = false
 
@@ -145,18 +143,18 @@ struct BackupRestoreView: View {
                                 )
                         )
 
-                        // Restore Card
+                        // Import IPA Card
                         VStack(spacing: 20) {
                             ZStack {
                                 Circle()
-                                    .fill(Color.green.opacity(0.12))
+                                    .fill(Color.orange.opacity(0.12))
                                     .frame(width: 72, height: 72)
 
-                                Image(systemName: "arrow.down.doc.fill")
+                                Image(systemName: "square.and.arrow.down.fill")
                                     .font(.system(size: 32, weight: .bold))
                                     .foregroundStyle(
                                         LinearGradient(
-                                            colors: [.green, .mint],
+                                            colors: [.orange, .yellow],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         )
@@ -164,18 +162,18 @@ struct BackupRestoreView: View {
                             }
 
                             VStack(spacing: 6) {
-                                Text(.localized("Restore"))
+                                Text(.localized("Import"))
                                     .font(.system(.headline, design: .rounded, weight: .bold))
-                                Text(.localized("Load A Backup"))
+                                Text(.localized("Add Apps To Library"))
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundStyle(.secondary)
                             }
 
                             Button {
-                                isRestoreFilePickerPresented = true
+                                isImportIPAPresented = true
                             } label: {
                                 HStack(spacing: 8) {
-                                    Image(systemName: "arrow.down.circle.fill")
+                                    Image(systemName: "plus.circle.fill")
                                         .font(.system(size: 14, weight: .bold))
                                     Text(.localized("Import"))
                                         .font(.system(.subheadline, design: .rounded, weight: .bold))
@@ -185,13 +183,13 @@ struct BackupRestoreView: View {
                                 .padding(.vertical, 12)
                                 .background(
                                     LinearGradient(
-                                        colors: [.green, .mint],
+                                        colors: [.orange, .yellow],
                                         startPoint: .leading,
                                         endPoint: .trailing
                                     )
                                 )
                                 .clipShape(RoundedRectangle(cornerRadius: 16))
-                                .shadow(color: .green.opacity(0.3), radius: 8, x: 0, y: 4)
+                                .shadow(color: .orange.opacity(0.3), radius: 8, x: 0, y: 4)
                             }
                         }
                         .padding(24)
@@ -222,6 +220,38 @@ struct BackupRestoreView: View {
                         isVerifyFilePickerPresented = true
                     } label: {
                         Label(.localized("Verify Backup Integrity"), systemImage: "shield.checkerboard")
+                    }
+
+                    Divider()
+
+                    Button {
+                        handleClearCaches()
+                    } label: {
+                        Label(.localized("Clear All Caches"), systemImage: "trash.fill")
+                    }
+
+                    Button {
+                        handleResetSettings()
+                    } label: {
+                        Label(.localized("Reset All Settings"), systemImage: "arrow.counterclockwise.circle.fill")
+                    }
+
+                    Button {
+                        handleExportLogs()
+                    } label: {
+                        Label(.localized("Export Application Logs"), systemImage: "doc.text.fill")
+                    }
+
+                    Button {
+                        handleRebuildIconCache()
+                    } label: {
+                        Label(.localized("Rebuild Icon Cache"), systemImage: "sparkles")
+                    }
+
+                    Button {
+                        handleViewPairingStatus()
+                    } label: {
+                        Label(.localized("View Pairing Status"), systemImage: "link.circle.fill")
                     }
                 } header: {
                     AppearanceSectionHeader(title: String.localized("Advanced Tools"), icon: "wrench.and.screwdriver.fill")
@@ -256,18 +286,21 @@ struct BackupRestoreView: View {
                 }
             )
         }
-        .fileImporter(
-            isPresented: $isRestoreFilePickerPresented,
-            allowedContentTypes: [.zip],
-            allowsMultipleSelection: false
-        ) { result in
-            switch result {
-            case .success(let urls):
-                pendingRestoreURL = urls.first
-                showRestoreDialog = true
-            case .failure(let error):
-                AppLogManager.shared.error("Failed to pick backup file: \(error.localizedDescription)", category: "Backup & Restore")
-            }
+        .sheet(isPresented: $isImportIPAPresented) {
+            FileImporterRepresentableView(
+                allowedContentTypes: [.ipa, .tipa],
+                allowsMultipleSelection: true,
+                onDocumentsPicked: { urls in
+                    guard !urls.isEmpty else { return }
+                    for url in urls {
+                        let id = "FeatherManualDownload_\(UUID().uuidString)"
+                        let dl = DownloadManager.shared.startArchive(from: url, id: id)
+                        try? DownloadManager.shared.handlePachageFile(url: url, dl: dl)
+                    }
+                    HapticsManager.shared.success()
+                }
+            )
+            .ignoresSafeArea()
         }
         .fileImporter(
             isPresented: $isVerifyFilePickerPresented,
@@ -303,32 +336,33 @@ struct BackupRestoreView: View {
             }
             backupDocument = nil
         }
-        .alert(.localized("Restart Required"), isPresented: $showRestoreDialog) {
-            Button(.localized("No"), role: .cancel) {
-                if let url = pendingRestoreURL {
-                    // Mark for deferred restore
-                    UserDefaults.standard.set(url.path, forKey: "pendingRestorePath")
-                    pendingRestoreURL = nil
-                }
-            }
-            Button(.localized("Yes")) {
-                if let url = pendingRestoreURL {
-                    handlePerformRestore(from: url, restart: true)
-                }
-            }
-        } message: {
-            Text(.localized("Portal has to restart in order to apply this backup, do you want to proceed?"))
-        }
         .alert(.localized("Invalid Backup File"), isPresented: $showInvalidBackupError) {
             Button(.localized("OK"), role: .cancel) { }
         } message: {
             Text(.localized("Not a valid Backup file because Portal couldn't find the internal checker inside this uploaded file. Please upload an actual .zip file of a backup."))
         }
-        .overlay {
-            if isRestoring {
-                RestoreLoadingOverlay(progress: restoreProgress)
+        .sheet(isPresented: $isShowingPairingStatus) {
+            NavigationStack {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text(pairingInfo)
+                            .font(.system(.body, design: .monospaced))
+                            .padding()
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .navigationTitle("Pairing Status")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Done") {
+                            isShowingPairingStatus = false
+                        }
+                    }
+                }
             }
-
+        }
+        .overlay {
             if isVerifying {
                 ZStack {
                     Color.black.opacity(0.4).ignoresSafeArea()
@@ -416,6 +450,107 @@ struct BackupRestoreView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Advanced Tools Functions
+    private func handleClearCaches() {
+        let tempDir = NSTemporaryDirectory()
+        let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first?.path
+
+        var count = 0
+
+        do {
+            let tempFiles = try FileManager.default.contentsOfDirectory(atPath: tempDir)
+            for file in tempFiles {
+                try? FileManager.default.removeItem(atPath: (tempDir as NSString).appendingPathComponent(file))
+                count += 1
+            }
+
+            if let cacheDir = cacheDir {
+                let cacheFiles = try FileManager.default.contentsOfDirectory(atPath: cacheDir)
+                for file in cacheFiles {
+                    try? FileManager.default.removeItem(atPath: (cacheDir as NSString).appendingPathComponent(file))
+                    count += 1
+                }
+            }
+
+            AppLogManager.shared.success("Cleared \(count) cache items", category: "Advanced Tools")
+            UIAlertController.showAlertWithOk(title: "Caches Cleared", message: "Successfully removed \(count) temporary files and cached items.")
+        } catch {
+            AppLogManager.shared.error("Failed to clear caches: \(error.localizedDescription)", category: "Advanced Tools")
+        }
+    }
+
+    private func handleResetSettings() {
+        let alert = UIAlertController(title: "Reset All Settings", message: "Are you sure you want to reset all app settings? This will clear all preferences and restart the app.", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
+        alert.addAction(UIAlertAction(title: "Reset", style: .destructive) { _ in
+            if let bundleID = Bundle.main.bundleIdentifier {
+                UserDefaults.standard.removePersistentDomain(forName: bundleID)
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                UIApplication.shared.suspendAndReopen()
+            }
+        })
+        alert.present()
+    }
+
+    private func handleExportLogs() {
+        let logs = AppLogManager.shared.exportLogs()
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("Feather_Logs_\(Date().timeIntervalSince1970).txt")
+        do {
+            try logs.write(to: tempURL, atomically: true, encoding: .utf8)
+            UIActivityViewController.show(activityItems: [tempURL])
+        } catch {
+            AppLogManager.shared.error("Failed to export logs: \(error.localizedDescription)", category: "Advanced Tools")
+        }
+    }
+
+    private func handleRebuildIconCache() {
+        isPreparingBackup = true
+        Task {
+            // Logic to clear icon cache
+            let docDir = Storage.shared.documentsURL
+            let signedDir = docDir.appendingPathComponent("Feather/Signed")
+            let importedDir = docDir.appendingPathComponent("Feather/Imported")
+
+            for dir in [signedDir, importedDir] {
+                if let enumerator = FileManager.default.enumerator(at: dir, includingPropertiesForKeys: nil) {
+                    for case let fileURL as URL in enumerator {
+                        if fileURL.lastPathComponent == "icon.png" || fileURL.lastPathComponent.contains("tinted_icon") {
+                            try? FileManager.default.removeItem(at: fileURL)
+                        }
+                    }
+                }
+            }
+
+            await MainActor.run {
+                isPreparingBackup = false
+                UIAlertController.showAlertWithOk(title: "Icon Cache Rebuilt", message: "Icons will be regenerated on next view.")
+            }
+        }
+    }
+
+    private func handleViewPairingStatus() {
+        let pairingFileURL = Storage.shared.documentsURL.appendingPathComponent("pairingFile.plist")
+        if FileManager.default.fileExists(atPath: pairingFileURL.path) {
+            if let dict = NSDictionary(contentsOf: pairingFileURL) as? [String: Any] {
+                var info = "Pairing File Found\n\n"
+                for (key, value) in dict {
+                    if key.lowercased().contains("key") || key.lowercased().contains("secret") {
+                        info += "\(key): [HIDDEN]\n"
+                    } else {
+                        info += "\(key): \(value)\n"
+                    }
+                }
+                pairingInfo = info
+            } else {
+                pairingInfo = "Pairing file found but could not be read as a dictionary."
+            }
+        } else {
+            pairingInfo = "No pairing file found at:\n\(pairingFileURL.path)"
+        }
+        isShowingPairingStatus = true
     }
 
     private func handleExportFullDatabase() {
@@ -641,120 +776,6 @@ struct BackupRestoreView: View {
         }
     }
 
-    private func handlePerformRestore(from url: URL, restart: Bool) {
-        isRestoring = true
-        restoreProgress = 0.0
-        Task {
-            let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-            do {
-                try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-                await MainActor.run { withAnimation { restoreProgress = 0.1 } }
-                try FileManager.default.unzipItem(at: url, to: tempDir)
-                await MainActor.run { withAnimation { restoreProgress = 0.2 } }
-
-                let markers = ["PORTAL_BACKUP_MARKER.txt", "FEATHER_BACKUP_MARKER.txt", "PORTAL_BACKUP_CHECKER.txt"]
-                let hasMarker = markers.contains { m in FileManager.default.fileExists(atPath: tempDir.appendingPathComponent(m).path) }
-                guard hasMarker, FileManager.default.fileExists(atPath: tempDir.appendingPathComponent("settings.plist").path) else {
-                    try? FileManager.default.removeItem(at: tempDir)
-                    await MainActor.run { isRestoring = false; showInvalidBackupError = true }
-                    return
-                }
-
-                await MainActor.run { withAnimation { restoreProgress = 0.3 } }
-
-                // 1. Certificates
-                if let data = try? Data(contentsOf: tempDir.appendingPathComponent("certificates_metadata.json")),
-                   let metadata = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
-                    let certDir = Storage.shared.documentsURL.appendingPathComponent("certificates")
-                    try? FileManager.default.createDirectory(at: certDir, withIntermediateDirectories: true)
-                    for c in metadata {
-                        guard let uuid = c["uuid"] as? String else { continue }
-                        let p12 = tempDir.appendingPathComponent("certificates/\(uuid).p12")
-                        let prov = tempDir.appendingPathComponent("certificates/\(uuid).mobileprovision")
-                        if FileManager.default.fileExists(atPath: p12.path), FileManager.default.fileExists(atPath: prov.path) {
-                            try? FileManager.default.copyItem(at: p12, to: certDir.appendingPathComponent("\(uuid).p12"))
-                            try? FileManager.default.copyItem(at: prov, to: certDir.appendingPathComponent("\(uuid).mobileprovision"))
-                            Storage.shared.addCertificate(uuid: uuid, password: c["password"] as? String, nickname: c["name"] as? String ?? "Restored", ppq: c["ppQCheck"] as? Bool ?? false, expiration: Date(timeIntervalSince1970: c["date"] as? Double ?? Date().timeIntervalSince1970), completion: { _ in })
-                        }
-                    }
-                }
-                await MainActor.run { withAnimation { restoreProgress = 0.5 } }
-
-                // 2. Sources
-                if let data = try? Data(contentsOf: tempDir.appendingPathComponent("sources.json")),
-                   let sources = try? JSONSerialization.jsonObject(with: data) as? [[String: String]] {
-                    for s in sources {
-                        if let u = s["url"], let url = URL(string: u) {
-                            Storage.shared.addSource(url, name: s["name"] ?? u, identifier: s["identifier"] ?? u, completion: { _ in })
-                        }
-                    }
-                }
-                await MainActor.run { withAnimation { restoreProgress = 0.6 } }
-
-                // 3. Signed/Imported Apps
-                for (file, dirName, method) in [("signed_apps.json", "signed", 1), ("imported_apps.json", "imported", 2)] {
-                    if let data = try? Data(contentsOf: tempDir.appendingPathComponent(file)),
-                       let apps = try? JSONSerialization.jsonObject(with: data) as? [[String: String]] {
-                        let dest = method == 1 ? FileManager.default.signed : FileManager.default.unsigned
-                        try? FileManager.default.createDirectory(at: dest, withIntermediateDirectories: true)
-                        for a in apps {
-                            guard let uuid = a["uuid"], a["hasIPA"] == "true" else { continue }
-                            let src = tempDir.appendingPathComponent("\(dirName)_apps/\(uuid).ipa")
-                            if FileManager.default.fileExists(atPath: src.path) {
-                                let appDestDir = dest.appendingPathComponent(uuid)
-                                try? FileManager.default.createDirectory(at: appDestDir, withIntermediateDirectories: true)
-                                try? FileManager.default.copyItem(at: src, to: appDestDir.appendingPathComponent("app.ipa"))
-                                if method == 1 { Storage.shared.addSigned(uuid: uuid, appName: a["name"] ?? "Unknown", appIdentifier: a["identifier"], appVersion: a["version"], completion: { _ in }) }
-                                else { Storage.shared.addImported(uuid: uuid, appName: a["name"] ?? "Unknown", appIdentifier: a["identifier"], appVersion: a["version"], completion: { _ in }) }
-                            }
-                        }
-                    }
-                }
-                await MainActor.run { withAnimation { restoreProgress = 0.8 } }
-
-                // 4. Everything else
-                let doc = Storage.shared.documentsURL
-                for (s, d) in [("default_frameworks", "Feather/DefaultFrameworks"), ("archives", "Archives"), ("extra_files", "")] {
-                    let src = tempDir.appendingPathComponent(s)
-                    let dest = d.isEmpty ? doc : doc.appendingPathComponent(d)
-                    if FileManager.default.fileExists(atPath: src.path) {
-                        try? FileManager.default.createDirectory(at: dest, withIntermediateDirectories: true)
-                        for f in (try? FileManager.default.contentsOfDirectory(at: src, includingPropertiesForKeys: nil)) ?? [] {
-                            let du = dest.appendingPathComponent(f.lastPathComponent)
-                            try? FileManager.default.removeItem(at: du); try? FileManager.default.copyItem(at: f, to: du)
-                        }
-                    }
-                }
-
-                if let storeURL = Storage.shared.container.persistentStoreDescriptions.first?.url {
-                    let destDir = storeURL.deletingLastPathComponent()
-                    let srcDir = tempDir.appendingPathComponent("database")
-                    for f in (try? FileManager.default.contentsOfDirectory(at: srcDir, includingPropertiesForKeys: nil)) ?? [] {
-                        let du = destDir.appendingPathComponent(f.lastPathComponent)
-                        try? FileManager.default.removeItem(at: du); try? FileManager.default.copyItem(at: f, to: du)
-                    }
-                }
-
-                await MainActor.run { withAnimation { restoreProgress = 0.9 } }
-
-                // 5. Settings
-                if let data = try? Data(contentsOf: tempDir.appendingPathComponent("settings.plist")),
-                   let s = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
-                    for (k, v) in s { if !k.hasPrefix("NS") && !k.hasPrefix("AK") && !k.hasPrefix("Apple") { UserDefaults.standard.set(v, forKey: k) } }
-                    UserDefaults.standard.synchronize()
-                }
-
-                await MainActor.run {
-                    restoreProgress = 1.0; try? FileManager.default.removeItem(at: tempDir); isRestoring = false
-                    if restart { UIAlertController.showAlertWithOk(title: .localized("Restore Complete"), message: .localized("The app will now restart.")) {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { UIApplication.shared.suspendAndReopen() }
-                    } } else { UIAlertController.showAlertWithOk(title: .localized("Success"), message: .localized("Backup restored successfully.")) }
-                }
-            } catch {
-                await MainActor.run { isRestoring = false; UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized("Failed to restore: \(error.localizedDescription)")) }
-            }
-        }
-    }
 }
 
 // MARK: - BackupDocument
@@ -831,22 +852,3 @@ struct BackupOptionsView: View {
     }
 }
 
-// MARK: - RestoreLoadingOverlay
-struct RestoreLoadingOverlay: View {
-    let progress: Double
-    @State private var rotation: Double = 0
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.5).ignoresSafeArea()
-            VStack(spacing: 24) {
-                ZStack {
-                    Circle().fill(Color.green.opacity(0.1)).frame(width: 100, height: 100)
-                    Circle().stroke(Color.green.opacity(0.3), lineWidth: 4).frame(width: 100, height: 100).rotationEffect(.degrees(rotation))
-                    Image(systemName: "arrow.down.circle.fill").font(.system(size: 50)).foregroundStyle(LinearGradient(colors: [.green, .mint], startPoint: .topLeading, endPoint: .bottomTrailing))
-                }
-                VStack(spacing: 8) { Text("Restoring Backup").font(.title2.bold()); Text("Please wait while Portal restores your data...").font(.subheadline).foregroundStyle(.secondary).multilineTextAlignment(.center) }
-                VStack(spacing: 8) { ProgressView(value: progress).tint(.green); Text("\(Int(progress * 100))%").font(.caption).foregroundStyle(.secondary) }
-            }.padding(32).background(.ultraThinMaterial).cornerRadius(24).padding(.horizontal, 40).shadow(color: .black.opacity(0.2), radius: 20)
-        }.onAppear { withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) { rotation = 360 } }
-    }
-}
