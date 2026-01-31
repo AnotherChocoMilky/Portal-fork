@@ -3,6 +3,8 @@ import CoreData
 // MARK: - Class
 final class Storage: ObservableObject {
 	static let shared = Storage()
+	static let appGroupID = "group.ayon1xw.Portal"
+
 	let container: NSPersistentContainer
 	
 	private let _name: String = "Feather"
