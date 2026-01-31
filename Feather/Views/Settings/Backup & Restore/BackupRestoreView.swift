@@ -169,7 +169,7 @@ struct BackupRestoreView: View {
                                 .foregroundStyle(.green)
                         }
                         Text(.localized("Create Backup"))
-                            .font(.system(.subheadline, weight: .bold, design: .rounded))
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
                             .foregroundStyle(.green)
                     }
                     .frame(maxWidth: .infinity)
@@ -192,7 +192,7 @@ struct BackupRestoreView: View {
                                 .foregroundStyle(.blue)
                         }
                         Text(.localized("Restore Backup"))
-                            .font(.system(.subheadline, weight: .bold, design: .rounded))
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
                             .foregroundStyle(.blue)
                     }
                     .frame(maxWidth: .infinity)

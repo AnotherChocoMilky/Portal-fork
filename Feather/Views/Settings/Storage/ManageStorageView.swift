@@ -707,13 +707,13 @@ struct ManageStorageView: View {
                     }
                     
                     Text(.localized("Total"))
-                        .font(.system(.body, design: .default, weight: .bold))
+                        .font(.system(size: 17, weight: .bold, design: .default))
                         .foregroundStyle(.primary)
                     
                     Spacer()
                     
                     Text(formatBytes(totalFeatherStorage))
-                        .font(.system(.title3, design: .rounded, weight: .bold))
+                        .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundStyle(Color.accentColor)
                 }
                 .padding(.vertical, 8)
