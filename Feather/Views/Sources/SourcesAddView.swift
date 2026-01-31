@@ -88,21 +88,27 @@ struct SourcesAddView: View {
 	// MARK: - Main Content
 	@ViewBuilder
 	private var _mainContent: some View {
-		VStack(spacing: 16) {
+		VStack(spacing: 24) {
 			// Import Results Section (shown after bulk import)
 			if _showImportResults {
 				_importResultsSection()
 			}
 			
 			// Regular UI when not showing import results
-			_sourceURLSection
+			if !_showImportResults {
+				_sourceURLSection
+
+				if !_isExportMode {
+					_featuredSourcesSection
+				}
+			}
 			
 			// Export mode UI
 			if _isExportMode {
 				_exportSelectionSection()
 			}
 		}
-		.padding(.bottom, 20)
+		.padding(.bottom, 30)
 	}
 	
 	// MARK: - Toolbar Content
@@ -169,44 +175,56 @@ struct SourcesAddView: View {
 	// MARK: - Source URL Section
 	@ViewBuilder
 	private var _sourceURLSection: some View {
-		VStack(alignment: .leading, spacing: 16) {
-			Text(.localized("Source URL"))
-				.font(.headline)
+		VStack(alignment: .leading, spacing: 12) {
+			Text(.localized("Add Source"))
+				.font(.system(.title3, design: .rounded).bold())
 				.foregroundStyle(.primary)
 				.padding(.horizontal, 4)
 			
-			VStack(spacing: 0) {
+			VStack(spacing: 16) {
 				HStack(spacing: 12) {
-					Image(systemName: "link.circle.fill")
-						.font(.title2)
-						.foregroundStyle(
-							LinearGradient(
-								colors: [Color.accentColor, Color.accentColor.opacity(0.7)],
-								startPoint: .topLeading,
-								endPoint: .bottomTrailing
-							)
-						)
+					Image(systemName: "link")
+						.font(.system(size: 18, weight: .semibold))
+						.foregroundStyle(Color.accentColor)
+						.frame(width: 40, height: 40)
+						.background(Color.accentColor.opacity(0.1))
+						.clipShape(Circle())
 					
-					TextField(.localized("Enter Source URL"), text: $_sourceURL)
+					TextField(.localized("Repository URL"), text: $_sourceURL)
 						.keyboardType(.URL)
 						.textInputAutocapitalization(.never)
-						.font(.body)
+						.font(.system(.body, design: .rounded))
 					
-					// Import button icon
-					Button {
-						_isImporting = true
-						_fetchImportedRepositories(UIPasteboard.general.string) {
-							// Don't dismiss anymore - show results instead
+					if !_sourceURL.isEmpty {
+						Button {
+							_sourceURL = ""
+						} label: {
+							Image(systemName: "xmark.circle.fill")
+								.foregroundStyle(.secondary)
 						}
-					} label: {
-						Image(systemName: "square.and.arrow.down")
-							.font(.title3)
-							.foregroundStyle(.blue)
+						.buttonStyle(.plain)
 					}
-					.buttonStyle(.plain)
+				}
+				.padding(12)
+				.background(Color(UIColor.secondarySystemGroupedBackground))
+				.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+				.shadow(color: .black.opacity(0.03), radius: 8, x: 0, y: 4)
+
+				HStack(spacing: 12) {
+					_actionButton(
+						title: .localized("Import"),
+						icon: "square.and.arrow.down",
+						color: .blue
+					) {
+						_isImporting = true
+						_fetchImportedRepositories(UIPasteboard.general.string) { }
+					}
 					
-					// Export button icon
-					Button {
+					_actionButton(
+						title: .localized("Export"),
+						icon: "doc.on.doc",
+						color: .green
+					) {
 						_isExportMode = true
 						let sources = Storage.shared.getSources()
 						guard !sources.isEmpty else {
@@ -217,39 +235,47 @@ struct SourcesAddView: View {
 							_isExportMode = false
 							return
 						}
-						// Initialize selection with all sources
 						_selectedSourcesForExport = Set(sources.compactMap { $0.sourceURL?.absoluteString })
-					} label: {
-						Image(systemName: "doc.on.doc")
-							.font(.title3)
-							.foregroundStyle(.green)
 					}
-					.buttonStyle(.plain)
 					
-					// Portal Export button icon
-					Button {
+					_actionButton(
+						title: .localized("Portal"),
+						icon: "square.and.arrow.down.on.square.fill",
+						color: .purple
+					) {
 						_openPortalExportDirectly()
-					} label: {
-						Image(systemName: "square.and.arrow.down.on.square.fill")
-							.font(.title3)
-							.foregroundStyle(.purple)
 					}
-					.buttonStyle(.plain)
 				}
-				.padding()
 			}
 			
-			VStack(alignment: .leading, spacing: 8) {
-				Text(.localized("The only supported repositories are AltStore repositories."))
-					.font(.caption)
-					.foregroundStyle(.secondary)
-				Text(.localized("Supports importing from KravaShit/MapleSign and ESign."))
-					.font(.caption)
-					.foregroundStyle(.secondary)
+			VStack(alignment: .leading, spacing: 4) {
+				Label(.localized("Only AltStore repositories are supported."), systemImage: "info.circle")
+				Label(.localized("Supports KravaShit/MapleSign and ESign imports."), systemImage: "arrow.triangle.2.circlepath")
 			}
-			.padding(.horizontal, 4)
+			.font(.system(size: 11, weight: .medium, design: .rounded))
+			.foregroundStyle(.secondary)
+			.padding(.horizontal, 8)
+			.padding(.top, 4)
 		}
 		.padding(.horizontal)
+	}
+
+	@ViewBuilder
+	private func _actionButton(title: LocalizedStringKey, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+		Button(action: action) {
+			VStack(spacing: 8) {
+				Image(systemName: icon)
+					.font(.system(size: 20, weight: .semibold))
+				Text(title)
+					.font(.system(size: 12, weight: .bold, design: .rounded))
+			}
+			.foregroundStyle(color)
+			.frame(maxWidth: .infinity)
+			.padding(.vertical, 14)
+			.background(color.opacity(0.1))
+			.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+		}
+		.buttonStyle(.plain)
 	}
 	// KravaShit lmaoo
 	// MARK: - Featured Sources Section
@@ -294,28 +320,31 @@ struct SourcesAddView: View {
 	@ViewBuilder
 	private var _featuredSourcesList: some View {
 		VStack(alignment: .leading, spacing: 16) {
-			Text(.localized("Featured"))
-				.font(.headline)
-				.foregroundStyle(.primary)
-				.padding(.horizontal, 4)
+			HStack {
+				Text(.localized("Featured Sources"))
+					.font(.system(.title3, design: .rounded).bold())
+				Spacer()
+				Text(.localized("Recommended"))
+					.font(.caption.bold())
+					.foregroundStyle(.secondary)
+					.padding(.horizontal, 8)
+					.padding(.vertical, 4)
+					.background(Color.secondary.opacity(0.1))
+					.clipShape(Capsule())
+			}
+			.padding(.horizontal, 4)
 			
-			VStack(spacing: 0) {
+			VStack(spacing: 12) {
 				ForEach(_filteredRecommendedSourcesData, id: \.url) { (url, source) in
 					_featuredSourceRow(url: url, source: source)
-					
-					if _filteredRecommendedSourcesData.last?.url != url {
-						Divider()
-							.padding(.leading, 16)
-					}
 				}
 			}
 			
-			VStack(alignment: .leading, spacing: 8) {
-				Text(.localized("More will get added soon!"))
-					.font(.caption)
-					.foregroundStyle(.secondary)
-			}
-			.padding(.horizontal, 4)
+			Text(.localized("More sources will be added soon!"))
+				.font(.system(size: 12, weight: .medium, design: .rounded))
+				.foregroundStyle(.secondary)
+				.frame(maxWidth: .infinity, alignment: .center)
+				.padding(.top, 8)
 		}
 		.padding(.horizontal)
 	}
@@ -326,7 +355,7 @@ struct SourcesAddView: View {
 		HStack(spacing: 16) {
 			FRIconCellView(
 				title: source.name ?? .localized("Unknown"),
-				subtitle: url.absoluteString,
+				subtitle: url.host ?? url.absoluteString,
 				iconUrl: source.currentIconURL
 			)
 			
@@ -334,38 +363,28 @@ struct SourcesAddView: View {
 			
 			Button {
 				Storage.shared.addSource(url, repository: source) { _ in
-					_refreshFilteredRecommendedSourcesData()
+					withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+						_refreshFilteredRecommendedSourcesData()
+					}
 				}
 			} label: {
 				Text(.localized("Add"))
-					.font(.subheadline.bold())
+					.font(.system(size: 14, weight: .bold, design: .rounded))
 					.foregroundStyle(.white)
-					.padding(.horizontal, 24)
-					.padding(.vertical, 10)
+					.padding(.horizontal, 20)
+					.padding(.vertical, 8)
 					.background(
-						ZStack {
-							// Shadow layer
-							Capsule()
-								.fill(Color.accentColor.opacity(0.3))
-								.blur(radius: 4)
-								.offset(y: 3)
-							
-							// Main gradient
-							Capsule()
-								.fill(
-									LinearGradient(
-										colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
-										startPoint: .topLeading,
-										endPoint: .bottomTrailing
-									)
-								)
-						}
+						Capsule()
+							.fill(Color.accentColor)
 					)
-					.shadow(color: Color.accentColor.opacity(0.4), radius: 8, x: 0, y: 4)
+					.shadow(color: Color.accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
 			}
-			.buttonStyle(.borderless)
+			.buttonStyle(.plain)
 		}
-		.padding()
+		.padding(12)
+		.background(Color(UIColor.secondarySystemGroupedBackground))
+		.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+		.shadow(color: .black.opacity(0.02), radius: 8, x: 0, y: 4)
 	}
 	
 	// MARK: - Import Results Section
@@ -885,31 +904,6 @@ struct PortalExportView: View {
 	private var headerSection: some View {
 		VStack(spacing: 16) {
 			ZStack {
-				// Outer glow ring
-				Circle()
-					.fill(
-						RadialGradient(
-							colors: [gradientColors[0].opacity(0.3), Color.clear],
-							center: .center,
-							startRadius: 30,
-							endRadius: 70
-						)
-					)
-					.frame(width: 140, height: 140)
-				
-				// Animated ring
-				Circle()
-					.stroke(
-						LinearGradient(
-							colors: gradientColors,
-							startPoint: .topLeading,
-							endPoint: .bottomTrailing
-						),
-						lineWidth: 3
-					)
-					.frame(width: 100, height: 100)
-					.rotationEffect(.degrees(iconRotation * 3))
-				
 				// Main circle
 				Circle()
 					.fill(
@@ -919,14 +913,19 @@ struct PortalExportView: View {
 							endPoint: .bottomTrailing
 						)
 					)
-					.frame(width: 80, height: 80)
-					.shadow(color: gradientColors[0].opacity(0.4), radius: 15, x: 0, y: 8)
+					.frame(width: 90, height: 90)
+					.shadow(color: gradientColors[0].opacity(0.3), radius: 20, x: 0, y: 10)
+
+				// Subtle ring
+				Circle()
+					.stroke(gradientColors[0].opacity(0.2), lineWidth: 4)
+					.frame(width: 110, height: 110)
+					.scaleEffect(iconRotation > 0 ? 1.05 : 1.0)
 				
 				// Icon
-				Image(systemName: isImportMode ? "arrow.down.doc.fill" : "arrow.up.doc.fill")
-					.font(.system(size: 32, weight: .semibold))
+				Image(systemName: isImportMode ? "arrow.down.circle.fill" : "arrow.up.circle.fill")
+					.font(.system(size: 40, weight: .medium))
 					.foregroundStyle(.white)
-					.rotationEffect(.degrees(iconRotation))
 			}
 			.animation(.spring(response: 0.5, dampingFraction: 0.7), value: isImportMode)
 			
@@ -935,7 +934,7 @@ struct PortalExportView: View {
 					.font(.system(size: 22, weight: .bold, design: .rounded))
 					.foregroundStyle(.primary)
 				
-				Text(isImportMode ? .localized("Paste the encoded data from Portal Transfer to import sources") : .localized("Share your sources with Portal Transfer."))
+				Text(isImportMode ? .localized("Paste your Portal code from another device to import sources.") : .localized("Share your sources with a Portal transfer code."))
 					.font(.subheadline)
 					.foregroundStyle(.secondary)
 					.multilineTextAlignment(.center)
@@ -991,7 +990,7 @@ struct PortalExportView: View {
 	// MARK: - Export Section
 	private var exportSection: some View {
 		VStack(spacing: 16) {
-			// Collapsible Encoded Data Section
+			// Collapsible Transfer Code Section
 			if !exportData.isEmpty {
 				VStack(spacing: 0) {
 					// Header with dropdown
@@ -1005,19 +1004,19 @@ struct PortalExportView: View {
 							HStack(spacing: 10) {
 								ZStack {
 									Circle()
-										.fill(Color.purple.opacity(0.15))
-										.frame(width: 36, height: 36)
-									Image(systemName: "lock.fill")
-										.font(.system(size: 14, weight: .semibold))
+										.fill(Color.purple.opacity(0.1))
+										.frame(width: 40, height: 40)
+									Image(systemName: "key.fill")
+										.font(.system(size: 16, weight: .semibold))
 										.foregroundStyle(.purple)
 								}
 								
 								VStack(alignment: .leading, spacing: 2) {
-									Text(.localized("Encoded Data"))
-										.font(.system(size: 15, weight: .semibold))
+									Text(.localized("Transfer Code"))
+										.font(.system(.subheadline, design: .rounded).bold())
 										.foregroundStyle(.primary)
-									Text("\(exportData.count) Characters")
-										.font(.caption)
+									Text(.localized("Ready to share"))
+										.font(.caption2)
 										.foregroundStyle(.secondary)
 								}
 							}
@@ -1127,15 +1126,15 @@ struct PortalExportView: View {
 					HStack(spacing: 10) {
 						ZStack {
 							Circle()
-								.fill(Color.cyan.opacity(0.15))
-								.frame(width: 36, height: 36)
-							Image(systemName: "doc.on.clipboard")
-								.font(.system(size: 14, weight: .semibold))
+								.fill(Color.cyan.opacity(0.1))
+								.frame(width: 40, height: 40)
+							Image(systemName: "square.and.pencil")
+								.font(.system(size: 16, weight: .semibold))
 								.foregroundStyle(.cyan)
 						}
 						
-						Text(.localized("Portal Data"))
-							.font(.system(size: 15, weight: .semibold))
+						Text(.localized("Portal Code"))
+							.font(.system(.subheadline, design: .rounded).bold())
 							.foregroundStyle(.primary)
 					}
 					
@@ -1288,7 +1287,7 @@ struct PortalExportView: View {
 				.foregroundStyle(.orange)
 			
 			VStack(alignment: .leading, spacing: 8) {
-				tipRow(icon: "1.circle.fill", text: isImportMode ? .localized("Paste the Portal data you received") : .localized("Copy the encoded data to share"))
+				tipRow(icon: "1.circle.fill", text: isImportMode ? .localized("Paste the Portal code you received") : .localized("Copy the transfer code to share"))
 				tipRow(icon: "2.circle.fill", text: isImportMode ? .localized("Tap Import to add the sources") : .localized("Send it to friends or save it"))
 				tipRow(icon: "3.circle.fill", text: isImportMode ? .localized("Sources will be added automatically") : .localized("They can import using this view"))
 			}
@@ -1321,7 +1320,7 @@ struct PortalExportView: View {
 		guard let urls = PortalSourceExport.decode(importText) else {
 			Logger.misc.error("[Portal Import] Failed to decode Portal data")
 			withAnimation {
-				importResult = .error(message: .localized("Invalid Portal Data Format"))
+				importResult = .error(message: .localized("Invalid Portal Transfer Code"))
 			}
 			return
 		}
