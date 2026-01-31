@@ -40,19 +40,79 @@ struct BackupRestoreView: View {
     var body: some View {
         NBList(.localized("Backup & Restore")) {
             Section {
-                Button {
-                    isBackupOptionsPresented = true
-                } label: {
-                    Label(.localized("Create Backup"), systemImage: "arrow.up.doc.fill")
-                }
+                ZStack {
+                    LinearGradient(colors: [Color.green.opacity(0.1), Color.blue.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                        .cornerRadius(20)
 
-                Button {
-                    isImportIPAPresented = true
-                } label: {
-                    Label(.localized("Restore Backup"), systemImage: "arrow.down.doc.fill")
+                    VStack(spacing: 12) {
+                        Image(systemName: "arrow.counterclockwise.icloud.fill")
+                            .font(.system(size: 40))
+                            .foregroundStyle(LinearGradient(colors: [.green, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
+
+                        Text(.localized("Secure your data by creating a backup of your apps and settings."))
+                            .font(.system(.subheadline, design: .rounded))
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal)
+                    }
+                    .padding(.vertical, 30)
                 }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+            }
+
+            Section {
+                HStack(spacing: 16) {
+                    Button {
+                        isBackupOptionsPresented = true
+                    } label: {
+                        VStack(spacing: 12) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color.green.opacity(0.15))
+                                    .frame(width: 54, height: 54)
+                                Image(systemName: "arrow.up.doc.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(.green)
+                            }
+                            Text(.localized("Create Backup"))
+                                .font(.system(.subheadline, weight: .bold, design: .rounded))
+                                .foregroundStyle(.green)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 20)
+                        .background(Color.green.opacity(0.05))
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        isImportIPAPresented = true
+                    } label: {
+                        VStack(spacing: 12) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color.blue.opacity(0.15))
+                                    .frame(width: 54, height: 54)
+                                Image(systemName: "arrow.down.doc.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(.blue)
+                            }
+                            Text(.localized("Restore Backup"))
+                                .font(.system(.subheadline, weight: .bold, design: .rounded))
+                                .foregroundStyle(.blue)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 20)
+                        .background(Color.blue.opacity(0.05))
+                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
             } header: {
-                AppearanceSectionHeader(title: String.localized("Actions"), icon: "arrow.up.arrow.down.circle.fill")
+                AppearanceSectionHeader(title: String.localized("Quick Actions"), icon: "bolt.fill")
             }
 
             // Advanced Tools Section
@@ -122,7 +182,7 @@ struct BackupRestoreView: View {
                     description: .localized("Restoring requires the app to restart. Certificate restoration preserves files for manual re-import if needed.")
                 )
             } header: {
-                AppearanceSectionHeader(title: String.localized("About Backups (Beta)"), icon: "info.circle.fill")
+                AppearanceSectionHeader(title: String.localized("About Backups"), icon: "info.circle.fill")
             }
         }
         .sheet(isPresented: $isBackupOptionsPresented) {
@@ -327,35 +387,65 @@ struct BackupRestoreView: View {
                     }
                 }
 
-                // 4b. Signed Apps
+                // 4b. Signed Apps - Handle both old (IPA-only) and new (Directory) formats
                 let signedSourceDir = tempRestoreDir.appendingPathComponent("signed_apps")
                 if fileManager.fileExists(atPath: signedSourceDir.path) {
                     let signedDestDir = fileManager.signed
                     try? fileManager.createDirectory(at: signedDestDir, withIntermediateDirectories: true)
 
                     let contents = (try? fileManager.contentsOfDirectory(at: signedSourceDir, includingPropertiesForKeys: nil)) ?? []
-                    for file in contents {
-                        if file.lastPathComponent.contains(".json") { continue }
+                    for fileURL in contents {
+                        let name = fileURL.lastPathComponent
+                        if name.contains(".json") { continue }
 
-                        let dest = signedDestDir.appendingPathComponent(file.lastPathComponent)
-                        try? fileManager.removeItem(at: dest)
-                        try fileManager.copyItem(at: file, to: dest)
+                        var isDir: ObjCBool = false
+                        if fileManager.fileExists(atPath: fileURL.path, isDirectory: &isDir) {
+                            if isDir.boolValue {
+                                // New format: Full directory
+                                let dest = signedDestDir.appendingPathComponent(name)
+                                try? fileManager.removeItem(at: dest)
+                                try fileManager.copyItem(at: fileURL, to: dest)
+                            } else if fileURL.pathExtension.lowercased() == "ipa" {
+                                // Old format: Single IPA file
+                                let uuid = name.replacingOccurrences(of: ".ipa", with: "")
+                                let destFolder = signedDestDir.appendingPathComponent(uuid)
+                                try? fileManager.createDirectory(at: destFolder, withIntermediateDirectories: true)
+                                let destFile = destFolder.appendingPathComponent("ipa")
+                                try? fileManager.removeItem(at: destFile)
+                                try fileManager.copyItem(at: fileURL, to: destFile)
+                            }
+                        }
                     }
                 }
 
-                // 4c. Imported (Unsigned) Apps
+                // 4c. Imported (Unsigned) Apps - Handle both old (IPA-only) and new (Directory) formats
                 let importedSourceDir = tempRestoreDir.appendingPathComponent("imported_apps")
                 if fileManager.fileExists(atPath: importedSourceDir.path) {
                     let importedDestDir = fileManager.unsigned
                     try? fileManager.createDirectory(at: importedDestDir, withIntermediateDirectories: true)
 
                     let contents = (try? fileManager.contentsOfDirectory(at: importedSourceDir, includingPropertiesForKeys: nil)) ?? []
-                    for file in contents {
-                        if file.lastPathComponent.contains(".json") { continue }
+                    for fileURL in contents {
+                        let name = fileURL.lastPathComponent
+                        if name.contains(".json") { continue }
 
-                        let dest = importedDestDir.appendingPathComponent(file.lastPathComponent)
-                        try? fileManager.removeItem(at: dest)
-                        try fileManager.copyItem(at: file, to: dest)
+                        var isDir: ObjCBool = false
+                        if fileManager.fileExists(atPath: fileURL.path, isDirectory: &isDir) {
+                            if isDir.boolValue {
+                                // New format: Full directory
+                                let dest = importedDestDir.appendingPathComponent(name)
+                                try? fileManager.removeItem(at: dest)
+                                try fileManager.copyItem(at: fileURL, to: dest)
+                            } else if fileURL.pathExtension.lowercased() == "ipa" {
+                                // Old format: Single IPA file
+                                let uuid = name.replacingOccurrences(of: ".ipa", with: "")
+                                let destFolder = importedDestDir.appendingPathComponent(uuid)
+                                try? fileManager.createDirectory(at: destFolder, withIntermediateDirectories: true)
+                                let destFile = destFolder.appendingPathComponent("ipa")
+                                try? fileManager.removeItem(at: destFile)
+                                try fileManager.copyItem(at: fileURL, to: destFile)
+                            }
+                        }
                     }
                 }
 
@@ -423,23 +513,31 @@ struct BackupRestoreView: View {
     // MARK: - Info Card View
     @ViewBuilder
     private func infoCard(icon: String, iconColor: Color, title: LocalizedStringKey, description: LocalizedStringKey) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(iconColor)
-                .frame(width: 36)
+        HStack(alignment: .top, spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(iconColor.opacity(0.15))
+                    .frame(width: 44, height: 44)
+
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(iconColor)
+            }
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
-                    .font(.headline)
+                    .font(.system(.headline, design: .rounded))
                     .foregroundStyle(.primary)
 
                 Text(description)
-                    .font(.subheadline)
+                    .font(.system(.subheadline, design: .rounded))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .padding(16)
+        .background(Color.secondary.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .padding(.vertical, 4)
     }
 
@@ -693,25 +791,22 @@ struct BackupRestoreView: View {
                 let signedAppsDir = tempDir.appendingPathComponent("signed_apps")
                 try? fileManager.createDirectory(at: signedAppsDir, withIntermediateDirectories: true)
 
-                let signedApps = (try? Storage.shared.context.fetch(Signed.fetchRequest())) ?? []
-                var appsData: [[String: String]] = []
-
-                for app in signedApps {
-                    guard let uuid = app.uuid else { continue }
-                    var data: [String: String] = ["uuid": uuid]
-                    if let name = app.name { data["name"] = name }
-                    if let identifier = app.identifier { data["identifier"] = identifier }
-                    if let version = app.version { data["version"] = version }
-
-                    if let ipaURL = fileManager.getPath(in: fileManager.signed(uuid), for: "ipa"),
-                       fileManager.fileExists(atPath: ipaURL.path) {
-                        try? fileManager.copyItem(at: ipaURL, to: signedAppsDir.appendingPathComponent("\(uuid).ipa"))
-                        data["hasIPA"] = "true"
+                let src = fileManager.signed
+                if fileManager.fileExists(atPath: src.path) {
+                    let folders = (try? fileManager.contentsOfDirectory(at: src, includingPropertiesForKeys: nil)) ?? []
+                    for folder in folders {
+                        try? fileManager.copyItem(at: folder, to: signedAppsDir.appendingPathComponent(folder.lastPathComponent))
                     }
-                    appsData.append(data)
+                }
+
+                // Metadata for easier identification
+                let signedApps = (try? Storage.shared.context.fetch(Signed.fetchRequest())) ?? []
+                let appsData = signedApps.compactMap { app -> [String: String]? in
+                    guard let uuid = app.uuid else { return nil }
+                    return ["uuid": uuid, "name": app.name ?? "", "identifier": app.identifier ?? "", "version": app.version ?? ""]
                 }
                 let jsonData = try JSONSerialization.data(withJSONObject: appsData)
-                try jsonData.write(to: tempDir.appendingPathComponent("signed_apps.json"))
+                try jsonData.write(to: tempDir.appendingPathComponent("signed_apps_metadata.json"))
             }
 
             // 4. Imported (Unsigned) Apps
@@ -719,25 +814,22 @@ struct BackupRestoreView: View {
                 let importedAppsDir = tempDir.appendingPathComponent("imported_apps")
                 try? fileManager.createDirectory(at: importedAppsDir, withIntermediateDirectories: true)
 
-                let importedApps = (try? Storage.shared.context.fetch(Imported.fetchRequest())) ?? []
-                var appsData: [[String: String]] = []
-
-                for app in importedApps {
-                    guard let uuid = app.uuid else { continue }
-                    var data: [String: String] = ["uuid": uuid]
-                    if let name = app.name { data["name"] = name }
-                    if let identifier = app.identifier { data["identifier"] = identifier }
-                    if let version = app.version { data["version"] = version }
-
-                    if let ipaURL = fileManager.getPath(in: fileManager.unsigned(uuid), for: "ipa"),
-                       fileManager.fileExists(atPath: ipaURL.path) {
-                        try? fileManager.copyItem(at: ipaURL, to: importedAppsDir.appendingPathComponent("\(uuid).ipa"))
-                        data["hasIPA"] = "true"
+                let src = fileManager.unsigned
+                if fileManager.fileExists(atPath: src.path) {
+                    let folders = (try? fileManager.contentsOfDirectory(at: src, includingPropertiesForKeys: nil)) ?? []
+                    for folder in folders {
+                        try? fileManager.copyItem(at: folder, to: importedAppsDir.appendingPathComponent(folder.lastPathComponent))
                     }
-                    appsData.append(data)
+                }
+
+                // Metadata for easier identification
+                let importedApps = (try? Storage.shared.context.fetch(Imported.fetchRequest())) ?? []
+                let appsData = importedApps.compactMap { app -> [String: String]? in
+                    guard let uuid = app.uuid else { return nil }
+                    return ["uuid": uuid, "name": app.name ?? "", "identifier": app.identifier ?? "", "version": app.version ?? ""]
                 }
                 let jsonData = try JSONSerialization.data(withJSONObject: appsData)
-                try jsonData.write(to: tempDir.appendingPathComponent("imported_apps.json"))
+                try jsonData.write(to: tempDir.appendingPathComponent("imported_apps_metadata.json"))
             }
 
             // 5. Default Frameworks
@@ -765,13 +857,20 @@ struct BackupRestoreView: View {
                 }
             }
 
-            // 7. Extra Files (Always)
+            // 7. Extra Files (Always) - Copy all plists, certs, and logs from root
             let extraDir = tempDir.appendingPathComponent("extra_files")
             try? FileManager.default.createDirectory(at: extraDir, withIntermediateDirectories: true)
-            for file in ["pairingFile.plist", "server.pem", "server.crt", "commonName.txt"] {
-                let url = Storage.shared.documentsURL.appendingPathComponent(file)
-                if FileManager.default.fileExists(atPath: url.path) {
-                    try? FileManager.default.copyItem(at: url, to: extraDir.appendingPathComponent(file))
+            let rootFiles = (try? fileManager.contentsOfDirectory(at: Storage.shared.documentsURL, includingPropertiesForKeys: nil)) ?? []
+            for fileURL in rootFiles {
+                let ext = fileURL.pathExtension.lowercased()
+                let name = fileURL.lastPathComponent
+                let importantExtensions = ["plist", "pem", "crt", "txt", "json", "log"]
+                let importantNames = ["pairingFile.plist", "server.pem", "server.crt", "commonName.txt"]
+
+                if importantExtensions.contains(ext) || importantNames.contains(name) {
+                    // Skip database files here as they are handled in step 8
+                    if ext == "sqlite" || name.contains("-shm") || name.contains("-wal") { continue }
+                    try? fileManager.copyItem(at: fileURL, to: extraDir.appendingPathComponent(name))
                 }
             }
 

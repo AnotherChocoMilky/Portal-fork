@@ -99,7 +99,7 @@ struct SettingsView: View {
             if !isEnterprise {
                 SettingsRow(icon: "internaldrive.fill", title: "Storage", color: .gray, destination: ManageStorageView())
             }
-            SettingsRow(icon: "arrow.counterclockwise.circle.fill", title: "Backup & Restore (Beta)", color: .green, destination: BackupRestoreView())
+            SettingsRow(icon: "arrow.counterclockwise.circle.fill", title: "Backup & Restore", color: .green, destination: BackupRestoreView())
 
             SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: "Fetch Full Data", color: .cyan, isLoading: _isFetchingFullData) {
                 Task {
