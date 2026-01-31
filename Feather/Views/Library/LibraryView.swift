@@ -804,13 +804,18 @@ struct LibraryAppRow: View {
                     selectedSigningAppPresenting = AnyApp(base: app)
                 }
             } label: {
-                Text(app.isSigned ? String.localized("Install") : String.localized("Sign"))
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
-                    .background(Color.accentColor)
-                    .clipShape(Capsule())
+                HStack(spacing: 6) {
+                    Image(systemName: app.isSigned ? "arrow.down.circle.fill" : "signature")
+                        .font(.system(size: 11, weight: .bold))
+
+                    Text(app.isSigned ? String.localized("Install") : String.localized("Sign"))
+                        .font(.system(size: 13, weight: .bold))
+                }
+                .foregroundStyle(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+                .background(app.isSigned ? Color.green : Color.accentColor)
+                .clipShape(Capsule())
             }
             .buttonStyle(.plain)
         }
