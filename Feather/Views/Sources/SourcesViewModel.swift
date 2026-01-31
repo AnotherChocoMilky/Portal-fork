@@ -31,6 +31,7 @@ enum SourceFetchState {
 }
 
 // MARK: - Class
+@MainActor
 final class SourcesViewModel: ObservableObject {
     static let shared = SourcesViewModel()
     
@@ -116,10 +117,8 @@ final class SourcesViewModel: ObservableObject {
     
     // MARK: - Full Manual Fetch
     func forceFetchAllSources(_ sources: FetchedResults<AltSource>) async {
-        await MainActor.run {
-            _cacheManager.clearCache()
-            errorMessage = nil
-        }
+        _cacheManager.clearCache()
+        errorMessage = nil
         await fetchSources(sources, refresh: true)
     }
 
@@ -141,12 +140,10 @@ final class SourcesViewModel: ObservableObject {
         if !refresh, sources.allSatisfy({ self.sources[$0] != nil }) { return }
         
         isFinished = false
-        await MainActor.run {
-            fetchState = .loading
-            fetchProgress = 0
-            failedSources = []
-            errorMessage = nil
-        }
+        fetchState = .loading
+        fetchProgress = 0
+        failedSources = []
+        errorMessage = nil
         
         defer {
             isFinished = true
@@ -155,9 +152,7 @@ final class SourcesViewModel: ObservableObject {
         
         // Load from cache first if not refreshing
         if !refresh {
-            await MainActor.run {
-                self.sources = [:]
-            }
+            self.sources = [:]
             
             // Load cached data in parallel
             await withTaskGroup(of: (AltSource, ASRepository?).self) { group in
@@ -172,26 +167,20 @@ final class SourcesViewModel: ObservableObject {
                 
                 for await (source, repo) in group {
                     if let repo = repo {
-                        await MainActor.run {
-                            self.sources[source] = repo
-                        }
+                        self.sources[source] = repo
                     }
                 }
             }
         } else {
-            await MainActor.run {
-                self.sources = [:]
-            }
+            self.sources = [:]
         }
         
         let sourcesArray = refresh ? Array(sources) : Array(sources).filter { self.sources[$0] == nil }
         let totalSources = sourcesArray.count
         
         if totalSources == 0 {
-            await MainActor.run {
-                fetchState = .loaded
-                fetchProgress = 1.0
-            }
+            fetchState = .loaded
+            fetchProgress = 1.0
             return
         }
 
@@ -240,28 +229,24 @@ final class SourcesViewModel: ObservableObject {
             currentProcessedCount += batchResults.count
             let progressValue = Double(currentProcessedCount) / Double(totalSources)
             
-            await MainActor.run {
-                for (source, repo, error) in batchResults {
-                    if let repo = repo {
-                        self.sources[source] = repo
-                    } else if error != nil, let urlString = source.sourceURL?.absoluteString {
-                        self.failedSources.insert(urlString)
-                    }
+            for (source, repo, error) in batchResults {
+                if let repo = repo {
+                    self.sources[source] = repo
+                } else if error != nil, let urlString = source.sourceURL?.absoluteString {
+                    self.failedSources.insert(urlString)
                 }
-                self.fetchProgress = progressValue
             }
+            self.fetchProgress = progressValue
         }
         
-        await MainActor.run {
-            if !failedSources.isEmpty {
-                errorMessage = "\(failedSources.count) sources failed to load"
-                fetchState = .error(errorMessage!)
-            } else {
-                fetchState = .loaded
-                errorMessage = nil
-            }
-            fetchProgress = 1.0
+        if !failedSources.isEmpty {
+            errorMessage = "\(failedSources.count) sources failed to load"
+            fetchState = .error(errorMessage!)
+        } else {
+            fetchState = .loaded
+            errorMessage = nil
         }
+        fetchProgress = 1.0
     }
     
     // MARK: - Single Source Refresh
@@ -347,7 +332,7 @@ final class SourcesViewModel: ObservableObject {
 }
 
 // MARK: - Repository Cache Manager
-final class RepositoryCacheManager {
+final class RepositoryCacheManager: @unchecked Sendable {
 	static let shared = RepositoryCacheManager()
 	
 	private let cacheDirectory: URL
