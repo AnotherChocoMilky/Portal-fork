@@ -246,6 +246,12 @@
 		<string>localdevvpn</string>
 		<string>new-portal</string>
 	</array>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>AddSourceIntent</string>
+		<string>AddCertificateIntent</string>
+		<string>CheckExpiryIntent</string>
+	</array>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSExceptionDomains</key>

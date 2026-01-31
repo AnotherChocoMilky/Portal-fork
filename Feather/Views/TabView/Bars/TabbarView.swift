@@ -106,6 +106,11 @@ struct TabbarView: View {
 				InstallModifyDialogView(app: app)
 			}
 		}
+		.onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.SwitchTab"))) { notification in
+			if let tab = notification.object as? TabEnum {
+				selectedTab = tab
+			}
+		}
 		.onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.showInstallModifyPopup"))) { notification in
 			// Get the downloaded app from the Library
 			if let url = notification.object as? URL {

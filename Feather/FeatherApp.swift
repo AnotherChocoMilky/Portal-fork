@@ -24,6 +24,8 @@ struct FeatherApp: App {
     // URL Scheme Handling
     @State private var _pendingSourceURL: String? = nil
     @State private var _showSourceConfirmation = false
+    @State private var _showCertAdd = false
+    @State private var _showCertificates = false
 
 	var body: some Scene {
 		WindowGroup(content: {
@@ -78,6 +80,14 @@ struct FeatherApp: App {
 							.environment(\.navigateToUpdates, $navigateToUpdates)
 							.onOpenURL(perform: _handleURL)
 							.transition(.move(edge: .top).combined(with: .opacity))
+                            .sheet(isPresented: $_showCertAdd) {
+                                CertificatesAddView()
+                            }
+                            .sheet(isPresented: $_showCertificates) {
+                                NBNavigationView(.localized("Certificates")) {
+                                    CertificatesView()
+                                }
+                            }
 							.confirmationDialog(
 								.localized("Add Source"),
 								isPresented: $_showSourceConfirmation,
@@ -304,6 +314,19 @@ struct FeatherApp: App {
 			if let fullPath = url.validatedScheme(after: "/source/") {
 				FR.handleSource(fullPath) { }
 			}
+            /// feather://add-source
+            if url.host == "add-source" {
+                // Just open the app, user can manually add or we could navigate to sources
+                NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.sources)
+            }
+            /// feather://add-certificate
+            if url.host == "add-certificate" {
+                _showCertAdd = true
+            }
+            /// feather://open-certificates
+            if url.host == "open-certificates" {
+                _showCertificates = true
+            }
 			/// feather://install/<url.ipa>
 			if
 				let fullPath = url.validatedScheme(after: "/install/"),

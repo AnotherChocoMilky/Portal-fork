@@ -1,5 +1,6 @@
 import CoreData
 import ZsignSwift
+import WidgetKit
 
 // MARK: - Class extension: certificate
 extension Storage {
@@ -106,5 +107,18 @@ extension Storage {
 		let fetchRequest: NSFetchRequest<CertificatePair> = CertificatePair.fetchRequest()
 		fetchRequest.sortDescriptors = [NSSortDescriptor(keyPath: \CertificatePair.date, ascending: false)]
 		return (try? context.fetch(fetchRequest)) ?? []
+	}
+
+	func updateWidgetData(certName: String, expiryDate: Date?) {
+		let userDefaults = UserDefaults(suiteName: "group.ayon1xw.Feather") ?? .standard
+		userDefaults.set(certName, forKey: "widget.selectedCertName")
+		if let expiryDate = expiryDate {
+			userDefaults.set(expiryDate.timeIntervalSince1970, forKey: "widget.selectedCertExpiry")
+		} else {
+			userDefaults.removeObject(forKey: "widget.selectedCertExpiry")
+		}
+		userDefaults.synchronize()
+
+		WidgetCenter.shared.reloadAllTimelines()
 	}
 }

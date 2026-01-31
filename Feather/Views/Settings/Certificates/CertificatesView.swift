@@ -80,6 +80,15 @@ struct CertificatesView: View {
 			withAnimation {
 				appearAnimation = true
 			}
+			// Initial sync for widgets
+			if let cert = Storage.shared.getCertificate(for: _selectedCertBinding.wrappedValue) {
+				Storage.shared.updateWidgetData(certName: cert.nickname ?? "Unknown", expiryDate: cert.expiration)
+			}
+		}
+		.onChange(of: _selectedCertBinding.wrappedValue) { index in
+			if let cert = Storage.shared.getCertificate(for: index) {
+				Storage.shared.updateWidgetData(certName: cert.nickname ?? "Unknown", expiryDate: cert.expiration)
+			}
 		}
 	}
 	
