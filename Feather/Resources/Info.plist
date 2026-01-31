@@ -237,6 +237,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>feather</string>
+				<string>portal</string>
 				<string>new-portal</string>
 			</array>
 		</dict>

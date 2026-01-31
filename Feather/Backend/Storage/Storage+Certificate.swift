@@ -124,7 +124,7 @@ extension Storage {
         }
 
         func updateWidgetData(certName: String, expiryDate: Date?) {
-                let userDefaults = UserDefaults(suiteName: "group.ayon1xw.Portal") ?? .standard
+                let userDefaults = UserDefaults(suiteName: Storage.appGroupID) ?? .standard
                 userDefaults.set(certName, forKey: "widget.selectedCertName")
                 if let expiryDate = expiryDate {
                         userDefaults.set(expiryDate.timeIntervalSince1970, forKey: "widget.selectedCertExpiry")
@@ -133,8 +133,8 @@ extension Storage {
                 }
 
                 // Save recent apps for the widget
-                let signedApps = getSignedApps().prefix(3)
-                let widgetApps = signedApps.map { app in
+                let signedApps = getSignedApps().prefix(4)
+                let widgetApps = signedApps.map { app -> [String: String?] in
                         ["name": app.name ?? "Unknown", "icon": app.icon]
                 }
 

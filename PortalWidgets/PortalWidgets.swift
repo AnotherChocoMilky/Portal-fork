@@ -2,212 +2,65 @@ import WidgetKit
 import SwiftUI
 import AppIntents
 
-@main
-struct PortalWidgetsBundle: WidgetBundle {
-    @WidgetBundleBuilder
-    var body: some Widget {
-        if #available(iOS 17.0, *) {
-            QuickActionsWidget()
-            CertificateStatusWidget()
-            AllInOneWidget()
-        }
-    }
+// MARK: - Constants
+private let APP_GROUP_ID = "group.ayon1xw.Portal"
+
+// MARK: - Data Models
+struct WidgetApp: Codable {
+    let name: String
+    let icon: String?
 }
 
-// MARK: - App Intents
-struct AddSourceIntent: AppIntent {
-    static var title: LocalizedStringResource = "Add Source"
-    static var description = IntentDescription("Open Portal to add a new source.")
-    static var openAppWhenRun: Bool = true
-
-    func perform() async throws -> some IntentResult {
-        return .result()
-    }
-}
-
-struct AddCertificateIntent: AppIntent {
-    static var title: LocalizedStringResource = "Add Certificate"
-    static var description = IntentDescription("Open Portal to add a new certificate.")
-    static var openAppWhenRun: Bool = true
-
-    func perform() async throws -> some IntentResult {
-        return .result()
-    }
-}
-
-struct OpenCertificatesIntent: AppIntent {
-    static var title: LocalizedStringResource = "Open Certificates"
-    static var description = IntentDescription("Open Portal to view certificates.")
-    static var openAppWhenRun: Bool = true
-
-    func perform() async throws -> some IntentResult {
-        return .result()
-    }
-}
-
-struct SignAppIntent: AppIntent {
-    static var title: LocalizedStringResource = "Sign App"
-    static var description = IntentDescription("Open Portal to sign an app.")
-    static var openAppWhenRun: Bool = true
-
-    func perform() async throws -> some IntentResult {
-        return .result()
-    }
-}
-
-struct AddAndSignIntent: AppIntent {
-    static var title: LocalizedStringResource = "Add and Sign IPA"
-    static var description = IntentDescription("Open Portal to add and sign an IPA.")
-    static var openAppWhenRun: Bool = true
-
-    func perform() async throws -> some IntentResult {
-        return .result()
-    }
-}
-
-struct ClearCachesIntent: AppIntent {
-    static var title: LocalizedStringResource = "Clear Caches"
-    static var description = IntentDescription("Clear Portal's work cache.")
-    static var openAppWhenRun: Bool = true
-
-    func perform() async throws -> some IntentResult {
-        return .result()
-    }
-}
-
-struct ExportLogsIntent: AppIntent {
-    static var title: LocalizedStringResource = "Export Logs"
-    static var description = IntentDescription("Export Portal's diagnostic logs.")
-    static var openAppWhenRun: Bool = true
-
-    func perform() async throws -> some IntentResult {
-        return .result()
-    }
-}
-
-struct RebuildIconCacheIntent: AppIntent {
-    static var title: LocalizedStringResource = "Rebuild Icon Cache"
-    static var description = IntentDescription("Rebuild broken app icons.")
-    static var openAppWhenRun: Bool = true
-
-    func perform() async throws -> some IntentResult {
-        return .result()
-    }
-}
-
-struct OpenSettingsIntent: AppIntent {
-    static var title: LocalizedStringResource = "Open Settings"
-    static var description = IntentDescription("Open Portal's settings.")
-    static var openAppWhenRun: Bool = true
-
-    func perform() async throws -> some IntentResult {
-        return .result()
-    }
-}
-
-struct OpenAboutIntent: AppIntent {
-    static var title: LocalizedStringResource = "Open About"
-    static var description = IntentDescription("Open Portal's about page.")
-    static var openAppWhenRun: Bool = true
-
-    func perform() async throws -> some IntentResult {
-        return .result()
-    }
-}
-
-struct QuickActionsIntent: AppIntent {
-    static var title: LocalizedStringResource = "Quick Actions"
-    static var description = IntentDescription("Open Portal's quick actions menu.")
-    static var openAppWhenRun: Bool = true
-
-    func perform() async throws -> some IntentResult {
-        return .result()
-    }
-}
-
-@available(iOS 17.0, *)
-struct PortalConfigurationIntent: WidgetConfigurationIntent {
-    static var title: LocalizedStringResource = "Portal"
-    static var description = IntentDescription("Customize your Portal widget.")
-
-    @Parameter(title: "Custom Title", default: "Portal")
-    var customTitle: String?
-
-    @Parameter(title: "Show Expiry Date", default: true)
-    var showExpiry: Bool
-}
-
-// MARK: - Timeline Entry
-@available(iOS 17.0, *)
 struct WidgetEntry: TimelineEntry {
     let date: Date
     let certName: String
     let expiryDate: Date?
     let daysRemaining: Int?
     let recentApps: [WidgetApp]
-    let configuration: PortalConfigurationIntent
-    
+    let isPlaceholder: Bool
+
+    // Configuration options (from Intent on iOS 17, or defaults on iOS 16)
+    var customTitle: String? = nil
+    var showExpiry: Bool = true
+
     static var placeholder: WidgetEntry {
-        WidgetEntry(date: Date(), certName: "Developer Certificate", expiryDate: Date().addingTimeInterval(86400 * 30), daysRemaining: 30, recentApps: [
-            WidgetApp(name: "Feather", icon: nil),
-            WidgetApp(name: "Example App", icon: nil),
-            WidgetApp(name: "Test Flight", icon: nil)
-        ], configuration: PortalConfigurationIntent())
+        WidgetEntry(
+            date: Date(),
+            certName: "Developer Certificate",
+            expiryDate: Date().addingTimeInterval(86400 * 30),
+            daysRemaining: 30,
+            recentApps: [
+                WidgetApp(name: "Feather", icon: nil),
+                WidgetApp(name: "Example", icon: nil),
+                WidgetApp(name: "Portal", icon: nil)
+            ],
+            isPlaceholder: true
+        )
     }
-    
+
     static var empty: WidgetEntry {
-        WidgetEntry(date: Date(), certName: "No Certificate", expiryDate: nil, daysRemaining: nil, recentApps: [
-            WidgetApp(name: "No Recent Apps", icon: nil)
-        ], configuration: PortalConfigurationIntent())
+        WidgetEntry(
+            date: Date(),
+            certName: "No Certificate",
+            expiryDate: nil,
+            daysRemaining: nil,
+            recentApps: [],
+            isPlaceholder: false
+        )
     }
 }
 
-struct WidgetApp: Codable {
-    let name: String
-    let icon: String?
-}
+// MARK: - Shared Logic
+struct WidgetDataFetcher {
+    static func fetchLatestEntry() -> WidgetEntry {
+        let userDefaults = UserDefaults(suiteName: APP_GROUP_ID) ?? .standard
 
-// MARK: - Timeline Provider
-@available(iOS 17.0, *)
-struct WidgetTimelineProvider: AppIntentTimelineProvider {
-    private let appGroupID = "group.ayon1xw.Portal"
-    
-    func placeholder(in context: Context) -> WidgetEntry {
-        .placeholder
-    }
-    
-    func snapshot(for configuration: PortalConfigurationIntent, in context: Context) async -> WidgetEntry {
-        if context.isPreview {
-            return .placeholder
-        } else {
-            return getCurrentEntry(for: configuration)
-        }
-    }
-    
-    func timeline(for configuration: PortalConfigurationIntent, in context: Context) async -> Timeline<WidgetEntry> {
-        let entry = getCurrentEntry(for: configuration)
-        let nextUpdate = Calendar.current.date(byAdding: .hour, value: 4, to: Date()) ?? Date()
-        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
-        return timeline
-    }
-    
-    private func getCurrentEntry(for configuration: PortalConfigurationIntent) -> WidgetEntry {
-        let userDefaults = UserDefaults(suiteName: appGroupID) ?? .standard
-
-        // Handle custom title logic more gracefully
-        let storedCertName = userDefaults.string(forKey: "widget.selectedCertName")
-        let certName: String
-        if let custom = configuration.customTitle, !custom.isEmpty, custom != "Portal" {
-            certName = custom
-        } else {
-            certName = storedCertName ?? "No Certificate"
-        }
-        
+        let certName = userDefaults.string(forKey: "widget.selectedCertName") ?? "No Certificate"
         let expiryTime = userDefaults.double(forKey: "widget.selectedCertExpiry")
-        
+
         var expiryDate: Date? = nil
         var daysRemaining: Int? = nil
-        
+
         if expiryTime > 0 {
             expiryDate = Date(timeIntervalSince1970: expiryTime)
             daysRemaining = Calendar.current.dateComponents([.day], from: Date(), to: expiryDate!).day
@@ -218,28 +71,184 @@ struct WidgetTimelineProvider: AppIntentTimelineProvider {
            let decoded = try? JSONDecoder().decode([WidgetApp].self, from: data) {
             recentApps = decoded
         }
-        
-        return WidgetEntry(date: Date(), certName: certName, expiryDate: expiryDate, daysRemaining: daysRemaining, recentApps: recentApps, configuration: configuration)
+
+        return WidgetEntry(
+            date: Date(),
+            certName: certName,
+            expiryDate: expiryDate,
+            daysRemaining: daysRemaining,
+            recentApps: recentApps,
+            isPlaceholder: false
+        )
     }
 }
 
-// MARK: - Quick Actions Widget
+// MARK: - iOS 17+ App Intents
+@available(iOS 17.0, *)
+struct PortalConfigurationIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource = "Portal Configuration"
+    static var description = IntentDescription("Customize your Portal widget.")
+
+    @Parameter(title: "Custom Title", default: "Portal")
+    var customTitle: String?
+
+    @Parameter(title: "Show Expiry Date", default: true)
+    var showExpiry: Bool
+}
+
+
+// MARK: - Timeline Providers
+
+@available(iOS 17.0, *)
+struct PortalAppIntentTimelineProvider: AppIntentTimelineProvider {
+    func placeholder(in context: Context) -> WidgetEntry {
+        .placeholder
+    }
+    
+    func snapshot(for configuration: PortalConfigurationIntent, in context: Context) async -> WidgetEntry {
+        if context.isPreview { return .placeholder }
+        var entry = WidgetDataFetcher.fetchLatestEntry()
+        entry.customTitle = configuration.customTitle
+        entry.showExpiry = configuration.showExpiry
+        return entry
+    }
+    
+    func timeline(for configuration: PortalConfigurationIntent, in context: Context) async -> Timeline<WidgetEntry> {
+        var entry = WidgetDataFetcher.fetchLatestEntry()
+        entry.customTitle = configuration.customTitle
+        entry.showExpiry = configuration.showExpiry
+
+        let nextUpdate = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
+        return Timeline(entries: [entry], policy: .after(nextUpdate))
+    }
+}
+
+struct PortalLegacyTimelineProvider: TimelineProvider {
+    func placeholder(in context: Context) -> WidgetEntry {
+        .placeholder
+    }
+    
+    func getSnapshot(in context: Context, completion: @escaping (WidgetEntry) -> Void) {
+        if context.isPreview {
+            completion(.placeholder)
+        } else {
+            completion(WidgetDataFetcher.fetchLatestEntry())
+        }
+    }
+    
+    func getTimeline(in context: Context, completion: @escaping (Timeline<WidgetEntry>) -> Void) {
+        let entry = WidgetDataFetcher.fetchLatestEntry()
+        let nextUpdate = Calendar.current.date(byAdding: .hour, value: 1, to: Date()) ?? Date()
+        let timeline = Timeline(entries: [entry], policy: .after(nextUpdate))
+        completion(timeline)
+    }
+}
+
+// MARK: - Widget Bundle
+@main
+struct PortalWidgetsBundle: WidgetBundle {
+    @WidgetBundleBuilder
+    var body: some Widget {
+        if #available(iOS 17.0, *) {
+            QuickActionsWidget()
+            CertificateStatusWidget()
+            AllInOneWidget()
+        } else {
+            QuickActionsWidgetLegacy()
+            CertificateStatusWidgetLegacy()
+            AllInOneWidgetLegacy()
+        }
+    }
+}
+
+// MARK: - Widgets (Modern iOS 17+)
+
 @available(iOS 17.0, *)
 struct QuickActionsWidget: Widget {
     let kind: String = "QuickActionsWidget"
     
     var body: some WidgetConfiguration {
-        AppIntentConfiguration(kind: kind, intent: PortalConfigurationIntent.self, provider: WidgetTimelineProvider()) { entry in
-            QuickActionsWidgetThumbnailView(entry: entry)
+        AppIntentConfiguration(kind: kind, intent: PortalConfigurationIntent.self, provider: PortalAppIntentTimelineProvider()) { entry in
+            QuickActionsWidgetView(entry: entry)
         }
         .configurationDisplayName("Quick Actions")
-        .description("Quickly add sources or certificates to Portal.")
+        .description("Quickly access Portal tools.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular])
     }
 }
 
 @available(iOS 17.0, *)
-struct QuickActionsWidgetThumbnailView: View {
+struct CertificateStatusWidget: Widget {
+    let kind: String = "CertificateStatusWidget"
+
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: kind, intent: PortalConfigurationIntent.self, provider: PortalAppIntentTimelineProvider()) { entry in
+            CertificateStatusWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Certificate Status")
+        .description("Monitor your certificate status.")
+        .supportedFamilies([.systemSmall, .accessoryRectangular])
+    }
+}
+
+@available(iOS 17.0, *)
+struct AllInOneWidget: Widget {
+    let kind: String = "AllInOneWidget"
+
+    var body: some WidgetConfiguration {
+        AppIntentConfiguration(kind: kind, intent: PortalConfigurationIntent.self, provider: PortalAppIntentTimelineProvider()) { entry in
+            AllInOneWidgetView(entry: entry)
+        }
+        .configurationDisplayName("All In One")
+        .description("Complete access to all Portal features.")
+        .supportedFamilies([.systemMedium, .systemLarge])
+    }
+}
+
+// MARK: - Widgets (Legacy iOS 16)
+
+struct QuickActionsWidgetLegacy: Widget {
+    let kind: String = "QuickActionsWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: PortalLegacyTimelineProvider()) { entry in
+            QuickActionsWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Quick Actions")
+        .description("Quickly access Portal tools.")
+        .supportedFamilies([.systemSmall, .systemMedium])
+    }
+}
+
+struct CertificateStatusWidgetLegacy: Widget {
+    let kind: String = "CertificateStatusWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: PortalLegacyTimelineProvider()) { entry in
+            CertificateStatusWidgetView(entry: entry)
+        }
+        .configurationDisplayName("Certificate Status")
+        .description("Monitor your certificate status.")
+        .supportedFamilies([.systemSmall])
+    }
+}
+
+struct AllInOneWidgetLegacy: Widget {
+    let kind: String = "AllInOneWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: PortalLegacyTimelineProvider()) { entry in
+            AllInOneWidgetView(entry: entry)
+        }
+        .configurationDisplayName("All In One")
+        .description("Complete access to all Portal features.")
+        .supportedFamilies([.systemMedium, .systemLarge])
+    }
+}
+
+// MARK: - Views
+
+struct QuickActionsWidgetView: View {
     var entry: WidgetEntry
     @Environment(\.widgetFamily) var family
     
@@ -251,11 +260,11 @@ struct QuickActionsWidgetThumbnailView: View {
             case .systemMedium:
                 mediumWidget
             case .accessoryCircular:
-                accessoryCircularWidget
+                accessoryCircular
             case .accessoryRectangular:
-                accessoryRectangularWidget
+                accessoryRectangular
             default:
-                Text("Portal")
+                smallWidget
             }
         }
         .widgetBackground()
@@ -263,79 +272,92 @@ struct QuickActionsWidgetThumbnailView: View {
     
     private var smallWidget: some View {
         VStack(spacing: 8) {
-            HStack {
-                Image(systemName: "square.grid.2x2.fill")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Color.accentColor)
-                Text(entry.configuration.customTitle ?? "Portal")
-                    .font(.system(size: 12, weight: .bold))
-                Spacer()
-            }
+            HeaderView(title: entry.customTitle ?? "Portal", icon: "bolt.fill")
             
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                QuickToolButton(intent: SignAppIntent(), icon: "signature", title: "Sign", color: .blue, url: "portal://sign-app")
-                QuickToolButton(intent: AddSourceIntent(), icon: "plus.circle.fill", title: "Source", color: .orange, url: "portal://add-source")
-                QuickToolButton(intent: AddCertificateIntent(), icon: "checkmark.seal.fill", title: "Cert", color: .green, url: "portal://add-certificate")
-                QuickToolButton(intent: OpenSettingsIntent(), icon: "gearshape.fill", title: "Config", color: .purple, url: "portal://open-settings")
+                ActionButton(title: "Sign", icon: "signature", color: .blue, url: "portal://sign-app")
+                ActionButton(title: "Add", icon: "plus.circle.fill", color: .green, url: "portal://add-source")
+                ActionButton(title: "Cert", icon: "checkmark.seal.fill", color: .purple, url: "portal://add-certificate")
+                ActionButton(title: "Config", icon: "gearshape.fill", color: .orange, url: "portal://open-settings")
             }
         }
         .padding(12)
     }
     
     private var mediumWidget: some View {
-        HStack(spacing: 12) {
-            ActionCard(intent: AddSourceIntent(), icon: "plus.circle.fill", label: "Add Source", color: .blue, url: "portal://add-source")
-            ActionCard(intent: AddCertificateIntent(), icon: "checkmark.seal.fill", label: "Add Cert", color: .green, url: "portal://add-certificate")
-            ActionCard(intent: OpenCertificatesIntent(), icon: "calendar.badge.clock", label: "Check Expiry", color: .orange, url: "portal://open-certificates")
+        VStack(spacing: 12) {
+            HeaderView(title: entry.customTitle ?? "Portal Quick Actions", icon: "bolt.fill")
+
+            HStack(spacing: 10) {
+                ActionCard(title: "Add Source", icon: "plus.circle.fill", color: .blue, url: "portal://add-source")
+                ActionCard(title: "Add Cert", icon: "checkmark.seal.fill", color: .green, url: "portal://add-certificate")
+                ActionCard(title: "Sign App", icon: "signature", color: .purple, url: "portal://sign-app")
+            }
         }
         .padding(14)
     }
     
-    private var accessoryCircularWidget: some View {
-        ActionButton(intent: QuickActionsIntent(), url: "portal://quick-actions") {
-            ZStack {
-                AccessoryWidgetBackground()
-                Image(systemName: "bolt.fill")
-                    .font(.title2)
-                    .foregroundStyle(Color.accentColor)
-            }
-        }
+    private var accessoryCircular: some View {
+        Image(systemName: "bolt.fill")
+            .font(.title)
+            .widgetURL(URL(string: "portal://quick-actions"))
     }
     
-    private var accessoryRectangularWidget: some View {
-        ActionButton(intent: QuickActionsIntent(), url: "portal://quick-actions") {
-            VStack(alignment: .leading, spacing: 2) {
-                HStack {
-                    Image(systemName: "bolt.fill")
-                        .foregroundStyle(Color.accentColor)
-                    Text(entry.configuration.customTitle ?? "Portal")
-                        .font(.headline)
-                        .lineLimit(1)
-                }
-                Text("Quick Actions")
-                    .font(.caption)
+    private var accessoryRectangular: some View {
+        VStack(alignment: .leading) {
+            Label(entry.customTitle ?? "Portal", systemImage: "bolt.fill")
+                .font(.headline)
+            Text("Quick Actions")
+                .font(.caption)
+        }
+        .widgetURL(URL(string: "portal://quick-actions"))
+    }
+}
+
+struct CertificateStatusWidgetView: View {
+    var entry: WidgetEntry
+    @Environment(\.widgetFamily) var family
+
+    private var statusColor: Color {
+        guard let days = entry.daysRemaining else { return .secondary }
+        if days < 7 { return .red }
+        if days < 30 { return .orange }
+        return .green
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HeaderView(title: "Certificate", icon: "checkmark.seal.fill", color: statusColor)
+
+            Spacer()
+
+            if entry.certName == "No Certificate" && !entry.isPlaceholder {
+                Text("No Certificate Found")
+                    .font(.system(size: 12, weight: .bold))
                     .foregroundStyle(.secondary)
+                Text("Open Portal to add one")
+                    .font(.system(size: 10))
+                    .foregroundStyle(.tertiary)
+            } else {
+                Text(entry.certName)
+                    .font(.system(size: 14, weight: .bold))
+                    .lineLimit(2)
+
+                if entry.showExpiry, let days = entry.daysRemaining {
+                    Text("\(days) days remaining")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(statusColor)
+                }
             }
+
+            Spacer()
         }
+        .padding(12)
+        .widgetBackground()
+        .widgetURL(URL(string: "portal://open-certificates"))
     }
 }
 
-// MARK: - All In One Widget
-@available(iOS 17.0, *)
-struct AllInOneWidget: Widget {
-    let kind: String = "AllInOneWidget"
-
-    var body: some WidgetConfiguration {
-        AppIntentConfiguration(kind: kind, intent: PortalConfigurationIntent.self, provider: WidgetTimelineProvider()) { entry in
-            AllInOneWidgetView(entry: entry)
-        }
-        .configurationDisplayName("All In One")
-        .description("Quick access to all Portal tools.")
-        .supportedFamilies([.systemMedium, .systemLarge])
-    }
-}
-
-@available(iOS 17.0, *)
 struct AllInOneWidgetView: View {
     var entry: WidgetEntry
     @Environment(\.widgetFamily) var family
@@ -343,84 +365,77 @@ struct AllInOneWidgetView: View {
     var body: some View {
         VStack(spacing: 12) {
             HStack {
-                HStack(spacing: 8) {
-                    Image(systemName: "square.grid.2x2.fill")
-                        .foregroundStyle(Color.accentColor)
-                    Text(entry.configuration.customTitle ?? "Portal")
-                        .font(.system(size: 16, weight: .bold))
-                }
+                HeaderView(title: entry.customTitle ?? "Portal", icon: "square.grid.2x2.fill")
                 Spacer()
-                Text("All-In-One")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 4)
-                    .background(Color.accentColor.opacity(0.1))
-                    .clipShape(Capsule())
+                if family == .systemLarge {
+                    Text("Pro")
+                        .font(.system(size: 10, weight: .bold))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.accentColor.opacity(0.2))
+                        .clipShape(Capsule())
+                }
             }
 
             VStack(spacing: 8) {
                 HStack(spacing: 8) {
-                    QuickToolButton(intent: SignAppIntent(), icon: "signature", title: "Sign", color: .blue, url: "portal://sign-app")
-                    QuickToolButton(intent: AddAndSignIntent(), icon: "plus.app.fill", title: "Add & Sign", color: .green, url: "portal://add-and-sign")
-                    QuickToolButton(intent: AddSourceIntent(), icon: "plus.circle.fill", title: "Source", color: .orange, url: "portal://add-source")
-                }
-
-                HStack(spacing: 8) {
-                    QuickToolButton(intent: AddCertificateIntent(), icon: "checkmark.seal.fill", title: "Add Cert", color: .purple, url: "portal://add-certificate")
-                    QuickToolButton(intent: ClearCachesIntent(), icon: "trash.fill", title: "Clear", color: .red, url: "portal://clear-caches")
-                    QuickToolButton(intent: ExportLogsIntent(), icon: "doc.text.fill", title: "Logs", color: .gray, url: "portal://export-logs")
+                    ActionButton(title: "Sign", icon: "signature", color: .blue, url: "portal://sign-app")
+                    ActionButton(title: "Add", icon: "plus.app.fill", color: .green, url: "portal://add-and-sign")
+                    ActionButton(title: "Source", icon: "plus.circle.fill", color: .orange, url: "portal://add-source")
                 }
 
                 if family == .systemLarge {
                     HStack(spacing: 8) {
-                        QuickToolButton(intent: RebuildIconCacheIntent(), icon: "app.badge.fill", title: "Icons", color: .cyan, url: "portal://rebuild-icon-cache")
-                        QuickToolButton(intent: OpenSettingsIntent(), icon: "gearshape.fill", title: "Settings", color: .indigo, url: "portal://open-settings")
-                        QuickToolButton(intent: OpenAboutIntent(), icon: "info.circle.fill", title: "About", color: .teal, url: "portal://open-about")
+                        ActionButton(title: "Certs", icon: "checkmark.seal.fill", color: .purple, url: "portal://open-certificates")
+                        ActionButton(title: "Clear", icon: "trash.fill", color: .red, url: "portal://clear-caches")
+                        ActionButton(title: "Logs", icon: "doc.text.fill", color: .gray, url: "portal://export-logs")
                     }
 
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 6) {
                         Text("Recently Signed")
-                            .font(.system(size: 12, weight: .bold))
+                            .font(.system(size: 11, weight: .bold))
                             .foregroundStyle(.secondary)
 
-                        HStack(spacing: 12) {
+                        HStack(spacing: 10) {
                             if entry.recentApps.isEmpty {
-                                Text("No recently signed apps")
-                                    .font(.system(size: 11))
+                                Text("No apps signed yet")
+                                    .font(.system(size: 10))
                                     .foregroundStyle(.tertiary)
+                                    .frame(maxWidth: .infinity, alignment: .center)
+                                    .padding(.vertical, 4)
                             } else {
-                                ForEach(entry.recentApps.prefix(3), id: \.name) { app in
-                                    RecentAppView(app: app)
+                                ForEach(entry.recentApps.prefix(4), id: \.name) { app in
+                                    RecentAppIconView(app: app)
                                 }
                             }
                         }
                     }
-                    .padding(10)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(8)
                     .background(Color.accentColor.opacity(0.05))
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-
-                    Spacer(minLength: 0)
-
-                    HStack {
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(entry.certName)
-                                .font(.system(size: 12, weight: .bold))
-                            if entry.configuration.showExpiry, let days = entry.daysRemaining {
-                                Text("\(days) days remaining")
-                                    .font(.system(size: 10))
-                                    .foregroundStyle(days < 7 ? .red : .secondary)
-                            }
-                        }
-                        Spacer()
-                        Image(systemName: "checkmark.seal.fill")
-                            .foregroundStyle(entry.daysRemaining ?? 0 < 7 ? .orange : .green)
-                    }
-                    .padding(10)
-                    .background(Color.accentColor.opacity(0.05))
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
+            }
+
+            if family == .systemLarge {
+                Spacer(minLength: 0)
+
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(entry.certName)
+                            .font(.system(size: 11, weight: .bold))
+                        if entry.showExpiry, let days = entry.daysRemaining {
+                            Text("\(days) days left")
+                                .font(.system(size: 9))
+                                .foregroundStyle(days < 7 ? .red : .secondary)
+                        }
+                    }
+                    Spacer()
+                    Image(systemName: "shield.checkered")
+                        .foregroundStyle(entry.daysRemaining ?? 0 < 7 ? .orange : .green)
+                }
+                .padding(8)
+                .background(Color.accentColor.opacity(0.05))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
             }
         }
         .padding(14)
@@ -428,263 +443,115 @@ struct AllInOneWidgetView: View {
     }
 }
 
-@available(iOS 17.0, *)
-struct QuickToolButton<I: AppIntent>: View {
-    let intent: I
-    let icon: String
+// MARK: - Components
+
+struct HeaderView: View {
     let title: String
+    let icon: String
+    var color: Color = .accentColor
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(color)
+            Text(title)
+                .font(.system(size: 12, weight: .bold))
+                .lineLimit(1)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+struct ActionButton: View {
+    let title: String
+    let icon: String
     let color: Color
     let url: String
 
     var body: some View {
-        ActionButton(intent: intent, url: url) {
-            VStack(spacing: 6) {
+        Link(destination: URL(string: url) ?? URL(string: "portal://home")!) {
+            VStack(spacing: 4) {
                 Image(systemName: icon)
-                    .font(.system(size: 20))
+                    .font(.system(size: 18))
                     .foregroundStyle(color)
                 Text(title)
                     .font(.system(size: 9, weight: .bold))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .foregroundStyle(.primary)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
             .background(color.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
         }
     }
 }
 
-// MARK: - Certificate Status Widget
-@available(iOS 17.0, *)
-struct CertificateStatusWidget: Widget {
-    let kind: String = "CertificateStatusWidget"
-    
-    var body: some WidgetConfiguration {
-        AppIntentConfiguration(kind: kind, intent: PortalConfigurationIntent.self, provider: WidgetTimelineProvider()) { entry in
-            CertificateStatusWidgetView(entry: entry)
-        }
-        .configurationDisplayName("Certificate Status")
-        .description("Monitor your certificate's expiration status.")
-        .supportedFamilies([.systemSmall, .accessoryRectangular])
-    }
-}
+struct ActionCard: View {
+    let title: String
+    let icon: String
+    let color: Color
+    let url: String
 
-@available(iOS 17.0, *)
-struct CertificateStatusWidgetView: View {
-    var entry: WidgetEntry
-    @Environment(\.widgetFamily) var family
-    
-    private var statusColor: Color {
-        guard let days = entry.daysRemaining else { return .secondary }
-        if days < 0 { return .red }
-        if days < 7 { return .orange }
-        if days < 30 { return .yellow }
-        return .green
-    }
-    
-    private var statusText: String {
-        guard let days = entry.daysRemaining else { return "No data" }
-        if days < 0 { return "Expired" }
-        if days == 0 { return "Expires today" }
-        if days == 1 { return "1 day left" }
-        return "\(days) days left"
-    }
-    
     var body: some View {
-        ActionButton(intent: OpenCertificatesIntent(), url: "portal://open-certificates") {
-            Group {
-                switch family {
-                case .systemSmall:
-                    smallWidget
-                case .accessoryRectangular:
-                    accessoryRectangularWidget
-                default:
-                    smallWidget
-                }
-            }
-        }
-        .widgetBackground()
-    }
-    
-    private var smallWidget: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Image(systemName: "checkmark.seal.fill")
-                    .foregroundStyle(statusColor)
-                Text(entry.configuration.customTitle ?? "Certificate")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.secondary)
-            }
-            
-            Spacer()
-            
-            Text(entry.certName)
-                .font(.system(size: 14, weight: .bold))
-                .lineLimit(2)
-                .minimumScaleFactor(0.8)
-            
-            if let days = entry.daysRemaining {
-                ProgressView(value: min(Double(max(0, days)), 365), total: 365)
-                    .tint(statusColor)
-                    .background(statusColor.opacity(0.1))
-                    .clipShape(Capsule())
-                    .scaleEffect(x: 1, y: 0.5, anchor: .center)
-            }
-
-            HStack(spacing: 4) {
-                Circle()
-                    .fill(statusColor)
-                    .frame(width: 6, height: 6)
-                Text(statusText)
+        Link(destination: URL(string: url) ?? URL(string: "portal://home")!) {
+            VStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 24))
+                    .foregroundStyle(color)
+                Text(title)
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(statusColor)
-            }
-        }
-        .padding(12)
-    }
-    
-    private var accessoryRectangularWidget: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(entry.certName)
-                .font(.headline)
-                .lineLimit(1)
-            
-            if entry.configuration.showExpiry {
-                Text(statusText)
-                    .font(.body)
-                    .foregroundStyle(entry.daysRemaining ?? 0 < 7 ? .red : .primary)
-            }
-        }
-    }
-}
-
-// MARK: - Interactive Components
-@available(iOS 17.0, *)
-struct ActionButton<I: AppIntent, Content: View>: View {
-    let intent: I
-    let url: String
-    @ViewBuilder let content: () -> Content
-
-    var body: some View {
-        if #available(iOS 17.0, *) {
-            Button(intent: intent) {
-                content()
-            }
-            .buttonStyle(.plain)
-        } else {
-            Link(destination: URL(string: url)!) {
-                content()
-            }
-        }
-    }
-}
-
-@available(iOS 17.0, *)
-struct ActionRow<I: AppIntent>: View {
-    let intent: I
-    let icon: String
-    let label: String
-    let color: Color
-    let url: String
-
-    var body: some View {
-        ActionButton(intent: intent, url: url) {
-            HStack {
-                Image(systemName: icon)
-                    .foregroundStyle(color)
-                Text(label)
-                    .font(.system(size: 13, weight: .semibold))
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-            }
-            .padding(10)
-            .background(color.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        }
-    }
-}
-
-@available(iOS 17.0, *)
-struct ActionCard<I: AppIntent>: View {
-    let intent: I
-    let icon: String
-    let label: String
-    let color: Color
-    let url: String
-
-    var body: some View {
-        ActionButton(intent: intent, url: url) {
-            VStack(spacing: 10) {
-                Image(systemName: icon)
-                    .font(.system(size: 28))
-                    .foregroundStyle(color)
-                Text(label)
-                    .font(.system(size: 12, weight: .semibold))
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(8)
             .background(color.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
 }
 
-@available(iOS 17.0, *)
-struct RecentAppView: View {
+struct RecentAppIconView: View {
     let app: WidgetApp
 
     var body: some View {
         VStack(spacing: 4) {
-            // Support both asset names and file paths
-            let iconImage: UIImage? = {
-                if let iconName = app.icon {
-                    if let image = UIImage(named: iconName) {
-                        return image
+            Group {
+                if let iconPath = app.icon, let image = UIImage(contentsOfFile: iconPath) {
+                    Image(uiImage: image)
+                        .resizable()
+                } else if let iconName = app.icon, let image = UIImage(named: iconName) {
+                    Image(uiImage: image)
+                        .resizable()
+                } else {
+                    ZStack {
+                        Color.accentColor.opacity(0.1)
+                        Image(systemName: "app.badge")
+                            .font(.system(size: 12))
+                            .foregroundStyle(Color.accentColor)
                     }
-                    if let image = UIImage(contentsOfFile: iconName) {
-                        return image
-                    }
-                }
-                return nil
-            }()
-
-            if let image = iconImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 32, height: 32)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-            } else {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.accentColor.opacity(0.12))
-                        .frame(width: 32, height: 32)
-                    Image(systemName: app.name == "No Recent Apps" ? "square.dashed" : "app.badge.fill")
-                        .font(.system(size: 16))
-                        .foregroundStyle(Color.accentColor.opacity(0.8))
                 }
             }
+            .frame(width: 28, height: 28)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+
             Text(app.name)
-                .font(.system(size: 8, weight: .medium))
+                .font(.system(size: 7, weight: .medium))
                 .lineLimit(1)
-                .frame(width: 40)
+                .frame(width: 32)
         }
     }
 }
 
-// MARK: - Widget Background Extension
+// MARK: - Extensions
 extension View {
     func widgetBackground() -> some View {
         if #available(iOS 17.0, *) {
             return self.containerBackground(for: .widget) {
-                Color(.systemBackground)
+                Color(uiColor: .systemBackground)
             }
         } else {
-            return self.padding().background(Color(.systemBackground))
+            return self.background(Color(uiColor: .systemBackground))
         }
     }
 }
