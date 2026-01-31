@@ -39,151 +39,10 @@ struct BackupRestoreView: View {
     // MARK: Body
     var body: some View {
         NBList(.localized("Backup & Restore")) {
-            Section {
-                ZStack {
-                    LinearGradient(colors: [Color.green.opacity(0.1), Color.blue.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                        .cornerRadius(20)
-
-                    VStack(spacing: 12) {
-                        Image(systemName: "arrow.counterclockwise.icloud.fill")
-                            .font(.system(size: 40))
-                            .foregroundStyle(LinearGradient(colors: [.green, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
-
-                        Text(.localized("Secure your data by creating a backup of your apps and settings."))
-                            .font(.system(.subheadline, design: .rounded))
-                            .multilineTextAlignment(.center)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal)
-                    }
-                    .padding(.vertical, 30)
-                }
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
-            }
-
-            Section {
-                HStack(spacing: 16) {
-                    Button {
-                        isBackupOptionsPresented = true
-                    } label: {
-                        VStack(spacing: 12) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color.green.opacity(0.15))
-                                    .frame(width: 54, height: 54)
-                                Image(systemName: "arrow.up.doc.fill")
-                                    .font(.title2)
-                                    .foregroundStyle(.green)
-                            }
-                            Text(.localized("Create Backup"))
-                                .font(.system(.subheadline, weight: .bold, design: .rounded))
-                                .foregroundStyle(.green)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 20)
-                        .background(Color.green.opacity(0.05))
-                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-
-                    Button {
-                        isImportIPAPresented = true
-                    } label: {
-                        VStack(spacing: 12) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color.blue.opacity(0.15))
-                                    .frame(width: 54, height: 54)
-                                Image(systemName: "arrow.down.doc.fill")
-                                    .font(.title2)
-                                    .foregroundStyle(.blue)
-                            }
-                            Text(.localized("Restore Backup"))
-                                .font(.system(.subheadline, weight: .bold, design: .rounded))
-                                .foregroundStyle(.blue)
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 20)
-                        .background(Color.blue.opacity(0.05))
-                        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                    }
-                    .buttonStyle(.plain)
-                }
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
-            } header: {
-                AppearanceSectionHeader(title: String.localized("Quick Actions"), icon: "bolt.fill")
-            }
-
-            // Advanced Tools Section
-            if advancedBackupTools {
-                Section {
-                    Button {
-                        handleExportFullDatabase()
-                    } label: {
-                        Label(.localized("Export Full Database"), systemImage: "cylinder.split.1x2.fill")
-                    }
-
-                    Button {
-                        isVerifyFilePickerPresented = true
-                    } label: {
-                        Label(.localized("Verify Backup Integrity"), systemImage: "shield.checkerboard")
-                    }
-
-                    Divider()
-
-                    Button {
-                        handleClearCaches()
-                    } label: {
-                        Label(.localized("Clear All Caches"), systemImage: "trash.fill")
-                    }
-
-                    Button {
-                        handleResetSettings()
-                    } label: {
-                        Label(.localized("Reset All Settings"), systemImage: "arrow.counterclockwise.circle.fill")
-                    }
-
-                    Button {
-                        handleExportLogs()
-                    } label: {
-                        Label(.localized("Export Application Logs"), systemImage: "doc.text.fill")
-                    }
-
-                    Button {
-                        handleRebuildIconCache()
-                    } label: {
-                        Label(.localized("Rebuild Icon Cache"), systemImage: "sparkles")
-                    }
-
-                    Button {
-                        handleViewPairingStatus()
-                    } label: {
-                        Label(.localized("View Pairing Status"), systemImage: "link.circle.fill")
-                    }
-                } header: {
-                    AppearanceSectionHeader(title: String.localized("Advanced Tools"), icon: "wrench.and.screwdriver.fill")
-                }
-            }
-
-            // Information sections with modern cards
-            Section {
-                infoCard(
-                    icon: "checkmark.shield.fill",
-                    iconColor: .blue,
-                    title: .localized("What's Included"),
-                    description: .localized("Backups can include certificates, provisioning profiles, signed apps, imported apps, sources, and all app settings.")
-                )
-
-                infoCard(
-                    icon: "exclamationmark.triangle.fill",
-                    iconColor: .orange,
-                    title: .localized("Important"),
-                    description: .localized("Restoring requires the app to restart. Certificate restoration preserves files for manual re-import if needed.")
-                )
-            } header: {
-                AppearanceSectionHeader(title: String.localized("About Backups"), icon: "info.circle.fill")
-            }
+            _headerSection
+            _quickActionsSection
+            _advancedToolsSection
+            _aboutSection
         }
         .sheet(isPresented: $isBackupOptionsPresented) {
             BackupOptionsView(
@@ -265,50 +124,209 @@ struct BackupRestoreView: View {
                 }
             }
         }
-        .overlay {
-            if isVerifying {
-                ZStack {
-                    Color.black.opacity(0.4).ignoresSafeArea()
-                    VStack(spacing: 12) {
-                        ProgressView()
-                            .tint(.white)
-                        Text("Verifying...")
-                            .foregroundStyle(.white)
-                    }
-                    .padding(24)
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(16)
-                }
-            }
+        .overlay { _statusOverlays }
+    }
 
-            if isRestoring {
-                ZStack {
-                    Color.black.opacity(0.4).ignoresSafeArea()
-                    VStack(spacing: 12) {
-                        ProgressView()
-                            .tint(.white)
-                        Text("Restoring...")
-                            .foregroundStyle(.white)
-                    }
-                    .padding(24)
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(16)
-                }
-            }
+    @ViewBuilder
+    private var _headerSection: some View {
+        Section {
+            ZStack {
+                LinearGradient(colors: [Color.green.opacity(0.1), Color.blue.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    .cornerRadius(20)
 
-            if isPreparingBackup {
-                ZStack {
-                    Color.black.opacity(0.4).ignoresSafeArea()
-                    VStack(spacing: 12) {
-                        ProgressView()
-                            .tint(.white)
-                        Text("Preparing Backup...")
-                            .foregroundStyle(.white)
-                    }
-                    .padding(24)
-                    .background(.ultraThinMaterial)
-                    .cornerRadius(16)
+                VStack(spacing: 12) {
+                    Image(systemName: "arrow.counterclockwise.icloud.fill")
+                        .font(.system(size: 40))
+                        .foregroundStyle(LinearGradient(colors: [.green, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
+
+                    Text(.localized("Secure your data by creating a backup of your apps and settings."))
+                        .font(.system(.subheadline, design: .rounded))
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal)
                 }
+                .padding(.vertical, 30)
+            }
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets())
+        }
+    }
+
+    @ViewBuilder
+    private var _quickActionsSection: some View {
+        Section {
+            HStack(spacing: 16) {
+                Button {
+                    isBackupOptionsPresented = true
+                } label: {
+                    VStack(spacing: 12) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color.green.opacity(0.15))
+                                .frame(width: 54, height: 54)
+                            Image(systemName: "arrow.up.doc.fill")
+                                .font(.title2)
+                                .foregroundStyle(.green)
+                        }
+                        Text(.localized("Create Backup"))
+                            .font(.system(.subheadline, weight: .bold, design: .rounded))
+                            .foregroundStyle(.green)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                    .background(Color.green.opacity(0.05))
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    isImportIPAPresented = true
+                } label: {
+                    VStack(spacing: 12) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color.blue.opacity(0.15))
+                                .frame(width: 54, height: 54)
+                            Image(systemName: "arrow.down.doc.fill")
+                                .font(.title2)
+                                .foregroundStyle(.blue)
+                        }
+                        Text(.localized("Restore Backup"))
+                            .font(.system(.subheadline, weight: .bold, design: .rounded))
+                            .foregroundStyle(.blue)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                    .background(Color.blue.opacity(0.05))
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                }
+                .buttonStyle(.plain)
+            }
+            .listRowBackground(Color.clear)
+            .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
+        } header: {
+            AppearanceSectionHeader(title: String.localized("Quick Actions"), icon: "bolt.fill")
+        }
+    }
+
+    @ViewBuilder
+    private var _advancedToolsSection: some View {
+        if advancedBackupTools {
+            Section {
+                Button {
+                    handleExportFullDatabase()
+                } label: {
+                    Label(.localized("Export Full Database"), systemImage: "cylinder.split.1x2.fill")
+                }
+
+                Button {
+                    isVerifyFilePickerPresented = true
+                } label: {
+                    Label(.localized("Verify Backup Integrity"), systemImage: "shield.checkerboard")
+                }
+
+                Divider()
+
+                Button {
+                    handleClearCaches()
+                } label: {
+                    Label(.localized("Clear All Caches"), systemImage: "trash.fill")
+                }
+
+                Button {
+                    handleResetSettings()
+                } label: {
+                    Label(.localized("Reset All Settings"), systemImage: "arrow.counterclockwise.circle.fill")
+                }
+
+                Button {
+                    handleExportLogs()
+                } label: {
+                    Label(.localized("Export Application Logs"), systemImage: "doc.text.fill")
+                }
+
+                Button {
+                    handleRebuildIconCache()
+                } label: {
+                    Label(.localized("Rebuild Icon Cache"), systemImage: "sparkles")
+                }
+
+                Button {
+                    handleViewPairingStatus()
+                } label: {
+                    Label(.localized("View Pairing Status"), systemImage: "link.circle.fill")
+                }
+            } header: {
+                AppearanceSectionHeader(title: String.localized("Advanced Tools"), icon: "wrench.and.screwdriver.fill")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var _aboutSection: some View {
+        Section {
+            infoCard(
+                icon: "checkmark.shield.fill",
+                iconColor: .blue,
+                title: .localized("What's Included"),
+                description: .localized("Backups can include certificates, provisioning profiles, signed apps, imported apps, sources, and all app settings.")
+            )
+
+            infoCard(
+                icon: "exclamationmark.triangle.fill",
+                iconColor: .orange,
+                title: .localized("Important"),
+                description: .localized("Restoring requires the app to restart. Certificate restoration preserves files for manual re-import if needed.")
+            )
+        } header: {
+            AppearanceSectionHeader(title: String.localized("About Backups"), icon: "info.circle.fill")
+        }
+    }
+
+    @ViewBuilder
+    private var _statusOverlays: some View {
+        if isVerifying {
+            ZStack {
+                Color.black.opacity(0.4).ignoresSafeArea()
+                VStack(spacing: 12) {
+                    ProgressView()
+                        .tint(.white)
+                    Text("Verifying...")
+                        .foregroundStyle(.white)
+                }
+                .padding(24)
+                .background(.ultraThinMaterial)
+                .cornerRadius(16)
+            }
+        }
+
+        if isRestoring {
+            ZStack {
+                Color.black.opacity(0.4).ignoresSafeArea()
+                VStack(spacing: 12) {
+                    ProgressView()
+                        .tint(.white)
+                    Text("Restoring...")
+                        .foregroundStyle(.white)
+                }
+                .padding(24)
+                .background(.ultraThinMaterial)
+                .cornerRadius(16)
+            }
+        }
+
+        if isPreparingBackup {
+            ZStack {
+                Color.black.opacity(0.4).ignoresSafeArea()
+                VStack(spacing: 12) {
+                    ProgressView()
+                        .tint(.white)
+                    Text("Preparing Backup...")
+                        .foregroundStyle(.white)
+                }
+                .padding(24)
+                .background(.ultraThinMaterial)
+                .cornerRadius(16)
             }
         }
     }
