@@ -1,4 +1,5 @@
 import SwiftUI
+import NimbleViews
 import Nuke
 import IDeviceSwift
 import OSLog
