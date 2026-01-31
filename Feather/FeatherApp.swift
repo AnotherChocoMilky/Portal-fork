@@ -92,7 +92,7 @@ struct FeatherApp: App {
                                 }
                             }
                             .sheet(isPresented: $_showQuickActions) {
-                                QuickActionsWidgetView()
+                                QuickActionsSheetView()
                             }
 							.confirmationDialog(
 								.localized("Add Source"),
@@ -126,6 +126,7 @@ struct FeatherApp: App {
 					.onAppear {
 						_setupTheme()
 						_checkForUpdates()
+						_handlePendingWidgetAction()
 					}
 					.overlay(StatusBarOverlay())
 				}
@@ -136,6 +137,20 @@ struct FeatherApp: App {
 				_checkForDylibs()
 			}
 		})
+		.onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+			_handlePendingWidgetAction()
+		}
+	}
+
+	private func _handlePendingWidgetAction() {
+		let userDefaults = UserDefaults(suiteName: Storage.appGroupID) ?? .standard
+		if let urlString = userDefaults.string(forKey: "widget.pendingAction"), let url = URL(string: urlString) {
+			userDefaults.removeObject(forKey: "widget.pendingAction")
+			userDefaults.synchronize()
+
+			// Process the action URL
+			_handleURL(url)
+		}
 	}
     
     private func _checkForDylibs() {
@@ -253,8 +268,8 @@ struct FeatherApp: App {
 		}
 
 		if url.scheme == "feather" || url.scheme == "portal" {
-			/// feather://import-certificate?p12=<base64>&mobileprovision=<base64>&password=<base64>
-			if url.host == "import-certificate" {
+			switch url.host {
+			case "import-certificate":
 				guard
 					let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
 					let queryItems = components.queryItems
@@ -297,14 +312,7 @@ struct FeatherApp: App {
 					}
 				}
 				
-				return
-			}
-			/// feather://export-certificate?callback_template=<template>
-			/// ?callback_template=: This is how we callback to the application requesting the certificate, this will be a url scheme
-			/// 	example: livecontainer%3A%2F%2Fcertificate%3Fcert%3D%24%28BASE64_CERT%29%26password%3D%24%28PASSWORD%29
-			/// 	decoded: livecontainer://certificate?cert=$(BASE64_CERT)&password=$(PASSWORD)
-			/// $(BASE64_CERT) and $(PASSWORD) must be presenting in the callback template so we can replace them with the proper content
-			if url.host == "export-certificate" {
+			case "export-certificate":
 				guard
 					let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
 				else {
@@ -315,77 +323,67 @@ struct FeatherApp: App {
 				guard let callbackTemplate = queryItems["callback_template"]?.removingPercentEncoding else { return }
 				
 				FR.exportCertificateAndOpenUrl(using: callbackTemplate)
-			}
-			/// feather://source/<url>
-			if let fullPath = url.validatedScheme(after: "/source/") {
-				FR.handleSource(fullPath) { }
-			}
-            /// feather://add-source
-            if url.host == "add-source" {
-                // Just open the app, user can manually add or we could navigate to sources
-                NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.sources)
-            }
-            /// feather://add-certificate
-            if url.host == "add-certificate" {
-                _showCertAdd = true
-            }
-            /// feather://open-certificates
-            if url.host == "open-certificates" {
-                _showCertificates = true
-            }
-            /// portal://quick-actions
-            if url.host == "quick-actions" {
-                _showQuickActions = true
-            }
-            /// portal://sign-app
-            if url.host == "sign-app" {
-                NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.library)
-                if let latest = Storage.shared.getLatestImportedApp() {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                        NotificationCenter.default.post(name: Notification.Name("Feather.openSigningView"), object: latest)
-                    }
-                }
-            }
-            /// portal://add-and-sign
-            if url.host == "add-and-sign" {
-                NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.library)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    NotificationCenter.default.post(name: Notification.Name("Feather.TriggerImport"), object: nil, userInfo: ["autoSign": true])
-                }
-            }
-            /// portal://clear-caches
-            if url.host == "clear-caches" {
-                ResetView.clearWorkCache()
-                HapticsManager.shared.success()
-            }
-            /// portal://export-logs
-            if url.host == "export-logs" {
-                if let logsData = try? JSONEncoder().encode(AppLogManager.shared.logs) {
-                    let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("PortalLogs.json")
-                    try? logsData.write(to: tempURL)
-                    UIActivityViewController.show(activityItems: [tempURL])
-                }
-            }
-            /// portal://rebuild-icon-cache
-            if url.host == "rebuild-icon-cache" {
-                // Logic to clear icon cache if applicable, or just notify
-                HapticsManager.shared.success()
-            }
-            /// portal://open-settings
-            if url.host == "open-settings" {
-                NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.settings)
-            }
-            /// portal://open-about
-            if url.host == "open-about" {
-                NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.settings)
-                // Could further navigate to about if there's a specific notification
-            }
-			/// feather://install/<url.ipa>
-			if
-				let fullPath = url.validatedScheme(after: "/install/"),
-				let downloadURL = URL(string: fullPath)
-			{
-				_ = DownloadManager.shared.startDownload(from: downloadURL)
+
+			case "add-source":
+				NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.sources)
+
+			case "add-certificate":
+				_showCertAdd = true
+
+			case "open-certificates":
+				_showCertificates = true
+
+			case "quick-actions":
+				_showQuickActions = true
+
+			case "sign-app":
+				NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.library)
+				if let latest = Storage.shared.getLatestImportedApp() {
+					DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+						NotificationCenter.default.post(name: Notification.Name("Feather.openSigningView"), object: latest)
+					}
+				} else {
+					HapticsManager.shared.error()
+				}
+
+			case "add-and-sign":
+				NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.library)
+				DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+					NotificationCenter.default.post(name: Notification.Name("Feather.TriggerImport"), object: nil, userInfo: ["autoSign": true])
+				}
+
+			case "clear-caches":
+				ResetView.clearWorkCache()
+				HapticsManager.shared.success()
+
+			case "export-logs":
+				if let logsData = try? JSONEncoder().encode(AppLogManager.shared.logs) {
+					let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("PortalLogs.json")
+					try? logsData.write(to: tempURL)
+					UIActivityViewController.show(activityItems: [tempURL])
+				}
+
+			case "rebuild-icon-cache":
+				HapticsManager.shared.success()
+
+			case "open-settings":
+				NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.settings)
+
+			case "open-about":
+				NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.settings)
+
+			default:
+				/// feather://source/<url>
+				if let fullPath = url.validatedScheme(after: "/source/") {
+					FR.handleSource(fullPath) { }
+				}
+				/// feather://install/<url.ipa>
+				if
+					let fullPath = url.validatedScheme(after: "/install/"),
+					let downloadURL = URL(string: fullPath)
+				{
+					_ = DownloadManager.shared.startDownload(from: downloadURL)
+				}
 			}
 		} else {
 			if url.pathExtension == "ipa" || url.pathExtension == "tipa" {

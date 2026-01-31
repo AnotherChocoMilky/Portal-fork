@@ -83,8 +83,32 @@ struct WidgetDataFetcher {
     }
 }
 
-#if compiler(>=5.9)
 // MARK: - iOS 17+ App Intents
+@available(iOS 17.0, *)
+struct PortalActionIntent: AppIntent {
+    static var title: LocalizedStringResource = "Portal Action"
+    static var openAppWhenRun: Bool = true
+
+    @Parameter(title: "URL")
+    var url: String
+
+    init() {}
+    init(url: String) {
+        self.url = url
+    }
+
+    func perform() async throws -> some IntentResult {
+        // App opens automatically due to openAppWhenRun = true
+        if let actionURL = URL(string: url) {
+            // We can also use UserDefaults to pass the specific action if needed,
+            // but the URL scheme will be handled by the app if we can trigger it.
+            // For now, opening the app is the primary goal.
+            UserDefaults(suiteName: APP_GROUP_ID)?.set(url, forKey: "widget.pendingAction")
+        }
+        return .result()
+    }
+}
+
 @available(iOS 17.0, *)
 struct PortalConfigurationIntent: WidgetConfigurationIntent {
     static var title: LocalizedStringResource = "Portal Configuration"
@@ -123,7 +147,6 @@ struct PortalAppIntentTimelineProvider: AppIntentTimelineProvider {
         return Timeline(entries: [entry], policy: .after(nextUpdate))
     }
 }
-#endif
 
 struct PortalLegacyTimelineProvider: TimelineProvider {
     func placeholder(in context: Context) -> WidgetEntry {
@@ -148,30 +171,24 @@ struct PortalLegacyTimelineProvider: TimelineProvider {
 
 // MARK: - Widget Bundle
 
-#if compiler(>=5.9)
 @main
-@available(iOS 17.0, *)
 struct PortalWidgetsBundle: WidgetBundle {
+    @WidgetBundleBuilder
     var body: some Widget {
-        QuickActionsWidget()
-        CertificateStatusWidget()
-        AllInOneWidget()
+        if #available(iOS 17.0, *) {
+            QuickActionsWidget()
+            CertificateStatusWidget()
+            AllInOneWidget()
+        } else {
+            QuickActionsWidgetLegacy()
+            CertificateStatusWidgetLegacy()
+            AllInOneWidgetLegacy()
+        }
     }
 }
-#else
-@main
-struct PortalWidgetsBundleLegacy: WidgetBundle {
-    var body: some Widget {
-        QuickActionsWidgetLegacy()
-        CertificateStatusWidgetLegacy()
-        AllInOneWidgetLegacy()
-    }
-}
-#endif
 
 // MARK: - Widgets (Modern iOS 17+)
 
-#if compiler(>=5.9)
 @available(iOS 17.0, *)
 struct QuickActionsWidget: Widget {
     let kind: String = "QuickActionsWidget"
@@ -213,7 +230,6 @@ struct AllInOneWidget: Widget {
         .supportedFamilies([.systemMedium, .systemLarge])
     }
 }
-#endif
 
 // MARK: - Widgets (Legacy iOS 16)
 
@@ -281,10 +297,10 @@ struct QuickActionsWidgetView: View {
     }
     
     private var smallWidget: some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 12) {
             HeaderView(title: entry.customTitle ?? "Portal", icon: "bolt.fill")
             
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
                 ActionButton(title: "Sign", icon: "signature", color: .blue, url: "portal://sign-app")
                 ActionButton(title: "Add", icon: "plus.circle.fill", color: .green, url: "portal://add-source")
                 ActionButton(title: "Cert", icon: "checkmark.seal.fill", color: .purple, url: "portal://add-certificate")
@@ -295,10 +311,10 @@ struct QuickActionsWidgetView: View {
     }
     
     private var mediumWidget: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             HeaderView(title: entry.customTitle ?? "Portal Quick Actions", icon: "bolt.fill")
 
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
                 ActionCard(title: "Add Source", icon: "plus.circle.fill", color: .blue, url: "portal://add-source")
                 ActionCard(title: "Add Cert", icon: "checkmark.seal.fill", color: .green, url: "portal://add-certificate")
                 ActionCard(title: "Sign App", icon: "signature", color: .purple, url: "portal://sign-app")
@@ -342,12 +358,18 @@ struct CertificateStatusWidgetView: View {
             Spacer()
 
             if entry.certName == "No Certificate" && !entry.isPlaceholder {
-                Text("No Certificate Found")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.secondary)
-                Text("Open Portal to add one")
-                    .font(.system(size: 10))
-                    .foregroundStyle(.tertiary)
+                VStack(spacing: 6) {
+                    Image(systemName: "questionmark.seal")
+                        .font(.system(size: 24))
+                        .foregroundStyle(.secondary)
+                    Text("No Certificate")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.secondary)
+                    Text("Tap to add one")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.tertiary)
+                }
+                .frame(maxWidth: .infinity)
             } else {
                 Text(entry.certName)
                     .font(.system(size: 14, weight: .bold))
@@ -408,11 +430,16 @@ struct AllInOneWidgetView: View {
 
                         HStack(spacing: 10) {
                             if entry.recentApps.isEmpty {
-                                Text("No apps signed yet")
-                                    .font(.system(size: 10))
-                                    .foregroundStyle(.tertiary)
-                                    .frame(maxWidth: .infinity, alignment: .center)
-                                    .padding(.vertical, 4)
+                                VStack(spacing: 4) {
+                                    Image(systemName: "app.badge")
+                                        .font(.system(size: 16))
+                                        .foregroundStyle(.tertiary)
+                                    Text("No apps signed yet")
+                                        .font(.system(size: 10))
+                                        .foregroundStyle(.tertiary)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .center)
+                                .padding(.vertical, 4)
                             } else {
                                 ForEach(entry.recentApps.prefix(4), id: \.name) { app in
                                     RecentAppIconView(app: app)
@@ -480,20 +507,33 @@ struct ActionButton: View {
     let url: String
 
     var body: some View {
-        Link(destination: URL(string: url) ?? URL(string: "portal://home")!) {
-            VStack(spacing: 4) {
+        Group {
+            if #available(iOS 17.0, *) {
+                Button(intent: PortalActionIntent(url: url)) {
+                    buttonContent
+                }
+                .buttonStyle(.plain)
+            } else {
+                Link(destination: URL(string: url) ?? URL(string: "portal://home")!) {
+                    buttonContent
+                }
+            }
+        }
+    }
+
+    private var buttonContent: some View {
+        VStack(spacing: 6) {
                 Image(systemName: icon)
-                    .font(.system(size: 18))
+                    .font(.system(size: 20))
                     .foregroundStyle(color)
                 Text(title)
-                    .font(.system(size: 9, weight: .bold))
+                    .font(.system(size: 10, weight: .bold))
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
+            .padding(.vertical, 10)
             .background(color.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-        }
+            .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -504,20 +544,33 @@ struct ActionCard: View {
     let url: String
 
     var body: some View {
-        Link(destination: URL(string: url) ?? URL(string: "portal://home")!) {
-            VStack(spacing: 8) {
+        Group {
+            if #available(iOS 17.0, *) {
+                Button(intent: PortalActionIntent(url: url)) {
+                    cardContent
+                }
+                .buttonStyle(.plain)
+            } else {
+                Link(destination: URL(string: url) ?? URL(string: "portal://home")!) {
+                    cardContent
+                }
+            }
+        }
+    }
+
+    private var cardContent: some View {
+        VStack(spacing: 12) {
                 Image(systemName: icon)
-                    .font(.system(size: 24))
+                    .font(.system(size: 28))
                     .foregroundStyle(color)
                 Text(title)
-                    .font(.system(size: 10, weight: .bold))
+                    .font(.system(size: 11, weight: .bold))
                     .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .padding(8)
+            .padding(10)
             .background(color.opacity(0.1))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-        }
+            .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -561,7 +614,9 @@ extension View {
                 Color(uiColor: .systemBackground)
             }
         } else {
-            return self.background(Color(uiColor: .systemBackground))
+            return self
+                .padding()
+                .background(Color(uiColor: .systemBackground))
         }
     }
 }
