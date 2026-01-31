@@ -145,19 +145,26 @@ struct PortalLegacyTimelineProvider: TimelineProvider {
 }
 
 // MARK: - Widget Bundle
+
+@available(iOS 17.0, *)
 @main
 struct PortalWidgetsBundle: WidgetBundle {
     @WidgetBundleBuilder
     var body: some Widget {
-        if #available(iOS 17.0, *) {
-            QuickActionsWidget()
-            CertificateStatusWidget()
-            AllInOneWidget()
-        } else {
-            QuickActionsWidgetLegacy()
-            CertificateStatusWidgetLegacy()
-            AllInOneWidgetLegacy()
-        }
+        QuickActionsWidget()
+        CertificateStatusWidget()
+        AllInOneWidget()
+    }
+}
+
+@available(iOS, obsoleted: 17.0)
+@main
+struct PortalWidgetsBundleLegacy: WidgetBundle {
+    @WidgetBundleBuilder
+    var body: some Widget {
+        QuickActionsWidgetLegacy()
+        CertificateStatusWidgetLegacy()
+        AllInOneWidgetLegacy()
     }
 }
 
