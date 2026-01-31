@@ -247,7 +247,7 @@ struct FeatherApp: App {
 			return
 		}
 
-		if url.scheme == "feather" {
+		if url.scheme == "feather" || url.scheme == "portal" {
 			/// feather://import-certificate?p12=<base64>&mobileprovision=<base64>&password=<base64>
 			if url.host == "import-certificate" {
 				guard
