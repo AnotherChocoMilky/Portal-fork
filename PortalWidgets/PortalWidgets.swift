@@ -109,7 +109,7 @@ struct QuickActionsWidgetView: View {
             HStack {
                 Image(systemName: "app.badge.fill")
                     .font(.title3)
-                    .foregroundStyle(.accent)
+                    .foregroundStyle(Color.accentColor)
                 Spacer()
             }
             
