@@ -14,6 +14,7 @@ struct HomeView: View {
     @AppStorage("Feather.showAppUpdateBanner") private var _showAppUpdateBanner = true
     @AppStorage("Feather.devShowSimulatedUpdateBanner") private var _devShowSimulatedUpdateBanner = false
     
+    @StateObject private var downloadManager = DownloadManager.shared
     @StateObject private var _settingsManager = HomeSettingsManager.shared
     @StateObject private var _networkMonitor = NetworkMonitor.shared
     @StateObject private var _profileManager = ProfilePictureManager.shared
