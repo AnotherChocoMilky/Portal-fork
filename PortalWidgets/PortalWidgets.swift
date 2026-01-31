@@ -6,6 +6,7 @@ struct PortalWidgetsBundle: WidgetBundle {
     var body: some Widget {
         QuickActionsWidget()
         CertificateStatusWidget()
+        AllInOneWidget()
     }
 }
 
@@ -74,7 +75,7 @@ struct QuickActionsWidget: Widget {
     
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: WidgetTimelineProvider()) { entry in
-            QuickActionsWidgetView(entry: entry)
+            QuickActionsWidgetThumbnailView(entry: entry)
         }
         .configurationDisplayName("Quick Actions")
         .description("Quickly add sources or certificates to Portal.")
@@ -82,7 +83,7 @@ struct QuickActionsWidget: Widget {
     }
 }
 
-struct QuickActionsWidgetView: View {
+struct QuickActionsWidgetThumbnailView: View {
     var entry: WidgetEntry
     @Environment(\.widgetFamily) var family
     
@@ -200,16 +201,18 @@ struct QuickActionsWidgetView: View {
     private var accessoryCircularWidget: some View {
         ZStack {
             AccessoryWidgetBackground()
-            Image(systemName: "plus.circle.fill")
+            Image(systemName: "bolt.fill")
                 .font(.title2)
+                .foregroundStyle(Color.accentColor)
         }
-        .widgetURL(URL(string: "portal://add-source"))
+        .widgetURL(URL(string: "portal://quick-actions"))
     }
     
     private var accessoryRectangularWidget: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack {
-                Image(systemName: "checkmark.seal.fill")
+                Image(systemName: "bolt.fill")
+                    .foregroundStyle(Color.accentColor)
                 Text("Portal")
                     .font(.headline)
             }
@@ -217,7 +220,117 @@ struct QuickActionsWidgetView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .widgetURL(URL(string: "portal://add-certificate"))
+        .widgetURL(URL(string: "portal://quick-actions"))
+    }
+}
+
+// MARK: - All In One Widget
+struct AllInOneWidget: Widget {
+    let kind: String = "AllInOneWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: WidgetTimelineProvider()) { entry in
+            AllInOneWidgetView(entry: entry)
+        }
+        .configurationDisplayName("All In One")
+        .description("Quick access to all Portal tools.")
+        .supportedFamilies([.systemMedium, .systemLarge])
+    }
+}
+
+struct AllInOneWidgetView: View {
+    var entry: WidgetEntry
+    @Environment(\.widgetFamily) var family
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack {
+                HStack(spacing: 8) {
+                    Image(systemName: "square.grid.2x2.fill")
+                        .foregroundStyle(Color.accentColor)
+                    Text("Portal")
+                        .font(.system(size: 16, weight: .bold))
+                }
+                Spacer()
+                Text("All-In-One")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.accentColor.opacity(0.1))
+                    .clipShape(Capsule())
+            }
+
+            VStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    QuickToolButton(icon: "signature", title: "Sign", color: .blue, url: "portal://sign-app")
+                    QuickToolButton(icon: "plus.app.fill", title: "Add & Sign", color: .green, url: "portal://add-and-sign")
+                    QuickToolButton(icon: "plus.circle.fill", title: "Source", color: .orange, url: "portal://add-source")
+                }
+
+                HStack(spacing: 8) {
+                    QuickToolButton(icon: "checkmark.seal.fill", title: "Add Cert", color: .purple, url: "portal://add-certificate")
+                    QuickToolButton(icon: "trash.fill", title: "Clear", color: .red, url: "portal://clear-caches")
+                    QuickToolButton(icon: "doc.text.fill", title: "Logs", color: .gray, url: "portal://export-logs")
+                }
+
+                if family == .systemLarge {
+                    HStack(spacing: 8) {
+                        QuickToolButton(icon: "app.badge.fill", title: "Icons", color: .cyan, url: "portal://rebuild-icon-cache")
+                        QuickToolButton(icon: "gearshape.fill", title: "Settings", color: .indigo, url: "portal://open-settings")
+                        QuickToolButton(icon: "info.circle.fill", title: "About", color: .teal, url: "portal://open-about")
+                    }
+
+                    Spacer(minLength: 0)
+
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(entry.certName)
+                                .font(.system(size: 12, weight: .bold))
+                            if let days = entry.daysRemaining {
+                                Text("\(days) days remaining")
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(days < 7 ? .red : .secondary)
+                            }
+                        }
+                        Spacer()
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundStyle(entry.daysRemaining ?? 0 < 7 ? .orange : .green)
+                    }
+                    .padding(10)
+                    .background(Color.accentColor.opacity(0.05))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                }
+            }
+        }
+        .padding(14)
+        .widgetBackground()
+    }
+}
+
+struct QuickToolButton: View {
+    let icon: String
+    let title: String
+    let color: Color
+    let url: String
+
+    var body: some View {
+        Link(destination: URL(string: url)!) {
+            VStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 20))
+                    .foregroundStyle(color)
+                Text(title)
+                    .font(.system(size: 9, weight: .bold))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                    .foregroundStyle(.primary)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(.vertical, 8)
+            .background(color.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
     }
 }
 

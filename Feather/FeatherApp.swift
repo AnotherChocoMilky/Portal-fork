@@ -27,6 +27,8 @@ struct FeatherApp: App {
     @State private var _showSourceConfirmation = false
     @State private var _showCertAdd = false
     @State private var _showCertificates = false
+    @State private var _showQuickActions = false
+    @State private var _shouldAutoSignNextImport = false
 
 	var body: some Scene {
 		WindowGroup(content: {
@@ -88,6 +90,9 @@ struct FeatherApp: App {
                                 NBNavigationView(.localized("Certificates")) {
                                     CertificatesView()
                                 }
+                            }
+                            .sheet(isPresented: $_showQuickActions) {
+                                QuickActionsWidgetView()
                             }
 							.confirmationDialog(
 								.localized("Add Source"),
@@ -328,6 +333,53 @@ struct FeatherApp: App {
             if url.host == "open-certificates" {
                 _showCertificates = true
             }
+            /// portal://quick-actions
+            if url.host == "quick-actions" {
+                _showQuickActions = true
+            }
+            /// portal://sign-app
+            if url.host == "sign-app" {
+                NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.library)
+                if let latest = Storage.shared.getLatestImportedApp() {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        NotificationCenter.default.post(name: Notification.Name("Feather.openSigningView"), object: latest)
+                    }
+                }
+            }
+            /// portal://add-and-sign
+            if url.host == "add-and-sign" {
+                NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.library)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    NotificationCenter.default.post(name: Notification.Name("Feather.TriggerImport"), object: nil, userInfo: ["autoSign": true])
+                }
+            }
+            /// portal://clear-caches
+            if url.host == "clear-caches" {
+                ResetView.clearWorkCache()
+                HapticsManager.shared.success()
+            }
+            /// portal://export-logs
+            if url.host == "export-logs" {
+                if let logsData = try? JSONEncoder().encode(AppLogManager.shared.logs) {
+                    let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("PortalLogs.json")
+                    try? logsData.write(to: tempURL)
+                    UIActivityViewController.show(activityItems: [tempURL])
+                }
+            }
+            /// portal://rebuild-icon-cache
+            if url.host == "rebuild-icon-cache" {
+                // Logic to clear icon cache if applicable, or just notify
+                HapticsManager.shared.success()
+            }
+            /// portal://open-settings
+            if url.host == "open-settings" {
+                NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.settings)
+            }
+            /// portal://open-about
+            if url.host == "open-about" {
+                NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.settings)
+                // Could further navigate to about if there's a specific notification
+            }
 			/// feather://install/<url.ipa>
 			if
 				let fullPath = url.validatedScheme(after: "/install/"),
@@ -364,6 +416,11 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		// Initialize source ordering (one-time migration)
 		Storage.shared.initializeSourceOrders()
 		
+		// Update widget data with current default certificate
+		if let defaultCert = Storage.shared.getCertificates().first(where: { $0.isDefault }) ?? Storage.shared.getCertificates().first {
+			Storage.shared.updateWidgetData(certName: defaultCert.nickname ?? "Certificate", expiryDate: defaultCert.expiration)
+		}
+
 		// Log app launch
 		AppLogManager.shared.info("Application launched successfully", category: "Lifecycle")
 		
