@@ -2,7 +2,7 @@ import WidgetKit
 import SwiftUI
 
 @main
-struct FeatherWidgetsBundle: WidgetBundle {
+struct PortalWidgetsBundle: WidgetBundle {
     var body: some Widget {
         QuickActionsWidget()
         CertificateStatusWidget()
@@ -27,7 +27,7 @@ struct WidgetEntry: TimelineEntry {
 
 // MARK: - Timeline Provider
 struct WidgetTimelineProvider: TimelineProvider {
-    private let appGroupID = "group.ayon1xw.Feather"
+    private let appGroupID = "group.ayon1xw.Portal"
     
     func placeholder(in context: Context) -> WidgetEntry {
         .placeholder
@@ -115,7 +115,7 @@ struct QuickActionsWidgetView: View {
             
             Spacer()
             
-            Link(destination: URL(string: "feather://add-source")!) {
+            Link(destination: URL(string: "portal://add-source")!) {
                 HStack {
                     Image(systemName: "plus.circle.fill")
                         .foregroundStyle(.blue)
@@ -131,7 +131,7 @@ struct QuickActionsWidgetView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
             
-            Link(destination: URL(string: "feather://add-certificate")!) {
+            Link(destination: URL(string: "portal://add-certificate")!) {
                 HStack {
                     Image(systemName: "checkmark.seal.fill")
                         .foregroundStyle(.green)
@@ -152,7 +152,7 @@ struct QuickActionsWidgetView: View {
     
     private var mediumWidget: some View {
         HStack(spacing: 12) {
-            Link(destination: URL(string: "feather://add-source")!) {
+            Link(destination: URL(string: "portal://add-source")!) {
                 VStack(spacing: 10) {
                     Image(systemName: "plus.circle.fill")
                         .font(.system(size: 28))
@@ -166,7 +166,7 @@ struct QuickActionsWidgetView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             
-            Link(destination: URL(string: "feather://add-certificate")!) {
+            Link(destination: URL(string: "portal://add-certificate")!) {
                 VStack(spacing: 10) {
                     Image(systemName: "checkmark.seal.fill")
                         .font(.system(size: 28))
@@ -180,7 +180,7 @@ struct QuickActionsWidgetView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             
-            Link(destination: URL(string: "feather://open-certificates")!) {
+            Link(destination: URL(string: "portal://open-certificates")!) {
                 VStack(spacing: 10) {
                     Image(systemName: "calendar.badge.clock")
                         .font(.system(size: 28))
@@ -203,7 +203,7 @@ struct QuickActionsWidgetView: View {
             Image(systemName: "plus.circle.fill")
                 .font(.title2)
         }
-        .widgetURL(URL(string: "feather://add-source"))
+        .widgetURL(URL(string: "portal://add-source"))
     }
     
     private var accessoryRectangularWidget: some View {
@@ -217,7 +217,7 @@ struct QuickActionsWidgetView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .widgetURL(URL(string: "feather://add-certificate"))
+        .widgetURL(URL(string: "portal://add-certificate"))
     }
 }
 
@@ -267,7 +267,7 @@ struct CertificateStatusWidgetView: View {
             }
         }
         .widgetBackground()
-        .widgetURL(URL(string: "feather://open-certificates"))
+        .widgetURL(URL(string: "portal://open-certificates"))
     }
     
     private var smallWidget: some View {

@@ -124,7 +124,7 @@ extension Storage {
         }
 
         func updateWidgetData(certName: String, expiryDate: Date?) {
-                let userDefaults = UserDefaults(suiteName: "group.ayon1xw.Feather") ?? .standard
+                let userDefaults = UserDefaults(suiteName: "group.ayon1xw.Portal") ?? .standard
                 userDefaults.set(certName, forKey: "widget.selectedCertName")
                 if let expiryDate = expiryDate {
                         userDefaults.set(expiryDate.timeIntervalSince1970, forKey: "widget.selectedCertExpiry")

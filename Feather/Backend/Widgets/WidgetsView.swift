@@ -5,14 +5,14 @@ import AppIntents
 // MARK: - DEPRECATED
 // ⚠️ This file is DEPRECATED and kept only for reference.
 // 
-// The actual widget implementation is now in the FeatherWidgets extension target.
-// See: /FeatherWidgets/FeatherWidgets.swift
+// The actual widget implementation is now in the PortalWidgets extension target.
+// See: /PortalWidgets/PortalWidgets.swift
 //
 // To enable widgets on the home screen, you MUST:
 // 1. Add a Widget Extension target to the Xcode project
-// 2. Use the files in the /FeatherWidgets directory
+// 2. Use the files in the /PortalWidgets directory
 // 3. Configure App Groups on both the main app and widget extension
-// 4. See /FeatherWidgets/README.md for complete setup instructions
+// 4. See /PortalWidgets/README.md for complete setup instructions
 
 // MARK: - App Intents
 @available(iOS 16.0, *)
@@ -60,7 +60,7 @@ struct Provider: TimelineProvider {
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<SimpleEntry>) -> ()) {
-        let userDefaults = UserDefaults(suiteName: "group.ayon1xw.Feather") ?? .standard
+        let userDefaults = UserDefaults(suiteName: "group.ayon1xw.Portal") ?? .standard
 
         let certName = userDefaults.string(forKey: "widget.selectedCertName") ?? "No Certificate"
         let expiryTime = userDefaults.double(forKey: "widget.selectedCertExpiry")
@@ -101,10 +101,10 @@ struct QuickActionsWidgetView: View {
         switch family {
         case .systemSmall:
             VStack(spacing: 12) {
-                Link(destination: URL(string: "feather://add-source")!) {
+                Link(destination: URL(string: "portal://add-source")!) {
                     actionRow(icon: "plus.circle.fill", label: "Source", color: .blue)
                 }
-                Link(destination: URL(string: "feather://add-certificate")!) {
+                Link(destination: URL(string: "portal://add-certificate")!) {
                     actionRow(icon: "checkmark.seal.fill", label: "Cert", color: .green)
                 }
             }
@@ -112,13 +112,13 @@ struct QuickActionsWidgetView: View {
 
         case .systemMedium:
             HStack(spacing: 12) {
-                Link(destination: URL(string: "feather://add-source")!) {
+                Link(destination: URL(string: "portal://add-source")!) {
                     actionCard(icon: "plus.circle.fill", label: "Add Source", color: .blue)
                 }
-                Link(destination: URL(string: "feather://add-certificate")!) {
+                Link(destination: URL(string: "portal://add-certificate")!) {
                     actionCard(icon: "checkmark.seal.fill", label: "Add Cert", color: .green)
                 }
-                Link(destination: URL(string: "feather://open-certificates")!) {
+                Link(destination: URL(string: "portal://open-certificates")!) {
                     actionCard(icon: "calendar.badge.clock", label: "Expiry", color: .orange)
                 }
             }
@@ -129,7 +129,7 @@ struct QuickActionsWidgetView: View {
                 Image(systemName: "plus.circle.fill")
                     .font(.title2)
             }
-            .widgetURL(URL(string: "feather://add-source"))
+            .widgetURL(URL(string: "portal://add-source"))
 
         case .accessoryRectangular:
             VStack(alignment: .leading, spacing: 2) {
@@ -143,7 +143,7 @@ struct QuickActionsWidgetView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            .widgetURL(URL(string: "feather://add-certificate"))
+            .widgetURL(URL(string: "portal://add-certificate"))
 
         default:
             Text("Select Widget")
@@ -191,7 +191,7 @@ struct CertificateStatusWidgetView: View {
             }
         }
         .widgetBackground()
-        .widgetURL(URL(string: "feather://open-certificates"))
+        .widgetURL(URL(string: "portal://open-certificates"))
     }
 
     var standardContent: some View {
@@ -280,7 +280,7 @@ struct CertificateStatusWidget: Widget {
 }
 
 // @main // Commented out to avoid multiple entry points in the main project
-struct FeatherWidgetsBundle: WidgetBundle {
+struct PortalWidgetsBundle: WidgetBundle {
     var body: some Widget {
         QuickActionsWidget()
         CertificateStatusWidget()
