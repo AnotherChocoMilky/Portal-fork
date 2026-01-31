@@ -23,6 +23,7 @@ struct LibraryView: View {
     @State private var _importErrorMessage: String = ""
     @State private var _currentDownloadId: String = ""
     @State private var _downloadProgress: Double = 0.0
+    @State private var _shouldAutoSignNext = false
     
     // Batch selection states
     @State private var _isSelectionMode = false
@@ -229,6 +230,16 @@ struct LibraryView: View {
                                         _importStatus = .success
                                 }
                                 
+                                // Auto-sign logic
+                                if _shouldAutoSignNext {
+                                    _shouldAutoSignNext = false
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                        if let latestApp = Storage.shared.getLatestImportedApp() {
+                                            _selectedSigningAppPresenting = AnyApp(base: latestApp)
+                                        }
+                                    }
+                                }
+
                                 // Auto-dismiss after showing success
                                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                                         withAnimation(.easeOut(duration: 0.3)) {
@@ -236,6 +247,12 @@ struct LibraryView: View {
                                                 _currentDownloadId = ""
                                         }
                                 }
+                        }
+                        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.TriggerImport"))) { notification in
+                            if let userInfo = notification.userInfo, let autoSign = userInfo["autoSign"] as? Bool {
+                                _shouldAutoSignNext = autoSign
+                            }
+                            _isImportingPresenting = true
                         }
                         // Listen for import failure notifications
                         .onReceive(NotificationCenter.default.publisher(for: DownloadManager.importDidFailNotification)) { notification in
