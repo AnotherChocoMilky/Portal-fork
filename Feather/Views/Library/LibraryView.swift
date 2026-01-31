@@ -130,7 +130,6 @@ struct LibraryView: View {
                     }
                 }
             }
-            .navigationBarHidden(true)
                         .sheet(item: $_selectedInfoAppPresenting) { app in
                                 LibraryInfoView(app: app.base)
                         }
@@ -994,7 +993,6 @@ struct BatchSigningView: View {
                         .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.2), value: appearAnimation)
                 }
             }
-            .navigationBarHidden(true)
         }
         .onAppear {
             // Initialize all apps as pending

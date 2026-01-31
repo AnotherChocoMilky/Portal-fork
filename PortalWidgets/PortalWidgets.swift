@@ -3,12 +3,14 @@ import SwiftUI
 import AppIntents
 
 @main
-@available(iOS 17.0, *)
 struct PortalWidgetsBundle: WidgetBundle {
+    @WidgetBundleBuilder
     var body: some Widget {
-        QuickActionsWidget()
-        CertificateStatusWidget()
-        AllInOneWidget()
+        if #available(iOS 17.0, *) {
+            QuickActionsWidget()
+            CertificateStatusWidget()
+            AllInOneWidget()
+        }
     }
 }
 
@@ -146,15 +148,17 @@ struct WidgetEntry: TimelineEntry {
     let configuration: PortalConfigurationIntent
     
     static var placeholder: WidgetEntry {
-        WidgetEntry(date: Date(), certName: "Certificate", expiryDate: Date().addingTimeInterval(86400 * 30), daysRemaining: 30, recentApps: [
-            WidgetApp(name: "App 1", icon: nil),
-            WidgetApp(name: "App 2", icon: nil),
-            WidgetApp(name: "App 3", icon: nil)
+        WidgetEntry(date: Date(), certName: "Developer Certificate", expiryDate: Date().addingTimeInterval(86400 * 30), daysRemaining: 30, recentApps: [
+            WidgetApp(name: "Feather", icon: nil),
+            WidgetApp(name: "Example App", icon: nil),
+            WidgetApp(name: "Test Flight", icon: nil)
         ], configuration: PortalConfigurationIntent())
     }
     
     static var empty: WidgetEntry {
-        WidgetEntry(date: Date(), certName: "No Certificate", expiryDate: nil, daysRemaining: nil, recentApps: [], configuration: PortalConfigurationIntent())
+        WidgetEntry(date: Date(), certName: "No Certificate", expiryDate: nil, daysRemaining: nil, recentApps: [
+            WidgetApp(name: "No Recent Apps", icon: nil)
+        ], configuration: PortalConfigurationIntent())
     }
 }
 
@@ -188,11 +192,17 @@ struct WidgetTimelineProvider: AppIntentTimelineProvider {
     }
     
     private func getCurrentEntry(for configuration: PortalConfigurationIntent) -> WidgetEntry {
-        guard let userDefaults = UserDefaults(suiteName: appGroupID) else {
-            return .empty
+        let userDefaults = UserDefaults(suiteName: appGroupID) ?? .standard
+
+        // Handle custom title logic more gracefully
+        let storedCertName = userDefaults.string(forKey: "widget.selectedCertName")
+        let certName: String
+        if let custom = configuration.customTitle, !custom.isEmpty, custom != "Portal" {
+            certName = custom
+        } else {
+            certName = storedCertName ?? "No Certificate"
         }
         
-        let certName = configuration.customTitle ?? userDefaults.string(forKey: "widget.selectedCertName") ?? "No Certificate"
         let expiryTime = userDefaults.double(forKey: "widget.selectedCertExpiry")
         
         var expiryDate: Date? = nil
@@ -629,7 +639,20 @@ struct RecentAppView: View {
 
     var body: some View {
         VStack(spacing: 4) {
-            if let iconName = app.icon, let image = UIImage(named: iconName) {
+            // Support both asset names and file paths
+            let iconImage: UIImage? = {
+                if let iconName = app.icon {
+                    if let image = UIImage(named: iconName) {
+                        return image
+                    }
+                    if let image = UIImage(contentsOfFile: iconName) {
+                        return image
+                    }
+                }
+                return nil
+            }()
+
+            if let image = iconImage {
                 Image(uiImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -638,11 +661,11 @@ struct RecentAppView: View {
             } else {
                 ZStack {
                     RoundedRectangle(cornerRadius: 8)
-                        .fill(Color.accentColor.opacity(0.1))
+                        .fill(Color.accentColor.opacity(0.12))
                         .frame(width: 32, height: 32)
-                    Image(systemName: "app.badge.fill")
+                    Image(systemName: app.name == "No Recent Apps" ? "square.dashed" : "app.badge.fill")
                         .font(.system(size: 16))
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(Color.accentColor.opacity(0.8))
                 }
             }
             Text(app.name)
