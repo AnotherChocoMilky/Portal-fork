@@ -83,6 +83,7 @@ struct WidgetDataFetcher {
     }
 }
 
+#if compiler(>=5.9)
 // MARK: - iOS 17+ App Intents
 @available(iOS 17.0, *)
 struct PortalConfigurationIntent: WidgetConfigurationIntent {
@@ -122,6 +123,7 @@ struct PortalAppIntentTimelineProvider: AppIntentTimelineProvider {
         return Timeline(entries: [entry], policy: .after(nextUpdate))
     }
 }
+#endif
 
 struct PortalLegacyTimelineProvider: TimelineProvider {
     func placeholder(in context: Context) -> WidgetEntry {
@@ -146,18 +148,23 @@ struct PortalLegacyTimelineProvider: TimelineProvider {
 
 // MARK: - Widget Bundle
 
-@available(iOS 17.0, *)
+#if compiler(>=5.9)
 @main
 struct PortalWidgetsBundle: WidgetBundle {
     @WidgetBundleBuilder
     var body: some Widget {
-        QuickActionsWidget()
-        CertificateStatusWidget()
-        AllInOneWidget()
+        if #available(iOS 17.0, *) {
+            QuickActionsWidget()
+            CertificateStatusWidget()
+            AllInOneWidget()
+        } else {
+            QuickActionsWidgetLegacy()
+            CertificateStatusWidgetLegacy()
+            AllInOneWidgetLegacy()
+        }
     }
 }
-
-@available(iOS, obsoleted: 17.0)
+#else
 @main
 struct PortalWidgetsBundleLegacy: WidgetBundle {
     @WidgetBundleBuilder
@@ -167,9 +174,11 @@ struct PortalWidgetsBundleLegacy: WidgetBundle {
         AllInOneWidgetLegacy()
     }
 }
+#endif
 
 // MARK: - Widgets (Modern iOS 17+)
 
+#if compiler(>=5.9)
 @available(iOS 17.0, *)
 struct QuickActionsWidget: Widget {
     let kind: String = "QuickActionsWidget"
@@ -211,6 +220,7 @@ struct AllInOneWidget: Widget {
         .supportedFamilies([.systemMedium, .systemLarge])
     }
 }
+#endif
 
 // MARK: - Widgets (Legacy iOS 16)
 
