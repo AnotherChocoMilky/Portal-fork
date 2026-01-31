@@ -1,7 +1,7 @@
 import SwiftUI
 import NimbleViews
 
-struct QuickActionsWidgetView: View {
+struct QuickActionsSheetView: View {
     @Environment(\.dismiss) var dismiss
 
     var body: some View {
@@ -137,12 +137,12 @@ private struct QuickActionRow: View {
         Button(action: action) {
             HStack(spacing: 16) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .fill(color.opacity(0.1))
-                        .frame(width: 44, height: 44)
+                        .frame(width: 48, height: 48)
 
                     Image(systemName: icon)
-                        .font(.system(size: 20, weight: .semibold))
+                        .font(.system(size: 22, weight: .semibold))
                         .foregroundStyle(color)
                 }
 
@@ -164,7 +164,7 @@ private struct QuickActionRow: View {
             }
             .padding(12)
             .background(Color(.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
         .buttonStyle(.plain)
     }
