@@ -29,6 +29,7 @@ struct BackupRestoreView: View {
     @State private var backupOptions = BackupOptions()
     @State private var backupDocument: BackupDocument?
     @State private var isVerifying = false
+    @State private var isRestoring = false
     @State private var isPreparingBackup = false
     @State private var isShowingPairingStatus = false
     @State private var pairingInfo: String = ""
@@ -143,14 +144,14 @@ struct BackupRestoreView: View {
                                 )
                         )
 
-                        // Import IPA Card
+                        // Restore Backup Card
                         VStack(spacing: 20) {
                             ZStack {
                                 Circle()
                                     .fill(Color.orange.opacity(0.12))
                                     .frame(width: 72, height: 72)
 
-                                Image(systemName: "square.and.arrow.down.fill")
+                                Image(systemName: "arrow.down.doc.fill")
                                     .font(.system(size: 32, weight: .bold))
                                     .foregroundStyle(
                                         LinearGradient(
@@ -162,9 +163,9 @@ struct BackupRestoreView: View {
                             }
 
                             VStack(spacing: 6) {
-                                Text(.localized("Import"))
+                                Text(.localized("Restore"))
                                     .font(.system(.headline, design: .rounded, weight: .bold))
-                                Text(.localized("Add Apps To Library"))
+                                Text(.localized("Apply A Backup"))
                                     .font(.system(.caption, design: .rounded))
                                     .foregroundStyle(.secondary)
                             }
@@ -173,9 +174,9 @@ struct BackupRestoreView: View {
                                 isImportIPAPresented = true
                             } label: {
                                 HStack(spacing: 8) {
-                                    Image(systemName: "plus.circle.fill")
+                                    Image(systemName: "arrow.counterclockwise.circle.fill")
                                         .font(.system(size: 14, weight: .bold))
-                                    Text(.localized("Import"))
+                                    Text(.localized("Restore"))
                                         .font(.system(.subheadline, design: .rounded, weight: .bold))
                                 }
                                 .foregroundStyle(.white)
@@ -288,16 +289,11 @@ struct BackupRestoreView: View {
         }
         .sheet(isPresented: $isImportIPAPresented) {
             FileImporterRepresentableView(
-                allowedContentTypes: [.ipa, .tipa],
-                allowsMultipleSelection: true,
+                allowedContentTypes: [.zip],
+                allowsMultipleSelection: false,
                 onDocumentsPicked: { urls in
-                    guard !urls.isEmpty else { return }
-                    for url in urls {
-                        let id = "FeatherManualDownload_\(UUID().uuidString)"
-                        let dl = DownloadManager.shared.startArchive(from: url, id: id)
-                        try? DownloadManager.shared.handlePachageFile(url: url, dl: dl)
-                    }
-                    HapticsManager.shared.success()
+                    guard let url = urls.first else { return }
+                    handleRestoreBackup(at: url)
                 }
             )
             .ignoresSafeArea()
@@ -378,6 +374,21 @@ struct BackupRestoreView: View {
                 }
             }
 
+            if isRestoring {
+                ZStack {
+                    Color.black.opacity(0.4).ignoresSafeArea()
+                    VStack(spacing: 12) {
+                        ProgressView()
+                            .tint(.white)
+                        Text("Restoring...")
+                            .foregroundStyle(.white)
+                    }
+                    .padding(24)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(16)
+                }
+            }
+
             if isPreparingBackup {
                 ZStack {
                     Color.black.opacity(0.4).ignoresSafeArea()
@@ -390,6 +401,165 @@ struct BackupRestoreView: View {
                     .padding(24)
                     .background(.ultraThinMaterial)
                     .cornerRadius(16)
+                }
+            }
+        }
+    }
+
+    private func handleRestoreBackup(at url: URL) {
+        isRestoring = true
+        Task {
+            let tempRestoreDir = FileManager.default.temporaryDirectory.appendingPathComponent("Restore_\(UUID().uuidString)")
+            do {
+                try FileManager.default.createDirectory(at: tempRestoreDir, withIntermediateDirectories: true)
+                try FileManager.default.unzipItem(at: url, to: tempRestoreDir)
+
+                let markers = ["PORTAL_BACKUP_MARKER.txt", "FEATHER_BACKUP_MARKER.txt", "PORTAL_BACKUP_CHECKER.txt"]
+                let hasMarker = markers.contains { marker in
+                    FileManager.default.fileExists(atPath: tempRestoreDir.appendingPathComponent(marker).path)
+                }
+                let hasSettings = FileManager.default.fileExists(atPath: tempRestoreDir.appendingPathComponent("settings.plist").path)
+
+                guard hasMarker && hasSettings else {
+                    try? FileManager.default.removeItem(at: tempRestoreDir)
+                    await MainActor.run {
+                        isRestoring = false
+                        showInvalidBackupError = true
+                    }
+                    return
+                }
+
+                // 1. Restore UserDefaults (Settings)
+                let settingsURL = tempRestoreDir.appendingPathComponent("settings.plist")
+                if FileManager.default.fileExists(atPath: settingsURL.path) {
+                    if let data = try? Data(contentsOf: settingsURL),
+                       let dict = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
+                        if let bundleID = Bundle.main.bundleIdentifier {
+                            UserDefaults.standard.setPersistentDomain(dict, forName: bundleID)
+                        }
+                    }
+                }
+
+                // 2. Restore Database
+                let dbSourceDir = tempRestoreDir.appendingPathComponent("database")
+                if FileManager.default.fileExists(atPath: dbSourceDir.path) {
+                    if let storeURL = Storage.shared.container.persistentStoreDescriptions.first?.url {
+                        let baseName = storeURL.lastPathComponent
+                        let dbDestDir = storeURL.deletingLastPathComponent()
+                        for f in [baseName, "\(baseName)-shm", "\(baseName)-wal"] {
+                            let src = dbSourceDir.appendingPathComponent(f)
+                            let dest = dbDestDir.appendingPathComponent(f)
+                            if FileManager.default.fileExists(atPath: src.path) {
+                                try? FileManager.default.removeItem(at: dest)
+                                try FileManager.default.copyItem(at: src, to: dest)
+                            }
+                        }
+                    }
+                }
+
+                // 3. Restore Application Files
+                let fileManager = FileManager.default
+                let documentsURL = Storage.shared.documentsURL
+
+                // 3a. Certificates
+                let certsSourceDir = tempRestoreDir.appendingPathComponent("certificates")
+                if fileManager.fileExists(atPath: certsSourceDir.path) {
+                    let certsDestDir = fileManager.certificates
+                    let contents = (try? fileManager.contentsOfDirectory(at: certsSourceDir, includingPropertiesForKeys: nil)) ?? []
+                    for file in contents {
+                        let uuid = file.deletingPathExtension().lastPathComponent
+                        let destFolder = fileManager.certificates(uuid)
+                        try? fileManager.createDirectory(at: destFolder, withIntermediateDirectories: true)
+                        let destFile = destFolder.appendingPathComponent(file.lastPathComponent)
+                        try? fileManager.removeItem(at: destFile)
+                        try? fileManager.copyItem(at: file, to: destFile)
+                    }
+                }
+
+                // 3b. Signed Apps
+                let signedSourceDir = tempRestoreDir.appendingPathComponent("signed_apps")
+                if fileManager.fileExists(atPath: signedSourceDir.path) {
+                    let signedDestDir = fileManager.signed
+                    let contents = (try? fileManager.contentsOfDirectory(at: signedSourceDir, includingPropertiesForKeys: nil)) ?? []
+                    for file in contents {
+                        let uuid = file.deletingPathExtension().lastPathComponent
+                        let destFolder = fileManager.signed(uuid)
+                        try? fileManager.createDirectory(at: destFolder, withIntermediateDirectories: true)
+                        let destFile = destFolder.appendingPathComponent(file.lastPathComponent)
+                        try? fileManager.removeItem(at: destFile)
+                        try? fileManager.copyItem(at: file, to: destFile)
+                    }
+                }
+
+                // 3c. Imported Apps
+                let importedSourceDir = tempRestoreDir.appendingPathComponent("imported_apps")
+                if fileManager.fileExists(atPath: importedSourceDir.path) {
+                    let importedDestDir = fileManager.unsigned
+                    let contents = (try? fileManager.contentsOfDirectory(at: importedSourceDir, includingPropertiesForKeys: nil)) ?? []
+                    for file in contents {
+                        let uuid = file.deletingPathExtension().lastPathComponent
+                        let destFolder = fileManager.unsigned(uuid)
+                        try? fileManager.createDirectory(at: destFolder, withIntermediateDirectories: true)
+                        let destFile = destFolder.appendingPathComponent(file.lastPathComponent)
+                        try? fileManager.removeItem(at: destFile)
+                        try? fileManager.copyItem(at: file, to: destFile)
+                    }
+                }
+
+                // 3d. Default Frameworks
+                let frameworksSourceDir = tempRestoreDir.appendingPathComponent("default_frameworks")
+                if fileManager.fileExists(atPath: frameworksSourceDir.path) {
+                    let frameworksDestDir = documentsURL.appendingPathComponent("Feather/DefaultFrameworks")
+                    try? fileManager.createDirectory(at: frameworksDestDir, withIntermediateDirectories: true)
+                    let contents = (try? fileManager.contentsOfDirectory(at: frameworksSourceDir, includingPropertiesForKeys: nil)) ?? []
+                    for file in contents {
+                        let destFile = frameworksDestDir.appendingPathComponent(file.lastPathComponent)
+                        try? fileManager.removeItem(at: destFile)
+                        try? fileManager.copyItem(at: file, to: destFile)
+                    }
+                }
+
+                // 3e. Archives
+                let archivesSourceDir = tempRestoreDir.appendingPathComponent("archives")
+                if fileManager.fileExists(atPath: archivesSourceDir.path) {
+                    let archivesDestDir = fileManager.archives
+                    try? fileManager.createDirectory(at: archivesDestDir, withIntermediateDirectories: true)
+                    let contents = (try? fileManager.contentsOfDirectory(at: archivesSourceDir, includingPropertiesForKeys: nil)) ?? []
+                    for file in contents {
+                        let destFile = archivesDestDir.appendingPathComponent(file.lastPathComponent)
+                        try? fileManager.removeItem(at: destFile)
+                        try? fileManager.copyItem(at: file, to: destFile)
+                    }
+                }
+
+                // 3f. Extra Files
+                let extraSourceDir = tempRestoreDir.appendingPathComponent("extra_files")
+                if fileManager.fileExists(atPath: extraSourceDir.path) {
+                    let contents = (try? fileManager.contentsOfDirectory(at: extraSourceDir, includingPropertiesForKeys: nil)) ?? []
+                    for file in contents {
+                        let destFile = documentsURL.appendingPathComponent(file.lastPathComponent)
+                        try? fileManager.removeItem(at: destFile)
+                        try? fileManager.copyItem(at: file, to: destFile)
+                    }
+                }
+
+                try? fileManager.removeItem(at: tempRestoreDir)
+
+                await MainActor.run {
+                    isRestoring = false
+                    HapticsManager.shared.success()
+
+                    // Restart app to apply changes
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                        UIApplication.shared.suspendAndReopen()
+                    }
+                }
+
+            } catch {
+                try? FileManager.default.removeItem(at: tempRestoreDir)
+                await MainActor.run {
+                    isRestoring = false
+                    UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized("Failed to restore backup: \(error.localizedDescription)"))
                 }
             }
         }
@@ -492,7 +662,7 @@ struct BackupRestoreView: View {
                 UIApplication.shared.suspendAndReopen()
             }
         })
-        alert.present()
+        alert.present(animated: true, completion: nil)
     }
 
     private func handleExportLogs() {
