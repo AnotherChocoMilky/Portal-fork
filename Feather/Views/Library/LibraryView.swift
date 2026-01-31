@@ -458,41 +458,35 @@ extension LibraryView {
         .padding(.bottom, 16)
     }
     
-    // MARK: - Modern Search Bar
+    // MARK: - Simple Search Bar
     private var searchBar: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 10) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.secondary)
+        HStack(spacing: 10) {
+            Image(systemName: "magnifyingglass")
+                .font(.system(size: 16))
+                .foregroundStyle(.secondary)
 
-                TextField(String.localized("Search Library"), text: $_searchText)
-                    .font(.system(size: 16))
+            TextField(String.localized("Search Library"), text: $_searchText)
+                .font(.system(size: 16))
 
-                if !_searchText.isEmpty {
-                    Button {
-                        withAnimation {
-                            _searchText = ""
-                        }
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.secondary)
+            if !_searchText.isEmpty {
+                Button {
+                    withAnimation {
+                        _searchText = ""
                     }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
                 }
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .stroke(Color.primary.opacity(0.05), lineWidth: 1)
-            )
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
         .padding(.bottom, 4)
     }
 
-    // MARK: - Filter Chips (Modern Minimal Design)
+    // MARK: - Simple Filter Chips
     private var filterChips: some View {
         HStack(spacing: 8) {
             ForEach(FilterMode.allCases, id: \.self) { mode in
@@ -503,18 +497,15 @@ extension LibraryView {
                     HapticsManager.shared.softImpact()
                 } label: {
                     Text(mode.rawValue)
-                        .font(.system(size: 14, weight: _filterMode == mode ? .semibold : .medium))
-                        .foregroundStyle(_filterMode == mode ? .white : .secondary)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
+                        .font(.system(size: 14, weight: _filterMode == mode ? .bold : .medium))
+                        .foregroundStyle(_filterMode == mode ? Color.accentColor : .secondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
                         .background {
                             if _filterMode == mode {
                                 Capsule()
-                                    .fill(Color.accentColor)
+                                    .stroke(Color.accentColor, lineWidth: 1)
                                     .matchedGeometryEffect(id: "activeFilter", in: _namespace)
-                            } else {
-                                Capsule()
-                                    .fill(Color.primary.opacity(0.05))
                             }
                         }
                 }
@@ -535,9 +526,6 @@ extension LibraryView {
                 Image(systemName: _isSelectionMode ? "checkmark.circle.fill" : "ellipsis.circle")
                     .font(.system(size: 20))
                     .foregroundStyle(_isSelectionMode ? Color.accentColor : Color.secondary)
-                    .padding(8)
-                    .background(Color.primary.opacity(0.05))
-                    .clipShape(Circle())
             }
             .buttonStyle(.plain)
         }
@@ -611,43 +599,79 @@ extension LibraryView {
             emptyStateView
         } else {
             LazyVStack(spacing: 0) {
-                ForEach(Array(displayedApps.enumerated()), id: \.element.uuid) { index, app in
-                    VStack(spacing: 0) {
-                        HStack(spacing: 12) {
-                            if _isSelectionMode {
-                                Button {
-                                    guard let uuid = app.uuid else { return }
-                                    withAnimation(.easeInOut(duration: 0.2)) {
-                                        if _selectedApps.contains(uuid) {
-                                            _selectedApps.remove(uuid)
-                                        } else {
-                                            _selectedApps.insert(uuid)
-                                        }
+                ForEach(displayedApps, id: \.uuid) { app in
+                    HStack(spacing: 12) {
+                        if _isSelectionMode {
+                            Button {
+                                guard let uuid = app.uuid else { return }
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    if _selectedApps.contains(uuid) {
+                                        _selectedApps.remove(uuid)
+                                    } else {
+                                        _selectedApps.insert(uuid)
                                     }
-                                    HapticsManager.shared.softImpact()
-                                } label: {
-                                    Image(systemName: app.uuid != nil && _selectedApps.contains(app.uuid!) ? "checkmark.circle.fill" : "circle")
-                                        .font(.system(size: 22))
-                                        .foregroundStyle(app.uuid != nil && _selectedApps.contains(app.uuid!) ? Color.accentColor : Color.secondary.opacity(0.4))
                                 }
-                                .buttonStyle(.plain)
+                                HapticsManager.shared.softImpact()
+                            } label: {
+                                Image(systemName: app.uuid != nil && _selectedApps.contains(app.uuid!) ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: 22))
+                                    .foregroundStyle(app.uuid != nil && _selectedApps.contains(app.uuid!) ? Color.accentColor : Color.secondary.opacity(0.4))
                             }
-                            
-                            PremiumAppCard(
-                                app: app,
-                                selectedInfoAppPresenting: $_selectedInfoAppPresenting,
-                                selectedSigningAppPresenting: $_selectedSigningAppPresenting,
-                                selectedInstallAppPresenting: $_selectedInstallAppPresenting
-                            )
-                            .allowsHitTesting(!_isSelectionMode)
+                            .buttonStyle(.plain)
                         }
                         
-                        if index < displayedApps.count - 1 {
+                        LibraryAppRow(
+                            app: app,
+                            selectedInfoAppPresenting: $_selectedInfoAppPresenting,
+                            selectedSigningAppPresenting: $_selectedSigningAppPresenting,
+                            selectedInstallAppPresenting: $_selectedInstallAppPresenting
+                        )
+                        .allowsHitTesting(!_isSelectionMode)
+                        .contextMenu {
+                            Button {
+                                _selectedInfoAppPresenting = AnyApp(base: app)
+                            } label: {
+                                Label(String.localized("Details"), systemImage: "info.circle")
+                            }
+
+                            if app.isSigned {
+                                Button {
+                                    _selectedInstallAppPresenting = AnyApp(base: app)
+                                } label: {
+                                    Label(String.localized("Install"), systemImage: "arrow.down.circle")
+                                }
+                                Button {
+                                    _selectedSigningAppPresenting = AnyApp(base: app)
+                                } label: {
+                                    Label(String.localized("ReSign"), systemImage: "signature")
+                                }
+                            } else {
+                                Button {
+                                    _selectedSigningAppPresenting = AnyApp(base: app)
+                                } label: {
+                                    Label(String.localized("Sign"), systemImage: "signature")
+                                }
+                            }
+
                             Divider()
-                                .padding(.leading, _isSelectionMode ? 90 : 70)
+
+                            Button(role: .destructive) {
+                                Storage.shared.deleteApp(for: app)
+                            } label: {
+                                Label(String.localized("Delete"), systemImage: "trash")
+                            }
+                        }
+                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                Storage.shared.deleteApp(for: app)
+                            } label: {
+                                Label(String.localized("Delete"), systemImage: "trash")
+                            }
                         }
                     }
-                    .id(app.uuid)
+
+                    Divider()
+                        .padding(.leading, _isSelectionMode ? 94 : 62)
                 }
             }
             
@@ -736,57 +760,38 @@ extension LibraryView {
     }
 }
 
-// MARK: - Modern Premium App Card
-struct PremiumAppCard: View {
+// MARK: - Simplified Library App Row
+struct LibraryAppRow: View {
     let app: AppInfoPresentable
     @Binding var selectedInfoAppPresenting: AnyApp?
     @Binding var selectedSigningAppPresenting: AnyApp?
     @Binding var selectedInstallAppPresenting: AnyApp?
     
     var body: some View {
-        HStack(spacing: 14) {
-            FRAppIconView(app: app, size: 56)
-                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
+        HStack(spacing: 12) {
+            FRAppIconView(app: app, size: 50)
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(app.name ?? String.localized("Unknown"))
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                    .font(.system(size: 16, weight: .bold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                 
                 HStack(spacing: 6) {
                     if let version = app.version {
                         Text(version)
-                            .font(.system(size: 12, weight: .medium, design: .monospaced))
+                            .font(.system(size: 11, design: .monospaced))
                             .foregroundStyle(.secondary)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.primary.opacity(0.05))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
                     }
                     
-                    if app.isSigned {
-                        HStack(spacing: 3) {
-                            Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 10))
-                            Text("Signed")
-                                .font(.system(size: 11, weight: .bold))
-                        }
-                        .foregroundStyle(.green)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.green.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 6))
-                    } else {
-                        Text("Unsigned")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(.orange)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(Color.orange.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                    }
+                    Text("•")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+
+                    Text(app.isSigned ? String.localized("Signed") : String.localized("Unsigned"))
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(app.isSigned ? .green : .orange)
                 }
             }
             
@@ -799,94 +804,24 @@ struct PremiumAppCard: View {
                     selectedSigningAppPresenting = AnyApp(base: app)
                 }
             } label: {
-                Text(app.isSigned ? "Install" : "Sign")
-                    .font(.system(size: 14, weight: .bold))
+                Text(app.isSigned ? String.localized("Install") : String.localized("Sign"))
+                    .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(.white)
                     .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
-                    .background(
-                        app.isSigned
-                        ? AnyShapeStyle(LinearGradient(colors: [.green, .green.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                        : AnyShapeStyle(LinearGradient(colors: [Color.accentColor, Color.accentColor.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    )
+                    .padding(.vertical, 6)
+                    .background(Color.accentColor)
                     .clipShape(Capsule())
-                    .shadow(color: (app.isSigned ? Color.green : Color.accentColor).opacity(0.3), radius: 6, x: 0, y: 3)
             }
             .buttonStyle(.plain)
         }
-        .padding(16)
-        .background(.ultraThinMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .stroke(Color.primary.opacity(0.05), lineWidth: 1)
-        )
-        .shadow(color: .black.opacity(0.03), radius: 10, x: 0, y: 4)
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
         .contentShape(Rectangle())
         .onTapGesture {
             selectedInfoAppPresenting = AnyApp(base: app)
         }
-        .contextMenu {
-            Button {
-                selectedInfoAppPresenting = AnyApp(base: app)
-            } label: {
-                Label(String.localized("Details"), systemImage: "info.circle")
-            }
-            
-            if app.isSigned {
-                Button {
-                    selectedInstallAppPresenting = AnyApp(base: app)
-                } label: {
-                    Label(String.localized("Install"), systemImage: "arrow.down.circle")
-                }
-                Button {
-                    selectedSigningAppPresenting = AnyApp(base: app)
-                } label: {
-                    Label(String.localized("ReSign"), systemImage: "signature")
-                }
-            } else {
-                Button {
-                    selectedSigningAppPresenting = AnyApp(base: app)
-                } label: {
-                    Label(String.localized("Sign"), systemImage: "signature")
-                }
-            }
-            
-            Divider()
-            
-            Button(role: .destructive) {
-                Storage.shared.deleteApp(for: app)
-            } label: {
-                Label(String.localized("Delete"), systemImage: "trash")
-            }
-        }
-        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-            Button(role: .destructive) {
-                Storage.shared.deleteApp(for: app)
-            } label: {
-                Label(String.localized("Delete"), systemImage: "trash")
-            }
-        }
     }
 }
 
-// MARK: - Legacy Support Structures (kept for compatibility)
-struct LibraryAppRow: View {
-    let app: AppInfoPresentable
-    @Binding var selectedInfoAppPresenting: AnyApp?
-    @Binding var selectedSigningAppPresenting: AnyApp?
-    @Binding var selectedInstallAppPresenting: AnyApp?
-    
-    var body: some View {
-        PremiumAppCard(
-            app: app,
-            selectedInfoAppPresenting: $selectedInfoAppPresenting,
-            selectedSigningAppPresenting: $selectedSigningAppPresenting,
-            selectedInstallAppPresenting: $selectedInstallAppPresenting
-        )
-    }
-}
 
 // MARK: - Modern Filter Chip
 struct ModernFilterChip: View {
