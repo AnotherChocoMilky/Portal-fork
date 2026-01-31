@@ -2,9 +2,17 @@ import WidgetKit
 import SwiftUI
 import AppIntents
 
-// NOTE: This file is intended for a separate Widget Extension target.
-// When adding this to your project, ensure it is only included in the Widget target
-// to avoid multiple @main entry points.
+// MARK: - DEPRECATED
+// ⚠️ This file is DEPRECATED and kept only for reference.
+// 
+// The actual widget implementation is now in the FeatherWidgets extension target.
+// See: /FeatherWidgets/FeatherWidgets.swift
+//
+// To enable widgets on the home screen, you MUST:
+// 1. Add a Widget Extension target to the Xcode project
+// 2. Use the files in the /FeatherWidgets directory
+// 3. Configure App Groups on both the main app and widget extension
+// 4. See /FeatherWidgets/README.md for complete setup instructions
 
 // MARK: - App Intents
 @available(iOS 16.0, *)

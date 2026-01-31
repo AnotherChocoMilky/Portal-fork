@@ -40,6 +40,14 @@ To build the actual iOS app, you need:
 - **Build System**: Makefile, xcodebuild
 
 ## Recent Changes
+- **Widget Extension setup**: Created proper Widget Extension structure in `/FeatherWidgets/` directory:
+  - Added `FeatherWidgets.swift` with proper `@main` entry point
+  - Created `Info.plist` with widget extension configuration
+  - Added App Groups entitlements for data sharing
+  - Included comprehensive setup README at `/FeatherWidgets/README.md`
+  - Updated main app entitlements with App Groups capability
+  - Auto-updates widget data when certificates are added
+
 - **LibraryView modernization**: Updated to a clean, minimal design without card-based UI or backgrounds. Features include:
   - Simple list layout with dividers
   - Large bold navigation title
