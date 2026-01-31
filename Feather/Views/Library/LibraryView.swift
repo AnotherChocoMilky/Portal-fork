@@ -105,22 +105,28 @@ struct LibraryView: View {
                     .ignoresSafeArea()
                 
                 ScrollView {
-                    VStack(spacing: 0) {
-                        // Custom navigation area
-                        customNavigationBar
+                    VStack(spacing: 20) {
+                        // Filter chips
+                        filterChips
                         
-                        VStack(spacing: 20) {
-                            // Search bar
-                            searchBar
-
-                            // Filter chips
-                            filterChips
-                            
-                            // Apps content
-                            appsContent
+                        // Apps content
+                        appsContent
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+                    .padding(.bottom, 100)
+                }
+                .navigationTitle("Library")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Menu {
+                            _importActions()
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 22))
+                                .foregroundStyle(Color.accentColor)
+                                .symbolRenderingMode(.hierarchical)
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.bottom, 100)
                     }
                 }
             }
@@ -452,61 +458,19 @@ struct LibraryView: View {
 
 // MARK: - Extension: View Components
 extension LibraryView {
-    // MARK: - Custom Navigation Bar
-    private var customNavigationBar: some View {
-        HStack {
-            Text("Library")
-                .font(.system(size: 34, weight: .bold))
-                .foregroundStyle(.primary)
-            
-            Spacer()
-            
-            Menu {
-                _importActions()
-            } label: {
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 28))
-                    .foregroundStyle(Color.accentColor)
-                    .symbolRenderingMode(.hierarchical)
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 8)
-        .padding(.bottom, 16)
-    }
-    
-    // MARK: - Simple Search Bar
-    private var searchBar: some View {
-        HStack(spacing: 10) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 16))
-                .foregroundStyle(.secondary)
-
-            TextField(String.localized("Search Library"), text: $_searchText)
-                .font(.system(size: 16))
-
-            if !_searchText.isEmpty {
-                Button {
-                    withAnimation {
-                        _searchText = ""
-                    }
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-        .padding(.bottom, 4)
-    }
-
     // MARK: - Simple Filter Chips
     private var filterChips: some View {
         HStack(spacing: 8) {
             ForEach(FilterMode.allCases, id: \.self) { mode in
+                let isSelected = _filterMode == mode
+                let strokeColor: Color = {
+                    switch mode {
+                    case .all: return Color.accentColor
+                    case .unsigned: return .orange
+                    case .signed: return .green
+                    }
+                }()
+
                 Button {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         _filterMode = mode
@@ -514,14 +478,14 @@ extension LibraryView {
                     HapticsManager.shared.softImpact()
                 } label: {
                     Text(mode.rawValue)
-                        .font(.system(size: 14, weight: _filterMode == mode ? .bold : .medium))
-                        .foregroundStyle(_filterMode == mode ? Color.accentColor : .secondary)
+                        .font(.system(size: 14, weight: isSelected ? .bold : .medium))
+                        .foregroundStyle(isSelected ? strokeColor : .secondary)
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background {
-                            if _filterMode == mode {
+                            if isSelected {
                                 Capsule()
-                                    .stroke(Color.accentColor, lineWidth: 1)
+                                    .stroke(strokeColor, lineWidth: 1.5)
                                     .matchedGeometryEffect(id: "activeFilter", in: _namespace)
                             }
                         }
@@ -531,20 +495,22 @@ extension LibraryView {
             
             Spacer()
             
-            Button {
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                    _isSelectionMode.toggle()
-                    if !_isSelectionMode {
-                        _selectedApps.removeAll()
+            if totalAppCount >= 2 {
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                        _isSelectionMode.toggle()
+                        if !_isSelectionMode {
+                            _selectedApps.removeAll()
+                        }
                     }
+                    HapticsManager.shared.softImpact()
+                } label: {
+                    Image(systemName: _isSelectionMode ? "checkmark.circle.fill" : "ellipsis.circle")
+                        .font(.system(size: 20))
+                        .foregroundStyle(_isSelectionMode ? Color.accentColor : Color.secondary)
                 }
-                HapticsManager.shared.softImpact()
-            } label: {
-                Image(systemName: _isSelectionMode ? "checkmark.circle.fill" : "ellipsis.circle")
-                    .font(.system(size: 20))
-                    .foregroundStyle(_isSelectionMode ? Color.accentColor : Color.secondary)
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
     }
     

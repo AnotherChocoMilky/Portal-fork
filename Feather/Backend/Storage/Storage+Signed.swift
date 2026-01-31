@@ -57,6 +57,11 @@ extension Storage {
 				HapticsManager.shared.impact()
 				AppLogManager.shared.success("Successfully added signed app to database: \(appName ?? "Unknown")", category: "Storage")
 				
+				// Update widget data
+				let certName = certificate?.nickname ?? "Certificate"
+				let expiry = certificate?.expiration
+				self.updateWidgetData(certName: certName, expiryDate: expiry)
+
 				// Post notification that signed app was added
 				NotificationCenter.default.post(
 					name: Storage.signedAppDidAddNotification,

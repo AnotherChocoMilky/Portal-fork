@@ -131,6 +131,17 @@ extension Storage {
                 } else {
                         userDefaults.removeObject(forKey: "widget.selectedCertExpiry")
                 }
+
+                // Save recent apps for the widget
+                let signedApps = getSignedApps().prefix(3)
+                let widgetApps = signedApps.map { app in
+                        ["name": app.name ?? "Unknown", "icon": app.icon]
+                }
+
+                if let encoded = try? JSONSerialization.data(withJSONObject: widgetApps) {
+                        userDefaults.set(encoded, forKey: "widget.recentApps")
+                }
+
                 userDefaults.synchronize()
 
                 WidgetCenter.shared.reloadAllTimelines()
