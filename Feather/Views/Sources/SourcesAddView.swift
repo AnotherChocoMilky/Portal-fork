@@ -529,67 +529,104 @@ struct SourcesAddView: View {
 		
 		VStack(alignment: .leading, spacing: 16) {
 			Text(.localized("Select Sources To Export"))
-				.font(.headline)
+				.font(.system(.headline, design: .rounded))
 				.foregroundStyle(.primary)
 				.padding(.horizontal, 4)
 			
 			// Select All / Deselect All buttons
 			HStack(spacing: 12) {
 				Button {
-					_selectedSourcesForExport = Set(sources.compactMap { $0.sourceURL?.absoluteString })
+					withAnimation {
+						_selectedSourcesForExport = Set(sources.compactMap { $0.sourceURL?.absoluteString })
+					}
 				} label: {
-					Text(.localized("Select All"))
+					Label(.localized("Select All"), systemImage: "checkmark.circle.fill")
 						.font(.subheadline.bold())
-						.foregroundStyle(.white)
-						.padding(.horizontal, 20)
+						.foregroundStyle(.blue)
+						.padding(.horizontal, 16)
 						.padding(.vertical, 10)
-						.background(
-							LinearGradient(
-								colors: [Color.blue, Color.blue.opacity(0.8)],
-								startPoint: .leading,
-								endPoint: .trailing
-							)
-						)
+						.background(Color.blue.opacity(0.1))
 						.clipShape(Capsule())
-						.shadow(color: Color.blue.opacity(0.3), radius: 6, x: 0, y: 3)
 				}
 				
 				Button {
-					_selectedSourcesForExport.removeAll()
+					withAnimation {
+						_selectedSourcesForExport.removeAll()
+					}
 				} label: {
-					Text(.localized("Deselect All"))
+					Label(.localized("Deselect All"), systemImage: "circle")
 						.font(.subheadline.bold())
-						.foregroundStyle(.white)
-						.padding(.horizontal, 20)
+						.foregroundStyle(.gray)
+						.padding(.horizontal, 16)
 						.padding(.vertical, 10)
-						.background(
-							LinearGradient(
-								colors: [Color.gray, Color.gray.opacity(0.8)],
-								startPoint: .leading,
-								endPoint: .trailing
-							)
-						)
+						.background(Color.gray.opacity(0.1))
 						.clipShape(Capsule())
-						.shadow(color: Color.gray.opacity(0.3), radius: 6, x: 0, y: 3)
 				}
 				
 				Spacer()
 			}
 			.padding(.horizontal)
 			
+			GroupBox {
+				VStack(spacing: 0) {
+					ForEach(sources, id: \.sourceURL?.absoluteString) { source in
+						if let urlString = source.sourceURL?.absoluteString {
+							Button {
+								if _selectedSourcesForExport.contains(urlString) {
+									_selectedSourcesForExport.remove(urlString)
+								} else {
+									_selectedSourcesForExport.insert(urlString)
+								}
+							} label: {
+								HStack(spacing: 12) {
+									Image(systemName: _selectedSourcesForExport.contains(urlString) ? "checkmark.circle.fill" : "circle")
+										.font(.title3)
+										.foregroundStyle(_selectedSourcesForExport.contains(urlString) ? Color.accentColor : Color.secondary)
+										.symbolRenderingMode(.hierarchical)
+
+									VStack(alignment: .leading, spacing: 2) {
+										Text(source.name ?? .localized("Unknown"))
+											.font(.system(.body, design: .rounded).bold())
+											.foregroundStyle(.primary)
+										Text(urlString)
+											.font(.system(.caption, design: .monospaced))
+											.foregroundStyle(.secondary)
+											.lineLimit(1)
+									}
+
+									Spacer()
+								}
+								.padding(.vertical, 10)
+							}
+							.buttonStyle(.plain)
+
+							if sources.last?.sourceURL?.absoluteString != urlString {
+								Divider()
+							}
+						}
+					}
+				}
+			} label: {
+				Label(.localized("Sources List"), systemImage: "list.bullet.rectangle.stack.fill")
+					.font(.caption.bold())
+					.foregroundStyle(.secondary)
+			}
+			.groupBoxStyle(PlainGroupBoxStyle())
+			.padding(.horizontal)
+
 			// Export through Portal button
 			Button {
 				_exportThroughPortal()
 			} label: {
 				HStack(spacing: 10) {
 					Image(systemName: "arrow.up.doc.fill")
-						.font(.system(size: 16, weight: .semibold))
+						.font(.system(size: 18, weight: .bold))
 					Text(.localized("Export through Portal"))
-						.font(.subheadline.bold())
+						.font(.system(.subheadline, design: .rounded).bold())
 				}
 				.foregroundStyle(.white)
 				.frame(maxWidth: .infinity)
-				.padding(.vertical, 14)
+				.padding(.vertical, 16)
 				.background(
 					LinearGradient(
 						colors: [Color.purple, Color.indigo.opacity(0.8)],
@@ -597,57 +634,26 @@ struct SourcesAddView: View {
 						endPoint: .trailing
 					)
 				)
-				.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+				.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 				.shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
 			}
 			.disabled(_selectedSourcesForExport.isEmpty)
 			.opacity(_selectedSourcesForExport.isEmpty ? 0.6 : 1)
 			.padding(.horizontal)
-			
-			// Sources list with checkmarks
-			VStack(spacing: 0) {
-				ForEach(sources, id: \.sourceURL?.absoluteString) { source in
-					if let urlString = source.sourceURL?.absoluteString {
-						Button {
-							if _selectedSourcesForExport.contains(urlString) {
-								_selectedSourcesForExport.remove(urlString)
-							} else {
-								_selectedSourcesForExport.insert(urlString)
-							}
-						} label: {
-							HStack(spacing: 12) {
-								Image(systemName: _selectedSourcesForExport.contains(urlString) ? "checkmark.circle.fill" : "circle")
-									.font(.title3)
-									.foregroundStyle(_selectedSourcesForExport.contains(urlString) ? Color.accentColor : Color.secondary)
-								
-								VStack(alignment: .leading, spacing: 2) {
-									Text(source.name ?? .localized("Unknown"))
-										.font(.body)
-										.foregroundStyle(.primary)
-									Text(urlString)
-										.font(.caption)
-										.foregroundStyle(.secondary)
-										.lineLimit(1)
-								}
-								
-								Spacer()
-							}
-							.padding()
-						}
-						.buttonStyle(.plain)
-						
-						if sources.last?.sourceURL?.absoluteString != urlString {
-							Divider()
-								.padding(.leading, 56)
-						}
-					}
-				}
-			}
-			.background(Color(UIColor.secondarySystemGroupedBackground))
-			.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 		}
-		.padding(.horizontal)
 	}
+
+struct PlainGroupBoxStyle: GroupBoxStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            configuration.label
+            configuration.content
+                .padding()
+                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+    }
+}
 	
 	// MARK: - Export through Portal
 	private func _exportThroughPortal() {
