@@ -67,91 +67,51 @@ struct CertificatesAddView: View {
     
     // MARK: - File Import Section
     private var fileImportSection: some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 10) {
-                compactImportCard(
-                    title: "P12",
-                    subtitle: _p12URL?.lastPathComponent ?? "Select",
-                    icon: "key.fill",
-                    isSelected: _p12URL != nil,
-                    color: .orange
-                ) {
-                    _isImportingP12Presenting = true
-                }
-                
-                compactImportCard(
-                    title: "Provision",
-                    subtitle: _provisionURL?.lastPathComponent ?? "Select",
-                    icon: "doc.badge.gearshape.fill",
-                    isSelected: _provisionURL != nil,
-                    color: .blue
-                ) {
-                    _isImportingMobileProvisionPresenting = true
-                }
+        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+            compactImportCard(
+                title: "P12",
+                subtitle: _p12URL?.lastPathComponent ?? "Select",
+                icon: "key.fill",
+                isSelected: _p12URL != nil,
+                color: .orange
+            ) {
+                _isImportingP12Presenting = true
             }
             
-            zipImportButton
+            compactImportCard(
+                title: "Provision",
+                subtitle: _provisionURL?.lastPathComponent ?? "Select",
+                icon: "doc.badge.gearshape.fill",
+                isSelected: _provisionURL != nil,
+                color: .blue
+            ) {
+                _isImportingMobileProvisionPresenting = true
+            }
             
-            // Show .portalcert import button only when feature flag is enabled
+            compactImportCard(
+                title: "ZIP",
+                subtitle: "Import Bundle",
+                icon: "doc.zipper",
+                isSelected: false,
+                color: .purple
+            ) {
+                _isImportingZipPresenting = true
+            }
+
             if usePortalCert {
-                portalCertImportButton
+                compactImportCard(
+                    title: "PortalCert",
+                    subtitle: "Proprietary",
+                    icon: "shippingbox.fill",
+                    isSelected: false,
+                    color: .indigo
+                ) {
+                    _isImportingPortalCertPresenting = true
+                }
             }
         }
     }
     
-    // MARK: - ZIP Import Button
-    private var zipImportButton: some View {
-        Button {
-            _isImportingZipPresenting = true
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "doc.zipper")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white)
-                Text("Import ZIP")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .background(
-                LinearGradient(
-                    colors: [Color.purple, Color.purple.opacity(0.8)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .shadow(color: Color.purple.opacity(0.2), radius: 4, x: 0, y: 2)
-        }
-    }
-    
-    // MARK: - Portal Cert Import Button
-    private var portalCertImportButton: some View {
-        Button {
-            _isImportingPortalCertPresenting = true
-        } label: {
-            HStack(spacing: 8) {
-                Image(systemName: "shippingbox.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white)
-                Text("Import .portalcert")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 10)
-            .background(
-                LinearGradient(
-                    colors: [Color.indigo, Color.purple.opacity(0.8)],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
-            )
-            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-            .shadow(color: Color.indigo.opacity(0.2), radius: 4, x: 0, y: 2)
-        }
-    }
     
     // MARK: - Portal Cert Import Sheet
     private var portalCertImportSheet: some View {

@@ -6335,102 +6335,131 @@ struct DeveloperBatchSigningView: View {
     }
     
     var body: some View {
-        List {
-            // Certificate Selection
-            Section {
-                if certificates.isEmpty {
-                    Text("No Certificates Available")
-                        .foregroundStyle(.secondary)
-                } else {
-                    Picker("Signing Certificate", selection: $selectedCertificateIndex) {
-                        ForEach(Array(certificates.enumerated()), id: \.element.uuid) { index, cert in
-                            Text(cert.nickname ?? "Certificate \(index + 1)")
-                                .tag(index)
-                        }
-                    }
-                }
-            } header: {
-                Text("Certificate")
-            }
-            
-            // App Selection
-            Section {
-                if importedApps.isEmpty {
-                    Text("No Apps Available For Signing")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(importedApps, id: \.uuid) { app in
-                        BatchAppRow(
-                            app: app,
-                            isSelected: selectedApps.contains(app.uuid ?? ""),
-                            onToggle: {
-                                toggleAppSelection(app)
-                            }
-                        )
-                    }
-                }
-            } header: {
-                HStack {
-                    Text("Select Apps (\(selectedApps.count) Selected)")
-                    Spacer()
-                    if !importedApps.isEmpty {
-                        Button(selectedApps.count == importedApps.count ? "Deselect All" : "Select All") {
-                            if selectedApps.count == importedApps.count {
-                                selectedApps.removeAll()
-                            } else {
-                                selectedApps = Set(importedApps.compactMap { $0.uuid })
-                            }
-                        }
-                        .font(.caption)
-                    }
-                }
-            }
-            
-            // Batch Action
-            Section {
-                Button {
-                    startBatchSigning()
-                } label: {
-                    HStack {
-                        if isSigningBatch {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                            Text("Signing \(currentSigningApp)...")
-                        } else {
-                            Image(systemName: "signature")
-                            Text("Sign Selected Apps (\(selectedApps.count))")
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                }
-                .disabled(selectedApps.isEmpty || certificates.isEmpty || isSigningBatch)
-                
-                if isSigningBatch {
-                    ProgressView(value: batchProgress)
-                        .progressViewStyle(.linear)
-                }
-            } header: {
-                Text("Actions")
-            }
-            
-            // Results Section
-            if !batchResults.isEmpty {
+        ZStack {
+            List {
+                // Certificate Selection
                 Section {
-                    ForEach(batchResults) { result in
-                        HStack {
-                            Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .foregroundStyle(result.success ? .green : .red)
-                            VStack(alignment: .leading) {
-                                Text(result.appName)
-                                    .font(.subheadline)
-                                Text(result.message)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                    if certificates.isEmpty {
+                        Text("No Certificates Available")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        Picker("Signing Certificate", selection: $selectedCertificateIndex) {
+                            ForEach(Array(certificates.enumerated()), id: \.element.uuid) { index, cert in
+                                Text(cert.nickname ?? "Certificate \(index + 1)")
+                                    .tag(index)
                             }
                         }
                     }
                 } header: {
-                    Text("Results")
+                    Text("Certificate")
+                }
+
+                // App Selection
+                Section {
+                    if importedApps.isEmpty {
+                        Text("No Apps Available For Signing")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(importedApps, id: \.uuid) { app in
+                            BatchAppRow(
+                                app: app,
+                                isSelected: selectedApps.contains(app.uuid ?? ""),
+                                onToggle: {
+                                    toggleAppSelection(app)
+                                }
+                            )
+                        }
+                    }
+                } header: {
+                    HStack {
+                        Text("Select Apps (\(selectedApps.count) Selected)")
+                        Spacer()
+                        if !importedApps.isEmpty {
+                            Button(selectedApps.count == importedApps.count ? "Deselect All" : "Select All") {
+                                withAnimation {
+                                    if selectedApps.count == importedApps.count {
+                                        selectedApps.removeAll()
+                                    } else {
+                                        selectedApps = Set(importedApps.compactMap { $0.uuid })
+                                    }
+                                }
+                            }
+                            .font(.caption)
+                        }
+                    }
+                }
+
+                // Batch Action
+                Section {
+                    Button {
+                        startBatchSigning()
+                    } label: {
+                        HStack {
+                            Image(systemName: "signature")
+                            Text("Sign Selected Apps (\(selectedApps.count))")
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .disabled(selectedApps.isEmpty || certificates.isEmpty || isSigningBatch)
+                } header: {
+                    Text("Actions")
+                }
+                
+                // Results Section
+                if !batchResults.isEmpty {
+                    Section {
+                        ForEach(batchResults) { result in
+                            HStack {
+                                Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                    .foregroundStyle(result.success ? .green : .red)
+                                VStack(alignment: .leading) {
+                                    Text(result.appName)
+                                        .font(.subheadline)
+                                    Text(result.message)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    } header: {
+                        Text("Results")
+                    }
+                }
+            }
+            
+            // Progress Overlay
+            if isSigningBatch {
+                ZStack {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+
+                    VStack(spacing: 20) {
+                        ProgressView(value: batchProgress)
+                            .progressViewStyle(.circular)
+                            .tint(.white)
+                            .scaleEffect(1.5)
+
+                        VStack(spacing: 8) {
+                            Text("Signing Apps...")
+                                .font(.headline)
+                                .foregroundStyle(.white)
+
+                            Text(currentSigningApp)
+                                .font(.subheadline)
+                                .foregroundStyle(.white.opacity(0.8))
+                                .lineLimit(1)
+
+                            Text("\(Int(batchProgress * 100))%")
+                                .font(.caption.bold())
+                                .foregroundStyle(.white.opacity(0.6))
+                        }
+                    }
+                    .padding(40)
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
+                    .transition(.scale.combined(with: .opacity))
                 }
             }
         }

@@ -99,7 +99,7 @@ struct LibraryView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Simple background
+                // Modern background
                 Color(.systemBackground)
                     .ignoresSafeArea()
                 
@@ -109,6 +109,9 @@ struct LibraryView: View {
                         customNavigationBar
                         
                         VStack(spacing: 20) {
+                            // Search bar
+                            searchBar
+
                             // Filter chips
                             filterChips
                             
@@ -455,9 +458,43 @@ extension LibraryView {
         .padding(.bottom, 16)
     }
     
+    // MARK: - Modern Search Bar
+    private var searchBar: some View {
+        HStack(spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.secondary)
+
+                TextField(String.localized("Search Library"), text: $_searchText)
+                    .font(.system(size: 16))
+
+                if !_searchText.isEmpty {
+                    Button {
+                        withAnimation {
+                            _searchText = ""
+                        }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(Color.primary.opacity(0.05), lineWidth: 1)
+            )
+        }
+        .padding(.bottom, 4)
+    }
+
     // MARK: - Filter Chips (Modern Minimal Design)
     private var filterChips: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 8) {
             ForEach(FilterMode.allCases, id: \.self) { mode in
                 Button {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
@@ -466,10 +503,20 @@ extension LibraryView {
                     HapticsManager.shared.softImpact()
                 } label: {
                     Text(mode.rawValue)
-                        .font(.system(size: 15, weight: _filterMode == mode ? .semibold : .regular))
-                        .foregroundStyle(_filterMode == mode ? .primary : .secondary)
+                        .font(.system(size: 14, weight: _filterMode == mode ? .semibold : .medium))
+                        .foregroundStyle(_filterMode == mode ? .white : .secondary)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
+                        .background {
+                            if _filterMode == mode {
+                                Capsule()
+                                    .fill(Color.accentColor)
+                                    .matchedGeometryEffect(id: "activeFilter", in: _namespace)
+                            } else {
+                                Capsule()
+                                    .fill(Color.primary.opacity(0.05))
+                            }
+                        }
                 }
                 .buttonStyle(.plain)
             }
@@ -486,8 +533,11 @@ extension LibraryView {
                 HapticsManager.shared.softImpact()
             } label: {
                 Image(systemName: _isSelectionMode ? "checkmark.circle.fill" : "ellipsis.circle")
-                    .font(.system(size: 22))
+                    .font(.system(size: 20))
                     .foregroundStyle(_isSelectionMode ? Color.accentColor : Color.secondary)
+                    .padding(8)
+                    .background(Color.primary.opacity(0.05))
+                    .clipShape(Circle())
             }
             .buttonStyle(.plain)
         }
@@ -609,33 +659,63 @@ extension LibraryView {
     // MARK: - Empty State View
     @ViewBuilder
     private var emptyStateView: some View {
-        VStack(spacing: 20) {
-            Spacer(minLength: 80)
-            
-            Image(systemName: "square.stack.3d.up.slash")
-                .font(.system(size: 56, weight: .thin))
-                .foregroundStyle(.secondary.opacity(0.6))
-            
-            VStack(spacing: 8) {
-                Text("No Apps")
-                    .font(.system(size: 22, weight: .semibold))
-                    .foregroundStyle(.primary)
-                
+        if #available(iOS 17, *) {
+            ContentUnavailableView {
+                Label {
+                    Text("No Apps")
+                        .font(.system(size: 22, weight: .bold, design: .rounded))
+                } icon: {
+                    Image(systemName: "square.stack.3d.up.slash")
+                        .font(.system(size: 50, weight: .thin))
+                        .foregroundStyle(.secondary.opacity(0.5))
+                }
+            } description: {
                 Text("Import an IPA file to get started")
                     .font(.system(size: 15))
-                    .foregroundStyle(.secondary)
+            } actions: {
+                Menu {
+                    _importActions()
+                } label: {
+                    Text("Import")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 10)
+                        .background(Color.accentColor)
+                        .clipShape(Capsule())
+                }
+                .padding(.top, 10)
             }
-            
-            Menu {
-                _importActions()
-            } label: {
-                Text("Import")
-                    .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Color.accentColor)
+            .padding(.top, 60)
+        } else {
+            VStack(spacing: 20) {
+                Spacer(minLength: 80)
+
+                Image(systemName: "square.stack.3d.up.slash")
+                    .font(.system(size: 56, weight: .thin))
+                    .foregroundStyle(.secondary.opacity(0.6))
+
+                VStack(spacing: 8) {
+                    Text("No Apps")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(.primary)
+
+                    Text("Import an IPA file to get started")
+                        .font(.system(size: 15))
+                        .foregroundStyle(.secondary)
+                }
+
+                Menu {
+                    _importActions()
+                } label: {
+                    Text("Import")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundStyle(Color.accentColor)
+                }
+                .padding(.top, 8)
+
+                Spacer(minLength: 80)
             }
-            .padding(.top, 8)
-            
-            Spacer(minLength: 80)
         }
     }
     
@@ -656,7 +736,7 @@ extension LibraryView {
     }
 }
 
-// MARK: - Modern Minimal App Row (No Cards)
+// MARK: - Modern Premium App Card
 struct PremiumAppCard: View {
     let app: AppInfoPresentable
     @Binding var selectedInfoAppPresenting: AnyApp?
@@ -666,33 +746,46 @@ struct PremiumAppCard: View {
     var body: some View {
         HStack(spacing: 14) {
             FRAppIconView(app: app, size: 56)
-                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(app.name ?? String.localized("Unknown"))
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                 
                 HStack(spacing: 6) {
                     if let version = app.version {
                         Text(version)
-                            .font(.system(size: 13))
+                            .font(.system(size: 12, weight: .medium, design: .monospaced))
                             .foregroundStyle(.secondary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.primary.opacity(0.05))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
                     }
                     
                     if app.isSigned {
-                        Text("•")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary.opacity(0.5))
-                        
                         HStack(spacing: 3) {
                             Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 11))
+                                .font(.system(size: 10))
                             Text("Signed")
-                                .font(.system(size: 13, weight: .medium))
+                                .font(.system(size: 11, weight: .bold))
                         }
                         .foregroundStyle(.green)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.green.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                    } else {
+                        Text("Unsigned")
+                            .font(.system(size: 11, weight: .bold))
+                            .foregroundStyle(.orange)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color.orange.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
                     }
                 }
             }
@@ -707,12 +800,29 @@ struct PremiumAppCard: View {
                 }
             } label: {
                 Text(app.isSigned ? "Install" : "Sign")
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(app.isSigned ? Color.green : Color.accentColor)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(
+                        app.isSigned
+                        ? AnyShapeStyle(LinearGradient(colors: [.green, .green.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        : AnyShapeStyle(LinearGradient(colors: [Color.accentColor, Color.accentColor.opacity(0.8)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    )
+                    .clipShape(Capsule())
+                    .shadow(color: (app.isSigned ? Color.green : Color.accentColor).opacity(0.3), radius: 6, x: 0, y: 3)
             }
             .buttonStyle(.plain)
         }
-        .padding(.vertical, 12)
+        .padding(16)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .stroke(Color.primary.opacity(0.05), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.03), radius: 10, x: 0, y: 4)
+        .padding(.vertical, 4)
         .contentShape(Rectangle())
         .onTapGesture {
             selectedInfoAppPresenting = AnyApp(base: app)
@@ -932,7 +1042,7 @@ struct BatchSigningView: View {
                             }
                             
                             // Apps List
-                            VStack(spacing: 10) {
+                            VStack(spacing: 12) {
                                 ForEach(Array(apps.enumerated()), id: \.element.uuid) { index, app in
                                     ModernBatchSigningAppRow(
                                         app: app,
@@ -940,8 +1050,13 @@ struct BatchSigningView: View {
                                         index: index + 1
                                     )
                                     .opacity(appearAnimation ? 1 : 0)
-                                    .offset(y: appearAnimation ? 0 : 20)
-                                    .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.15 + Double(index) * 0.03), value: appearAnimation)
+                                    .offset(y: appearAnimation ? 0 : 30)
+                                    .scaleEffect(appearAnimation ? 1 : 0.95)
+                                    .animation(
+                                        .spring(response: 0.6, dampingFraction: 0.7)
+                                        .delay(0.2 + Double(index) * 0.05),
+                                        value: appearAnimation
+                                    )
                                 }
                             }
                             .padding(.horizontal, 20)
@@ -982,18 +1097,19 @@ struct BatchSigningView: View {
             // Top bar
             HStack {
                 Button {
-                    isCancelled = true
-                    isSigningInProgress = false
-                    dismiss()
+                    withAnimation {
+                        isCancelled = true
+                        isSigningInProgress = false
+                        dismiss()
+                    }
                 } label: {
                     Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 16, weight: .bold))
                         .foregroundStyle(.secondary)
-                        .frame(width: 36, height: 36)
-                        .background(
-                            Circle()
-                                .fill(Color(.tertiarySystemGroupedBackground))
-                        )
+                        .frame(width: 40, height: 40)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Circle())
+                        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
                 }
                 
                 Spacer()
@@ -1005,14 +1121,16 @@ struct BatchSigningView: View {
                             .fill(currentPhase == .installing ? Color.green : (currentPhase == .completed ? Color.green : Color.accentColor))
                             .frame(width: 8, height: 8)
                         Text(currentPhase == .installing ? "Installing" : (currentPhase == .completed ? "Completed" : "Signing"))
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
                             .foregroundStyle(currentPhase == .installing ? Color.green : (currentPhase == .completed ? Color.green : Color.accentColor))
                     }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 6)
-                    .background(
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Capsule())
+                    .overlay(
                         Capsule()
-                            .fill((currentPhase == .installing || currentPhase == .completed ? Color.green : Color.accentColor).opacity(0.12))
+                            .stroke((currentPhase == .installing || currentPhase == .completed ? Color.green : Color.accentColor).opacity(0.2), lineWidth: 1)
                     )
                 }
                 
@@ -1020,7 +1138,7 @@ struct BatchSigningView: View {
                 
                 // Placeholder for symmetry
                 Color.clear
-                    .frame(width: 36, height: 36)
+                    .frame(width: 40, height: 40)
             }
             .padding(.horizontal, 20)
             .padding(.top, 16)
@@ -1210,6 +1328,7 @@ struct BatchSigningView: View {
     private var modernActionButtonSection: some View {
         VStack(spacing: 0) {
             Divider()
+                .opacity(0.5)
             
             Group {
                 if isSigningInProgress {

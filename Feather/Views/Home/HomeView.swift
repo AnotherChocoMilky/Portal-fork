@@ -181,6 +181,7 @@ struct HomeView: View {
             }
         }
         .onAppear {
+            UIDevice.current.isBatteryMonitoringEnabled = true
             if _animationsEnabled {
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                     _appearAnimation = true
@@ -291,6 +292,16 @@ struct HomeView: View {
             favoriteAppsSection(size: size)
         case .signingHistory:
             signingHistorySection(size: size)
+        case .activeDownloads:
+            activeDownloadsSection(size: size)
+        case .systemHealth:
+            systemHealthSection(size: size)
+        case .diskSpace:
+            diskSpaceSection(size: size)
+        case .latestGuides:
+            latestGuidesSection(size: size)
+        case .quickSettings:
+            quickSettingsSection(size: size)
         }
     }
     
@@ -1050,6 +1061,276 @@ struct HomeView: View {
         .animation(_animationsEnabled ? .spring(response: 0.5, dampingFraction: 0.8).delay(0.8) : .none, value: _appearAnimation)
     }
     
+    // MARK: - Active Downloads Section
+    @ViewBuilder
+    private func activeDownloadsSection(size: WidgetSize) -> some View {
+        VStack(alignment: .leading, spacing: size == .compact ? 8 : 16) {
+            if size != .compact {
+                sectionHeader("Active Downloads", icon: "arrow.down.circle.fill")
+            }
+
+            if downloadManager.downloads.isEmpty {
+                HStack {
+                    Image(systemName: "arrow.down.circle")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.secondary)
+                    Text("No active downloads")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(size == .compact ? 12 : 16)
+                .background(RoundedRectangle(cornerRadius: 12).fill(Color.primary.opacity(0.05)))
+            } else {
+                VStack(spacing: 12) {
+                    ForEach(downloadManager.downloads, id: \.id) { download in
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text(download.fileName)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .lineLimit(1)
+                                Spacer()
+                                Text("\(Int(download.overallProgress * 100))%")
+                                    .font(.system(size: 12, weight: .bold, design: .monospaced))
+                                    .foregroundStyle(Color.accentColor)
+                            }
+
+                            ProgressView(value: download.overallProgress)
+                                .tint(Color.accentColor)
+                        }
+                        .padding(12)
+                        .background(RoundedRectangle(cornerRadius: 12).fill(Color.primary.opacity(0.05)))
+                    }
+                }
+            }
+        }
+        .opacity(_appearAnimation ? 1 : 0)
+        .offset(y: _appearAnimation ? 0 : 20)
+        .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.25), value: _appearAnimation)
+    }
+
+    // MARK: - System Health Section
+    @ViewBuilder
+    private func systemHealthSection(size: WidgetSize) -> some View {
+        VStack(alignment: .leading, spacing: size == .compact ? 8 : 16) {
+            if size != .compact {
+                sectionHeader("System Health", icon: "heart.text.square.fill")
+            }
+
+            HStack(spacing: 12) {
+                // Battery
+                VStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .stroke(Color.primary.opacity(0.1), lineWidth: 4)
+                        Circle()
+                            .trim(from: 0, to: CGFloat(max(0, UIDevice.current.batteryLevel)))
+                            .stroke(batteryColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+
+                        Text("\(Int(max(0, UIDevice.current.batteryLevel) * 100))%")
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                    }
+                    .frame(width: 44, height: 44)
+
+                    Text("Battery")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+
+                // Thermal State
+                VStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(thermalColor.opacity(0.12))
+                        Image(systemName: "thermometer.medium")
+                            .font(.system(size: 20))
+                            .foregroundStyle(thermalColor)
+                    }
+                    .frame(width: 44, height: 44)
+
+                    Text("Thermal")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+
+                // Memory
+                VStack(spacing: 8) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.blue.opacity(0.12))
+                        Image(systemName: "memorychip")
+                            .font(.system(size: 20))
+                            .foregroundStyle(.blue)
+                    }
+                    .frame(width: 44, height: 44)
+
+                    Text("Memory")
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .padding(16)
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color(UIColor.secondarySystemGroupedBackground)))
+        }
+        .opacity(_appearAnimation ? 1 : 0)
+        .offset(y: _appearAnimation ? 0 : 20)
+    }
+
+    private var batteryColor: Color {
+        let level = UIDevice.current.batteryLevel
+        if level > 0.6 { return .green }
+        if level > 0.2 { return .orange }
+        return .red
+    }
+
+    private var thermalColor: Color {
+        switch ProcessInfo.processInfo.thermalState {
+        case .nominal: return .green
+        case .fair: return .yellow
+        case .serious: return .orange
+        case .critical: return .red
+        @unknown default: return .green
+        }
+    }
+
+    // MARK: - Disk Space Section
+    @ViewBuilder
+    private func diskSpaceSection(size: WidgetSize) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if size != .compact {
+                sectionHeader("Device Storage", icon: "sdcard.fill")
+            }
+
+            VStack(spacing: 12) {
+                let (total, free) = getDiskSpace()
+                let used = total - free
+                let percent = total > 0 ? Double(used) / Double(total) : 0
+
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Used Space")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(ByteCountFormatter.string(fromByteCount: used, countStyle: .file))
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("Free Space")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(ByteCountFormatter.string(fromByteCount: free, countStyle: .file))
+                            .font(.system(size: 18, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color.accentColor)
+                    }
+                }
+
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.primary.opacity(0.05))
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(LinearGradient(colors: [Color.accentColor, Color.accentColor.opacity(0.7)], startPoint: .leading, endPoint: .trailing))
+                            .frame(width: geo.size.width * percent)
+                    }
+                }
+                .frame(height: 12)
+
+                Text("\(Int(percent * 100))% Capacity Used")
+                    .font(.system(size: 10, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(16)
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color(UIColor.secondarySystemGroupedBackground)))
+        }
+        .opacity(_appearAnimation ? 1 : 0)
+        .offset(y: _appearAnimation ? 0 : 20)
+    }
+
+    private func getDiskSpace() -> (Int64, Int64) {
+        let attrs = try? FileManager.default.attributesOfFileSystem(forPath: NSHomeDirectory())
+        let total = attrs?[.systemSize] as? Int64 ?? 0
+        let free = attrs?[.systemFreeSize] as? Int64 ?? 0
+        return (total, free)
+    }
+
+    // MARK: - Latest Guides Section
+    @ViewBuilder
+    private func latestGuidesSection(size: WidgetSize) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if size != .compact {
+                sectionHeader("Latest Guides", icon: "book.fill")
+            }
+
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.orange.opacity(0.15))
+                        .frame(width: 50, height: 50)
+                    Image(systemName: "lightbulb.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(.orange)
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Understanding Certificates")
+                        .font(.system(size: 16, weight: .bold))
+                    Text("Learn how to manage and use signing certificates effectively.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(16)
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color(UIColor.secondarySystemGroupedBackground)))
+        }
+        .opacity(_appearAnimation ? 1 : 0)
+        .offset(y: _appearAnimation ? 0 : 20)
+    }
+
+    // MARK: - Quick Settings Section
+    @ViewBuilder
+    private func quickSettingsSection(size: WidgetSize) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if size != .compact {
+                sectionHeader("Quick Settings", icon: "gearshape.fill")
+            }
+
+            VStack(spacing: 1) {
+                QuickSettingToggle(title: "Use Gradients", icon: "paintbrush.fill", color: .purple, isOn: _useGradientsBinding)
+                Divider().padding(.leading, 50)
+                QuickSettingToggle(title: "Tint App Icons", icon: "app.dashed", color: .blue, isOn: _shouldTintIconsBinding)
+            }
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color(UIColor.secondarySystemGroupedBackground)))
+        }
+        .opacity(_appearAnimation ? 1 : 0)
+        .offset(y: _appearAnimation ? 0 : 20)
+    }
+
+    private var _useGradientsBinding: Binding<Bool> {
+        Binding(
+            get: { UserDefaults.standard.bool(forKey: "Feather.useGradients") },
+            set: { UserDefaults.standard.set($0, forKey: "Feather.useGradients") }
+        )
+    }
+
+    private var _shouldTintIconsBinding: Binding<Bool> {
+        Binding(
+            get: { UserDefaults.standard.bool(forKey: "Feather.shouldTintIcons") },
+            set: { UserDefaults.standard.set($0, forKey: "Feather.shouldTintIcons") }
+        )
+    }
+
     // MARK: - Favorite Apps Section
     private func favoriteAppsSection(size: WidgetSize) -> some View {
         VStack(alignment: .leading, spacing: _compactMode ? 8 : 16) {
@@ -1547,6 +1828,33 @@ struct RecentAppRow: View {
             
             Spacer()
         }
+    }
+}
+
+// MARK: - Quick Setting Toggle
+struct QuickSettingToggle: View {
+    let title: String
+    let icon: String
+    let color: Color
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Toggle(isOn: $isOn) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(color.opacity(0.15))
+                        .frame(width: 32, height: 32)
+                    Image(systemName: icon)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(color)
+                }
+                Text(title)
+                    .font(.system(size: 15, weight: .medium))
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 }
 
