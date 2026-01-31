@@ -136,10 +136,10 @@ struct FeatherApp: App {
 				// Scan for dylibs at launch
 				_checkForDylibs()
 			}
+			.onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+				_handlePendingWidgetAction()
+			}
 		})
-		.onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
-			_handlePendingWidgetAction()
-		}
 	}
 
 	private func _handlePendingWidgetAction() {
