@@ -29,15 +29,15 @@ final class SigningHandler: NSObject {
 	private static let appStoreBundleIDPrefixes: Set<String> = [
 		"com.apple.",
 		"com.facebook.",
+		"com.burbn.", // Instagram
 		"com.google.",
 		"com.microsoft.",
 		"com.amazon.",
 		"com.netflix.",
 		"com.spotify.",
 		"com.twitter.",
-		"com.instagram.",
 		"com.snapchat.",
-		"com.tiktok.",
+		"com.zhiliaoapp.", // TikTok
 		"com.reddit.",
 		"com.discord.",
 		"com.whatsapp.",
@@ -52,7 +52,7 @@ final class SigningHandler: NSObject {
 		"com.airbnb.",
 		"com.paypal.",
 		"com.venmo.",
-		"com.cashapp.",
+		"com.squareup.", // Cash App
 		"com.robinhood.",
 		"com.coinbase.",
 		"com.dropbox.",
@@ -142,6 +142,7 @@ final class SigningHandler: NSObject {
 		let originalIdentifier = infoDictionary["CFBundleIdentifier"] as? String
 		
 		// Apply PPQ Protection or Dynamic Protection if enabled
+		// Note: Dynamic Protection takes precedence if both are enabled
 		var modifiedIdentifier = _options.appIdentifier
 		var shouldApplyProtection = false
 		

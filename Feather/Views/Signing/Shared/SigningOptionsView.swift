@@ -31,23 +31,42 @@ struct SigningOptionsView: View {
             Section {
                 Toggle(isOn: Binding(
                     get: { 
-                        // Always return true if forced
-                        isPPQProtectionForced ? true : options.ppqProtection 
+                        // Always return true if forced, false if dynamicProtection is enabled
+                        if options.dynamicProtection {
+                            return false
+                        }
+                        return isPPQProtectionForced ? true : options.ppqProtection 
                     },
                     set: { newValue in
-                        // Only allow disabling if not forced
+                        // Only allow disabling if not forced and dynamic protection is off
                         if !isPPQProtectionForced || newValue {
                             options.ppqProtection = newValue
+                            if newValue {
+                                // Disable dynamic protection when PPQ is enabled
+                                options.dynamicProtection = false
+                            }
                         }
                     }
                 )) {
                     Label(.localized("PPQ Protection"), systemImage: "shield.checkered")
                 }
-                .disabled(isPPQProtectionForced)
+                .disabled(isPPQProtectionForced || options.dynamicProtection)
                 
-                Toggle(isOn: $options.dynamicProtection) {
+                Toggle(isOn: Binding(
+                    get: { options.dynamicProtection },
+                    set: { newValue in
+                        options.dynamicProtection = newValue
+                        if newValue {
+                            // Disable PPQ protection when Dynamic is enabled (unless forced)
+                            if !isPPQProtectionForced {
+                                options.ppqProtection = false
+                            }
+                        }
+                    }
+                )) {
                     Label(.localized("Dynamic Protection"), systemImage: "wand.and.stars")
                 }
+                .disabled(isPPQProtectionForced)
                 
                 Button {
                     HapticsManager.shared.impact()
