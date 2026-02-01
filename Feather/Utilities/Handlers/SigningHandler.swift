@@ -25,6 +25,13 @@ final class SigningHandler: NSObject {
 	// Static character set for PPQ protection - reused across instances for efficiency
 	private static let ppqCharacterSet: [Character] = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 	
+	// Dynamic Protection constants
+	private static let bundleSizeLargeThreshold: Int64 = 200_000_000  // 200 MB
+	private static let bundleSizeMediumThreshold: Int64 = 100_000_000 // 100 MB
+	private static let riskScoreHighThreshold = 50
+	private static let riskScoreMediumThreshold = 25
+	private static let riskScoreLowThreshold = 10
+	
 	init(app: AppInfoPresentable, options: Options = OptionsManager.shared.options) {
 		self._app = app
 		self._options = options
@@ -640,10 +647,10 @@ extension SigningHandler {
 		// 5. Check bundle size and complexity
 		do {
 			let bundleSize = try _fileManager.allocatedSizeOfDirectory(at: appPath)
-			if bundleSize > 200_000_000 { // > 200 MB
+			if bundleSize > Self.bundleSizeLargeThreshold {
 				riskScore += 10
 				AppLogManager.shared.debug("Large bundle size detected: \(bundleSize / 1_000_000) MB", category: "Signing")
-			} else if bundleSize > 100_000_000 { // > 100 MB
+			} else if bundleSize > Self.bundleSizeMediumThreshold {
 				riskScore += 5
 			}
 		} catch {
@@ -665,11 +672,15 @@ extension SigningHandler {
 			}
 		}
 		
-		// 7. Check for DRM or obfuscation indicators
+		// 7. Check for recent minimum OS version requirements
 		if let minimumOSVersion = infoDictionary["MinimumOSVersion"] as? String {
-			// Very recent minimum OS requirements might indicate active development
-			if minimumOSVersion.hasPrefix("17") || minimumOSVersion.hasPrefix("18") {
-				riskScore += 3
+			// Apps requiring iOS 16+ might indicate active development and higher profile
+			// Extract major version number
+			if let majorVersion = Int(minimumOSVersion.components(separatedBy: ".").first ?? "0") {
+				if majorVersion >= 16 {
+					riskScore += 3
+					AppLogManager.shared.debug("Recent iOS requirement detected: \(minimumOSVersion)", category: "Signing")
+				}
 			}
 		}
 		
@@ -684,11 +695,11 @@ extension SigningHandler {
 		
 		// Determine protection level based on accumulated risk score
 		let protectionLevel: ProtectionLevel
-		if riskScore >= 50 {
+		if riskScore >= Self.riskScoreHighThreshold {
 			protectionLevel = .high
-		} else if riskScore >= 25 {
+		} else if riskScore >= Self.riskScoreMediumThreshold {
 			protectionLevel = .medium
-		} else if riskScore >= 10 {
+		} else if riskScore >= Self.riskScoreLowThreshold {
 			protectionLevel = .low
 		} else {
 			protectionLevel = .none
