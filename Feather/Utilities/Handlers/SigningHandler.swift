@@ -26,8 +26,8 @@ final class SigningHandler: NSObject {
 	private static let ppqCharacterSet: [Character] = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 	
 	// Dynamic Protection constants
-	private static let bundleSizeLargeThreshold: Int64 = 200_000_000  // 200 MB
-	private static let bundleSizeMediumThreshold: Int64 = 100_000_000 // 100 MB
+	private static let bundleSizeLargeThreshold: Int64 = 50_000_000   // 50 MB (executable size proxy for large apps)
+	private static let bundleSizeMediumThreshold: Int64 = 20_000_000  // 20 MB (executable size proxy for medium apps)
 	private static let riskScoreHighThreshold = 50
 	private static let riskScoreMediumThreshold = 25
 	private static let riskScoreLowThreshold = 10
@@ -717,7 +717,8 @@ extension SigningHandler {
 					let bundleSize = fileSize.int64Value
 					if bundleSize > Self.bundleSizeLargeThreshold {
 						riskScore += 10
-						AppLogManager.shared.debug("Large bundle size detected (proxy: executable): \(bundleSize / 1_000_000) MB", category: "Signing")
+						let sizeInMB = Double(bundleSize) / 1_000_000.0
+						AppLogManager.shared.debug("Large executable size detected: \(String(format: "%.1f", sizeInMB)) MB", category: "Signing")
 					} else if bundleSize > Self.bundleSizeMediumThreshold {
 						riskScore += 5
 					}
