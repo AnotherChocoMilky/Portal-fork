@@ -1,10 +1,72 @@
 import Foundation
 
-struct AnyCodable: Codable {
+struct AnyCodable: Codable, Equatable {
 	let value: Any
 	
 	init(_ value: Any) {
 		self.value = value
+	}
+	
+	static func == (lhs: AnyCodable, rhs: AnyCodable) -> Bool {
+		// Handle NSNull
+		if lhs.value is NSNull && rhs.value is NSNull {
+			return true
+		}
+		
+		// Handle Bool
+		if let lhsBool = lhs.value as? Bool, let rhsBool = rhs.value as? Bool {
+			return lhsBool == rhsBool
+		}
+		
+		// Handle Int
+		if let lhsInt = lhs.value as? Int, let rhsInt = rhs.value as? Int {
+			return lhsInt == rhsInt
+		}
+		
+		// Handle UInt
+		if let lhsUInt = lhs.value as? UInt, let rhsUInt = rhs.value as? UInt {
+			return lhsUInt == rhsUInt
+		}
+		
+		// Handle Double
+		if let lhsDouble = lhs.value as? Double, let rhsDouble = rhs.value as? Double {
+			return lhsDouble == rhsDouble
+		}
+		
+		// Handle String
+		if let lhsString = lhs.value as? String, let rhsString = rhs.value as? String {
+			return lhsString == rhsString
+		}
+		
+		// Handle Array
+		if let lhsArray = lhs.value as? [Any], let rhsArray = rhs.value as? [Any] {
+			guard lhsArray.count == rhsArray.count else { return false }
+			for (lhsElement, rhsElement) in zip(lhsArray, rhsArray) {
+				if !AnyCodable(lhsElement).isEqual(to: AnyCodable(rhsElement)) {
+					return false
+				}
+			}
+			return true
+		}
+		
+		// Handle Dictionary
+		if let lhsDict = lhs.value as? [String: Any], let rhsDict = rhs.value as? [String: Any] {
+			guard lhsDict.count == rhsDict.count else { return false }
+			for (key, lhsValue) in lhsDict {
+				guard let rhsValue = rhsDict[key] else { return false }
+				if !AnyCodable(lhsValue).isEqual(to: AnyCodable(rhsValue)) {
+					return false
+				}
+			}
+			return true
+		}
+		
+		// If types don't match or aren't supported, they're not equal
+		return false
+	}
+	
+	private func isEqual(to other: AnyCodable) -> Bool {
+		return self == other
 	}
 	
 	init(from decoder: Decoder) throws {
