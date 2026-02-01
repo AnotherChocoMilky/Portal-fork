@@ -77,6 +77,28 @@ struct InfoPlistEntriesView: View {
 				}
 			}
 			
+			// Export Section
+			NBSection(.localized("Export"), systemName: "arrow.up.doc.fill") {
+				Button {
+					exportPlistFile()
+				} label: {
+					Label {
+						VStack(alignment: .leading, spacing: 2) {
+							Text(.localized("Export Entries to File"))
+								.font(.body)
+							Text(.localized("Save current entries as plist"))
+								.font(.caption)
+								.foregroundStyle(.secondary)
+						}
+					} icon: {
+						Image(systemName: "square.and.arrow.up.fill")
+							.font(.title2)
+							.foregroundStyle(.blue)
+					}
+				}
+				.disabled(options.customInfoPlistEntries.isEmpty)
+			}
+			
 			// Custom Entries Section
 			NBSection(.localized("Custom Entries"), systemName: "key.fill") {
 				if options.customInfoPlistEntries.isEmpty {
@@ -393,8 +415,97 @@ struct InfoPlistEntriesView: View {
 								.foregroundStyle(.teal)
 						}
 					}
+					
+					Button {
+						addBackgroundMode(.processing)
+					} label: {
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Background Processing"))
+									.font(.body)
+								Text(.localized("Run background tasks"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "cpu.fill")
+								.foregroundStyle(.purple)
+						}
+					}
+					
+					Button {
+						addBackgroundMode(.remoteNotification)
+					} label: {
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Remote Notifications"))
+									.font(.body)
+								Text(.localized("Receive push notifications"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+						}
+					} icon: {
+							Image(systemName: "bell.badge.fill")
+								.foregroundStyle(.red)
+						}
+					}
 				} header: {
 					Label(.localized("Background Modes"), systemImage: "gear.circle.fill")
+				}
+				
+				Section {
+					Button {
+						addSimpleEntry(key: "UIRequiresFullScreen", value: true)
+					} label: {
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Require Full Screen"))
+									.font(.body)
+								Text(.localized("App requires full screen mode"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "rectangle.expand.vertical")
+								.foregroundStyle(.purple)
+						}
+					}
+					
+					Button {
+						addSimpleEntry(key: "UIStatusBarHidden", value: true)
+					} label: {
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Hide Status Bar"))
+									.font(.body)
+								Text(.localized("Hide the status bar"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "eye.slash.fill")
+								.foregroundStyle(.gray)
+						}
+					}
+					
+					Button {
+						addSimpleEntry(key: "UILaunchStoryboardName", value: "LaunchScreen")
+					} label: {
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Launch Screen"))
+									.font(.body)
+								Text(.localized("Set launch screen name"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "play.rectangle.fill")
+								.foregroundStyle(.green)
+						}
+					}
+				} header: {
+					Label(.localized("Display & UI"), systemImage: "paintbrush.fill")
 				}
 				
 				Section {
@@ -434,6 +545,99 @@ struct InfoPlistEntriesView: View {
 				} header: {
 					Label(.localized("File Access"), systemImage: "filemenu.and.selection")
 				}
+				
+				Section {
+					Button {
+						addSimpleEntry(key: "NSCameraUsageDescription", value: "This app needs camera access")
+					} label: {
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Camera Usage"))
+									.font(.body)
+								Text(.localized("Add camera permission description"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "camera.fill")
+								.foregroundStyle(.blue)
+						}
+					}
+					
+					Button {
+						addSimpleEntry(key: "NSPhotoLibraryUsageDescription", value: "This app needs photo library access")
+					} label: {
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Photo Library Usage"))
+									.font(.body)
+								Text(.localized("Add photo library permission"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "photo.fill")
+								.foregroundStyle(.purple)
+						}
+					}
+					
+					Button {
+						addSimpleEntry(key: "NSMicrophoneUsageDescription", value: "This app needs microphone access")
+					} label: {
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Microphone Usage"))
+									.font(.body)
+								Text(.localized("Add microphone permission"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "mic.fill")
+								.foregroundStyle(.red)
+						}
+					}
+					
+					Button {
+						addSimpleEntry(key: "NSLocationWhenInUseUsageDescription", value: "This app needs location access")
+					} label: {
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Location Usage"))
+									.font(.body)
+								Text(.localized("Add location permission"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "location.fill")
+								.foregroundStyle(.green)
+						}
+					}
+				} header: {
+					Label(.localized("Privacy Permissions"), systemImage: "hand.raised.fill")
+				}
+				
+				Section {
+					Button {
+						addURLScheme("myapp")
+					} label: {
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Add URL Scheme"))
+									.font(.body)
+								Text(.localized("Custom URL scheme for deep linking"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "link.circle.fill")
+								.foregroundStyle(.orange)
+						}
+					}
+				} header: {
+					Label(.localized("URL Schemes"), systemImage: "link.badge.plus")
+				}
 			}
 			.toolbar {
 				ToolbarItem(placement: .cancellationAction) {
@@ -454,6 +658,8 @@ struct InfoPlistEntriesView: View {
 		case location = "location"
 		case voip = "voip"
 		case fetch = "fetch"
+		case processing = "processing"
+		case remoteNotification = "remote-notification"
 	}
 	
 	private func addOrientationPreset(_ orientation: Orientation) {
@@ -502,6 +708,29 @@ struct InfoPlistEntriesView: View {
 	private func addSimpleEntry(key: String, value: Any) {
 		withAnimation {
 			options.customInfoPlistEntries[key] = AnyCodable(value)
+		}
+		
+		HapticsManager.shared.success()
+		showPresetSheet = false
+	}
+	
+	private func addURLScheme(_ scheme: String) {
+		// CFBundleURLTypes is an array of dictionaries
+		var urlTypes: [[String: Any]] = []
+		
+		if let existing = options.customInfoPlistEntries["CFBundleURLTypes"]?.value as? [[String: Any]] {
+			urlTypes = existing
+		}
+		
+		// Add new URL type
+		let newType: [String: Any] = [
+			"CFBundleURLName": scheme,
+			"CFBundleURLSchemes": [scheme]
+		]
+		urlTypes.append(newType)
+		
+		withAnimation {
+			options.customInfoPlistEntries["CFBundleURLTypes"] = AnyCodable(urlTypes)
 		}
 		
 		HapticsManager.shared.success()
@@ -566,6 +795,50 @@ struct InfoPlistEntriesView: View {
 			UIAlertController.showAlertWithOk(
 				title: .localized("Error"),
 				message: .localized("Failed to import plist: \(error.localizedDescription)")
+			)
+		}
+	}
+	
+	private func exportPlistFile() {
+		do {
+			// Convert AnyCodable entries to plain dictionary
+			var exportDict: [String: Any] = [:]
+			for (key, anyCodable) in options.customInfoPlistEntries {
+				exportDict[key] = anyCodable.value
+			}
+			
+			// Serialize to plist format
+			let data = try PropertyListSerialization.data(fromPropertyList: exportDict, format: .xml, options: 0)
+			
+			// Create temp file
+			let tempDir = FileManager.default.temporaryDirectory
+			let fileName = "InfoPlistEntries_\(Date().timeIntervalSince1970).plist"
+			let fileURL = tempDir.appendingPathComponent(fileName)
+			
+			// Write data
+			try data.write(to: fileURL)
+			
+			// Share the file
+			let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
+			if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+			   let window = windowScene.windows.first,
+			   let rootVC = window.rootViewController {
+				var topVC = rootVC
+				while let presented = topVC.presentedViewController {
+					topVC = presented
+				}
+				activityVC.popoverPresentationController?.sourceView = topVC.view
+				activityVC.popoverPresentationController?.sourceRect = CGRect(x: topVC.view.bounds.midX, y: topVC.view.bounds.midY, width: 0, height: 0)
+				activityVC.popoverPresentationController?.permittedArrowDirections = []
+				topVC.present(activityVC, animated: true)
+			}
+			
+			HapticsManager.shared.success()
+		} catch {
+			HapticsManager.shared.error()
+			UIAlertController.showAlertWithOk(
+				title: .localized("Error"),
+				message: .localized("Failed to export plist: \(error.localizedDescription)")
 			)
 		}
 	}

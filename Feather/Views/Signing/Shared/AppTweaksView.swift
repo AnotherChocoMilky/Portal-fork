@@ -15,6 +15,8 @@ struct AppTweaksView: View {
 	@State private var expandedFrameworks = false
 	@State private var expandedBundles = false
 	@State private var showExtractView = false
+	@State private var searchText = ""
+	@FocusState private var searchFieldFocused: Bool
 	
 	// Data
 	@State private var dylibs: [String] = []
@@ -173,6 +175,38 @@ struct AppTweaksView: View {
 			.background(
 				RoundedRectangle(cornerRadius: 10, style: .continuous)
 					.fill(Color(UIColor.secondarySystemGroupedBackground))
+			)
+			
+			// Search Bar
+			HStack(spacing: 10) {
+				Image(systemName: "magnifyingglass")
+					.font(.system(size: 14))
+					.foregroundStyle(Color(UIColor.secondaryLabel))
+				
+				TextField("Search tweaks...", text: $searchText)
+					.font(.system(size: 15))
+					.focused($searchFieldFocused)
+				
+				if !searchText.isEmpty {
+					Button {
+						searchText = ""
+						searchFieldFocused = false
+					} label: {
+						Image(systemName: "xmark.circle.fill")
+							.font(.system(size: 16))
+							.foregroundStyle(Color(UIColor.tertiaryLabel))
+					}
+				}
+			}
+			.padding(.horizontal, 12)
+			.padding(.vertical, 10)
+			.background(
+				RoundedRectangle(cornerRadius: 10, style: .continuous)
+					.fill(Color(UIColor.secondarySystemGroupedBackground))
+			)
+			.overlay(
+				RoundedRectangle(cornerRadius: 10, style: .continuous)
+					.stroke(searchFieldFocused ? Color.accentColor.opacity(0.5) : Color.clear, lineWidth: 1)
 			)
 		}
 		.onChange(of: selectedTab) { newValue in
@@ -351,18 +385,27 @@ struct AppTweaksView: View {
 	// MARK: - Frameworks List
 	@ViewBuilder
 	private var frameworksList: some View {
+		let filteredFrameworks = searchText.isEmpty ? frameworks : frameworks.filter { $0.localizedCaseInsensitiveContains(searchText) }
+		
 		VStack(spacing: 8) {
-			ForEach(frameworks, id: \.self) { framework in
-				tweakItemRow(
-					name: framework,
-					isEnabled: !options.removeFiles.contains("Frameworks/\(framework)"),
-					onToggle: {
-						toggleFramework(framework)
-					},
-					onRemove: {
-						removeFramework(framework)
-					}
-				)
+			if filteredFrameworks.isEmpty {
+				Text("No matching frameworks")
+					.font(.system(size: 14))
+					.foregroundStyle(.secondary)
+					.padding()
+			} else {
+				ForEach(filteredFrameworks, id: \.self) { framework in
+					tweakItemRow(
+						name: framework,
+						isEnabled: !options.removeFiles.contains("Frameworks/\(framework)"),
+						onToggle: {
+							toggleFramework(framework)
+						},
+						onRemove: {
+							removeFramework(framework)
+						}
+					)
+				}
 			}
 		}
 		.padding(12)
@@ -375,18 +418,27 @@ struct AppTweaksView: View {
 	// MARK: - Bundles List
 	@ViewBuilder
 	private var bundlesList: some View {
+		let filteredBundles = searchText.isEmpty ? bundles : bundles.filter { $0.localizedCaseInsensitiveContains(searchText) }
+		
 		VStack(spacing: 8) {
-			ForEach(bundles, id: \.self) { bundle in
-				tweakItemRow(
-					name: bundle,
-					isEnabled: !options.removeFiles.contains("PlugIns/\(bundle)"),
-					onToggle: {
-						toggleBundle(bundle)
-					},
-					onRemove: {
-						removeBundle(bundle)
-					}
-				)
+			if filteredBundles.isEmpty {
+				Text("No matching bundles")
+					.font(.system(size: 14))
+					.foregroundStyle(.secondary)
+					.padding()
+			} else {
+				ForEach(filteredBundles, id: \.self) { bundle in
+					tweakItemRow(
+						name: bundle,
+						isEnabled: !options.removeFiles.contains("PlugIns/\(bundle)"),
+						onToggle: {
+							toggleBundle(bundle)
+						},
+						onRemove: {
+							removeBundle(bundle)
+						}
+					)
+				}
 			}
 		}
 		.padding(12)

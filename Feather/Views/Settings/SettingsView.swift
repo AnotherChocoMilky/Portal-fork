@@ -47,7 +47,7 @@ struct SettingsView: View {
                 HapticsManager.shared.success()
             }
         } message: {
-            Text("Developer mode provides advanced tools for developers. This can make the app crash and is NOT intended for regular users. Auth checks may be needed.")
+            Text("Developer mode provides advanced debugging tools for app developers. This is NOT recommended for regular users as it may cause instability and crashes. Use at your own risk.")
         }
         .onChange(of: navigateToUpdates.wrappedValue) { shouldNavigate in
             if shouldNavigate {
@@ -151,15 +151,15 @@ struct SettingsView: View {
     
     private func handleDeveloperModeTap() {
         let now = Date()
-        if let lastTap = lastTapTime, now.timeIntervalSince(lastTap) > 5.0 {
+        if let lastTap = lastTapTime, now.timeIntervalSince(lastTap) > 3.0 {
             developerTapCount = 0
         }
         lastTapTime = now
         developerTapCount += 1
-        if developerTapCount >= 5 && developerTapCount < 10 {
+        if developerTapCount >= 7 && developerTapCount < 15 {
             HapticsManager.shared.softImpact()
         }
-        if developerTapCount >= 10 {
+        if developerTapCount >= 15 {
             showDeveloperConfirmation = true
         }
     }

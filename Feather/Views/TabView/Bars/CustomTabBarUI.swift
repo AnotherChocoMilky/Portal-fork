@@ -120,26 +120,27 @@ struct CustomTabBarUI: View {
     
     // MARK: - Liquid Glass Tab Bar
     private var liquidGlassTabBar: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 4) {
             ForEach(visibleTabs, id: \.self) { tab in
                 liquidGlassTabButton(for: tab)
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 6)
+        .padding(.vertical, 8)
         .background(
             ZStack {
-                // Frosted glass effect
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                // Frosted glass effect with enhanced blur
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(.ultraThinMaterial)
                 
-                // Subtle inner glow
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                // Enhanced inner glow
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.15),
-                                Color.white.opacity(0.05),
+                                Color.white.opacity(0.2),
+                                Color.white.opacity(0.08),
+                                Color.white.opacity(0.02),
                                 Color.clear
                             ],
                             startPoint: .top,
@@ -147,26 +148,28 @@ struct CustomTabBarUI: View {
                         )
                     )
                 
-                // Border with gradient
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                // Enhanced border with gradient
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .stroke(
                         LinearGradient(
                             colors: [
-                                Color.white.opacity(0.3),
-                                Color.white.opacity(0.1),
-                                Color.white.opacity(0.05)
+                                Color.white.opacity(0.4),
+                                Color.white.opacity(0.15),
+                                Color.white.opacity(0.08),
+                                Color.clear
                             ],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         ),
-                        lineWidth: 0.5
+                        lineWidth: 0.8
                     )
             }
         )
-        .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 8)
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-        .padding(.horizontal, 40)
-        .padding(.bottom, 6)
+        .shadow(color: .black.opacity(0.2), radius: 25, x: 0, y: 10)
+        .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
+        .shadow(color: .black.opacity(0.04), radius: 2, x: 0, y: 1)
+        .padding(.horizontal, 32)
+        .padding(.bottom, 8)
     }
     
     // MARK: - Liquid Glass Tab Button
@@ -175,52 +178,96 @@ struct CustomTabBarUI: View {
         let isSelected = currentTab == tab
         
         Button {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.75, blendDuration: 0.3)) {
                 selectedTab = tab
             }
             HapticsManager.shared.softImpact()
         } label: {
-            VStack(spacing: 3) {
+            VStack(spacing: 4) {
                 ZStack {
-                    // Selection indicator with glow
+                    // Enhanced selection indicator with multiple layers
                     if isSelected {
+                        // Outer glow
                         Circle()
                             .fill(
                                 RadialGradient(
                                     colors: [
-                                        Color.accentColor.opacity(0.25),
-                                        Color.accentColor.opacity(0.1),
+                                        Color.accentColor.opacity(0.3),
+                                        Color.accentColor.opacity(0.15),
+                                        Color.accentColor.opacity(0.05),
                                         Color.clear
                                     ],
                                     center: .center,
                                     startRadius: 0,
-                                    endRadius: 20
+                                    endRadius: 24
                                 )
                             )
-                            .frame(width: 40, height: 40)
+                            .frame(width: 48, height: 48)
                             .matchedGeometryEffect(id: "tabGlow", in: animation)
                         
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color.accentColor.opacity(0.15))
-                            .frame(width: 32, height: 32)
+                        // Mid-layer blur effect
+                        Circle()
+                            .fill(Color.accentColor.opacity(0.12))
+                            .blur(radius: 4)
+                            .frame(width: 38, height: 38)
+                        
+                        // Inner background
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color.accentColor.opacity(0.2),
+                                        Color.accentColor.opacity(0.15)
+                                    ],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .frame(width: 36, height: 36)
                             .matchedGeometryEffect(id: "tabBackground", in: animation)
                     }
                     
                     Image(systemName: isSelected ? tab.selectedIcon : tab.icon)
-                        .font(.system(size: 18, weight: isSelected ? .semibold : .regular))
-                        .foregroundStyle(isSelected ? Color.accentColor : .secondary)
-                        .scaleEffect(isSelected ? 1.05 : 1.0)
+                        .font(.system(size: 19, weight: isSelected ? .semibold : .regular, design: .rounded))
+                        .foregroundStyle(
+                            isSelected ? 
+                            LinearGradient(
+                                colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            ) : 
+                            LinearGradient(
+                                colors: [Color.secondary, Color.secondary],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .scaleEffect(isSelected ? 1.08 : 1.0)
+                        .symbolEffect(.bounce, value: isSelected)
                 }
-                .frame(width: 32, height: 32)
+                .frame(width: 36, height: 36)
                 
                 Text(tab.title)
-                    .font(.system(size: 10, weight: isSelected ? .semibold : .medium))
-                    .foregroundStyle(isSelected ? Color.accentColor : .secondary)
+                    .font(.system(size: 9, weight: isSelected ? .semibold : .medium, design: .rounded))
+                    .foregroundStyle(
+                        isSelected ? 
+                        LinearGradient(
+                            colors: [Color.accentColor, Color.accentColor.opacity(0.9)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        ) : 
+                        LinearGradient(
+                            colors: [Color.secondary, Color.secondary],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
             }
             .frame(maxWidth: .infinity)
+            .padding(.vertical, 6)
             .contentShape(Rectangle())
         }
-        .buttonStyle(LiquidGlassButtonStyle())
+        .buttonStyle(EnhancedLiquidGlassButtonStyle())
     }
 }
 
@@ -231,6 +278,16 @@ struct LiquidGlassButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.9 : 1.0)
             .opacity(configuration.isPressed ? 0.8 : 1.0)
             .animation(.spring(response: 0.25, dampingFraction: 0.6), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Enhanced Liquid Glass Button Style
+struct EnhancedLiquidGlassButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.92 : 1.0)
+            .brightness(configuration.isPressed ? -0.05 : 0)
+            .animation(.spring(response: 0.2, dampingFraction: 0.7, blendDuration: 0.2), value: configuration.isPressed)
     }
 }
 

@@ -90,20 +90,32 @@ struct CheckForUpdatesView: View {
     // MARK: - Hero Section
     private var heroSection: some View {
         VStack(spacing: 20) {
-            // App Icon with glow effect
+            // App Icon with enhanced glow effect
             ZStack {
-                // Glow effect
+                // Multiple glow layers for depth
                 Circle()
                     .fill(
                         RadialGradient(
-                            colors: [Color.accentColor.opacity(0.3), Color.clear],
+                            colors: [Color.accentColor.opacity(0.4), Color.accentColor.opacity(0.1), Color.clear],
                             center: .center,
-                            startRadius: 30,
-                            endRadius: 80
+                            startRadius: 20,
+                            endRadius: 90
                         )
                     )
-                    .frame(width: 160, height: 160)
-                    .blur(radius: 10)
+                    .frame(width: 180, height: 180)
+                    .blur(radius: 15)
+                
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Color.accentColor.opacity(0.2), Color.clear],
+                            center: .center,
+                            startRadius: 40,
+                            endRadius: 70
+                        )
+                    )
+                    .frame(width: 140, height: 140)
+                    .blur(radius: 8)
                 
                 if let iconName = Bundle.main.iconFileName,
                    let icon = UIImage(named: iconName) {
@@ -112,7 +124,19 @@ struct CheckForUpdatesView: View {
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 100, height: 100)
                         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                        .shadow(color: .accentColor.opacity(0.4), radius: 15, x: 0, y: 8)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                .strokeBorder(
+                                    LinearGradient(
+                                        colors: [Color.white.opacity(0.4), Color.white.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ),
+                                    lineWidth: 1
+                                )
+                        )
+                        .shadow(color: .accentColor.opacity(0.5), radius: 20, x: 0, y: 10)
+                        .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 5)
                 } else {
                     RoundedRectangle(cornerRadius: 22, style: .continuous)
                         .fill(LinearGradient(colors: [.accentColor, .accentColor.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
@@ -122,7 +146,8 @@ struct CheckForUpdatesView: View {
                                 .font(.system(size: 40))
                                 .foregroundStyle(.white)
                         )
-                        .shadow(color: .accentColor.opacity(0.4), radius: 15, x: 0, y: 8)
+                        .shadow(color: .accentColor.opacity(0.5), radius: 20, x: 0, y: 10)
+                        .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 5)
                 }
             }
             .padding(.top, 20)
@@ -131,28 +156,56 @@ struct CheckForUpdatesView: View {
             VStack(spacing: 8) {
                 Text("Portal")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                
-                // Modern version badge
-                HStack(spacing: 8) {
-                    Text("v\(currentVersion)")
-                        .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(.primary)
-                    
-                    Text("Build \(currentBuild)")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(
-                            Capsule()
-                                .fill(Color.accentColor)
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.primary, .primary.opacity(0.8)],
+                            startPoint: .leading,
+                            endPoint: .trailing
                         )
+                    )
+                
+                // Modern version badge with enhanced styling
+                HStack(spacing: 10) {
+                    HStack(spacing: 6) {
+                        Image(systemName: "number.circle.fill")
+                            .font(.system(size: 12))
+                        Text("v\(currentVersion)")
+                            .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                    }
+                    .foregroundStyle(.primary)
+                    
+                    Divider()
+                        .frame(height: 14)
+                    
+                    HStack(spacing: 6) {
+                        Image(systemName: "hammer.circle.fill")
+                            .font(.system(size: 11))
+                        Text(currentBuild)
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                    )
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 10)
                 .background(
                     Capsule()
                         .fill(Color(UIColor.tertiarySystemBackground))
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(Color(UIColor.separator).opacity(0.3), lineWidth: 1)
+                        )
                 )
             }
             

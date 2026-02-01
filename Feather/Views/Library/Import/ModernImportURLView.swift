@@ -6,11 +6,13 @@ struct ModernImportURLView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 	@AppStorage("Feather.useGradients") private var _useGradients: Bool = true
+	@AppStorage("Feather.recentImportURLs") private var recentURLsData: Data = Data()
     @State private var urlText = ""
     @FocusState private var isTextFieldFocused: Bool
 	@State private var errorMessage: String?
 	@State private var showError = false
 	@State private var isImporting = false
+	@State private var recentURLs: [String] = []
     var onImport: (URL) -> Void
     
     var body: some View {
@@ -111,6 +113,29 @@ struct ModernImportURLView: View {
 										showError = false
 									}
 								}
+								
+								// Paste button
+								if !urlText.isEmpty {
+									Button {
+										urlText = ""
+										HapticsManager.shared.softImpact()
+									} label: {
+										Image(systemName: "xmark.circle.fill")
+											.foregroundStyle(.secondary)
+											.font(.system(size: 18))
+									}
+								} else {
+									Button {
+										if let clipboardString = UIPasteboard.general.string, !clipboardString.isEmpty {
+											urlText = clipboardString
+											HapticsManager.shared.softImpact()
+										}
+									} label: {
+										Image(systemName: "doc.on.clipboard")
+											.foregroundStyle(.accentColor)
+											.font(.system(size: 18))
+									}
+								}
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 14)
@@ -144,6 +169,62 @@ struct ModernImportURLView: View {
                     }
                     .padding(.horizontal, 24)
                     .frame(maxWidth: horizontalSizeClass == .regular ? 500 : .infinity)
+                    
+                    // Recent URLs
+					if !recentURLs.isEmpty {
+						VStack(alignment: .leading, spacing: 12) {
+							HStack {
+								Image(systemName: "clock.arrow.circlepath")
+									.foregroundStyle(.secondary)
+									.font(.system(size: 14))
+								Text(.localized("Recent URLs"))
+									.font(.subheadline.weight(.semibold))
+									.foregroundStyle(.secondary)
+								Spacer()
+								Button {
+									recentURLs.removeAll()
+									saveRecentURLs()
+									HapticsManager.shared.softImpact()
+								} label: {
+									Text(.localized("Clear"))
+										.font(.caption.weight(.medium))
+										.foregroundStyle(.red)
+								}
+							}
+							
+							VStack(spacing: 8) {
+								ForEach(Array(recentURLs.prefix(3)), id: \.self) { urlString in
+									Button {
+										urlText = urlString
+										HapticsManager.shared.softImpact()
+									} label: {
+										HStack(spacing: 12) {
+											Image(systemName: "link")
+												.foregroundStyle(.accentColor)
+												.font(.system(size: 14))
+											
+											Text(urlString)
+												.font(.system(size: 13))
+												.foregroundStyle(.primary)
+												.lineLimit(1)
+												.frame(maxWidth: .infinity, alignment: .leading)
+											
+											Image(systemName: "arrow.up.left")
+												.foregroundStyle(.secondary)
+												.font(.system(size: 12))
+										}
+										.padding(.horizontal, 12)
+										.padding(.vertical, 10)
+										.background(
+											RoundedRectangle(cornerRadius: 10, style: .continuous)
+												.fill(Color(uiColor: .secondarySystemGroupedBackground))
+										)
+									}
+								}
+							}
+						}
+						.padding(.horizontal, 24)
+					}
                     
                     Spacer(minLength: 40)
                     
@@ -213,11 +294,36 @@ struct ModernImportURLView: View {
             }
         }
         .onAppear {
+			loadRecentURLs()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 isTextFieldFocused = true
             }
         }
     }
+    
+    private func loadRecentURLs() {
+		if let urls = try? JSONDecoder().decode([String].self, from: recentURLsData) {
+			recentURLs = urls
+		}
+	}
+	
+	private func saveRecentURLs() {
+		if let data = try? JSONEncoder().encode(recentURLs) {
+			recentURLsData = data
+		}
+	}
+	
+	private func addToRecentURLs(_ urlString: String) {
+		// Remove if already exists
+		recentURLs.removeAll { $0 == urlString }
+		// Add to front
+		recentURLs.insert(urlString, at: 0)
+		// Keep only last 5
+		if recentURLs.count > 5 {
+			recentURLs = Array(recentURLs.prefix(5))
+		}
+		saveRecentURLs()
+	}
     
     private func handleImport() {
 		// Clear any previous errors
@@ -274,6 +380,7 @@ struct ModernImportURLView: View {
 			}
 			
 			HapticsManager.shared.impact()
+			addToRecentURLs(url.absoluteString)
 			onImport(url)
 			dismiss()
 		}
