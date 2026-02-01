@@ -665,14 +665,19 @@ extension SigningHandler {
 				   let plistEnd = provisioningData.range(of: Data("</plist>".utf8)) {
 					let xmlEndIndex = plistEnd.upperBound
 					let xmlData = provisioningData.subdata(in: xmlStart.lowerBound..<xmlEndIndex)
-					if let plist = try? PropertyListSerialization.propertyList(from: xmlData, format: nil) as? [String: Any],
-					   let embeddedEntitlements = plist["Entitlements"] as? [String: Any] {
-						entitlements = embeddedEntitlements
-						AppLogManager.shared.debug("Extracted entitlements from embedded.mobileprovision", category: "Signing")
+					
+					do {
+						if let plist = try PropertyListSerialization.propertyList(from: xmlData, format: nil) as? [String: Any],
+						   let embeddedEntitlements = plist["Entitlements"] as? [String: Any] {
+							entitlements = embeddedEntitlements
+							AppLogManager.shared.debug("Extracted entitlements from embedded.mobileprovision", category: "Signing")
+						}
+					} catch {
+						AppLogManager.shared.debug("Could not parse embedded.mobileprovision plist: \(error.localizedDescription)", category: "Signing")
 					}
 				}
 			} catch {
-				AppLogManager.shared.debug("Could not extract entitlements from embedded.mobileprovision: \(error.localizedDescription)", category: "Signing")
+				AppLogManager.shared.debug("Could not read embedded.mobileprovision: \(error.localizedDescription)", category: "Signing")
 			}
 		}
 		
