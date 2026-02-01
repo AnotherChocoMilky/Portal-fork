@@ -880,6 +880,17 @@ struct CompactFilterChip: View {
 
 
 
+// MARK: - App Customization Model
+struct AppCustomization: Equatable {
+    var appName: String = ""
+    var bundleID: String = ""
+    var version: String = ""
+    
+    var isEmpty: Bool {
+        return appName.isEmpty && bundleID.isEmpty && version.isEmpty
+    }
+}
+
 // MARK: - Batch Signing View
 struct BatchSigningView: View {
     @Environment(\.dismiss) private var dismiss
@@ -904,6 +915,10 @@ struct BatchSigningView: View {
     @State private var batchBundleID: String = ""
     @State private var batchVersion: String = ""
     @State private var showEditSheet = false
+    
+    // Per-app customizations
+    @State private var perAppCustomizations: [String: AppCustomization] = [:]
+    @State private var editingAppUUID: String? = nil
     
     @AppStorage("Feather.installationMethod") private var installationMethod: Int = 0
     
@@ -975,7 +990,13 @@ struct BatchSigningView: View {
                                     ModernBatchSigningAppRow(
                                         app: app,
                                         status: getStatusForApp(app),
-                                        index: index + 1
+                                        index: index + 1,
+                                        onEdit: {
+                                            if let uuid = app.uuid {
+                                                editingAppUUID = uuid
+                                            }
+                                        },
+                                        hasCustomization: perAppCustomizations[app.uuid ?? ""] != nil
                                     )
                                     .opacity(appearAnimation ? 1 : 0)
                                     .offset(y: appearAnimation ? 0 : 30)
@@ -1017,6 +1038,30 @@ struct BatchSigningView: View {
                 batchBundleID: $batchBundleID,
                 batchVersion: $batchVersion
             )
+        }
+        .sheet(isPresented: Binding(
+            get: { editingAppUUID != nil },
+            set: { if !$0 { editingAppUUID = nil } }
+        )) {
+            if let uuid = editingAppUUID,
+               let app = apps.first(where: { $0.uuid == uuid }) {
+                PerAppEditSheet(
+                    app: app,
+                    customization: Binding(
+                        get: { perAppCustomizations[uuid] ?? AppCustomization() },
+                        set: { 
+                            if $0.isEmpty {
+                                perAppCustomizations.removeValue(forKey: uuid)
+                            } else {
+                                perAppCustomizations[uuid] = $0
+                            }
+                        }
+                    ),
+                    onDelete: {
+                        perAppCustomizations.removeValue(forKey: uuid)
+                    }
+                )
+            }
         }
     }
     
@@ -1479,7 +1524,7 @@ struct BatchSigningView: View {
             // Create a local copy of options for this app (Options is a struct, so this is a value copy)
             var options = OptionsManager.shared.options
             
-            // Apply batch signing options if specified
+            // First, apply batch signing options if specified (general settings)
             if !batchAppName.isEmpty {
                 options.appName = batchAppName
             }
@@ -1488,6 +1533,19 @@ struct BatchSigningView: View {
             }
             if !batchVersion.isEmpty {
                 options.appVersion = batchVersion
+            }
+            
+            // Then, apply per-app customizations if they exist (overrides batch settings)
+            if let customization = perAppCustomizations[uuid] {
+                if !customization.appName.isEmpty {
+                    options.appName = customization.appName
+                }
+                if !customization.bundleID.isEmpty {
+                    options.appIdentifier = customization.bundleID
+                }
+                if !customization.version.isEmpty {
+                    options.appVersion = customization.version
+                }
             }
             
             AppLogManager.shared.info("Signing app \(index + 1)/\(apps.count): \(app.name ?? "Unknown")", category: "BatchSign")
@@ -1762,12 +1820,157 @@ private struct BatchSigningEditSheet: View {
     }
 }
 
+// MARK: - Per-App Edit Sheet
+private struct PerAppEditSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let app: AppInfoPresentable
+    @Binding var customization: AppCustomization
+    let onDelete: () -> Void
+    
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
+                    // App info header
+                    HStack(spacing: 12) {
+                        FRAppIconView(app: app, size: 60)
+                            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(app.name ?? "Unknown")
+                                .font(.system(size: 16, weight: .semibold))
+                                .lineLimit(2)
+                            
+                            if let bundleID = app.identifier {
+                                Text(bundleID)
+                                    .font(.system(size: 12, weight: .regular))
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
+                    
+                    // Customization fields
+                    VStack(spacing: 16) {
+                        // App Name field
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("App Name (Optional)")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.secondary)
+                            TextField("Leave blank to keep original", text: $customization.appName)
+                                .textFieldStyle(.plain)
+                                .padding(12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .fill(Color(.tertiarySystemGroupedBackground))
+                                )
+                        }
+                        
+                        // Bundle ID field
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Bundle ID (Optional)")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.secondary)
+                            TextField("Leave blank to keep original", text: $customization.bundleID)
+                                .textFieldStyle(.plain)
+                                .autocapitalization(.none)
+                                .padding(12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .fill(Color(.tertiarySystemGroupedBackground))
+                                )
+                        }
+                        
+                        // Version field
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Version (Optional)")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.secondary)
+                            TextField("Leave blank to keep original", text: $customization.version)
+                                .textFieldStyle(.plain)
+                                .padding(12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .fill(Color(.tertiarySystemGroupedBackground))
+                                )
+                        }
+                        
+                        // Clear button
+                        if !customization.isEmpty {
+                            Button {
+                                customization = AppCustomization()
+                                onDelete()
+                            } label: {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.system(size: 14, weight: .semibold))
+                                    Text("Clear Customizations")
+                                        .font(.system(size: 14, weight: .semibold))
+                                }
+                                .foregroundStyle(.red)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                        .fill(Color.red.opacity(0.1))
+                                )
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                }
+            }
+            .navigationTitle("Edit App Info")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 14, weight: .bold))
+                            Text("Done")
+                                .font(.system(size: 15, weight: .semibold))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(Color.accentColor)
+                        )
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+}
+
 // MARK: - Batch Signing App Row
 // MARK: - Modern Batch Signing App Row
 private struct ModernBatchSigningAppRow: View {
     let app: AppInfoPresentable
     let status: BatchSigningView.BatchSigningStatus
     let index: Int
+    let onEdit: () -> Void
+    let hasCustomization: Bool
     
     private var statusColor: Color {
         switch status {
@@ -1800,6 +2003,32 @@ private struct ModernBatchSigningAppRow: View {
         case .success: return "Completed"
         case .failed(let error): return error
         }
+    }
+    
+    private var showEditButton: Bool {
+        if case .pending = status { return true }
+        if case .failed = status { return true }
+        return false
+    }
+    
+    @ViewBuilder
+    private var editButton: some View {
+        Button(action: onEdit) {
+            HStack(spacing: 4) {
+                Image(systemName: "pencil")
+                    .font(.system(size: 12, weight: .semibold))
+                Text("Edit")
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(hasCustomization ? Color.orange : Color.accentColor)
+            )
+        }
+        .buttonStyle(.plain)
     }
     
     var body: some View {
@@ -1860,6 +2089,11 @@ private struct ModernBatchSigningAppRow: View {
             }
             
             Spacer()
+            
+            // Edit button (only show when not in progress states)
+            if showEditButton {
+                editButton
+            }
             
             // Status indicator
             ZStack {
