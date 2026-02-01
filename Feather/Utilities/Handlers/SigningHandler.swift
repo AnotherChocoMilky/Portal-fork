@@ -31,6 +31,7 @@ final class SigningHandler: NSObject {
 	private static let riskScoreHighThreshold = 50
 	private static let riskScoreMediumThreshold = 25
 	private static let riskScoreLowThreshold = 10
+	private static let minimumRecentIOSVersion = 16  // Apps requiring iOS 16+ indicate active development
 	
 	init(app: AppInfoPresentable, options: Options = OptionsManager.shared.options) {
 		self._app = app
@@ -674,10 +675,10 @@ extension SigningHandler {
 		
 		// 7. Check for recent minimum OS version requirements
 		if let minimumOSVersion = infoDictionary["MinimumOSVersion"] as? String {
-			// Apps requiring iOS 16+ might indicate active development and higher profile
+			// Apps requiring recent iOS versions might indicate active development and higher profile
 			// Extract major version number
 			if let majorVersion = Int(minimumOSVersion.components(separatedBy: ".").first ?? "0") {
-				if majorVersion >= 16 {
+				if majorVersion >= Self.minimumRecentIOSVersion {
 					riskScore += 3
 					AppLogManager.shared.debug("Recent iOS requirement detected: \(minimumOSVersion)", category: "Signing")
 				}
