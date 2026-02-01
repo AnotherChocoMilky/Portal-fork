@@ -585,6 +585,7 @@ extension SigningHandler {
 	/// Analyzes an app bundle to determine the appropriate protection level
 	/// Uses multiple heuristics instead of hardcoded bundle IDs for more flexibility
 	private func _analyzeBundleForProtection(infoDictionary: NSDictionary, bundleIdentifier: String, appPath: URL) async throws -> ProtectionLevel {
+		await Task.yield()
 		var riskScore = 0
 		
 		// 1. Analyze bundle identifier patterns (high-profile domains)
