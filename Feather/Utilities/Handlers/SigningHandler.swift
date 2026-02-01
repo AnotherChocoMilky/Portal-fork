@@ -91,30 +91,42 @@ final class SigningHandler: NSObject {
 		}
 		
 		// Apply Dynamic Protection if enabled
-		if _options.dynamicProtection, let baseIdentifier = modifiedIdentifier ?? originalIdentifier {
-			let protectionLevel = try await _analyzeBundleForProtection(infoDictionary: infoDictionary, bundleIdentifier: baseIdentifier, appPath: movedAppPath)
+		if _options.dynamicProtection {
+			// Use the original bundle identifier for analysis (not the modified one)
+			// to ensure high-profile apps are correctly detected
+			let analysisIdentifier = originalIdentifier ?? modifiedIdentifier ?? ""
+			let protectionLevel = try await _analyzeBundleForProtection(infoDictionary: infoDictionary, bundleIdentifier: analysisIdentifier, appPath: movedAppPath)
+			
+			// Apply protection to the current identifier (which may already be modified by PPQ)
+			let baseIdentifier = modifiedIdentifier ?? originalIdentifier
 			
 			switch protectionLevel {
 			case .high:
 				// High-risk apps get full randomization with timestamp component
 				// Use modulo to get a unique 32-bit value without Y2038 overflow concerns
-				let timeValue = UInt64(Date().timeIntervalSince1970) % 0x100000000
-				let timestamp = String(format: "%08X", timeValue)
-				let randomSuffix = String((0..<8).compactMap { _ in Self.ppqCharacterSet.randomElement() })
-				modifiedIdentifier = "\(baseIdentifier).\(timestamp).\(randomSuffix)"
-				AppLogManager.shared.info("Dynamic Protection (HIGH): Applied timestamp and randomization to Bundle ID", category: "Signing")
+				if let base = baseIdentifier {
+					let timeValue = UInt64(Date().timeIntervalSince1970) % 0x100000000
+					let timestamp = String(format: "%08X", timeValue)
+					let randomSuffix = String((0..<8).compactMap { _ in Self.ppqCharacterSet.randomElement() })
+					modifiedIdentifier = "\(base).\(timestamp).\(randomSuffix)"
+					AppLogManager.shared.info("Dynamic Protection (HIGH): Applied timestamp and randomization to Bundle ID", category: "Signing")
+				}
 				
 			case .medium:
 				// Medium-risk apps get moderate randomization
-				let randomSuffix = String((0..<10).compactMap { _ in Self.ppqCharacterSet.randomElement() })
-				modifiedIdentifier = "\(baseIdentifier).\(randomSuffix)"
-				AppLogManager.shared.info("Dynamic Protection (MEDIUM): Applied extended randomization to Bundle ID", category: "Signing")
+				if let base = baseIdentifier {
+					let randomSuffix = String((0..<10).compactMap { _ in Self.ppqCharacterSet.randomElement() })
+					modifiedIdentifier = "\(base).\(randomSuffix)"
+					AppLogManager.shared.info("Dynamic Protection (MEDIUM): Applied extended randomization to Bundle ID", category: "Signing")
+				}
 				
 			case .low:
 				// Low-risk apps get basic randomization
-				let randomSuffix = String((0..<6).compactMap { _ in Self.ppqCharacterSet.randomElement() })
-				modifiedIdentifier = "\(baseIdentifier).\(randomSuffix)"
-				AppLogManager.shared.info("Dynamic Protection (LOW): Applied basic randomization to Bundle ID", category: "Signing")
+				if let base = baseIdentifier {
+					let randomSuffix = String((0..<6).compactMap { _ in Self.ppqCharacterSet.randomElement() })
+					modifiedIdentifier = "\(base).\(randomSuffix)"
+					AppLogManager.shared.info("Dynamic Protection (LOW): Applied basic randomization to Bundle ID", category: "Signing")
+				}
 				
 			case .none:
 				// No protection needed
@@ -619,20 +631,57 @@ extension SigningHandler {
 		
 		// 3. Analyze URL schemes - apps with many URL schemes are often high-profile
 		if let urlTypes = infoDictionary["CFBundleURLTypes"] as? [[String: Any]] {
-			let schemeCount = urlTypes.count
-			if schemeCount > 5 {
+			// Count total schemes across all URL types (not just URL type count)
+			var totalSchemes = 0
+			for urlType in urlTypes {
+				if let schemes = urlType["CFBundleURLSchemes"] as? [String] {
+					totalSchemes += schemes.count
+				}
+			}
+			
+			if totalSchemes > 5 {
 				riskScore += 15
-				AppLogManager.shared.debug("High URL scheme count detected: \(schemeCount)", category: "Signing")
-			} else if schemeCount > 2 {
+				AppLogManager.shared.debug("High URL scheme count detected: \(totalSchemes)", category: "Signing")
+			} else if totalSchemes > 2 {
 				riskScore += 8
 			}
 		}
 		
 		// 4. Check for entitlements that indicate high-profile apps
-		if let entitlementsPath = _options.appEntitlementsFile,
+		// Extract entitlements from the app's embedded.mobileprovision (if present)
+		// or fall back to user-supplied entitlements file
+		var entitlements: [String: Any]? = nil
+		
+		// First, try to extract from embedded.mobileprovision in the app bundle
+		let provisioningPath = appPath.appendingPathComponent("embedded.mobileprovision")
+		if _fileManager.fileExists(atPath: provisioningPath.path) {
+			do {
+				let provisioningData = try Data(contentsOf: provisioningPath)
+				// Find XML content within the provisioning profile
+				if let xmlRange = provisioningData.range(of: Data("<?xml".utf8)) {
+					let xmlData = provisioningData.subdata(in: xmlRange.lowerBound..<provisioningData.endIndex)
+					if let plist = try? PropertyListSerialization.propertyList(from: xmlData, format: nil) as? [String: Any],
+					   let embeddedEntitlements = plist["Entitlements"] as? [String: Any] {
+						entitlements = embeddedEntitlements
+						AppLogManager.shared.debug("Extracted entitlements from embedded.mobileprovision", category: "Signing")
+					}
+				}
+			} catch {
+				AppLogManager.shared.debug("Could not extract entitlements from embedded.mobileprovision", category: "Signing")
+			}
+		}
+		
+		// Fall back to user-supplied entitlements file if no embedded entitlements found
+		if entitlements == nil,
+		   let entitlementsPath = _options.appEntitlementsFile,
 		   let entitlementsData = try? Data(contentsOf: entitlementsPath),
-		   let entitlements = try? PropertyListSerialization.propertyList(from: entitlementsData, format: nil) as? [String: Any] {
-			
+		   let userEntitlements = try? PropertyListSerialization.propertyList(from: entitlementsData, format: nil) as? [String: Any] {
+			entitlements = userEntitlements
+			AppLogManager.shared.debug("Using user-supplied entitlements file", category: "Signing")
+		}
+		
+		// Analyze entitlements if we have them
+		if let entitlements = entitlements {
 			// Apps with iCloud, push notifications, or associated domains are often popular
 			let significantEntitlements = [
 				"com.apple.developer.icloud-services",
