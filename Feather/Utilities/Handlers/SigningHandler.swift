@@ -25,6 +25,74 @@ final class SigningHandler: NSObject {
 	// Static character set for PPQ protection - reused across instances for efficiency
 	private static let ppqCharacterSet: [Character] = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 	
+	// Common App Store bundle ID prefixes for Dynamic Protection
+	private static let appStoreBundleIDPrefixes: Set<String> = [
+		"com.apple.",
+		"com.facebook.",
+		"com.burbn.", // Instagram
+		"com.google.",
+		"com.microsoft.",
+		"com.amazon.",
+		"com.netflix.",
+		"com.spotify.",
+		"com.twitter.",
+		"com.snapchat.",
+		"com.zhiliaoapp.", // TikTok
+		"com.reddit.",
+		"com.discord.",
+		"com.whatsapp.",
+		"com.telegram.",
+		"com.zoom.",
+		"com.skype.",
+		"com.linkedin.",
+		"com.pinterest.",
+		"com.yelp.",
+		"com.uber.",
+		"com.lyft.",
+		"com.airbnb.",
+		"com.paypal.",
+		"com.venmo.",
+		"com.squareup.", // Cash App
+		"com.robinhood.",
+		"com.coinbase.",
+		"com.dropbox.",
+		"com.evernote.",
+		"com.adobe.",
+		"com.canva.",
+		"com.grammarly.",
+		"com.duolingo.",
+		"com.khanacademy.",
+		"com.coursera.",
+		"com.udemy.",
+		"com.twitch.",
+		"com.google.ios.youtube", // YouTube (specific)
+		"com.hulu.",
+		"com.disneyplus.",
+		"com.hbomax.",
+		"com.paramount.",
+		"com.peacock.",
+		"com.espn.",
+		"com.mlb.",
+		"com.nba.",
+		"com.nfl.",
+		"com.ea.",
+		"com.roblox.",
+		"com.epicgames.",
+		"com.minecraft.",
+		"com.supercell.",
+		"com.rovio.",
+		"com.zynga.",
+		"com.king.",
+		"com.niantic.",
+		"com.activision.",
+		"com.blizzard."
+	]
+	
+	// Helper method to check if a bundle ID matches App Store apps
+	private static func isAppStoreBundleID(_ bundleID: String) -> Bool {
+		return appStoreBundleIDPrefixes.contains { bundleID.hasPrefix($0) }
+	}
+	
 	init(app: AppInfoPresentable, options: Options = OptionsManager.shared.options) {
 		self._app = app
 		self._options = options
@@ -73,9 +141,27 @@ final class SigningHandler: NSObject {
 		// Get the original bundle identifier before any modifications
 		let originalIdentifier = infoDictionary["CFBundleIdentifier"] as? String
 		
-		// Apply PPQ Protection if enabled
+		// Apply PPQ Protection or Dynamic Protection if enabled
+		// These options are mutually exclusive in the UI, but we check both for defensive programming
 		var modifiedIdentifier = _options.appIdentifier
-		if _options.ppqProtection, let baseIdentifier = modifiedIdentifier ?? originalIdentifier {
+		var shouldApplyProtection = false
+		
+		if _options.dynamicProtection {
+			// Dynamic Protection: only apply to App Store bundle IDs
+			if let baseIdentifier = modifiedIdentifier ?? originalIdentifier {
+				if Self.isAppStoreBundleID(baseIdentifier) {
+					shouldApplyProtection = true
+					AppLogManager.shared.info("Dynamic Protection: Bundle ID matches App Store pattern, applying protection", category: "Signing")
+				} else {
+					AppLogManager.shared.info("Dynamic Protection: Bundle ID does not match App Store pattern, skipping protection", category: "Signing")
+				}
+			}
+		} else if _options.ppqProtection {
+			// Regular PPQ Protection: apply to all apps
+			shouldApplyProtection = true
+		}
+		
+		if shouldApplyProtection, let baseIdentifier = modifiedIdentifier ?? originalIdentifier {
 			// Generate a 7-character random string using static character set
 			let randomSuffix = String((0..<7).compactMap { _ in Self.ppqCharacterSet.randomElement() })
 			modifiedIdentifier = "\(baseIdentifier).\(randomSuffix)"
