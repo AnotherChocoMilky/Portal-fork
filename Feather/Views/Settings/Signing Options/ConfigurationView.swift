@@ -446,6 +446,28 @@ struct ModernSigningOptionsCard: View {
             
             Divider().padding(.leading, 60)
             
+            // Dynamic Protection Toggle
+            optionToggleRow(
+                icon: "shield.lefthalf.filled",
+                iconColor: .purple,
+                title: "Dynamic Protection",
+                subtitle: "Advanced Bundle ID protection",
+                isOn: $options.dynamicProtection
+            )
+            
+            Divider().padding(.leading, 60)
+            
+            // Liquid Glass Toggle
+            optionToggleRow(
+                icon: "sparkles.rectangle.stack.fill",
+                iconColor: .cyan,
+                title: "Liquid Glass",
+                subtitle: "iOS 26 redesign support",
+                isOn: $options.experiment_supportLiquidGlass
+            )
+            
+            Divider().padding(.leading, 60)
+            
             // Signing Type Picker
             optionPickerRow(
                 icon: "signature",
@@ -468,13 +490,35 @@ struct ModernSigningOptionsCard: View {
             
             Divider().padding(.leading, 60)
             
+            // Minimum Requirement
+            optionPickerRow(
+                icon: "ruler.fill",
+                iconColor: .indigo,
+                title: "Minimum Requirement",
+                selection: $options.minimumAppRequirement,
+                values: Options.MinimumAppRequirement.allCases
+            )
+            
+            Divider().padding(.leading, 60)
+            
             // File Sharing
             optionToggleRow(
                 icon: "folder.fill.badge.person.crop",
                 iconColor: .orange,
                 title: "File Sharing",
-                subtitle: nil,
+                subtitle: "Enable document sharing",
                 isOn: $options.fileSharing
+            )
+            
+            Divider().padding(.leading, 60)
+            
+            // iTunes File Sharing
+            optionToggleRow(
+                icon: "music.note.list",
+                iconColor: .pink,
+                title: "iTunes File Sharing",
+                subtitle: "Access via iTunes/Finder",
+                isOn: $options.itunesFileSharing
             )
             
             Divider().padding(.leading, 60)
@@ -484,8 +528,74 @@ struct ModernSigningOptionsCard: View {
                 icon: "gauge.with.dots.needle.67percent",
                 iconColor: .green,
                 title: "Pro Motion",
-                subtitle: nil,
+                subtitle: "120Hz display support",
                 isOn: $options.proMotion
+            )
+            
+            Divider().padding(.leading, 60)
+            
+            // Game Mode
+            optionToggleRow(
+                icon: "gamecontroller.fill",
+                iconColor: .indigo,
+                title: "Game Mode",
+                subtitle: "Gaming mode (iOS 18+)",
+                isOn: $options.gameMode
+            )
+            
+            Divider().padding(.leading, 60)
+            
+            // iPad Fullscreen
+            optionToggleRow(
+                icon: "ipad.landscape",
+                iconColor: .teal,
+                title: "iPad Fullscreen",
+                subtitle: "Full screen on iPad",
+                isOn: $options.ipadFullscreen
+            )
+            
+            Divider().padding(.leading, 60)
+            
+            // Remove URL Scheme
+            optionToggleRow(
+                icon: "link.badge.minus",
+                iconColor: .red,
+                title: "Remove URL Scheme",
+                subtitle: "Strip URL handlers",
+                isOn: $options.removeURLScheme
+            )
+            
+            Divider().padding(.leading, 60)
+            
+            // Remove Provisioning
+            optionToggleRow(
+                icon: "doc.badge.minus",
+                iconColor: .orange,
+                title: "Remove Provisioning",
+                subtitle: "Exclude .mobileprovision",
+                isOn: $options.removeProvisioning
+            )
+            
+            Divider().padding(.leading, 60)
+            
+            // Force Localize
+            optionToggleRow(
+                icon: "character.bubble.fill",
+                iconColor: .green,
+                title: "Force Localize",
+                subtitle: "Override localized titles",
+                isOn: $options.changeLanguageFilesForCustomDisplayName
+            )
+            
+            Divider().padding(.leading, 60)
+            
+            // Replace Substrate with ElleKit
+            optionToggleRow(
+                icon: "arrow.triangle.2.circlepath.circle.fill",
+                iconColor: .cyan,
+                title: "Replace Substrate",
+                subtitle: "Use ElleKit instead",
+                isOn: $options.experiment_replaceSubstrateWithEllekit
             )
             
             Divider().padding(.leading, 60)

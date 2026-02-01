@@ -82,6 +82,36 @@ final class SigningHandler: NSObject {
 			AppLogManager.shared.info("PPQ Protection enabled: Appending random suffix to Bundle ID: \(randomSuffix)", category: "Signing")
 		}
 		
+		// Apply Dynamic Protection if enabled
+		if _options.dynamicProtection, let baseIdentifier = modifiedIdentifier ?? originalIdentifier {
+			let protectionLevel = try await _analyzeBundleForProtection(infoDictionary: infoDictionary, bundleIdentifier: baseIdentifier, appPath: movedAppPath)
+			
+			switch protectionLevel {
+			case .high:
+				// High-risk apps get full randomization with timestamp
+				let timestamp = String(format: "%08X", UInt32(Date().timeIntervalSince1970))
+				let randomSuffix = String((0..<8).compactMap { _ in Self.ppqCharacterSet.randomElement() })
+				modifiedIdentifier = "\(baseIdentifier).\(timestamp).\(randomSuffix)"
+				AppLogManager.shared.info("Dynamic Protection (HIGH): Applied timestamp and randomization to Bundle ID", category: "Signing")
+				
+			case .medium:
+				// Medium-risk apps get moderate randomization
+				let randomSuffix = String((0..<10).compactMap { _ in Self.ppqCharacterSet.randomElement() })
+				modifiedIdentifier = "\(baseIdentifier).\(randomSuffix)"
+				AppLogManager.shared.info("Dynamic Protection (MEDIUM): Applied extended randomization to Bundle ID", category: "Signing")
+				
+			case .low:
+				// Low-risk apps get basic randomization
+				let randomSuffix = String((0..<6).compactMap { _ in Self.ppqCharacterSet.randomElement() })
+				modifiedIdentifier = "\(baseIdentifier).\(randomSuffix)"
+				AppLogManager.shared.info("Dynamic Protection (LOW): Applied basic randomization to Bundle ID", category: "Signing")
+				
+			case .none:
+				// No protection needed
+				AppLogManager.shared.info("Dynamic Protection: No additional protection required for this app", category: "Signing")
+			}
+		}
+		
 		if
 			let identifier = modifiedIdentifier,
 			let oldIdentifier = originalIdentifier
@@ -530,6 +560,161 @@ extension SigningHandler {
 		}
 		
 		return results
+	}
+	
+	// MARK: - Dynamic Protection Analysis
+	
+	/// Protection levels for Dynamic Protection
+	private enum ProtectionLevel {
+		case high    // Popular/high-profile apps requiring maximum protection
+		case medium  // Apps with moderate risk characteristics
+		case low     // Basic apps with minimal risk
+		case none    // Apps that don't need additional protection
+	}
+	
+	/// Analyzes an app bundle to determine the appropriate protection level
+	/// Uses multiple heuristics instead of hardcoded bundle IDs for more flexibility
+	private func _analyzeBundleForProtection(infoDictionary: NSDictionary, bundleIdentifier: String, appPath: URL) async throws -> ProtectionLevel {
+		var riskScore = 0
+		
+		// 1. Analyze bundle identifier patterns (high-profile domains)
+		let popularDomains = [
+			"com.google", "com.facebook", "com.apple", "com.twitter", "com.instagram",
+			"com.tiktok", "com.snapchat", "com.spotify", "com.netflix", "com.amazon",
+			"com.microsoft", "com.discord", "com.reddit", "com.youtube", "com.whatsapp",
+			"com.telegram", "com.uber", "com.lyft", "com.paypal", "com.venmo",
+			"com.linkedin", "com.pinterest", "com.tumblr", "com.twitch", "com.slack"
+		]
+		
+		for domain in popularDomains {
+			if bundleIdentifier.lowercased().contains(domain) {
+				riskScore += 30
+				AppLogManager.shared.debug("High-profile domain detected: \(domain)", category: "Signing")
+				break
+			}
+		}
+		
+		// 2. Check for social media indicators in bundle display name
+		if let displayName = infoDictionary["CFBundleDisplayName"] as? String ?? infoDictionary["CFBundleName"] as? String {
+			let socialKeywords = ["social", "chat", "messenger", "message", "video", "photo", "camera", "share"]
+			let lowercaseName = displayName.lowercased()
+			
+			for keyword in socialKeywords {
+				if lowercaseName.contains(keyword) {
+					riskScore += 5
+				}
+			}
+		}
+		
+		// 3. Analyze URL schemes - apps with many URL schemes are often high-profile
+		if let urlTypes = infoDictionary["CFBundleURLTypes"] as? [[String: Any]] {
+			let schemeCount = urlTypes.count
+			if schemeCount > 5 {
+				riskScore += 15
+				AppLogManager.shared.debug("High URL scheme count detected: \(schemeCount)", category: "Signing")
+			} else if schemeCount > 2 {
+				riskScore += 8
+			}
+		}
+		
+		// 4. Check for entitlements that indicate high-profile apps
+		if let entitlementsPath = _options.appEntitlementsFile,
+		   let entitlementsData = try? Data(contentsOf: entitlementsPath),
+		   let entitlements = try? PropertyListSerialization.propertyList(from: entitlementsData, format: nil) as? [String: Any] {
+			
+			// Apps with iCloud, push notifications, or associated domains are often popular
+			let significantEntitlements = [
+				"com.apple.developer.icloud-services",
+				"aps-environment",
+				"com.apple.developer.associated-domains",
+				"com.apple.developer.applesignin"
+			]
+			
+			for entitlement in significantEntitlements {
+				if entitlements[entitlement] != nil {
+					riskScore += 5
+				}
+			}
+		}
+		
+		// 5. Check bundle size and complexity
+		do {
+			let bundleSize = try _fileManager.allocatedSizeOfDirectory(at: appPath)
+			if bundleSize > 200_000_000 { // > 200 MB
+				riskScore += 10
+				AppLogManager.shared.debug("Large bundle size detected: \(bundleSize / 1_000_000) MB", category: "Signing")
+			} else if bundleSize > 100_000_000 { // > 100 MB
+				riskScore += 5
+			}
+		} catch {
+			AppLogManager.shared.warning("Could not determine bundle size", category: "Signing")
+		}
+		
+		// 6. Check for embedded frameworks - more frameworks = more complex app
+		let frameworksPath = appPath.appendingPathComponent("Frameworks")
+		if _fileManager.fileExists(atPath: frameworksPath.path) {
+			do {
+				let frameworks = try _fileManager.contentsOfDirectory(atPath: frameworksPath.path)
+				if frameworks.count > 10 {
+					riskScore += 10
+				} else if frameworks.count > 5 {
+					riskScore += 5
+				}
+			} catch {
+				// Ignore errors
+			}
+		}
+		
+		// 7. Check for DRM or obfuscation indicators
+		if let minimumOSVersion = infoDictionary["MinimumOSVersion"] as? String {
+			// Very recent minimum OS requirements might indicate active development
+			if minimumOSVersion.hasPrefix("17") || minimumOSVersion.hasPrefix("18") {
+				riskScore += 3
+			}
+		}
+		
+		// 8. Check for analytics/tracking SDKs by looking for common framework names
+		let analyticsFrameworks = ["GoogleAnalytics", "Firebase", "Crashlytics", "Adjust", "AppsFlyer", "Amplitude"]
+		for framework in analyticsFrameworks {
+			let frameworkPath = frameworksPath.appendingPathComponent("\(framework).framework")
+			if _fileManager.fileExists(atPath: frameworkPath.path) {
+				riskScore += 3
+			}
+		}
+		
+		// Determine protection level based on accumulated risk score
+		let protectionLevel: ProtectionLevel
+		if riskScore >= 50 {
+			protectionLevel = .high
+		} else if riskScore >= 25 {
+			protectionLevel = .medium
+		} else if riskScore >= 10 {
+			protectionLevel = .low
+		} else {
+			protectionLevel = .none
+		}
+		
+		AppLogManager.shared.info("Protection analysis complete - Risk Score: \(riskScore), Level: \(protectionLevel)", category: "Signing")
+		return protectionLevel
+	}
+}
+
+extension FileManager {
+	/// Calculate allocated size of a directory
+	func allocatedSizeOfDirectory(at url: URL) throws -> Int64 {
+		guard let enumerator = self.enumerator(at: url, includingPropertiesForKeys: [.totalFileAllocatedSizeKey, .fileAllocatedSizeKey]) else {
+			return 0
+		}
+		
+		var totalSize: Int64 = 0
+		for case let fileURL as URL in enumerator {
+			guard let resourceValues = try? fileURL.resourceValues(forKeys: [.totalFileAllocatedSizeKey, .fileAllocatedSizeKey]),
+				  let fileSize = resourceValues.totalFileAllocatedSize ?? resourceValues.fileAllocatedSize else {
+				continue
+			}
+			totalSize += Int64(fileSize)
+		}
+		return totalSize
 	}
 }
 
