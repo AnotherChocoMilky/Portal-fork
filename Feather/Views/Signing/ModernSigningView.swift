@@ -222,8 +222,6 @@ struct ModernSigningView: View {
                     _buttonOffset = 0
                     _appearAnimation = true
                 }
-            }
-        }
     }
     
     // MARK: - Dismiss with Animation
