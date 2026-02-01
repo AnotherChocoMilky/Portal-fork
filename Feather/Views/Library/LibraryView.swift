@@ -903,6 +903,7 @@ struct BatchSigningView: View {
     @State private var batchAppName: String = ""
     @State private var batchBundleID: String = ""
     @State private var batchVersion: String = ""
+    @State private var showEditSheet = false
     
     @AppStorage("Feather.installationMethod") private var installationMethod: Int = 0
     
@@ -1009,6 +1010,13 @@ struct BatchSigningView: View {
             withAnimation {
                 appearAnimation = true
             }
+        }
+        .sheet(isPresented: $showEditSheet) {
+            BatchSigningEditSheet(
+                batchAppName: $batchAppName,
+                batchBundleID: $batchBundleID,
+                batchVersion: $batchVersion
+            )
         }
     }
     
@@ -1224,52 +1232,72 @@ struct BatchSigningView: View {
                     Text("Batch Signing Options")
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.secondary)
+                    
+                    Spacer()
+                    
+                    Button {
+                        showEditSheet = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "pencil")
+                                .font(.system(size: 12, weight: .semibold))
+                            Text("Edit")
+                                .font(.system(size: 13, weight: .semibold))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(Color.accentColor)
+                        )
+                    }
                 }
                 
-                VStack(spacing: 10) {
-                    // App Name field
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("App Name (Optional)")
-                            .font(.system(size: 12, weight: .medium))
+                // Summary of current values
+                VStack(spacing: 8) {
+                    HStack {
+                        Text("App Name:")
+                            .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(.secondary)
-                        TextField("Leave blank to keep original", text: $batchAppName)
-                            .textFieldStyle(.plain)
-                            .padding(12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(Color(.tertiarySystemGroupedBackground))
-                            )
+                        Spacer()
+                        Text(batchAppName.isEmpty ? "Original" : batchAppName)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
                     }
                     
-                    // Bundle ID field
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Bundle ID (Optional)")
-                            .font(.system(size: 12, weight: .medium))
+                    Divider()
+                    
+                    HStack {
+                        Text("Bundle ID:")
+                            .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(.secondary)
-                        TextField("Leave blank to keep original", text: $batchBundleID)
-                            .textFieldStyle(.plain)
-                            .autocapitalization(.none)
-                            .padding(12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(Color(.tertiarySystemGroupedBackground))
-                            )
+                        Spacer()
+                        Text(batchBundleID.isEmpty ? "Original" : batchBundleID)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
                     }
                     
-                    // Version field
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Version (Optional)")
-                            .font(.system(size: 12, weight: .medium))
+                    Divider()
+                    
+                    HStack {
+                        Text("Version:")
+                            .font(.system(size: 13, weight: .medium))
                             .foregroundStyle(.secondary)
-                        TextField("Leave blank to keep original", text: $batchVersion)
-                            .textFieldStyle(.plain)
-                            .padding(12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(Color(.tertiarySystemGroupedBackground))
-                            )
+                        Spacer()
+                        Text(batchVersion.isEmpty ? "Original" : batchVersion)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
                     }
                 }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color(.tertiarySystemGroupedBackground))
+                )
             }
             .padding(16)
             .background(
@@ -1637,6 +1665,101 @@ struct BatchSigningView: View {
         }
     }
     
+}
+
+// MARK: - Batch Signing Edit Sheet
+private struct BatchSigningEditSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var batchAppName: String
+    @Binding var batchBundleID: String
+    @Binding var batchVersion: String
+    
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
+                    // App Name field
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("App Name (Optional)")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        TextField("Leave blank to keep original", text: $batchAppName)
+                            .textFieldStyle(.plain)
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(Color(.tertiarySystemGroupedBackground))
+                            )
+                    }
+                    
+                    // Bundle ID field
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Bundle ID (Optional)")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        TextField("Leave blank to keep original", text: $batchBundleID)
+                            .textFieldStyle(.plain)
+                            .autocapitalization(.none)
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(Color(.tertiarySystemGroupedBackground))
+                            )
+                    }
+                    
+                    // Version field
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Version (Optional)")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        TextField("Leave blank to keep original", text: $batchVersion)
+                            .textFieldStyle(.plain)
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(Color(.tertiarySystemGroupedBackground))
+                            )
+                    }
+                }
+                .padding(20)
+            }
+            .navigationTitle("Edit Options")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 14, weight: .bold))
+                            Text("Confirm")
+                                .font(.system(size: 15, weight: .semibold))
+                        }
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(Color.accentColor)
+                        )
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
+    }
 }
 
 // MARK: - Batch Signing App Row
