@@ -45,6 +45,10 @@ struct SigningOptionsView: View {
                 }
                 .disabled(isPPQProtectionForced)
                 
+                Toggle(isOn: $options.dynamicProtection) {
+                    Label(.localized("Dynamic Protection"), systemImage: "wand.and.stars")
+                }
+                
                 Button {
                     HapticsManager.shared.impact()
                     showPPQInfo = true
@@ -87,7 +91,7 @@ struct SigningOptionsView: View {
                 } else if hasCertificateWithPPQCheck {
                     Text(.localized("PPQ Protection is automatically enabled and required because one or more of your certificates has PPQCheck. This helps protect your Apple ID from being flagged."))
                 } else {
-                    Text(.localized("Enabling any protection will append a random string to the Bundle Identifiers of the apps you sign, this is to ensure yours certificte does not get flagged or revoked by Apple."))
+                    Text(.localized("Enabling any protection will append a random string to the Bundle Identifiers of the apps you sign. Dynamic Protection only applies random strings to apps with Bundle IDs matching those in the App Store, helping to avoid detection while preserving functionality for non-App Store apps."))
                 }
             }
             .onAppear {
