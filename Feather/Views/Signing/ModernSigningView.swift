@@ -307,8 +307,8 @@ struct ModernSigningView: View {
     // MARK: - Header Section (Clean Modern Design)
     @ViewBuilder
     private var headerSection: some View {
-        VStack(spacing: 20) {
-            // App Icon - Clean, minimal
+        VStack(spacing: 16) {
+            // App Icon with standard menu
             Menu {
                 Button {
                     _isAltPickerPresenting = true
@@ -318,78 +318,72 @@ struct ModernSigningView: View {
                 Button {
                     _isFilePickerPresenting = true
                 } label: {
-                    Label("Choose Files", systemImage: "folder")
+                    Label("Choose from Files", systemImage: "folder.fill")
                 }
                 Button {
                     _isImagePickerPresenting = true
                 } label: {
-                    Label("Choose Photos", systemImage: "photo")
+                    Label("Choose from Photos", systemImage: "photo.fill")
                 }
             } label: {
-                ZStack {
+                ZStack(alignment: .bottomTrailing) {
                     if let icon = appIcon {
                         Image(uiImage: icon)
                             .resizable()
                             .aspectRatio(contentMode: .fill)
-                            .frame(width: 88, height: 88)
-                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            .frame(width: 80, height: 80)
+                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                     } else {
-                        FRAppIconView(app: app, size: 88)
+                        FRAppIconView(app: app, size: 80)
                     }
                     
-                    // Edit badge
-                    VStack {
-                        Spacer()
-                        HStack {
-                            Spacer()
-                            ZStack {
-                                Circle()
-                                    .fill(Color.accentColor)
-                                    .frame(width: 26, height: 26)
-                                Image(systemName: "pencil")
-                                    .font(.system(size: 11, weight: .bold))
-                                    .foregroundStyle(.white)
-                            }
-                            .offset(x: 4, y: 4)
-                        }
-                    }
-                    .frame(width: 88, height: 88)
+                    // Simple edit indicator
+                    Image(systemName: "pencil.circle.fill")
+                        .font(.system(size: 24))
+                        .foregroundStyle(.white, Color.accentColor)
+                        .background(
+                            Circle()
+                                .fill(Color.accentColor)
+                                .frame(width: 20, height: 20)
+                        )
+                        .offset(x: 4, y: 4)
                 }
-                .shadow(color: .black.opacity(0.15), radius: 12, x: 0, y: 6)
+                .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
             }
             
-            // App Info
-            VStack(spacing: 8) {
+            // Compact App Info
+            VStack(spacing: 6) {
                 Text(_temporaryOptions.appName ?? app.name ?? "Unknown")
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.title3.weight(.semibold))
                     .foregroundStyle(.primary)
+                    .lineLimit(1)
                 
-                if let version = _temporaryOptions.appVersion ?? app.version {
-                    Text("Version \(version)")
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(.secondary)
+                HStack(spacing: 8) {
+                    if let version = _temporaryOptions.appVersion ?? app.version {
+                        Label(version, systemImage: "number.circle.fill")
+                            .font(.caption.weight(.medium))
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 
-                // Bundle ID pill
-                Text(_temporaryOptions.appIdentifier ?? app.identifier ?? "")
-                    .font(.system(size: 11, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(
-                        Capsule()
-                            .fill(Color(.tertiarySystemGroupedBackground))
-                    )
+                // Simplified Bundle ID
+                if let bundleId = _temporaryOptions.appIdentifier ?? app.identifier {
+                    Text(bundleId)
+                        .font(.system(size: 10, weight: .regular, design: .monospaced))
+                        .foregroundStyle(.tertiary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(Color(.systemGray6))
+                        )
+                }
             }
         }
-        .padding(.vertical, 24)
+        .padding(.vertical, 20)
         .frame(maxWidth: .infinity)
-        .onAppear {
-            withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
-                _glowAnimation = true
-            }
-        }
     }
     
     // MARK: - Unified Content Section (Clean Modern Design)
@@ -644,21 +638,17 @@ struct ModernSigningView: View {
                 CertificatesView(selectedCert: $_temporaryCertificate)
             } label: {
                 HStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.green.opacity(0.15))
-                            .frame(width: 40, height: 40)
-                        Image(systemName: "checkmark.seal.fill")
-                            .font(.system(size: 16))
-                            .foregroundStyle(.green)
-                    }
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.title2)
+                        .foregroundStyle(.green)
+                        .frame(width: 40)
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text(cert.nickname ?? "Certificate")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.body.weight(.medium))
                             .foregroundStyle(.primary)
                         if let expiration = cert.expiration {
-                            Text("Expires On \(expiration, style: .date)")
+                            Label("Expires \(expiration, style: .date)", systemImage: "calendar")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -668,12 +658,12 @@ struct ModernSigningView: View {
                     
                     Image(systemName: "chevron.right")
                         .font(.caption.weight(.semibold))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.quaternary)
                 }
                 .padding(14)
                 .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(.ultraThinMaterial)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color(.secondarySystemGroupedBackground))
                 )
             }
         } else {
@@ -681,20 +671,16 @@ struct ModernSigningView: View {
                 _isAddingCertificatePresenting = true
             } label: {
                 HStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.orange.opacity(0.15))
-                            .frame(width: 40, height: 40)
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.system(size: 16))
-                            .foregroundStyle(.orange)
-                    }
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.orange)
+                        .frame(width: 40)
                     
                     VStack(alignment: .leading, spacing: 2) {
                         Text("No Certificate")
-                            .font(.subheadline.weight(.semibold))
+                            .font(.body.weight(.medium))
                             .foregroundStyle(.primary)
-                        Text("Add Certificate")
+                        Text("Tap to add")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -702,13 +688,13 @@ struct ModernSigningView: View {
                     Spacer()
                     
                     Image(systemName: "plus.circle.fill")
-                        .font(.system(size: 20))
+                        .font(.title3)
                         .foregroundStyle(Color.accentColor)
                 }
                 .padding(14)
                 .background(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(.ultraThinMaterial)
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color(.secondarySystemGroupedBackground))
                 )
             }
         }
