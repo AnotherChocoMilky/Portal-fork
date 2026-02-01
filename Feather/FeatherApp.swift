@@ -29,6 +29,11 @@ struct FeatherApp: App {
     @State private var _showCertificates = false
     @State private var _showQuickActions = false
     @State private var _shouldAutoSignNextImport = false
+    
+    // IPA Import Handling
+    @State private var _isImportingIPA = false
+    @State private var _importErrorMessage: String?
+    @State private var _showImportError = false
 
 	var body: some Scene {
 		WindowGroup(content: {
@@ -110,6 +115,34 @@ struct FeatherApp: App {
 								}
 							} message: { sourceURL in
 								Text(.localized("Add \"\(sourceURL)\" source to Portal?"))
+							}
+							.alert(.localized("Import Failed"), isPresented: $_showImportError) {
+								Button(.localized("OK"), role: .cancel) { }
+							} message: {
+								Text(_importErrorMessage ?? .localized("An unknown error occurred during import."))
+							}
+							.overlay {
+								if _isImportingIPA {
+									ZStack {
+										Color.black.opacity(0.4)
+											.edgesIgnoringSafeArea(.all)
+										
+										VStack(spacing: 16) {
+											ProgressView()
+												.scaleEffect(1.5)
+												.tint(.white)
+											
+											Text(.localized("Importing IPA..."))
+												.font(.headline)
+												.foregroundColor(.white)
+										}
+										.padding(32)
+										.background(
+											RoundedRectangle(cornerRadius: 16)
+												.fill(Color.black.opacity(0.8))
+										)
+									}
+								}
 							}
 					}
 					.animation(animationForPlatform(), value: downloadManager.manualDownloads.description)
@@ -386,12 +419,56 @@ struct FeatherApp: App {
 				}
 			}
 		} else {
+			// Handle file URLs (IPA/TIPA files)
 			if url.pathExtension == "ipa" || url.pathExtension == "tipa" {
-				if FileManager.default.isFileFromFileProvider(at: url) {
-					guard url.startAccessingSecurityScopedResource() else { return }
-					FR.handlePackageFile(url) { _ in }
-				} else {
-					FR.handlePackageFile(url) { _ in }
+				// Switch to Library tab first
+				NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.library)
+				
+				// Show loading state
+				_isImportingIPA = true
+				
+				// Handle security-scoped resources
+				let needsSecurityScope = FileManager.default.isFileFromFileProvider(at: url)
+				if needsSecurityScope {
+					guard url.startAccessingSecurityScopedResource() else {
+						_isImportingIPA = false
+						_importErrorMessage = .localized("Failed to access the file. Please try again.")
+						_showImportError = true
+						return
+					}
+				}
+				
+				// Import the IPA
+				FR.handlePackageFile(url) { [self] error in
+					// Clean up security-scoped resource
+					if needsSecurityScope {
+						url.stopAccessingSecurityScopedResource()
+					}
+					
+					DispatchQueue.main.async {
+						_isImportingIPA = false
+						
+						if let error = error {
+							// Show error alert
+							_importErrorMessage = error.localizedDescription
+							_showImportError = true
+							HapticsManager.shared.error()
+						} else {
+							// Import succeeded - navigate to the imported app's signing view
+							HapticsManager.shared.success()
+							
+							// Give the database a moment to update
+							DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+								if let latestApp = Storage.shared.getLatestImportedApp() {
+									// Trigger navigation to signing view
+									NotificationCenter.default.post(
+										name: Notification.Name("Feather.openSigningView"),
+										object: latestApp
+									)
+								}
+							}
+						}
+					}
 				}
 				
 				return
