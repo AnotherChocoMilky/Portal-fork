@@ -96,8 +96,10 @@ final class SigningHandler: NSObject {
 			
 			switch protectionLevel {
 			case .high:
-				// High-risk apps get full randomization with timestamp
-				let timestamp = String(format: "%08X", UInt64(Date().timeIntervalSince1970) & 0xFFFFFFFF)
+				// High-risk apps get full randomization with timestamp component
+				// Use modulo to get a unique 32-bit value without Y2038 overflow concerns
+				let timeValue = UInt64(Date().timeIntervalSince1970) % 0x100000000
+				let timestamp = String(format: "%08X", timeValue)
 				let randomSuffix = String((0..<8).compactMap { _ in Self.ppqCharacterSet.randomElement() })
 				modifiedIdentifier = "\(baseIdentifier).\(timestamp).\(randomSuffix)"
 				AppLogManager.shared.info("Dynamic Protection (HIGH): Applied timestamp and randomization to Bundle ID", category: "Signing")
@@ -605,10 +607,10 @@ extension SigningHandler {
 		// 2. Check for social media indicators in bundle display name
 		if let displayName = infoDictionary["CFBundleDisplayName"] as? String ?? infoDictionary["CFBundleName"] as? String {
 			let socialKeywords = ["social", "chat", "messenger", "message", "video", "photo", "camera", "share"]
-			let lowercaseName = displayName.lowercased()
+			let lowercaseDisplayName = displayName.lowercased()
 			
 			for keyword in socialKeywords {
-				if lowercaseName.contains(keyword) {
+				if lowercaseDisplayName.contains(keyword) {
 					riskScore += 5
 				}
 			}
