@@ -97,7 +97,7 @@ final class SigningHandler: NSObject {
 			switch protectionLevel {
 			case .high:
 				// High-risk apps get full randomization with timestamp
-				let timestamp = String(format: "%08X", UInt32(Date().timeIntervalSince1970))
+				let timestamp = String(format: "%08X", UInt64(Date().timeIntervalSince1970) & 0xFFFFFFFF)
 				let randomSuffix = String((0..<8).compactMap { _ in Self.ppqCharacterSet.randomElement() })
 				modifiedIdentifier = "\(baseIdentifier).\(timestamp).\(randomSuffix)"
 				AppLogManager.shared.info("Dynamic Protection (HIGH): Applied timestamp and randomization to Bundle ID", category: "Signing")
@@ -647,7 +647,7 @@ extension SigningHandler {
 		
 		// 5. Check bundle size and complexity
 		do {
-			let bundleSize = try _fileManager.allocatedSizeOfDirectory(at: appPath)
+			let bundleSize = try _allocatedSizeOfDirectory(at: appPath)
 			if bundleSize > Self.bundleSizeLargeThreshold {
 				riskScore += 10
 				AppLogManager.shared.debug("Large bundle size detected: \(bundleSize / 1_000_000) MB", category: "Signing")
@@ -709,12 +709,10 @@ extension SigningHandler {
 		AppLogManager.shared.info("Protection analysis complete - Risk Score: \(riskScore), Level: \(protectionLevel)", category: "Signing")
 		return protectionLevel
 	}
-}
-
-extension FileManager {
+	
 	/// Calculate allocated size of a directory
-	func allocatedSizeOfDirectory(at url: URL) throws -> Int64 {
-		guard let enumerator = self.enumerator(at: url, includingPropertiesForKeys: [.totalFileAllocatedSizeKey, .fileAllocatedSizeKey]) else {
+	private func _allocatedSizeOfDirectory(at url: URL) throws -> Int64 {
+		guard let enumerator = _fileManager.enumerator(at: url, includingPropertiesForKeys: [.totalFileAllocatedSizeKey, .fileAllocatedSizeKey]) else {
 			return 0
 		}
 		
