@@ -862,27 +862,7 @@ struct DeveloperControlPanelView: View {
     
     var body: some View {
         NBNavigationView("Developer Mode") {
-            ScrollView {
-                LazyVStack(spacing: 16) {
-                    // Header Card
-                    devHeaderCard
-                    
-                    // Quick Toggle Card
-                    quickToggleCard
-                    
-                    // Category Cards
-                    ForEach(filteredCategories, id: \.title) { category in
-                        devCategoryCard(category)
-                    }
-                    
-                    // Security Card
-                    securityCard
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-            }
-            .background(Color(UIColor.systemGroupedBackground))
-            .searchable(text: $searchText, prompt: "Search Developer")
+            _mainContent
         }
         .withToast()
         .onChange(of: scenePhase) { newPhase in
@@ -892,6 +872,31 @@ struct DeveloperControlPanelView: View {
         }
     }
     
+    @ViewBuilder
+    private var _mainContent: some View {
+        ScrollView {
+            LazyVStack(spacing: 16) {
+                // Header Card
+                devHeaderCard
+
+                // Quick Toggle Card
+                quickToggleCard
+
+                // Category Cards
+                ForEach(filteredCategories, id: \.title) { category in
+                    devCategoryCard(category)
+                }
+
+                // Security Card
+                securityCard
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+        }
+        .background(Color(UIColor.systemGroupedBackground))
+        .searchable(text: $searchText, prompt: "Search Developer")
+    }
+
     // MARK: - Header Card
     private var devHeaderCard: some View {
         HStack(spacing: 14) {

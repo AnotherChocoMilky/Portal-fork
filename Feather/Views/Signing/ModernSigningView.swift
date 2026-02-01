@@ -59,55 +59,71 @@ struct ModernSigningView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Modern animated mesh gradient background
                 modernBackground
                 
                 VStack(spacing: 0) {
-                    // Unified scrollable content
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            // Header with app info
-                            headerSection
-                                .scaleEffect(_headerScale)
-                                .opacity(_contentOpacity)
-                            
-                            // All content in unified view
-                            unifiedContentSection
-                                .opacity(_contentOpacity)
-                        }
-                        .padding(.bottom, 100)
-                    }
+                    _scrollableContent
                     
-                    // Modern sign button (fixed at bottom)
                     modernSignButton
                         .offset(y: _buttonOffset)
                         .opacity(_contentOpacity)
                 }
+
+                _dialogsAndSheets
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        dismissWithAnimation()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.secondary)
-                    }
-                    .opacity(_contentOpacity)
-                }
-                
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        _temporaryOptions = OptionsManager.shared.options
-                        appIcon = nil
-                    } label: {
-                        Text("Reset")
-                            .font(.subheadline.weight(.medium))
-                    }
-                    .opacity(_contentOpacity)
-                }
+                _toolbarContent
             }
+            .onAppear {
+                _onAppearAction()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var _scrollableContent: some View {
+        ScrollView {
+            VStack(spacing: 16) {
+                headerSection
+                    .scaleEffect(_headerScale)
+                    .opacity(_contentOpacity)
+                
+                unifiedContentSection
+                    .opacity(_contentOpacity)
+            }
+            .padding(.bottom, 100)
+        }
+    }
+
+    @ToolbarContentBuilder
+    private var _toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            Button {
+                dismissWithAnimation()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.secondary)
+            }
+            .opacity(_contentOpacity)
+        }
+
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                _temporaryOptions = OptionsManager.shared.options
+                appIcon = nil
+            } label: {
+                Text("Reset")
+                    .font(.subheadline.weight(.medium))
+            }
+            .opacity(_contentOpacity)
+        }
+    }
+
+    @ViewBuilder
+    private var _dialogsAndSheets: some View {
+        EmptyView()
             .sheet(isPresented: $_isAltPickerPresenting) {
                 SigningAlternativeIconView(app: app, appIcon: $appIcon, isModifing: .constant(true))
             }
@@ -179,7 +195,9 @@ struct ModernSigningView: View {
                 Button("Cancel", role: .cancel) { }
                 Button("Save") { }
             }
-            .onAppear {
+    }
+
+    private func _onAppearAction() {
                 if _optionsManager.options.ppqProtection,
                    let identifier = app.identifier,
                    let cert = _selectedCert(),
