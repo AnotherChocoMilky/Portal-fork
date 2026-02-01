@@ -443,17 +443,9 @@ struct ModernSigningView: View {
                     Divider().padding(.leading, 52)
                     
                     NavigationLink {
-                        SigningDylibView(app: app, options: $_temporaryOptions.optional())
+                        AppTweaksView(app: app, options: $_temporaryOptions)
                     } label: {
-                        cleanNavigationRow(title: "Existing Dylibs", icon: "puzzlepiece.extension.fill", color: .purple)
-                    }
-                    
-                    Divider().padding(.leading, 52)
-                    
-                    NavigationLink {
-                        SigningFrameworksView(app: app, options: $_temporaryOptions.optional())
-                    } label: {
-                        cleanNavigationRow(title: "Frameworks & Plugins", icon: "cube.fill", color: .blue)
+                        cleanNavigationRow(title: "App Tweaks", icon: "cube.fill", color: .blue)
                     }
                     
                     Divider().padding(.leading, 52)
@@ -974,15 +966,9 @@ struct ModernSigningView: View {
                     }
                     
                     NavigationLink {
-                        SigningDylibView(app: app, options: $_temporaryOptions.optional())
+                        AppTweaksView(app: app, options: $_temporaryOptions)
                     } label: {
-                        modernAdvancedRow(title: "Existing Dylibs", subtitle: "Manage Dynamic Libraries", icon: "puzzlepiece.extension.fill", color: .purple)
-                    }
-                    
-                    NavigationLink {
-                        SigningFrameworksView(app: app, options: $_temporaryOptions.optional())
-                    } label: {
-                        modernAdvancedRow(title: "Frameworks & Plugins", subtitle: "Add or Remove Frameworks", icon: "cube.fill", color: .blue)
+                        modernAdvancedRow(title: "App Tweaks", subtitle: "Manage Frameworks & Bundles", icon: "cube.fill", color: .blue)
                     }
                     
                     NavigationLink {
