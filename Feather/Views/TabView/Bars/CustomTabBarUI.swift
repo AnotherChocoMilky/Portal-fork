@@ -243,7 +243,7 @@ struct CustomTabBarUI: View {
                             )
                         )
                         .scaleEffect(isSelected ? 1.08 : 1.0)
-                        .symbolEffect(.bounce, value: isSelected)
+                        .modifier(TabBarBounceModifier(trigger: isSelected))
                 }
                 .frame(width: 36, height: 36)
                 
@@ -268,6 +268,19 @@ struct CustomTabBarUI: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(EnhancedLiquidGlassButtonStyle())
+    }
+}
+
+// MARK: - Tab Bar Bounce Modifier
+struct TabBarBounceModifier: ViewModifier {
+    let trigger: Bool
+
+    func body(content: Content) -> some View {
+        if #available(iOS 17.0, *) {
+            content.symbolEffect(.bounce, value: trigger)
+        } else {
+            content
+        }
     }
 }
 
