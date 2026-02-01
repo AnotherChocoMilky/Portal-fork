@@ -36,6 +36,11 @@ struct AllAppsCustomizationView: View {
     @AppStorage("Feather.allApps.searchBarFloating") private var searchBarFloating: Bool = false
     @AppStorage("Feather.allApps.rowDividerOpacity") private var rowDividerOpacity: Double = 0.5
     @AppStorage("Feather.allApps.showAppCount") private var showAppCount: Bool = true
+    @AppStorage("Feather.allApps.cardBackgroundOpacity") private var cardBackgroundOpacity: Double = 1.0
+    @AppStorage("Feather.allApps.searchBarStyle") private var searchBarStyle: Int = 0
+    @AppStorage("Feather.allApps.headerGradient") private var headerGradient: Bool = true
+    @AppStorage("Feather.allApps.compactHeader") private var compactHeader: Bool = false
+    @AppStorage("Feather.allApps.animationDuration") private var animationDuration: Double = 0.3
 
     var body: some View {
         List {
@@ -180,11 +185,108 @@ struct AllAppsCustomizationView: View {
                 }
             } header: {
                 AppearanceSectionHeader(title: "Dividers", icon: "square.split.1x2.fill")
+            }
+            
+            Section {
+                Toggle(isOn: $headerGradient) {
+                    AppearanceRowLabel(icon: "paintpalette.fill", title: "Header Gradient", color: .purple)
+                }
+                
+                Toggle(isOn: $compactHeader) {
+                    AppearanceRowLabel(icon: "rectangle.compress.vertical", title: "Compact Header", color: .indigo)
+                }
+                
+                Toggle(isOn: $searchBarFloating) {
+                    AppearanceRowLabel(icon: "rectangle.bottomthird.inset.filled", title: "Floating Search Bar", color: .cyan)
+                }
+                
+                Picker(selection: $searchBarStyle) {
+                    Text("Standard").tag(0)
+                    Text("Prominent").tag(1)
+                    Text("Minimal").tag(2)
+                } label: {
+                    AppearanceRowLabel(icon: "magnifyingglass", title: "Search Bar Style", color: .blue)
+                }
+                .pickerStyle(.menu)
+            } header: {
+                AppearanceSectionHeader(title: "Header & Search", icon: "rectangle.tophalf.inset.filled")
+            }
+            
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    AppearanceRowLabel(icon: "speedometer", title: "Animation Duration: \(String(format: "%.1f", animationDuration))s", color: .orange)
+                    Slider(value: $animationDuration, in: 0.1...0.8, step: 0.1)
+                }
+                .padding(.vertical, 4)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    AppearanceRowLabel(icon: "rectangle.fill", title: "Card Opacity: \(Int(cardBackgroundOpacity * 100))%", color: .cyan)
+                    Slider(value: $cardBackgroundOpacity, in: 0.5...1.0, step: 0.05)
+                }
+                .padding(.vertical, 4)
+            } header: {
+                AppearanceSectionHeader(title: "Advanced Effects", icon: "wand.and.stars")
+            } footer: {
+                Text("Customize every detail of the app list to match your preference.")
+            }
+            
+            Section {
+                Button {
+                    resetToDefaults()
+                } label: {
+                    HStack {
+                        Image(systemName: "arrow.counterclockwise")
+                        Text("Reset to Defaults")
+                    }
+                    .frame(maxWidth: .infinity)
+                    .foregroundStyle(.red)
+                }
             } footer: {
                 Text("Customize every detail of the app list to match your preference.")
             }
         }
         .listStyle(.insetGrouped)
         .navigationTitle("All Apps")
+    }
+    
+    private func resetToDefaults() {
+        showVersion = true
+        showSize = true
+        showDeveloper = true
+        showStatus = true
+        showSourceIcon = true
+        showSorting = true
+        iconSize = 54.0
+        iconCornerRadius = 12.0
+        iconPadding = 0
+        iconShadowRadius = 0.0
+        rowSpacing = 0
+        rowStyle = .minimal
+        rowHorizontalPadding = 20.0
+        infoSpacing = 14.0
+        showDividers = true
+        dividerOpacity = 0.5
+        useSpringAnimations = true
+        nameFontSize = 17.0
+        subtitleFontSize = 13.0
+        metadataFontSize = 12.0
+        useBoldTitles = true
+        useGrid = false
+        gridColumns = 3
+        titleFontSize = 17.0
+        boldTitles = true
+        useGlassEffects = true
+        showDescription = false
+        descriptionLimit = 2
+        searchBarFloating = false
+        rowDividerOpacity = 0.5
+        showAppCount = true
+        cardBackgroundOpacity = 1.0
+        searchBarStyle = 0
+        headerGradient = true
+        compactHeader = false
+        animationDuration = 0.3
+        
+        HapticsManager.shared.success()
     }
 }

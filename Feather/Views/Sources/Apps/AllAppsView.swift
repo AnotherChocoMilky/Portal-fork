@@ -497,11 +497,21 @@ struct AllAppsView: View {
 				}
 				_filterApps()
 				_loadedSourcesCount = object.count
-				_isLoading = false
+				
+				// Immediately hide loading if we have cached data
+				withAnimation(.easeOut(duration: 0.2)) {
+					_isLoading = false
+				}
 
 				if viewModel.isFinished {
 					return
 				}
+				
+				// Continue background update if needed
+				Task {
+					await updateSourcesInBackground()
+				}
+				return
 			}
 		}
 
@@ -510,37 +520,8 @@ struct AllAppsView: View {
 		_currentFact = DidYouKnowFacts.random()
 		
 		Task {
-			// Ensure viewModel finishes loading if needed
-			if !viewModel.isFinished {
-				var timeoutCount = 0
-				let maxTimeout = 150 // 15 seconds total
-				while !viewModel.isFinished && timeoutCount < maxTimeout {
-					try? await Task.sleep(nanoseconds: 100_000_000)
-					timeoutCount += 1
-
-					// Update progress based on viewModel progress
-					await MainActor.run {
-						_loadedSourcesCount = Int(Double(object.count) * viewModel.fetchProgress)
-					}
-				}
-			}
+			await updateSourcesInBackground()
 			
-			// Get final loaded sources from viewModel
-			let finalSources = object.compactMap { viewModel.sources[$0] }
-			
-			// Flatten apps in background
-			let flattenedApps = finalSources.flatMap { source in
-				source.apps.map { (source: source, app: $0) }
-			}
-
-			await MainActor.run {
-				_sources = finalSources
-				_allApps = flattenedApps
-				_filterApps()
-				_loadedSourcesCount = object.count
-			}
-			
-			// Add a small delay before hiding loading screen for better UX
 			try? await Task.sleep(nanoseconds: 500_000_000)
 			
 			await MainActor.run {
@@ -548,6 +529,38 @@ struct AllAppsView: View {
 					_isLoading = false
 				}
 			}
+		}
+	}
+	
+	private func updateSourcesInBackground() async {
+		// Ensure viewModel finishes loading if needed
+		if !viewModel.isFinished {
+			var timeoutCount = 0
+			let maxTimeout = 150 // 15 seconds total
+			while !viewModel.isFinished && timeoutCount < maxTimeout {
+				try? await Task.sleep(nanoseconds: 100_000_000)
+				timeoutCount += 1
+
+				// Update progress based on viewModel progress
+				await MainActor.run {
+					_loadedSourcesCount = Int(Double(object.count) * viewModel.fetchProgress)
+				}
+			}
+		}
+		
+		// Get final loaded sources from viewModel
+		let finalSources = object.compactMap { viewModel.sources[$0] }
+		
+		// Flatten apps in background
+		let flattenedApps = finalSources.flatMap { source in
+			source.apps.map { (source: source, app: $0) }
+		}
+
+		await MainActor.run {
+			_sources = finalSources
+			_allApps = flattenedApps
+			_filterApps()
+			_loadedSourcesCount = object.count
 		}
 	}
 	
