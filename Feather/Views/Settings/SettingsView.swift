@@ -126,8 +126,13 @@ struct SettingsView: View {
     private var appSection: some View {
         Section {
             SettingsRow(icon: "app.badge.fill", title: "App Icons", color: .pink, destination: AppIconView())
-            NavigationLink(destination: CheckForUpdatesView(), isActive: $navigateToCheckForUpdates) {
+            Button {
+                navigateToCheckForUpdates = true
+            } label: {
                 SettingsRowContent(icon: "arrow.triangle.2.circlepath", title: "Check For Updates", color: .green)
+            }
+            .navigationDestination(isPresented: $navigateToCheckForUpdates) {
+                CheckForUpdatesView()
             }
         } header: {
             SettingsSectionHeader(title: "App", icon: "app.fill")
