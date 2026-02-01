@@ -648,7 +648,8 @@ struct ModernSigningView: View {
                             .font(.body.weight(.medium))
                             .foregroundStyle(.primary)
                         if let expiration = cert.expiration {
-                            Label(.localized("Expires \(expiration, style: .date)"), systemImage: "calendar")
+                            let formattedDate = expiration.formatted(date: .abbreviated, time: .omitted)
+                            Label(.localized("Expires \(formattedDate)"), systemImage: "calendar")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }

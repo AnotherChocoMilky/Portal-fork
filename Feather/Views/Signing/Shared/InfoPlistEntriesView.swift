@@ -80,13 +80,24 @@ struct InfoPlistEntriesView: View {
 			// Custom Entries Section
 			NBSection(.localized("Custom Entries"), systemName: "key.fill") {
 				if options.customInfoPlistEntries.isEmpty {
-					ContentUnavailableView {
-						Label(.localized("No Custom Entries"), systemImage: "doc.text.fill")
-					} description: {
-						Text(.localized("Add custom Info.plist entries using the + button"))
+					if #available(iOS 17.0, *) {
+						ContentUnavailableView {
+							Label(.localized("No Custom Entries"), systemImage: "doc.text.fill")
+						} description: {
+							Text(.localized("Add custom Info.plist entries using the + button"))
+						}
+						.frame(maxWidth: .infinity)
+						.padding()
+					} else {
+						VStack {
+							Label(.localized("No Custom Entries"), systemImage: "doc.text.fill")
+							Text(.localized("Add custom Info.plist entries using the + button"))
+								.font(.caption)
+								.foregroundStyle(.secondary)
+						}
+						.frame(maxWidth: .infinity)
+						.padding()
 					}
-					.frame(maxWidth: .infinity)
-					.padding()
 				} else {
 					ForEach(Array(options.customInfoPlistEntries.keys.sorted()), id: \.self) { key in
 						entryRow(key: key)
