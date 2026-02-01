@@ -93,6 +93,10 @@ struct Options: Codable, Equatable {
 	var removeProvisioning: Bool
 	/// Forcefully rename string files for App name
 	var changeLanguageFilesForCustomDisplayName: Bool
+	/// Custom Info.plist entries (key-value pairs to be added to Info.plist)
+	var customInfoPlistEntries: [String: AnyCodable]
+	/// URL to custom Info.plist file to import
+	var customInfoPlistFile: URL?
 	
 	// MARK: Experiments
 	
@@ -136,6 +140,8 @@ struct Options: Codable, Equatable {
 		removeURLScheme: false,
 		removeProvisioning: false,
 		changeLanguageFilesForCustomDisplayName: false,
+		customInfoPlistEntries: [:],
+		customInfoPlistFile: nil,
 		
 		// MARK: Experiments
 		

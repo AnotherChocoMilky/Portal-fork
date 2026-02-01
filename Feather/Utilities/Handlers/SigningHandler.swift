@@ -288,6 +288,30 @@ extension SigningHandler {
 			infoDictionary.setObject(customVersion, forKey: "CFBundleVersion" as NSCopying)
 		}
 		
+		// MARK: Custom Info.plist Entries
+		
+		// Apply custom Info.plist entries from options
+		for (key, anyCodableValue) in options.customInfoPlistEntries {
+			infoDictionary.setObject(anyCodableValue.value, forKey: key as NSCopying)
+			AppLogManager.shared.info("Applied custom Info.plist entry: \(key) = \(anyCodableValue.value)", category: "Signing")
+		}
+		
+		// Import from custom Info.plist file if provided
+		if let customPlistURL = options.customInfoPlistFile {
+			do {
+				if let customPlist = NSDictionary(contentsOf: customPlistURL) {
+					for (key, value) in customPlist {
+						if let stringKey = key as? String {
+							infoDictionary.setObject(value, forKey: stringKey as NSCopying)
+							AppLogManager.shared.info("Applied custom Info.plist entry from file: \(stringKey)", category: "Signing")
+						}
+					}
+				}
+			} catch {
+				AppLogManager.shared.error("Failed to load custom Info.plist file: \(error.localizedDescription)", category: "Signing")
+			}
+		}
+		
 		try infoDictionary.write(to: app.appendingPathComponent("Info.plist"))
 	}
 	

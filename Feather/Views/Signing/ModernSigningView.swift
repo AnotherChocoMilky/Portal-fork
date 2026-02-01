@@ -471,6 +471,14 @@ struct ModernSigningView: View {
                     } label: {
                         cleanNavigationRow(title: "Entitlements", icon: "lock.shield.fill", color: .orange)
                     }
+                    
+                    Divider().padding(.leading, 52)
+                    
+                    NavigationLink {
+                        InfoPlistEntriesView(options: $_temporaryOptions)
+                    } label: {
+                        cleanNavigationRow(title: "Custom Info.plist Entries", icon: "doc.badge.gearshape.fill", color: .indigo)
+                    }
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
