@@ -95,7 +95,7 @@ final class SigningHandler: NSObject {
 		   let analysisIdentifier = originalIdentifier ?? modifiedIdentifier {
 			// Use the original bundle identifier for analysis (not the modified one)
 			// to ensure high-profile apps are correctly detected
-			let protectionLevel = try await _analyzeBundleForProtection(infoDictionary: infoDictionary, bundleIdentifier: analysisIdentifier, appPath: movedAppPath)
+			let protectionLevel = try _analyzeBundleForProtection(infoDictionary: infoDictionary, bundleIdentifier: analysisIdentifier, appPath: movedAppPath)
 			
 			// Apply protection to the current identifier (which may already be modified by PPQ)
 			let baseIdentifier = modifiedIdentifier ?? originalIdentifier
@@ -599,8 +599,7 @@ extension SigningHandler {
 	
 	/// Analyzes an app bundle to determine the appropriate protection level
 	/// Uses multiple heuristics instead of hardcoded bundle IDs for more flexibility
-	private func _analyzeBundleForProtection(infoDictionary: NSDictionary, bundleIdentifier: String, appPath: URL) async throws -> ProtectionLevel {
-		await Task.yield()
+	private func _analyzeBundleForProtection(infoDictionary: NSDictionary, bundleIdentifier: String, appPath: URL) throws -> ProtectionLevel {
 		var riskScore = 0
 		
 		// 1. Analyze bundle identifier patterns (high-profile domains)
@@ -708,16 +707,26 @@ extension SigningHandler {
 		}
 		
 		// 5. Check bundle size and complexity
-		do {
-			let bundleSize = try _allocatedSizeOfDirectory(at: appPath)
-			if bundleSize > Self.bundleSizeLargeThreshold {
-				riskScore += 10
-				AppLogManager.shared.debug("Large bundle size detected: \(bundleSize / 1_000_000) MB", category: "Signing")
-			} else if bundleSize > Self.bundleSizeMediumThreshold {
-				riskScore += 5
+		// Use main executable size as a proxy instead of recursively traversing the entire bundle
+		// to avoid signing-time latency for large apps
+		if let executableName = infoDictionary["CFBundleExecutable"] as? String {
+			let executableURL = appPath.appendingPathComponent(executableName)
+			do {
+				let attributes = try _fileManager.attributesOfItem(atPath: executableURL.path)
+				if let fileSize = attributes[.size] as? NSNumber {
+					let bundleSize = fileSize.int64Value
+					if bundleSize > Self.bundleSizeLargeThreshold {
+						riskScore += 10
+						AppLogManager.shared.debug("Large bundle size detected (proxy: executable): \(bundleSize / 1_000_000) MB", category: "Signing")
+					} else if bundleSize > Self.bundleSizeMediumThreshold {
+						riskScore += 5
+					}
+				}
+			} catch {
+				AppLogManager.shared.warning("Could not determine bundle size (executable attributes failed)", category: "Signing")
 			}
-		} catch {
-			AppLogManager.shared.warning("Could not determine bundle size", category: "Signing")
+		} else {
+			AppLogManager.shared.warning("Could not determine bundle size (missing CFBundleExecutable)", category: "Signing")
 		}
 		
 		// 6. Check for embedded frameworks - more frameworks = more complex app
@@ -770,23 +779,6 @@ extension SigningHandler {
 		
 		AppLogManager.shared.info("Protection analysis complete - Risk Score: \(riskScore), Level: \(protectionLevel)", category: "Signing")
 		return protectionLevel
-	}
-	
-	/// Calculate allocated size of a directory
-	private func _allocatedSizeOfDirectory(at url: URL) throws -> Int64 {
-		guard let enumerator = _fileManager.enumerator(at: url, includingPropertiesForKeys: [.totalFileAllocatedSizeKey, .fileAllocatedSizeKey]) else {
-			return 0
-		}
-		
-		var totalSize: Int64 = 0
-		for case let fileURL as URL in enumerator {
-			guard let resourceValues = try? fileURL.resourceValues(forKeys: [.totalFileAllocatedSizeKey, .fileAllocatedSizeKey]),
-				  let fileSize = resourceValues.totalFileAllocatedSize ?? resourceValues.fileAllocatedSize else {
-				continue
-			}
-			totalSize += Int64(fileSize)
-		}
-		return totalSize
 	}
 }
 
