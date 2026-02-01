@@ -125,7 +125,7 @@ struct FeatherApp: App {
 								if _isImportingIPA {
 									ZStack {
 										Color.black.opacity(0.4)
-											.edgesIgnoringSafeArea(.all)
+											.ignoresSafeArea()
 										
 										VStack(spacing: 16) {
 											ProgressView()
