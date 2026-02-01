@@ -653,7 +653,7 @@ extension SigningHandler {
 		// 4. Check for entitlements that indicate high-profile apps
 		// Extract entitlements from the app's embedded.mobileprovision (if present)
 		// or fall back to user-supplied entitlements file
-		var entitlements: [String: Any]? = nil
+		var entitlements: [String: Any]?
 		
 		// First, try to extract from embedded.mobileprovision in the app bundle
 		let provisioningPath = appPath.appendingPathComponent("embedded.mobileprovision")
