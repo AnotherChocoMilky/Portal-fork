@@ -242,7 +242,7 @@ struct InfoPlistEntriesView: View {
 		.swipeActions(edge: .trailing, allowsFullSwipe: true) {
 			Button(role: .destructive) {
 				withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-					options.customInfoPlistEntries.removeValue(forKey: key)
+					_ = options.customInfoPlistEntries.removeValue(forKey: key)
 				}
 			} label: {
 				Label(.localized("Delete"), systemImage: "trash")
@@ -251,7 +251,7 @@ struct InfoPlistEntriesView: View {
 		.contextMenu {
 			Button(role: .destructive) {
 				withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-					options.customInfoPlistEntries.removeValue(forKey: key)
+					_ = options.customInfoPlistEntries.removeValue(forKey: key)
 				}
 			} label: {
 				Label(.localized("Delete"), systemImage: "trash")
