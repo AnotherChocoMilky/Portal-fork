@@ -26,8 +26,8 @@ final class SigningHandler: NSObject {
 	private static let ppqCharacterSet: [Character] = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 	
 	// Dynamic Protection constants
-	private static let bundleSizeLargeThreshold: Int64 = 50_000_000   // 50 MB (executable size proxy for large apps)
-	private static let bundleSizeMediumThreshold: Int64 = 20_000_000  // 20 MB (executable size proxy for medium apps)
+	private static let executableSizeLargeThreshold: Int64 = 50_000_000   // 50 MB (executable size for large apps)
+	private static let executableSizeMediumThreshold: Int64 = 20_000_000  // 20 MB (executable size for medium apps)
 	private static let riskScoreHighThreshold = 50
 	private static let riskScoreMediumThreshold = 25
 	private static let riskScoreLowThreshold = 10
@@ -714,20 +714,20 @@ extension SigningHandler {
 			do {
 				let attributes = try _fileManager.attributesOfItem(atPath: executableURL.path)
 				if let fileSize = attributes[.size] as? NSNumber {
-					let bundleSize = fileSize.int64Value
-					if bundleSize > Self.bundleSizeLargeThreshold {
+					let executableSize = fileSize.int64Value
+					if executableSize > Self.executableSizeLargeThreshold {
 						riskScore += 10
-						let sizeInMB = Double(bundleSize) / 1_000_000.0
+						let sizeInMB = Double(executableSize) / 1_000_000.0
 						AppLogManager.shared.debug("Large executable size detected: \(String(format: "%.1f", sizeInMB)) MB", category: "Signing")
-					} else if bundleSize > Self.bundleSizeMediumThreshold {
+					} else if executableSize > Self.executableSizeMediumThreshold {
 						riskScore += 5
 					}
 				}
 			} catch {
-				AppLogManager.shared.warning("Could not determine bundle size (executable attributes failed)", category: "Signing")
+				AppLogManager.shared.warning("Could not determine executable size (attributes failed)", category: "Signing")
 			}
 		} else {
-			AppLogManager.shared.warning("Could not determine bundle size (missing CFBundleExecutable)", category: "Signing")
+			AppLogManager.shared.warning("Could not determine executable size (missing CFBundleExecutable)", category: "Signing")
 		}
 		
 		// 6. Check for embedded frameworks - more frameworks = more complex app
