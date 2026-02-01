@@ -880,6 +880,17 @@ struct CompactFilterChip: View {
 
 
 
+// MARK: - App Customization Model
+struct AppCustomization: Equatable {
+    var appName: String = ""
+    var bundleID: String = ""
+    var version: String = ""
+    
+    var isEmpty: Bool {
+        return appName.isEmpty && bundleID.isEmpty && version.isEmpty
+    }
+}
+
 // MARK: - Batch Signing View
 struct BatchSigningView: View {
     @Environment(\.dismiss) private var dismiss
@@ -908,12 +919,6 @@ struct BatchSigningView: View {
     // Per-app customizations
     @State private var perAppCustomizations: [String: AppCustomization] = [:]
     @State private var editingAppUUID: String? = nil
-    
-    struct AppCustomization: Equatable {
-        var appName: String = ""
-        var bundleID: String = ""
-        var version: String = ""
-    }
     
     @AppStorage("Feather.installationMethod") private var installationMethod: Int = 0
     
@@ -1045,7 +1050,7 @@ struct BatchSigningView: View {
                     customization: Binding(
                         get: { perAppCustomizations[uuid] ?? AppCustomization() },
                         set: { 
-                            if $0.appName.isEmpty && $0.bundleID.isEmpty && $0.version.isEmpty {
+                            if $0.isEmpty {
                                 perAppCustomizations.removeValue(forKey: uuid)
                             } else {
                                 perAppCustomizations[uuid] = $0
@@ -1819,7 +1824,7 @@ private struct BatchSigningEditSheet: View {
 private struct PerAppEditSheet: View {
     @Environment(\.dismiss) private var dismiss
     let app: AppInfoPresentable
-    @Binding var customization: BatchSigningView.AppCustomization
+    @Binding var customization: AppCustomization
     let onDelete: () -> Void
     
     var body: some View {
@@ -1895,9 +1900,9 @@ private struct PerAppEditSheet: View {
                         }
                         
                         // Clear button
-                        if !customization.appName.isEmpty || !customization.bundleID.isEmpty || !customization.version.isEmpty {
+                        if !customization.isEmpty {
                             Button {
-                                customization = BatchSigningView.AppCustomization()
+                                customization = AppCustomization()
                                 onDelete()
                             } label: {
                                 HStack(spacing: 6) {
@@ -2000,6 +2005,32 @@ private struct ModernBatchSigningAppRow: View {
         }
     }
     
+    private var showEditButton: Bool {
+        if case .pending = status { return true }
+        if case .failed = status { return true }
+        return false
+    }
+    
+    @ViewBuilder
+    private var editButton: some View {
+        Button(action: onEdit) {
+            HStack(spacing: 4) {
+                Image(systemName: "pencil")
+                    .font(.system(size: 12, weight: .semibold))
+                Text("Edit")
+                    .font(.system(size: 12, weight: .semibold))
+            }
+            .foregroundStyle(.white)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(
+                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    .fill(hasCustomization ? Color.orange : Color.accentColor)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+    
     var body: some View {
         HStack(spacing: 14) {
             // Index badge
@@ -2060,40 +2091,8 @@ private struct ModernBatchSigningAppRow: View {
             Spacer()
             
             // Edit button (only show when not in progress states)
-            if case .pending = status {
-                Button(action: onEdit) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 12, weight: .semibold))
-                        Text("Edit")
-                            .font(.system(size: 12, weight: .semibold))
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(hasCustomization ? Color.orange : Color.accentColor)
-                    )
-                }
-                .buttonStyle(.plain)
-            } else if case .failed = status {
-                Button(action: onEdit) {
-                    HStack(spacing: 4) {
-                        Image(systemName: "pencil")
-                            .font(.system(size: 12, weight: .semibold))
-                        Text("Edit")
-                            .font(.system(size: 12, weight: .semibold))
-                    }
-                    .foregroundStyle(.white)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(hasCustomization ? Color.orange : Color.accentColor)
-                    )
-                }
-                .buttonStyle(.plain)
+            if showEditButton {
+                editButton
             }
             
             // Status indicator
