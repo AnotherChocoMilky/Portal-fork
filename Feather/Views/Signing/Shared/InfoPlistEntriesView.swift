@@ -26,9 +26,9 @@ struct InfoPlistEntriesView: View {
 		var icon: String {
 			switch self {
 			case .string: return "text.quote"
-			case .boolean: return "checkmark.circle"
-			case .number: return "number"
-			case .array: return "list.bullet"
+			case .boolean: return "checkmark.circle.fill"
+			case .number: return "number.circle.fill"
+			case .array: return "list.bullet.circle.fill"
 			}
 		}
 	}
@@ -36,139 +36,57 @@ struct InfoPlistEntriesView: View {
 	var body: some View {
 		NBList(.localized("Custom Info.plist Entries")) {
 			// Preset Options Section
-			NBSection(.localized("Preset Options"), systemName: "sparkles") {
+			NBSection(.localized("Preset Options"), systemName: "sparkles.rectangle.stack.fill") {
 				Button {
 					showPresetSheet = true
 				} label: {
-					HStack(spacing: 12) {
-						ZStack {
-							Circle()
-								.fill(
-									LinearGradient(
-										colors: [Color.purple, Color.blue, Color.purple.opacity(0.7)],
-										startPoint: .topLeading,
-										endPoint: .bottomTrailing
-									)
-								)
-								.frame(width: 40, height: 40)
-								.shadow(color: Color.purple.opacity(0.4), radius: 8, x: 0, y: 3)
-							
-							Image(systemName: "star.fill")
-								.font(.system(size: 18))
-								.foregroundStyle(.white)
-						}
-						
+					Label {
 						VStack(alignment: .leading, spacing: 2) {
 							Text(.localized("Add Preset Options"))
 								.font(.body)
-								.foregroundStyle(.primary)
-							
 							Text(.localized("Orientation, Background Modes, etc."))
 								.font(.caption)
 								.foregroundStyle(.secondary)
 						}
-						
-						Spacer()
-						
-						Image(systemName: "chevron.right")
-							.font(.caption)
-							.foregroundStyle(.secondary)
+					} icon: {
+						Image(systemName: "star.circle.fill")
+							.font(.title2)
+							.foregroundStyle(.purple)
 					}
-					.padding(.vertical, 4)
 				}
-				.buttonStyle(.plain)
 			}
 			
 			// Import Section
-			NBSection(.localized("Import"), systemName: "arrow.down.doc") {
+			NBSection(.localized("Import"), systemName: "arrow.down.doc.fill") {
 				Button {
 					showImportSheet = true
 				} label: {
-					HStack(spacing: 12) {
-						ZStack {
-							Circle()
-								.fill(
-									LinearGradient(
-										colors: [Color.green, Color.cyan, Color.green.opacity(0.7)],
-										startPoint: .topLeading,
-										endPoint: .bottomTrailing
-									)
-								)
-								.frame(width: 40, height: 40)
-								.shadow(color: Color.green.opacity(0.4), radius: 8, x: 0, y: 3)
-							
-							Image(systemName: "square.and.arrow.down")
-								.font(.system(size: 18))
-								.foregroundStyle(.white)
-						}
-						
+					Label {
 						VStack(alignment: .leading, spacing: 2) {
 							Text(.localized("Import Info.plist File"))
 								.font(.body)
-								.foregroundStyle(.primary)
-							
 							Text(.localized("Upload custom plist file"))
 								.font(.caption)
 								.foregroundStyle(.secondary)
 						}
-						
-						Spacer()
-						
-						Image(systemName: "chevron.right")
-							.font(.caption)
-							.foregroundStyle(.secondary)
+					} icon: {
+						Image(systemName: "square.and.arrow.down.fill")
+							.font(.title2)
+							.foregroundStyle(.green)
 					}
-					.padding(.vertical, 4)
 				}
-				.buttonStyle(.plain)
 			}
 			
 			// Custom Entries Section
 			NBSection(.localized("Custom Entries"), systemName: "key.fill") {
 				if options.customInfoPlistEntries.isEmpty {
-					HStack {
-						Spacer()
-						VStack(spacing: 12) {
-							ZStack {
-								Circle()
-									.fill(
-										LinearGradient(
-											colors: [
-												Color.orange.opacity(0.3),
-												Color.pink.opacity(0.2),
-												Color.orange.opacity(0.1)
-											],
-											startPoint: .topLeading,
-											endPoint: .bottomTrailing
-										)
-									)
-									.frame(width: 50, height: 50)
-									.shadow(color: Color.orange.opacity(0.4), radius: 10, x: 0, y: 4)
-								
-								Image(systemName: "doc.text")
-									.font(.system(size: 40))
-									.foregroundStyle(
-										LinearGradient(
-											colors: [Color.orange, Color.pink, Color.orange.opacity(0.7)],
-											startPoint: .topLeading,
-											endPoint: .bottomTrailing
-										)
-									)
-							}
-							
-							Text(verbatim: .localized("No Custom Entries"))
-								.font(.subheadline)
-								.foregroundStyle(
-									LinearGradient(
-										colors: [Color.secondary, Color.secondary.opacity(0.7)],
-										startPoint: .leading,
-										endPoint: .trailing
-									)
-								)
-						}
-						.padding(.vertical, 20)
-						Spacer()
+					ContentUnavailableView {
+						Label(.localized("No Custom Entries"), systemImage: "doc.text.fill")
+					} description: {
+						Text(.localized("Add custom Info.plist entries using the + button"))
 					}
+					.frame(maxWidth: .infinity)
+					.padding()
 				} else {
 					ForEach(Array(options.customInfoPlistEntries.keys.sorted()), id: \.self) { key in
 						entryRow(key: key)
@@ -178,7 +96,7 @@ struct InfoPlistEntriesView: View {
 		}
 		.toolbar {
 			NBToolbarButton(
-				systemImage: "plus",
+				systemImage: "plus.circle.fill",
 				style: .icon,
 				placement: .topBarTrailing
 			) {
@@ -202,78 +120,59 @@ struct InfoPlistEntriesView: View {
 			)
 			.ignoresSafeArea()
 		}
-		.animation(.spring(response: 0.5, dampingFraction: 0.8), value: options.customInfoPlistEntries)
+		.animation(.default, value: options.customInfoPlistEntries)
 	}
 	
 	@ViewBuilder
 	private func entryRow(key: String) -> some View {
-		HStack(spacing: 12) {
-			ZStack {
-				Circle()
-					.fill(
-						LinearGradient(
-							colors: [Color.accentColor, Color.accentColor.opacity(0.8), Color.accentColor.opacity(0.6)],
-							startPoint: .topLeading,
-							endPoint: .bottomTrailing
-						)
-					)
-					.frame(width: 40, height: 40)
-					.shadow(color: Color.accentColor.opacity(0.4), radius: 8, x: 0, y: 3)
-				
-				Image(systemName: valueTypeIcon(for: options.customInfoPlistEntries[key]?.value))
-					.font(.system(size: 18))
-					.foregroundStyle(.white)
-			}
-			
+		Label {
 			VStack(alignment: .leading, spacing: 2) {
 				Text(key)
 					.font(.body)
-					.lineLimit(1)
-				
 				Text(valueDescription(for: options.customInfoPlistEntries[key]?.value))
 					.font(.caption)
 					.foregroundStyle(.secondary)
-					.lineLimit(1)
 			}
-			
-			Spacer()
+		} icon: {
+			Image(systemName: valueTypeIcon(for: options.customInfoPlistEntries[key]?.value))
+				.font(.title3)
+				.foregroundStyle(.blue)
 		}
-		.padding(.vertical, 4)
 		.swipeActions(edge: .trailing, allowsFullSwipe: true) {
 			Button(role: .destructive) {
-				withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+				withAnimation {
 					_ = options.customInfoPlistEntries.removeValue(forKey: key)
 				}
 			} label: {
-				Label(.localized("Delete"), systemImage: "trash")
+				Label(.localized("Delete"), systemImage: "trash.fill")
 			}
 		}
 		.contextMenu {
 			Button(role: .destructive) {
-				withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+				withAnimation {
 					_ = options.customInfoPlistEntries.removeValue(forKey: key)
 				}
 			} label: {
-				Label(.localized("Delete"), systemImage: "trash")
+				Label(.localized("Delete"), systemImage: "trash.fill")
 			}
 		}
 	}
 	
 	private func valueTypeIcon(for value: Any?) -> String {
-		guard let value = value else { return "questionmark" }
+		guard let value = value else { return "questionmark.circle.fill" }
 		
 		if value is String {
 			return "text.quote"
 		} else if value is Bool {
-			return "checkmark.circle"
+			return "checkmark.circle.fill"
 		} else if value is Int || value is Double || value is Float {
-			return "number"
+			return "number.circle.fill"
 		} else if value is [Any] {
-			return "list.bullet"
+			return "list.bullet.circle.fill"
 		} else if value is [String: Any] {
-			return "curlybraces"
+			return "curlybraces.square.fill"
 		} else {
-			return "questionmark"
+			return "questionmark.circle.fill"
 		}
 	}
 	
@@ -306,7 +205,7 @@ struct InfoPlistEntriesView: View {
 						.textInputAutocapitalization(.never)
 						.autocorrectionDisabled()
 				} header: {
-					Text(.localized("Key"))
+					Label(.localized("Key"), systemImage: "key.fill")
 				}
 				
 				Section {
@@ -332,14 +231,14 @@ struct InfoPlistEntriesView: View {
 							.foregroundStyle(.secondary)
 					}
 				} header: {
-					Text(.localized("Value"))
+					Label(.localized("Value"), systemImage: "text.alignleft")
 				}
 				
 				Section {
 					Button {
 						addEntry()
 					} label: {
-						Text(.localized("Add"))
+						Label(.localized("Add"), systemImage: "plus.circle.fill")
 							.frame(maxWidth: .infinity)
 					}
 					.disabled(newKey.isEmpty)
@@ -364,111 +263,165 @@ struct InfoPlistEntriesView: View {
 					Button {
 						addOrientationPreset(.portrait)
 					} label: {
-						presetRow(
-							title: "Portrait Only",
-							description: "Lock orientation to portrait",
-							icon: "rectangle.portrait",
-							color: .blue
-						)
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Portrait Only"))
+									.font(.body)
+								Text(.localized("Lock orientation to portrait"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "rectangle.portrait.fill")
+								.foregroundStyle(.blue)
+						}
 					}
 					
 					Button {
 						addOrientationPreset(.landscape)
 					} label: {
-						presetRow(
-							title: "Landscape Only",
-							description: "Lock orientation to landscape",
-							icon: "rectangle",
-							color: .green
-						)
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Landscape Only"))
+									.font(.body)
+								Text(.localized("Lock orientation to landscape"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "rectangle.fill")
+								.foregroundStyle(.green)
+						}
 					}
 					
 					Button {
 						addOrientationPreset(.all)
 					} label: {
-						presetRow(
-							title: "All Orientations",
-							description: "Allow all device orientations",
-							icon: "rotate.3d",
-							color: .purple
-						)
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("All Orientations"))
+									.font(.body)
+								Text(.localized("Allow all device orientations"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "rotate.3d.fill")
+								.foregroundStyle(.purple)
+						}
 					}
 				} header: {
-					Text(.localized("App Orientation"))
+					Label(.localized("App Orientation"), systemImage: "rotate.right.fill")
 				}
 				
 				Section {
 					Button {
 						addBackgroundMode(.audio)
 					} label: {
-						presetRow(
-							title: "Background Audio",
-							description: "Play audio in background",
-							icon: "music.note",
-							color: .pink
-						)
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Background Audio"))
+									.font(.body)
+								Text(.localized("Play audio in background"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "music.note.circle.fill")
+								.foregroundStyle(.pink)
+						}
 					}
 					
 					Button {
 						addBackgroundMode(.location)
 					} label: {
-						presetRow(
-							title: "Background Location",
-							description: "Access location in background",
-							icon: "location",
-							color: .orange
-						)
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Background Location"))
+									.font(.body)
+								Text(.localized("Access location in background"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "location.circle.fill")
+								.foregroundStyle(.orange)
+						}
 					}
 					
 					Button {
 						addBackgroundMode(.voip)
 					} label: {
-						presetRow(
-							title: "VoIP",
-							description: "Voice over IP in background",
-							icon: "phone",
-							color: .indigo
-						)
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("VoIP"))
+									.font(.body)
+								Text(.localized("Voice over IP in background"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "phone.circle.fill")
+								.foregroundStyle(.indigo)
+						}
 					}
 					
 					Button {
 						addBackgroundMode(.fetch)
 					} label: {
-						presetRow(
-							title: "Background Fetch",
-							description: "Fetch content in background",
-							icon: "arrow.down.circle",
-							color: .teal
-						)
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Background Fetch"))
+									.font(.body)
+								Text(.localized("Fetch content in background"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "arrow.down.circle.fill")
+								.foregroundStyle(.teal)
+						}
 					}
 				} header: {
-					Text(.localized("Background Modes"))
+					Label(.localized("Background Modes"), systemImage: "gear.circle.fill")
 				}
 				
 				Section {
 					Button {
 						addSimpleEntry(key: "UIFileSharingEnabled", value: true)
 					} label: {
-						presetRow(
-							title: "File Sharing",
-							description: "Enable iTunes file sharing",
-							icon: "folder",
-							color: .cyan
-						)
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("File Sharing"))
+									.font(.body)
+								Text(.localized("Enable iTunes file sharing"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "folder.fill")
+								.foregroundStyle(.cyan)
+						}
 					}
 					
 					Button {
 						addSimpleEntry(key: "UISupportsDocumentBrowser", value: true)
 					} label: {
-						presetRow(
-							title: "Document Browser",
-							description: "Support document browser",
-							icon: "doc",
-							color: .brown
-						)
+						Label {
+							VStack(alignment: .leading, spacing: 2) {
+								Text(.localized("Document Browser"))
+									.font(.body)
+								Text(.localized("Support document browser"))
+									.font(.caption)
+									.foregroundStyle(.secondary)
+							}
+						} icon: {
+							Image(systemName: "doc.fill")
+								.foregroundStyle(.brown)
+						}
 					}
 				} header: {
-					Text(.localized("File Access"))
+					Label(.localized("File Access"), systemImage: "filemenu.and.selection")
 				}
 			}
 			.toolbar {
@@ -478,31 +431,6 @@ struct InfoPlistEntriesView: View {
 					}
 				}
 			}
-		}
-	}
-	
-	@ViewBuilder
-	private func presetRow(title: String, description: String, icon: String, color: Color) -> some View {
-		HStack(spacing: 12) {
-			ZStack {
-				RoundedRectangle(cornerRadius: 8, style: .continuous)
-					.fill(color.opacity(0.15))
-					.frame(width: 40, height: 40)
-				Image(systemName: icon)
-					.font(.system(size: 18))
-					.foregroundStyle(color)
-			}
-			
-			VStack(alignment: .leading, spacing: 2) {
-				Text(.localized(title))
-					.font(.body)
-					.foregroundStyle(.primary)
-				Text(.localized(description))
-					.font(.caption)
-					.foregroundStyle(.secondary)
-			}
-			
-			Spacer()
 		}
 	}
 	
@@ -533,7 +461,7 @@ struct InfoPlistEntriesView: View {
 			]
 		}
 		
-		withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+		withAnimation {
 			options.customInfoPlistEntries["UISupportedInterfaceOrientations"] = AnyCodable(orientations)
 		}
 		
@@ -552,7 +480,7 @@ struct InfoPlistEntriesView: View {
 			modes.append(mode.rawValue)
 		}
 		
-		withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+		withAnimation {
 			options.customInfoPlistEntries["UIBackgroundModes"] = AnyCodable(modes)
 		}
 		
@@ -561,7 +489,7 @@ struct InfoPlistEntriesView: View {
 	}
 	
 	private func addSimpleEntry(key: String, value: Any) {
-		withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+		withAnimation {
 			options.customInfoPlistEntries[key] = AnyCodable(value)
 		}
 		
@@ -590,7 +518,7 @@ struct InfoPlistEntriesView: View {
 			value = [String]()
 		}
 		
-		withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+		withAnimation {
 			options.customInfoPlistEntries[newKey] = AnyCodable(value)
 		}
 		
@@ -611,7 +539,7 @@ struct InfoPlistEntriesView: View {
 			}
 			
 			// Merge imported entries with existing ones
-			withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+			withAnimation {
 				for (key, value) in plist {
 					options.customInfoPlistEntries[key] = AnyCodable(value)
 				}

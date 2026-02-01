@@ -22,6 +22,14 @@ final class SigningHandler: NSObject {
 	var appIcon: UIImage?
 	var appCertificate: CertificatePair?
 	
+	// Static thresholds for risk analysis and app size detection
+	private static let executableSizeLargeThreshold: Int64 = 50 * 1_000_000    // 50 MB
+	private static let executableSizeMediumThreshold: Int64 = 15 * 1_000_000   // 15 MB
+	private static let minimumRecentIOSVersion: Int = 16
+	private static let riskScoreHighThreshold: Int = 60
+	private static let riskScoreMediumThreshold: Int = 40
+	private static let riskScoreLowThreshold: Int = 20
+	
 	// Static character set for PPQ protection - reused across instances for efficiency
 	private static let ppqCharacterSet: [Character] = Array("ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 	
