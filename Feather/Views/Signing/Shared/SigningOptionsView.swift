@@ -57,8 +57,11 @@ struct SigningOptionsView: View {
                     set: { newValue in
                         options.dynamicProtection = newValue
                         if newValue {
-                            // Disable PPQ protection when Dynamic is enabled (unless forced)
-                            if !isPPQProtectionForced {
+                            // Disable PPQ protection when Dynamic is enabled (only if not forced)
+                            // When PPQ is forced, Dynamic Protection cannot be enabled
+                            if isPPQProtectionForced {
+                                options.dynamicProtection = false
+                            } else {
                                 options.ppqProtection = false
                             }
                         }

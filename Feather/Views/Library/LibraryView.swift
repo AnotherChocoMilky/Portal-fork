@@ -1448,9 +1448,10 @@ struct BatchSigningView: View {
             
             // Get the selected certificate
             let certificate = certificates[selectedCertificateIndex]
+            // Create a local copy of options for this app (Options is a struct, so this is a value copy)
             var options = OptionsManager.shared.options
             
-            // Apply batch signing options
+            // Apply batch signing options if specified
             if !batchAppName.isEmpty {
                 options.appName = batchAppName
             }

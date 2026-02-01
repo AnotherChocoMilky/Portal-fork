@@ -65,7 +65,7 @@ final class SigningHandler: NSObject {
 		"com.coursera.",
 		"com.udemy.",
 		"com.twitch.",
-		"com.youtube.",
+		"com.google.ios.youtube", // YouTube (specific)
 		"com.hulu.",
 		"com.disneyplus.",
 		"com.hbomax.",
@@ -142,7 +142,7 @@ final class SigningHandler: NSObject {
 		let originalIdentifier = infoDictionary["CFBundleIdentifier"] as? String
 		
 		// Apply PPQ Protection or Dynamic Protection if enabled
-		// Note: Dynamic Protection takes precedence if both are enabled
+		// These options are mutually exclusive in the UI, but we check both for defensive programming
 		var modifiedIdentifier = _options.appIdentifier
 		var shouldApplyProtection = false
 		
