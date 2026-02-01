@@ -169,7 +169,7 @@ struct ModernImportURLView: View {
                         }
                     } label: {
                         Image(systemName: "doc.on.clipboard")
-                            .foregroundStyle(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                             .font(.system(size: 18))
                     }
                 }
@@ -239,7 +239,7 @@ struct ModernImportURLView: View {
                         } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: "link")
-                                    .foregroundStyle(.accentColor)
+                                    .foregroundStyle(Color.accentColor)
                                     .font(.system(size: 14))
 
                                 Text(urlString)
