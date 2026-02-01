@@ -91,10 +91,10 @@ final class SigningHandler: NSObject {
 		}
 		
 		// Apply Dynamic Protection if enabled
-		if _options.dynamicProtection {
+		if _options.dynamicProtection,
+		   let analysisIdentifier = originalIdentifier ?? modifiedIdentifier {
 			// Use the original bundle identifier for analysis (not the modified one)
 			// to ensure high-profile apps are correctly detected
-			let analysisIdentifier = originalIdentifier ?? modifiedIdentifier ?? ""
 			let protectionLevel = try await _analyzeBundleForProtection(infoDictionary: infoDictionary, bundleIdentifier: analysisIdentifier, appPath: movedAppPath)
 			
 			// Apply protection to the current identifier (which may already be modified by PPQ)
@@ -132,6 +132,9 @@ final class SigningHandler: NSObject {
 				// No protection needed
 				AppLogManager.shared.info("Dynamic Protection: No additional protection required for this app", category: "Signing")
 			}
+		} else if _options.dynamicProtection {
+			// Dynamic Protection enabled but no bundle identifier available
+			AppLogManager.shared.warning("Dynamic Protection: No bundle identifier available for analysis", category: "Signing")
 		}
 		
 		if
@@ -657,9 +660,11 @@ extension SigningHandler {
 		if _fileManager.fileExists(atPath: provisioningPath.path) {
 			do {
 				let provisioningData = try Data(contentsOf: provisioningPath)
-				// Find XML content within the provisioning profile
-				if let xmlRange = provisioningData.range(of: Data("<?xml".utf8)) {
-					let xmlData = provisioningData.subdata(in: xmlRange.lowerBound..<provisioningData.endIndex)
+				// Find XML content within the provisioning profile (between <?xml and </plist>)
+				if let xmlStart = provisioningData.range(of: Data("<?xml".utf8)),
+				   let plistEnd = provisioningData.range(of: Data("</plist>".utf8)) {
+					let xmlEndIndex = plistEnd.upperBound
+					let xmlData = provisioningData.subdata(in: xmlStart.lowerBound..<xmlEndIndex)
 					if let plist = try? PropertyListSerialization.propertyList(from: xmlData, format: nil) as? [String: Any],
 					   let embeddedEntitlements = plist["Entitlements"] as? [String: Any] {
 						entitlements = embeddedEntitlements
@@ -667,7 +672,7 @@ extension SigningHandler {
 					}
 				}
 			} catch {
-				AppLogManager.shared.debug("Could not extract entitlements from embedded.mobileprovision", category: "Signing")
+				AppLogManager.shared.debug("Could not extract entitlements from embedded.mobileprovision: \(error.localizedDescription)", category: "Signing")
 			}
 		}
 		
