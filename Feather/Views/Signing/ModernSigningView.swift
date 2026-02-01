@@ -648,7 +648,7 @@ struct ModernSigningView: View {
                             .font(.body.weight(.medium))
                             .foregroundStyle(.primary)
                         if let expiration = cert.expiration {
-                            Label("Expires \(expiration, style: .date)", systemImage: "calendar")
+                            Label(.localized("Expires \(expiration, style: .date)"), systemImage: "calendar")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -677,10 +677,10 @@ struct ModernSigningView: View {
                         .frame(width: 40)
                     
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("No Certificate")
+                        Text(.localized("No Certificate"))
                             .font(.body.weight(.medium))
                             .foregroundStyle(.primary)
-                        Text("Tap to add")
+                        Text(.localized("Tap to add"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

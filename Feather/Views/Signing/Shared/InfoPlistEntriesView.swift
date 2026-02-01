@@ -81,9 +81,9 @@ struct InfoPlistEntriesView: View {
 			NBSection(.localized("Custom Entries"), systemName: "key.fill") {
 				if options.customInfoPlistEntries.isEmpty {
 					ContentUnavailableView {
-						Label("No Custom Entries", systemImage: "doc.text.fill")
+						Label(.localized("No Custom Entries"), systemImage: "doc.text.fill")
 					} description: {
-						Text("Add custom Info.plist entries using the + button")
+						Text(.localized("Add custom Info.plist entries using the + button"))
 					}
 					.frame(maxWidth: .infinity)
 					.padding()
@@ -205,7 +205,7 @@ struct InfoPlistEntriesView: View {
 						.textInputAutocapitalization(.never)
 						.autocorrectionDisabled()
 				} header: {
-					Label("Key", systemImage: "key.fill")
+					Label(.localized("Key"), systemImage: "key.fill")
 				}
 				
 				Section {
@@ -231,14 +231,14 @@ struct InfoPlistEntriesView: View {
 							.foregroundStyle(.secondary)
 					}
 				} header: {
-					Label("Value", systemImage: "text.alignleft")
+					Label(.localized("Value"), systemImage: "text.alignleft")
 				}
 				
 				Section {
 					Button {
 						addEntry()
 					} label: {
-						Label("Add", systemImage: "plus.circle.fill")
+						Label(.localized("Add"), systemImage: "plus.circle.fill")
 							.frame(maxWidth: .infinity)
 					}
 					.disabled(newKey.isEmpty)
@@ -265,9 +265,9 @@ struct InfoPlistEntriesView: View {
 					} label: {
 						Label {
 							VStack(alignment: .leading, spacing: 2) {
-								Text("Portrait Only")
+								Text(.localized("Portrait Only"))
 									.font(.body)
-								Text("Lock orientation to portrait")
+								Text(.localized("Lock orientation to portrait"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -282,9 +282,9 @@ struct InfoPlistEntriesView: View {
 					} label: {
 						Label {
 							VStack(alignment: .leading, spacing: 2) {
-								Text("Landscape Only")
+								Text(.localized("Landscape Only"))
 									.font(.body)
-								Text("Lock orientation to landscape")
+								Text(.localized("Lock orientation to landscape"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -299,9 +299,9 @@ struct InfoPlistEntriesView: View {
 					} label: {
 						Label {
 							VStack(alignment: .leading, spacing: 2) {
-								Text("All Orientations")
+								Text(.localized("All Orientations"))
 									.font(.body)
-								Text("Allow all device orientations")
+								Text(.localized("Allow all device orientations"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -311,7 +311,7 @@ struct InfoPlistEntriesView: View {
 						}
 					}
 				} header: {
-					Label("App Orientation", systemImage: "rotate.right.fill")
+					Label(.localized("App Orientation"), systemImage: "rotate.right.fill")
 				}
 				
 				Section {
@@ -320,9 +320,9 @@ struct InfoPlistEntriesView: View {
 					} label: {
 						Label {
 							VStack(alignment: .leading, spacing: 2) {
-								Text("Background Audio")
+								Text(.localized("Background Audio"))
 									.font(.body)
-								Text("Play audio in background")
+								Text(.localized("Play audio in background"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -337,9 +337,9 @@ struct InfoPlistEntriesView: View {
 					} label: {
 						Label {
 							VStack(alignment: .leading, spacing: 2) {
-								Text("Background Location")
+								Text(.localized("Background Location"))
 									.font(.body)
-								Text("Access location in background")
+								Text(.localized("Access location in background"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -354,9 +354,9 @@ struct InfoPlistEntriesView: View {
 					} label: {
 						Label {
 							VStack(alignment: .leading, spacing: 2) {
-								Text("VoIP")
+								Text(.localized("VoIP"))
 									.font(.body)
-								Text("Voice over IP in background")
+								Text(.localized("Voice over IP in background"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -371,9 +371,9 @@ struct InfoPlistEntriesView: View {
 					} label: {
 						Label {
 							VStack(alignment: .leading, spacing: 2) {
-								Text("Background Fetch")
+								Text(.localized("Background Fetch"))
 									.font(.body)
-								Text("Fetch content in background")
+								Text(.localized("Fetch content in background"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -383,7 +383,7 @@ struct InfoPlistEntriesView: View {
 						}
 					}
 				} header: {
-					Label("Background Modes", systemImage: "gear.circle.fill")
+					Label(.localized("Background Modes"), systemImage: "gear.circle.fill")
 				}
 				
 				Section {
@@ -392,9 +392,9 @@ struct InfoPlistEntriesView: View {
 					} label: {
 						Label {
 							VStack(alignment: .leading, spacing: 2) {
-								Text("File Sharing")
+								Text(.localized("File Sharing"))
 									.font(.body)
-								Text("Enable iTunes file sharing")
+								Text(.localized("Enable iTunes file sharing"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -409,9 +409,9 @@ struct InfoPlistEntriesView: View {
 					} label: {
 						Label {
 							VStack(alignment: .leading, spacing: 2) {
-								Text("Document Browser")
+								Text(.localized("Document Browser"))
 									.font(.body)
-								Text("Support document browser")
+								Text(.localized("Support document browser"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -421,7 +421,7 @@ struct InfoPlistEntriesView: View {
 						}
 					}
 				} header: {
-					Label("File Access", systemImage: "filemenu.and.selection")
+					Label(.localized("File Access"), systemImage: "filemenu.and.selection")
 				}
 			}
 			.toolbar {
