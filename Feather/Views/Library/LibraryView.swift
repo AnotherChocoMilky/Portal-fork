@@ -899,6 +899,11 @@ struct BatchSigningView: View {
     @State private var installationIndex = 0
     @State private var appearAnimation = false
     
+    // Batch signing options
+    @State private var batchAppName: String = ""
+    @State private var batchBundleID: String = ""
+    @State private var batchVersion: String = ""
+    
     @AppStorage("Feather.installationMethod") private var installationMethod: Int = 0
     
     @FetchRequest(
@@ -1210,6 +1215,69 @@ struct BatchSigningView: View {
                     .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
             )
             
+            // Batch Signing Options
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 8) {
+                    Image(systemName: "slider.horizontal.3")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.blue)
+                    Text("Batch Signing Options")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                }
+                
+                VStack(spacing: 10) {
+                    // App Name field
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("App Name (Optional)")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        TextField("Leave blank to keep original", text: $batchAppName)
+                            .textFieldStyle(.plain)
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(Color(.tertiarySystemGroupedBackground))
+                            )
+                    }
+                    
+                    // Bundle ID field
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Bundle ID (Optional)")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        TextField("Leave blank to keep original", text: $batchBundleID)
+                            .textFieldStyle(.plain)
+                            .autocapitalization(.none)
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(Color(.tertiarySystemGroupedBackground))
+                            )
+                    }
+                    
+                    // Version field
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Version (Optional)")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
+                        TextField("Leave blank to keep original", text: $batchVersion)
+                            .textFieldStyle(.plain)
+                            .padding(12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(Color(.tertiarySystemGroupedBackground))
+                            )
+                    }
+                }
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(.systemBackground))
+                    .shadow(color: .black.opacity(0.04), radius: 8, x: 0, y: 2)
+            )
+            
             // Auto install toggle
             HStack(spacing: 14) {
                 ZStack {
@@ -1380,7 +1448,19 @@ struct BatchSigningView: View {
             
             // Get the selected certificate
             let certificate = certificates[selectedCertificateIndex]
-            let options = OptionsManager.shared.options
+            // Create a local copy of options for this app (Options is a struct, so this is a value copy)
+            var options = OptionsManager.shared.options
+            
+            // Apply batch signing options if specified
+            if !batchAppName.isEmpty {
+                options.appName = batchAppName
+            }
+            if !batchBundleID.isEmpty {
+                options.appIdentifier = batchBundleID
+            }
+            if !batchVersion.isEmpty {
+                options.appVersion = batchVersion
+            }
             
             AppLogManager.shared.info("Signing app \(index + 1)/\(apps.count): \(app.name ?? "Unknown")", category: "BatchSign")
             
@@ -1631,11 +1711,26 @@ private struct ModernBatchSigningAppRow: View {
                     .font(.system(size: 15, weight: .semibold))
                     .lineLimit(1)
                 
+                // Bundle ID and Version
+                if let bundleID = app.identifier {
+                    Text(bundleID)
+                        .font(.system(size: 11, weight: .regular))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                
                 HStack(spacing: 6) {
                     Image(systemName: statusIcon)
                         .font(.system(size: 10, weight: .semibold))
                     Text(statusText)
                         .font(.system(size: 12, weight: .medium))
+                    
+                    if let version = app.version, !version.isEmpty {
+                        Text("•")
+                            .font(.system(size: 10))
+                        Text("v\(version)")
+                            .font(.system(size: 11, weight: .medium))
+                    }
                 }
                 .foregroundStyle(statusColor)
                 .lineLimit(1)
