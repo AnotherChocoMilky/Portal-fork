@@ -42,7 +42,7 @@ struct AnyCodable: Codable, Equatable {
 		if let lhsArray = lhs.value as? [Any], let rhsArray = rhs.value as? [Any] {
 			guard lhsArray.count == rhsArray.count else { return false }
 			for (lhsElement, rhsElement) in zip(lhsArray, rhsArray) {
-				if !AnyCodable(lhsElement).isEqual(to: AnyCodable(rhsElement)) {
+				if AnyCodable(lhsElement) != AnyCodable(rhsElement) {
 					return false
 				}
 			}
@@ -54,7 +54,7 @@ struct AnyCodable: Codable, Equatable {
 			guard lhsDict.count == rhsDict.count else { return false }
 			for (key, lhsValue) in lhsDict {
 				guard let rhsValue = rhsDict[key] else { return false }
-				if !AnyCodable(lhsValue).isEqual(to: AnyCodable(rhsValue)) {
+				if AnyCodable(lhsValue) != AnyCodable(rhsValue) {
 					return false
 				}
 			}
@@ -63,10 +63,6 @@ struct AnyCodable: Codable, Equatable {
 		
 		// If types don't match or aren't supported, they're not equal
 		return false
-	}
-	
-	private func isEqual(to other: AnyCodable) -> Bool {
-		return self == other
 	}
 	
 	init(from decoder: Decoder) throws {
