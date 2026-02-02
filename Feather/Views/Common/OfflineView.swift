@@ -89,15 +89,15 @@ struct OfflineView: View {
             
             // Troubleshooting tips
             VStack(alignment: .leading, spacing: 12) {
-                Text("Try:")
+                Text("Tips:")
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                 
-                TroubleshootingTip(icon: "wifi", text: "Check your Wi-Fi connection")
-                TroubleshootingTip(icon: "antenna.radiowaves.left.and.right", text: "Enable cellular data")
+                TroubleshootingTip(icon: "wifi", text: "Check Your Wi-Fi Connection")
+                TroubleshootingTip(icon: "antenna.radiowaves.left.and.right", text: "Enable Cellular Data")
                 TroubleshootingTip(icon: "airplane", text: "Disable Airplane Mode")
-                TroubleshootingTip(icon: "arrow.clockwise", text: "Restart your device")
+                TroubleshootingTip(icon: "arrow.clockwise", text: "Restart Your iPhone or iPad")
             }
             .padding(20)
             .frame(maxWidth: .infinity, alignment: .leading)
