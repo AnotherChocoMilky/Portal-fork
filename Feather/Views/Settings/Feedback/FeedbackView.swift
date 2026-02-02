@@ -1560,7 +1560,7 @@ struct FeedbackView: View {
                                 .scaleEffect(1.3)
                                 .tint(.accentColor)
                         }
-                        Text("Loading Feedback...")
+                        Text("Please Wait...")
                             .font(.system(size: 15, weight: .medium))
                             .foregroundStyle(.secondary)
                     }
@@ -1649,7 +1649,7 @@ struct FeedbackView: View {
                             .foregroundStyle(.secondary)
                         Text("No Submissions Yet")
                             .font(.system(size: 16, weight: .semibold))
-                        Text("Your submitted feedback will appear here")
+                        Text("Your submitted feedback will appear here.")
                             .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                         Button {
@@ -1827,7 +1827,7 @@ struct FeedbackView: View {
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.secondary)
                 
-                TextField("Brief summary", text: $feedbackTitle)
+                TextField("Brief Summary", text: $feedbackTitle)
                     .font(.system(size: 16))
                     .focused($focusedField, equals: .title)
                     .submitLabel(.next)
@@ -1862,7 +1862,7 @@ struct FeedbackView: View {
                         .focused($focusedField, equals: .message)
                     
                     if feedbackMessage.isEmpty {
-                        Text("Describe your feedback...")
+                        Text("Describe Your Feedback...")
                             .font(.system(size: 16))
                             .foregroundStyle(.quaternary)
                             .padding(.horizontal, 14)
@@ -2259,7 +2259,7 @@ struct FeedbackView: View {
                 // Active count badge
                 let activeCount = [includeLogs, includeDeviceInfo, includeCode].filter { $0 }.count
                 if activeCount > 0 {
-                    Text("\(activeCount) active")
+                    Text("\(activeCount) Active")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 8)
@@ -2637,7 +2637,7 @@ struct FeedbackView: View {
             if !logs.isEmpty {
                 body += "\n## App Logs\n"
                 body += "<details>\n"
-                body += "<summary>Click To Expand Logs</summary>\n\n"
+                body += "<summary>Available Logs</summary>\n\n"
                 body += "```\n\(logs.prefix(10000))\n```\n\n"
                 body += "</details>\n\n"
             }
@@ -2860,7 +2860,7 @@ struct CodeEditorSheet: View {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
-                        Text("Copied to clipboard")
+                        Text("Copied To Clipboard")
                             .font(.system(size: 14, weight: .medium))
                     }
                     .padding(.horizontal, 16)
@@ -3130,7 +3130,7 @@ struct FeedbackSuccessSheet: View {
                     .opacity(showContent ? 1 : 0)
                     .offset(y: showContent ? 0 : 20)
                 
-                Text("Thank you for helping us improve Portal!")
+                Text("Thank you for helping us improve Portal! We'll review your feedback shortly.")
                     .font(.system(size: 14))
                     .foregroundStyle(.tertiary)
                     .opacity(showContent ? 1 : 0)
@@ -3332,7 +3332,7 @@ enum FeedbackError: LocalizedError {
         case .invalidURL:
             return "Invalid Server URL"
         case .invalidResponse:
-            return "Invalid response from server"
+            return "Invalid Response From Server"
         case .serverError(let statusCode):
             return "Server Error (Status: \(statusCode))"
         case .tokenFetchFailed:
@@ -3689,7 +3689,7 @@ struct FeedbackDetailSheet: View {
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: "arrow.up.right.square.fill")
-                            Text("View on GitHub")
+                            Text("View On GitHub")
                         }
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.white)

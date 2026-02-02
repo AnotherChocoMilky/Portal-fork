@@ -282,7 +282,7 @@ struct SourceAppsView: View {
         Button(.localized("Copy Source URL"), systemImage: "doc.on.doc") {
             guard !object.isEmpty else {
                 UIAlertController.showAlertWithOk(
-                    title: .localized("Error"),
+                    title: .localized("No Sources"),
                     message: .localized("No Sources To Copy")
                 )
                 return

@@ -65,7 +65,7 @@ struct InfoPlistEntriesView: View {
 						VStack(alignment: .leading, spacing: 2) {
 							Text(.localized("Import Info.plist File"))
 								.font(.body)
-							Text(.localized("Upload custom plist file"))
+							Text(.localized("Upload Custom .plist File"))
 								.font(.caption)
 								.foregroundStyle(.secondary)
 						}
@@ -84,9 +84,9 @@ struct InfoPlistEntriesView: View {
 				} label: {
 					Label {
 						VStack(alignment: .leading, spacing: 2) {
-							Text(.localized("Export Entries to File"))
+							Text(.localized("Export Entries To File"))
 								.font(.body)
-							Text(.localized("Save current entries as plist"))
+							Text(.localized("Save Current Entries As .plist"))
 								.font(.caption)
 								.foregroundStyle(.secondary)
 						}
@@ -106,14 +106,14 @@ struct InfoPlistEntriesView: View {
 						ContentUnavailableView {
 							Label(.localized("No Custom Entries"), systemImage: "doc.text.fill")
 						} description: {
-							Text(.localized("Add custom Info.plist entries using the + button"))
+							Text(.localized("Add custom Info.plist entries using the + button."))
 						}
 						.frame(maxWidth: .infinity)
 						.padding()
 					} else {
 						VStack {
 							Label(.localized("No Custom Entries"), systemImage: "doc.text.fill")
-							Text(.localized("Add custom Info.plist entries using the + button"))
+							Text(.localized("Add custom Info.plist entries using the + button."))
 								.font(.caption)
 								.foregroundStyle(.secondary)
 						}
@@ -223,7 +223,7 @@ struct InfoPlistEntriesView: View {
 		} else if let array = value as? [Any] {
 			return "Array (\(array.count) items)"
 		} else if let dict = value as? [String: Any] {
-			return "Dictionary (\(dict.count) keys)"
+			return "Dictionary (\(dict.count) Keys)"
 		} else {
 			return "\(value)"
 		}
@@ -300,7 +300,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Portrait Only"))
 									.font(.body)
-								Text(.localized("Lock orientation to portrait"))
+								Text(.localized("Lock Orientation To Portrait"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -317,7 +317,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Landscape Only"))
 									.font(.body)
-								Text(.localized("Lock orientation to landscape"))
+								Text(.localized("Lock Orientation To Landscape"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -334,7 +334,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("All Orientations"))
 									.font(.body)
-								Text(.localized("Allow all device orientations"))
+								Text(.localized("Allow All Device Orientations"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -355,7 +355,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Background Audio"))
 									.font(.body)
-								Text(.localized("Play audio in background"))
+								Text(.localized("Play Audio In Background"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -372,7 +372,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Background Location"))
 									.font(.body)
-								Text(.localized("Access location in background"))
+								Text(.localized("Access Location In Background"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -389,7 +389,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("VoIP"))
 									.font(.body)
-								Text(.localized("Voice over IP in background"))
+								Text(.localized("Voice Over IP In Background"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -406,7 +406,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Background Fetch"))
 									.font(.body)
-								Text(.localized("Fetch content in background"))
+								Text(.localized("Fetch Content In Background"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -423,7 +423,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Background Processing"))
 									.font(.body)
-								Text(.localized("Run background tasks"))
+								Text(.localized("Run Background Tasks"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -440,7 +440,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Remote Notifications"))
 									.font(.body)
-								Text(.localized("Receive push notifications"))
+								Text(.localized("Receive Push Notifications. Note this might not work as intended."))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 						}
@@ -461,7 +461,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Require Full Screen"))
 									.font(.body)
-								Text(.localized("App requires full screen mode"))
+								Text(.localized("App Requires Full Screen Mode"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -478,7 +478,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Hide Status Bar"))
 									.font(.body)
-								Text(.localized("Hide the status bar"))
+								Text(.localized("Hide The Status Bar"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -495,7 +495,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Launch Screen"))
 									.font(.body)
-								Text(.localized("Set launch screen name"))
+								Text(.localized("Set Launch Screen Name"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -516,7 +516,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("File Sharing"))
 									.font(.body)
-								Text(.localized("Enable iTunes file sharing"))
+								Text(.localized("Enable iTunes File Sharing"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -533,7 +533,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Document Browser"))
 									.font(.body)
-								Text(.localized("Support document browser"))
+								Text(.localized("Support Document Browser"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -548,13 +548,13 @@ struct InfoPlistEntriesView: View {
 				
 				Section {
 					Button {
-						addSimpleEntry(key: "NSCameraUsageDescription", value: "This app needs camera access")
+						addSimpleEntry(key: "NSCameraUsageDescription", value: "This app needs camera access. Modified .plist entry.")
 					} label: {
 						Label {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Camera Usage"))
 									.font(.body)
-								Text(.localized("Add camera permission description"))
+								Text(.localized("Add Camera Permission Description"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -565,13 +565,13 @@ struct InfoPlistEntriesView: View {
 					}
 					
 					Button {
-						addSimpleEntry(key: "NSPhotoLibraryUsageDescription", value: "This app needs photo library access")
+						addSimpleEntry(key: "NSPhotoLibraryUsageDescription", value: "This app needs photo library access. Modified .plist entry.")
 					} label: {
 						Label {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Photo Library Usage"))
 									.font(.body)
-								Text(.localized("Add photo library permission"))
+								Text(.localized("Add Photo Library Permission"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -582,13 +582,13 @@ struct InfoPlistEntriesView: View {
 					}
 					
 					Button {
-						addSimpleEntry(key: "NSMicrophoneUsageDescription", value: "This app needs microphone access")
+						addSimpleEntry(key: "NSMicrophoneUsageDescription", value: "This app needs microphone access. Modified .plist entry.")
 					} label: {
 						Label {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Microphone Usage"))
 									.font(.body)
-								Text(.localized("Add microphone permission"))
+								Text(.localized("Add Microphone Permission"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -599,13 +599,13 @@ struct InfoPlistEntriesView: View {
 					}
 					
 					Button {
-						addSimpleEntry(key: "NSLocationWhenInUseUsageDescription", value: "This app needs location access")
+						addSimpleEntry(key: "NSLocationWhenInUseUsageDescription", value: "This app needs location access. Modified .plist entry.")
 					} label: {
 						Label {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Location Usage"))
 									.font(.body)
-								Text(.localized("Add location permission"))
+								Text(.localized("Add Location Permission"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -626,7 +626,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Add URL Scheme"))
 									.font(.body)
-								Text(.localized("Custom URL scheme for deep linking"))
+								Text(.localized("Custom URL Scheme For Deep Linking"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
@@ -773,7 +773,7 @@ struct InfoPlistEntriesView: View {
 			guard let plist = try PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
 				UIAlertController.showAlertWithOk(
 					title: .localized("Error"),
-					message: .localized("Invalid plist format")
+					message: .localized("Invalid Plist Format")
 				)
 				return
 			}
@@ -788,7 +788,7 @@ struct InfoPlistEntriesView: View {
 			HapticsManager.shared.success()
 			UIAlertController.showAlertWithOk(
 				title: .localized("Success"),
-				message: .localized("Imported \(plist.count) entries from plist")
+				message: .localized("Imported \(plist.count) Entries From .plist file.")
 			)
 		} catch {
 			HapticsManager.shared.error()
@@ -812,7 +812,7 @@ struct InfoPlistEntriesView: View {
 			
 			// Create temp file
 			let tempDir = FileManager.default.temporaryDirectory
-			let fileName = "InfoPlistEntries_\(Date().timeIntervalSince1970).plist"
+			let fileName = "ModifiedInfoPlistEntries_\(Date().timeIntervalSince1970).plist"
 			let fileURL = tempDir.appendingPathComponent(fileName)
 			
 			// Write data

@@ -635,7 +635,7 @@ struct SourceAppsListView: View {
                                     Text("No Results")
                                         .font(.system(size: 18, weight: .semibold))
                                         .foregroundStyle(.primary)
-                                    Text("There is nothing here. Try a different search term.")
+                                    Text("There is nothing to see here. Try a different search term.")
                                         .font(.system(size: 14))
                                         .foregroundStyle(.secondary)
                                 }

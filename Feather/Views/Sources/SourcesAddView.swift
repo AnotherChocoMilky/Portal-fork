@@ -239,7 +239,7 @@ struct SourcesAddView: View {
 					}
 					
 					_actionButton(
-						title: .localized("Portal"),
+						title: .localized("Transfer"),
 						icon: "square.and.arrow.down.on.square.fill",
 						color: .purple
 					) {
@@ -607,7 +607,7 @@ struct SourcesAddView: View {
 					}
 				}
 			} label: {
-				Label(.localized("Sources List"), systemImage: "list.bullet.rectangle.stack.fill")
+				Label(.localized("Available Sources"), systemImage: "list.bullet.rectangle.stack.fill")
 					.font(.caption.bold())
 					.foregroundStyle(.secondary)
 			}
@@ -621,7 +621,7 @@ struct SourcesAddView: View {
 				HStack(spacing: 10) {
 					Image(systemName: "arrow.up.doc.fill")
 						.font(.system(size: 18, weight: .bold))
-					Text(.localized("Export through Portal"))
+					Text(.localized("Export Through Portal"))
 						.font(.system(.subheadline, design: .rounded).bold())
 				}
 				.foregroundStyle(.white)
@@ -1021,7 +1021,7 @@ struct PortalExportView: View {
 									Text(.localized("Transfer Code"))
 										.font(.system(.subheadline, design: .rounded).bold())
 										.foregroundStyle(.primary)
-									Text(.localized("Ready to share"))
+									Text(.localized("Ready To Share!"))
 										.font(.caption2)
 										.foregroundStyle(.secondary)
 								}
@@ -1331,7 +1331,7 @@ struct PortalExportView: View {
 			return
 		}
 		
-		Logger.misc.info("[Portal Import] Decoded \(urls.count) URLs, adding to sources")
+		Logger.misc.info("[Portal Import] Decoded \(urls.count) URLs, adding to Sources")
 		
 		var addedCount = 0
 		for urlString in urls {

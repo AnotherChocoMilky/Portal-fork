@@ -588,7 +588,7 @@ struct SourceAppsDetailView: View {
     
     private func screenshotsPreview(_ urls: [URL]) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Preview")
+            Text("App Preview")
                 .font(.system(size: 22, weight: .bold))
                 .foregroundStyle(.primary)
                 .padding(.horizontal, horizontalPadding)
@@ -769,7 +769,7 @@ struct SourceAppsDetailView: View {
                         
                         Spacer()
                         
-                        Text("Tap To Copy")
+                        Text("Copy")
                             .font(.system(size: 11, weight: .medium))
                             .foregroundStyle(.tertiary)
                     }

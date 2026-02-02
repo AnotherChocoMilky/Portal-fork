@@ -146,7 +146,7 @@ struct SourcesView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 
-                Text("Manage Sources")
+                Text("View All Your Sources")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
             }
@@ -200,8 +200,8 @@ struct SourcesView: View {
             AllAppsWrapperView(object: Array(_sources), viewModel: viewModel)
         } label: {
             ModernSourceCard(
-                title: String.localized("All Apps"),
-                subtitle: "\(_sources.reduce(0) { $0 + (viewModel.sources[$1]?.apps.count ?? 0) }) apps available",
+                title: String.localized("See All"),
+                subtitle: "\(_sources.reduce(0) { $0 + (viewModel.sources[$1]?.apps.count ?? 0) }) Apps Available",
                 iconSystemName: "app.badge.fill",
                 isPinned: false,
                 accentColor: .cyan
@@ -244,11 +244,11 @@ struct SourcesView: View {
             }
             
             VStack(spacing: 12) {
-                Text(String.localized("No Repositories"))
+                Text(String.localized("No Sources Found"))
                     .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                 
-                Text(String.localized("Get started by adding your first repository to view apps here."))
+                Text(String.localized("Get started by adding Sources to view the listed apps here."))
                     .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -293,7 +293,7 @@ struct SourcesView: View {
                                 .foregroundStyle(.blue)
                         }
                         
-                        Text("Developer Certificates")
+                        Text("Buy Developer Certificates")
                             .font(.title2.bold())
                             .multilineTextAlignment(.center)
                     }
@@ -331,7 +331,7 @@ struct SourcesView: View {
                     } label: {
                         HStack {
                             Image(systemName: "cart.fill")
-                            Text("Get Developer Certificate")
+                            Text("Buy Now")
                                 .font(.headline)
                         }
                         .frame(maxWidth: horizontalSizeClass == .regular ? 400 : .infinity)
@@ -414,7 +414,7 @@ struct SourcesView: View {
         
         UIAlertController.showAlert(
             title: .localized("Enjoying %@?", arguments: Bundle.main.name),
-            message: .localized("Go to our GitHub and give us a star!"),
+            message: .localized("If you are, go to our GitHub and give us a star!"),
             actions: [github, cancel]
         )
     }

@@ -379,7 +379,7 @@ struct CertificateStatusWidgetView: View {
                     Text("No Certificate")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(.secondary)
-                    Text("Tap to add one")
+                    Text("Tap To Add One")
                         .font(.system(size: 10))
                         .foregroundStyle(.tertiary)
                 }
@@ -390,7 +390,7 @@ struct CertificateStatusWidgetView: View {
                     .lineLimit(2)
 
                 if entry.showExpiry, let days = entry.daysRemaining {
-                    Text("\(days) days remaining")
+                    Text("\(days) Days Remaining")
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(statusColor)
                 }
@@ -448,7 +448,7 @@ struct AllInOneWidgetView: View {
                                     Image(systemName: "app.badge")
                                         .font(.system(size: 16))
                                         .foregroundStyle(.tertiary)
-                                    Text("No apps signed yet")
+                                    Text("No Apps Signed Yet")
                                         .font(.system(size: 10))
                                         .foregroundStyle(.tertiary)
                                 }
@@ -475,7 +475,7 @@ struct AllInOneWidgetView: View {
                         Text(entry.certName)
                             .font(.system(size: 11, weight: .bold))
                         if entry.showExpiry, let days = entry.daysRemaining {
-                            Text("\(days) days left")
+                            Text("\(days) Days Left")
                                 .font(.system(size: 9))
                                 .foregroundStyle(days < 7 ? .red : .secondary)
                         }

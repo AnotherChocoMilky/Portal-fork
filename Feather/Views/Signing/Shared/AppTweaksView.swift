@@ -164,7 +164,7 @@ struct AppTweaksView: View {
 					.font(.system(size: 12))
 					.foregroundStyle(Color(UIColor.secondaryLabel))
 				
-				Text("Enabled tweaks will be injected when signing")
+				Text("Enabled tweaks will be injected when signing this app")
 					.font(.system(size: 13, weight: .medium))
 					.foregroundStyle(Color(UIColor.secondaryLabel))
 				
@@ -183,7 +183,7 @@ struct AppTweaksView: View {
 					.font(.system(size: 14))
 					.foregroundStyle(Color(UIColor.secondaryLabel))
 				
-				TextField("Search tweaks...", text: $searchText)
+				TextField("Search Tweaks", text: $searchText)
 					.font(.system(size: 15))
 					.focused($searchFieldFocused)
 				
@@ -226,7 +226,7 @@ struct AppTweaksView: View {
 	private var overviewSection: some View {
 		VStack(alignment: .leading, spacing: 12) {
 			// Section Header
-			Text("OVERVIEW")
+			Text("Overview")
 				.font(.system(size: 12, weight: .semibold))
 				.foregroundStyle(Color(UIColor.secondaryLabel))
 				.padding(.leading, 4)
@@ -363,7 +363,7 @@ struct AppTweaksView: View {
 					.font(.system(size: 16, weight: .semibold))
 					.foregroundStyle(.primary)
 				
-				Text("\(count) items")
+				Text("\(count) Items")
 					.font(.system(size: 13))
 					.foregroundStyle(Color(UIColor.secondaryLabel))
 			}
@@ -389,7 +389,7 @@ struct AppTweaksView: View {
 		
 		VStack(spacing: 8) {
 			if filteredFrameworks.isEmpty {
-				Text("No matching frameworks")
+				Text("No Matching Frameworks")
 					.font(.system(size: 14))
 					.foregroundStyle(.secondary)
 					.padding()
@@ -422,7 +422,7 @@ struct AppTweaksView: View {
 		
 		VStack(spacing: 8) {
 			if filteredBundles.isEmpty {
-				Text("No matching bundles")
+				Text("No Matching Bundles")
 					.font(.system(size: 14))
 					.foregroundStyle(.secondary)
 					.padding()
@@ -507,7 +507,7 @@ struct AppTweaksView: View {
 		frameworks = listFiles(at: path.appendingPathComponent("Frameworks"))
 		
 		// Load bundles (PlugIns)
-		bundles = listFiles(at: path.appendingPathComponent("PlugIns"))
+		bundles = listFiles(at: path.appendingPathComponent("Plugins"))
 	}
 	
 	private func listFiles(at path: URL) -> [String] {
@@ -724,7 +724,7 @@ struct ExtractTweaksView: View {
 					dismiss()
 				}
 			} message: {
-				Text("Tweaks extracted successfully!")
+				Text("Tweaks Extracted Successfully!")
 			}
 		}
 	}
@@ -822,7 +822,7 @@ struct ExtractTweaksView: View {
 		
 		UIAlertController.showAlert(
 			title: "Confirm Extract",
-			message: "Extract \(totalItems) selected item(s) to a zip file?",
+			message: "Extract \(totalItems) selected item(s) into a zip file?",
 			actions: [
 				UIAlertAction(title: "Cancel", style: .cancel),
 				UIAlertAction(title: "Extract", style: .default) { _ in
@@ -838,7 +838,7 @@ struct ExtractTweaksView: View {
 		Task {
 			do {
 				guard let appPath = Storage.shared.getAppDirectory(for: app) else {
-					throw NSError(domain: "ExtractTweaks", code: -1, userInfo: [NSLocalizedDescriptionKey: "App directory not found"])
+					throw NSError(domain: "ExtractTweaks", code: -1, userInfo: [NSLocalizedDescriptionKey: "App Directory Not Found"])
 				}
 				
 				// Create temporary directory for extraction

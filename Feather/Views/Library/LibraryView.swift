@@ -518,7 +518,7 @@ extension LibraryView {
     private var selectionActionBar: some View {
         if _isSelectionMode && !_selectedApps.isEmpty {
             HStack(spacing: 16) {
-                Text("\(_selectedApps.count) selected")
+                Text("\(_selectedApps.count) Selected")
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(.secondary)
                 
