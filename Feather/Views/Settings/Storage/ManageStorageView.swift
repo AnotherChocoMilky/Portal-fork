@@ -262,7 +262,7 @@ struct ManageStorageView: View {
             QuickActionCard(
                 icon: "doc.on.doc.fill",
                 title: .localized("Duplicates"),
-                subtitle: LocalizedStringKey(duplicateFilesCount > 0 ? "\(duplicateFilesCount) Found" : .localized("Scan")),
+                subtitle: duplicateFilesCount > 0 ? LocalizedStringKey("\(duplicateFilesCount) Found") : .localized("Scan"),
                 gradient: [.blue, .cyan],
                 action: { showDuplicateFinder = true }
             )
@@ -270,7 +270,7 @@ struct ManageStorageView: View {
             QuickActionCard(
                 icon: "arrow.up.doc.fill",
                 title: .localized("Large Files"),
-                subtitle: LocalizedStringKey(largeFilesCount > 0 ? "\(largeFilesCount) Found" : .localized("Find")),
+                subtitle: largeFilesCount > 0 ? LocalizedStringKey("\(largeFilesCount) Found") : .localized("Find"),
                 gradient: [.pink, .red],
                 action: { showLargeFilesFinder = true }
             )

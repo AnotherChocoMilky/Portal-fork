@@ -5446,7 +5446,7 @@ struct EnvironmentInspectorView: View {
     @State private var searchText = ""
     
     var filteredEnvironment: [(key: String, value: String)] {
-        let sorted = environment.sorted { $0.key < $1.key }.map { (key: $0.key, value: $0.value) }
+        let sorted = environment.sorted { $0.key < $1.key }
         if searchText.isEmpty {
             return sorted
         }
