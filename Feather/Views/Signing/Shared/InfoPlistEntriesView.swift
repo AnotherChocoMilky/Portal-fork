@@ -84,7 +84,7 @@ struct InfoPlistEntriesView: View {
     }
     
     private var filteredEntries: [(key: String, value: AnyCodable)] {
-        let entries = options.customInfoPlistEntries.map { ($0.key, $0.value) }
+        let entries = options.customInfoPlistEntries.map { (key: $0.key, value: $0.value) }
         var result = entries
         
         if !searchText.isEmpty {
@@ -259,7 +259,7 @@ struct InfoPlistEntriesView: View {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                             selectedCategory = category
                         }
-                        HapticsManager.shared.light()
+                        HapticsManager.shared.softImpact()
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: category.icon)
@@ -519,7 +519,7 @@ struct InfoPlistEntriesView: View {
                             withAnimation {
                                 options.customInfoPlistEntries[entry.key] = AnyCodable(newValue)
                             }
-                            HapticsManager.shared.light()
+                            HapticsManager.shared.softImpact()
                         } : nil,
                         onDelete: {
                             entryToDelete = entry.key
@@ -1521,49 +1521,6 @@ struct InfoPlistEntriesView: View {
     }
 }
 
-struct QuickActionCard: View {
-    let icon: String
-    let title: LocalizedStringKey
-    let subtitle: LocalizedStringKey
-    let gradient: [Color]
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: 8) {
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing)
-                        )
-                        .frame(width: 36, height: 36)
-                    
-                    Image(systemName: icon)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
-                }
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.primary)
-                    
-                    Text(subtitle)
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .frame(width: 100)
-            .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
-            )
-        }
-        .buttonStyle(.plain)
-    }
-}
-
 struct ModernEntryRow: View {
     let key: String
     let value: AnyCodable
@@ -1670,7 +1627,7 @@ struct ModernEntryRow: View {
             
             Button {
                 UIPasteboard.general.string = key
-                HapticsManager.shared.light()
+                HapticsManager.shared.softImpact()
             } label: {
                 Label(.localized("Copy Key"), systemImage: "doc.on.clipboard")
             }

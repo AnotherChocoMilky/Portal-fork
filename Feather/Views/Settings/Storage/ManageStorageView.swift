@@ -246,8 +246,8 @@ struct ManageStorageView: View {
             QuickActionCard(
                 icon: "sparkles",
                 title: .localized("Quick Clean"),
-                subtitle: formatBytes(reclaimableSpace),
-                color: .orange,
+                subtitle: LocalizedStringKey(formatBytes(reclaimableSpace)),
+                gradient: [.orange, .yellow],
                 action: performCleanup
             )
             
@@ -255,23 +255,23 @@ struct ManageStorageView: View {
                 icon: "chart.pie.fill",
                 title: .localized("Analyze"),
                 subtitle: .localized("Deep Scan"),
-                color: .purple,
+                gradient: [.purple, .pink],
                 action: { showStorageAnalyzer = true }
             )
             
             QuickActionCard(
                 icon: "doc.on.doc.fill",
                 title: .localized("Duplicates"),
-                subtitle: duplicateFilesCount > 0 ? "\(duplicateFilesCount) Found" : .localized("Scan"),
-                color: .blue,
+                subtitle: LocalizedStringKey(duplicateFilesCount > 0 ? "\(duplicateFilesCount) Found" : .localized("Scan")),
+                gradient: [.blue, .cyan],
                 action: { showDuplicateFinder = true }
             )
             
             QuickActionCard(
                 icon: "arrow.up.doc.fill",
                 title: .localized("Large Files"),
-                subtitle: largeFilesCount > 0 ? "\(largeFilesCount) Found" : .localized("Find"),
-                color: .pink,
+                subtitle: LocalizedStringKey(largeFilesCount > 0 ? "\(largeFilesCount) Found" : .localized("Find")),
+                gradient: [.pink, .red],
                 action: { showLargeFilesFinder = true }
             )
         }
@@ -1415,47 +1415,6 @@ struct StorageStatRow: View {
                     .font(.subheadline.bold())
             }
         }
-    }
-}
-
-// MARK: - Quick Action Card
-struct QuickActionCard: View {
-    let icon: String
-    let title: String
-    let subtitle: String
-    let color: Color
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            VStack(alignment: .leading, spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(color.opacity(0.15))
-                        .frame(width: 44, height: 44)
-                    
-                    Image(systemName: icon)
-                        .font(.title3.bold())
-                        .foregroundStyle(color)
-                }
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.primary)
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
-            )
-        }
-        .buttonStyle(.plain)
     }
 }
 
