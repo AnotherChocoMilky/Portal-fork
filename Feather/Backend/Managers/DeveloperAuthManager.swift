@@ -28,12 +28,11 @@ final class DeveloperAuthManager: ObservableObject {
     private let rememberedSessionTimeout: TimeInterval = 604800 // 7 days
     
     private let validDeveloperTokens: Set<String> = [
-        "FEATHER-DEV-2024-ALPHA",
-        "FEATHER-DEV-2024-BETA",
+        "INT-DEV-26",
         "INTERNAL-DEV",
         "DEVELOPER-ACCESS-DEBUG",
         "DEV-MODE-AUTH",
-        "DEVELOPER-ACCESS:TRUE"
+        "DEVELOPER-ACCESS:TRUE",
         "PORTAL-INTERNAL-DEV",
     ]
     
