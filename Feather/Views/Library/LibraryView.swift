@@ -265,7 +265,7 @@ struct LibraryView: View {
                                           let downloadId = userInfo["downloadId"] as? String,
                                           downloadId == _currentDownloadId else { return }
                                 
-                                _importErrorMessage = userInfo["error"] as? String ?? "Unknown error"
+                                _importErrorMessage = userInfo["error"] as? String ?? "Unknown Error"
                                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                                         _importStatus = .failed
                                 }
@@ -284,7 +284,7 @@ struct LibraryView: View {
                                           let downloadId = userInfo["downloadId"] as? String,
                                           downloadId == _currentDownloadId else { return }
                                 
-                                _importErrorMessage = userInfo["error"] as? String ?? "Download failed"
+                                _importErrorMessage = userInfo["error"] as? String ?? "Download Failed"
                                 withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
                                         _importStatus = .failed
                                 }
@@ -625,7 +625,7 @@ extension LibraryView {
                                 Button {
                                     _selectedSigningAppPresenting = AnyApp(base: app)
                                 } label: {
-                                    Label(String.localized("ReSign"), systemImage: "signature")
+                                    Label(String.localized("Sign Again"), systemImage: "signature")
                                 }
                             } else {
                                 Button {
@@ -706,7 +706,7 @@ extension LibraryView {
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundStyle(.primary)
 
-                    Text("Import an IPA file to get started")
+                    Text("There is no apps here. Import an IPA file to get started!")
                         .font(.system(size: 15))
                         .foregroundStyle(.secondary)
                 }

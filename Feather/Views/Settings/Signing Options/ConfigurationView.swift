@@ -130,7 +130,7 @@ struct InstallationOptionsSplashView: View {
                 Image(systemName: "server.rack")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.cyan)
-                Text("SERVER SETTINGS")
+                Text("Server Settings")
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.secondary)
             }
@@ -450,8 +450,8 @@ struct ModernSigningOptionsCard: View {
             optionToggleRow(
                 icon: "shield.lefthalf.filled",
                 iconColor: .purple,
-                title: "Dynamic Protection",
-                subtitle: "Advanced Bundle ID protection",
+                title: "Dynamic PPQ Protection",
+                subtitle: "This protection is diffrent because it only applies a string to the bundle IDs for apps that are on the App Store. Other apps will keep the original Bundle ID.",
                 isOn: $options.dynamicProtection
             )
             

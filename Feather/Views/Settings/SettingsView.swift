@@ -116,7 +116,7 @@ struct SettingsView: View {
     
     private var resourcesSection: some View {
         Section {
-            SettingsRow(icon: "apple.intelligence", title: "Guides With AI", color: .orange, destination: GuidesSettingsView())
+            SettingsRow(icon: "apple.intelligence", title: "Guides With AI", color: .blue, destination: GuidesSettingsView())
             SettingsRow(icon: "bubble.left.and.bubble.right.fill", title: "Feedback", color: .purple, destination: FeedbackView())
         } header: {
             SettingsSectionHeader(title: "Resources", icon: "books.vertical.fill")
@@ -141,7 +141,7 @@ struct SettingsView: View {
     
     private var developerSection: some View {
         Section {
-            SettingsRow(icon: "hammer.fill", title: "Developer Tools & Debug", color: .yellow, destination: DeveloperView())
+            SettingsRow(icon: "hammer.fill", title: "Debug", color: .red, destination: DeveloperView())
         } header: {
             SettingsSectionHeader(title: "Developer", icon: "wrench.and.screwdriver.fill")
         }

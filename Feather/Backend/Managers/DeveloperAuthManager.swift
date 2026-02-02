@@ -27,13 +27,13 @@ final class DeveloperAuthManager: ObservableObject {
     private let sessionTimeout: TimeInterval = 300 // 5 minutes
     private let rememberedSessionTimeout: TimeInterval = 604800 // 7 days
     
-    // Valid developer tokens (in production, these would be fetched from a secure server)
     private let validDeveloperTokens: Set<String> = [
         "FEATHER-DEV-2024-ALPHA",
         "FEATHER-DEV-2024-BETA",
         "INTERNAL-DEV",
         "DEVELOPER-ACCESS-DEBUG",
         "DEV-MODE-AUTH",
+        "DEVELOPER-ACCESS:TRUE"
         "PORTAL-INTERNAL-DEV",
     ]
     
@@ -58,7 +58,7 @@ final class DeveloperAuthManager: ObservableObject {
                 AppLogManager.shared.info("Auto authenticated via Remember Me", category: "Security")
             } else {
                 clearRememberedSession()
-                AppLogManager.shared.info("Remembered session expired", category: "Security")
+                AppLogManager.shared.info("Remembered session token expired", category: "Security")
             }
         }
     }
@@ -116,7 +116,7 @@ final class DeveloperAuthManager: ObservableObject {
         isAuthenticated = false
         lastAuthTime = nil
         authenticationError = nil
-        AppLogManager.shared.info("Developer mode locked", category: "Security")
+        AppLogManager.shared.info("Developer Mode Locked", category: "Security")
     }
     
     // MARK: - Passcode Management
@@ -135,7 +135,7 @@ final class DeveloperAuthManager: ObservableObject {
         let success = saveToKeychain(hash)
         
         if success {
-            AppLogManager.shared.success("Developer passcode set", category: "Security")
+            AppLogManager.shared.success("Developer Passcode Set", category: "Security")
         } else {
             authenticationError = "Failed to save passcode"
             AppLogManager.shared.error("Failed to set developer passcode", category: "Security")

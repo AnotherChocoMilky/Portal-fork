@@ -135,7 +135,7 @@ struct LibraryInfoView: View {
 					
 					if let version = app.version {
 						HStack(spacing: 6) {
-							Text("v\(version)")
+							Text("Version \(version)")
 								.font(.system(size: 14, weight: .semibold, design: .rounded))
 								.foregroundStyle(.white)
 								.padding(.horizontal, 10)
@@ -358,7 +358,7 @@ struct LibraryInfoView: View {
 				NavigationLink {
 					SigningFrameworksView(app: app, options: .constant(nil))
 				} label: {
-					modernNavRow(icon: "puzzlepiece.extension", title: .localized("Frameworks & PlugIns"))
+					modernNavRow(icon: "puzzlepiece.extension", title: .localized("Frameworks & Plugins"))
 				}
 				
 				NavigationLink {
@@ -438,7 +438,7 @@ struct LibraryInfoView: View {
 					Text(.localized("Open In Files"))
 						.font(.system(size: 15, weight: .semibold))
 						.foregroundStyle(.primary)
-					Text(.localized("View app bundle contents"))
+					Text(.localized("View App Bundle Contents"))
 						.font(.system(size: 12, weight: .medium))
 						.foregroundStyle(.secondary)
 				}

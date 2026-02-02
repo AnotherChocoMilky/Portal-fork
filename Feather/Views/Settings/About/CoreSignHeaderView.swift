@@ -1,16 +1,5 @@
 import SwiftUI
 
-/// A SwiftUI header view for Portal with rotating subtitles
-/// Changes subtitle when user switches tabs or when app returns to foreground
-///
-/// ## Adding New Subtitles
-/// Simply add a new entry to the `HeaderSubtitle.allSubtitles` array.
-/// Each subtitle is a simple string that will be displayed below the app name.
-///
-/// Example:
-/// ```swift
-/// HeaderSubtitle.allSubtitles.append("Your new subtitle here")
-/// ```
 struct CoreSignHeaderView: View {
     // MARK: - State
     @State private var currentSubtitleIndex: Int = 0
@@ -207,7 +196,9 @@ enum HeaderSubtitle {
         "Portal made by dylan lol",
         "5-7, 7-3, elite ball knowledge needed to understand",
         "why do I encounter stupid people ffs",
+        "S on S tier, get it? probably not",
         "easter eggs hidden",
+        "where tf is QuickSign at??",
         "Porque la vida es asi -Peso Pluma",
         "made with some crashouts",
         "When is DRUNK releasing omg",

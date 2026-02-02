@@ -62,7 +62,7 @@ extension ServerView {
 		var icon: String {
 			switch self {
 			case .fullyLocal: return "iphone"
-			case .semiLocal: return "wifi"
+			case .semiLocal: return "cloud"
 			case .custom: return "link"
 			}
 		}
@@ -357,7 +357,7 @@ struct ServerView: View {
 							Image(systemName: "waveform.path.ecg")
 								.padding(.trailing, 4)
 						}
-						Text(_isCheckingStatus ? "Checking..." : "Check Status")
+						Text(_isCheckingStatus ? "Checking Server Status..." : "Check Status")
 							.fontWeight(.semibold)
 					}
 					.frame(maxWidth: .infinity)
@@ -378,7 +378,7 @@ struct ServerView: View {
 
 	private func _checkServerStatus() {
 		_isCheckingStatus = true
-		_serverStatus = "Checking..."
+		_serverStatus = "Checking Server Status..."
 		_statusColor = .orange
 
 		let urlString: String
@@ -408,16 +408,16 @@ struct ServerView: View {
 					_serverStatus = "Offline"
 					_statusColor = .red
 					_responseTime = "--"
-					print("Server status check failed: \(error.localizedDescription)")
+					print("Server Status Check Failed: \(error.localizedDescription)")
 				} else if let httpResponse = response as? HTTPURLResponse {
 					if (200...399).contains(httpResponse.statusCode) {
 						_serverStatus = "Online"
 						_statusColor = .green
-						_responseTime = "\(time)ms"
+						_responseTime = "\(time)MS"
 					} else {
 						_serverStatus = "Error \(httpResponse.statusCode)"
 						_statusColor = .orange
-						_responseTime = "\(time)ms"
+						_responseTime = "\(time)MS"
 					}
 				}
 			}
