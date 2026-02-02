@@ -2,852 +2,1756 @@ import SwiftUI
 import NimbleViews
 import UniformTypeIdentifiers
 
-// MARK: - Info.plist Entries View
 struct InfoPlistEntriesView: View {
-	@Environment(\.dismiss) var dismiss
-	@Binding var options: Options
-	
-	@State private var editingKey: String?
-	@State private var showAddEntryDialog = false
-	@State private var showImportSheet = false
-	@State private var newKey = ""
-	@State private var newValueType: InfoPlistValueType = .string
-	@State private var newStringValue = ""
-	@State private var newBoolValue = false
-	@State private var newNumberValue = ""
-	@State private var showPresetSheet = false
-	
-	enum InfoPlistValueType: String, CaseIterable {
-		case string = "String"
-		case boolean = "Boolean"
-		case number = "Number"
-		case array = "Array"
-		
-		var icon: String {
-			switch self {
-			case .string: return "text.quote"
-			case .boolean: return "checkmark.circle.fill"
-			case .number: return "number.circle.fill"
-			case .array: return "list.bullet.circle.fill"
-			}
-		}
-	}
-	
-	var body: some View {
-		NBList(.localized("Custom Info.plist Entries")) {
-			// Preset Options Section
-			NBSection(.localized("Preset Options"), systemName: "sparkles.rectangle.stack.fill") {
-				Button {
-					showPresetSheet = true
-				} label: {
-					Label {
-						VStack(alignment: .leading, spacing: 2) {
-							Text(.localized("Add Preset Options"))
-								.font(.body)
-							Text(.localized("Orientation, Background Modes, etc."))
-								.font(.caption)
-								.foregroundStyle(.secondary)
-						}
-					} icon: {
-						Image(systemName: "star.circle.fill")
-							.font(.title2)
-							.foregroundStyle(.purple)
-					}
-				}
-			}
-			
-			// Import Section
-			NBSection(.localized("Import"), systemName: "arrow.down.doc.fill") {
-				Button {
-					showImportSheet = true
-				} label: {
-					Label {
-						VStack(alignment: .leading, spacing: 2) {
-							Text(.localized("Import Info.plist File"))
-								.font(.body)
-							Text(.localized("Upload Custom .plist File"))
-								.font(.caption)
-								.foregroundStyle(.secondary)
-						}
-					} icon: {
-						Image(systemName: "square.and.arrow.down.fill")
-							.font(.title2)
-							.foregroundStyle(.green)
-					}
-				}
-			}
-			
-			// Export Section
-			NBSection(.localized("Export"), systemName: "arrow.up.doc.fill") {
-				Button {
-					exportPlistFile()
-				} label: {
-					Label {
-						VStack(alignment: .leading, spacing: 2) {
-							Text(.localized("Export Entries To File"))
-								.font(.body)
-							Text(.localized("Save Current Entries As .plist"))
-								.font(.caption)
-								.foregroundStyle(.secondary)
-						}
-					} icon: {
-						Image(systemName: "square.and.arrow.up.fill")
-							.font(.title2)
-							.foregroundStyle(.blue)
-					}
-				}
-				.disabled(options.customInfoPlistEntries.isEmpty)
-			}
-			
-			// Custom Entries Section
-			NBSection(.localized("Custom Entries"), systemName: "key.fill") {
-				if options.customInfoPlistEntries.isEmpty {
-					if #available(iOS 17.0, *) {
-						ContentUnavailableView {
-							Label(.localized("No Custom Entries"), systemImage: "doc.text.fill")
-						} description: {
-							Text(.localized("Add custom Info.plist entries using the + button."))
-						}
-						.frame(maxWidth: .infinity)
-						.padding()
-					} else {
-						VStack {
-							Label(.localized("No Custom Entries"), systemImage: "doc.text.fill")
-							Text(.localized("Add custom Info.plist entries using the + button."))
-								.font(.caption)
-								.foregroundStyle(.secondary)
-						}
-						.frame(maxWidth: .infinity)
-						.padding()
-					}
-				} else {
-					ForEach(Array(options.customInfoPlistEntries.keys.sorted()), id: \.self) { key in
-						entryRow(key: key)
-					}
-				}
-			}
-		}
-		.toolbar {
-			NBToolbarButton(
-				systemImage: "plus.circle.fill",
-				style: .icon,
-				placement: .topBarTrailing
-			) {
-				showAddEntryDialog = true
-			}
-		}
-		.sheet(isPresented: $showAddEntryDialog) {
-			addEntrySheet
-		}
-		.sheet(isPresented: $showPresetSheet) {
-			presetOptionsSheet
-		}
-		.sheet(isPresented: $showImportSheet) {
-			FileImporterRepresentableView(
-				allowedContentTypes: [.propertyList, .xml],
-				allowsMultipleSelection: false,
-				onDocumentsPicked: { urls in
-					guard let url = urls.first else { return }
-					importPlistFile(url: url)
-				}
-			)
-			.ignoresSafeArea()
-		}
-		.animation(.default, value: options.customInfoPlistEntries)
-	}
-	
-	@ViewBuilder
-	private func entryRow(key: String) -> some View {
-		Label {
-			VStack(alignment: .leading, spacing: 2) {
-				Text(key)
-					.font(.body)
-				Text(valueDescription(for: options.customInfoPlistEntries[key]?.value))
-					.font(.caption)
-					.foregroundStyle(.secondary)
-			}
-		} icon: {
-			Image(systemName: valueTypeIcon(for: options.customInfoPlistEntries[key]?.value))
-				.font(.title3)
-				.foregroundStyle(.blue)
-		}
-		.swipeActions(edge: .trailing, allowsFullSwipe: true) {
-			Button(role: .destructive) {
-				withAnimation {
-					_ = options.customInfoPlistEntries.removeValue(forKey: key)
-				}
-			} label: {
-				Label(.localized("Delete"), systemImage: "trash.fill")
-			}
-		}
-		.contextMenu {
-			Button(role: .destructive) {
-				withAnimation {
-					_ = options.customInfoPlistEntries.removeValue(forKey: key)
-				}
-			} label: {
-				Label(.localized("Delete"), systemImage: "trash.fill")
-			}
-		}
-	}
-	
-	private func valueTypeIcon(for value: Any?) -> String {
-		guard let value = value else { return "questionmark.circle.fill" }
-		
-		if value is String {
-			return "text.quote"
-		} else if value is Bool {
-			return "checkmark.circle.fill"
-		} else if value is Int || value is Double || value is Float {
-			return "number.circle.fill"
-		} else if value is [Any] {
-			return "list.bullet.circle.fill"
-		} else if value is [String: Any] {
-			return "curlybraces.square.fill"
-		} else {
-			return "questionmark.circle.fill"
-		}
-	}
-	
-	private func valueDescription(for value: Any?) -> String {
-		guard let value = value else { return "Unknown" }
-		
-		if let string = value as? String {
-			return string
-		} else if let bool = value as? Bool {
-			return bool ? "true" : "false"
-		} else if let number = value as? Int {
-			return "\(number)"
-		} else if let number = value as? Double {
-			return "\(number)"
-		} else if let array = value as? [Any] {
-			return "Array (\(array.count) Items)"
-		} else if let dict = value as? [String: Any] {
-			return "Dictionary (\(dict.count) Keys)"
-		} else {
-			return "\(value)"
-		}
-	}
-	
-	@ViewBuilder
-	private var addEntrySheet: some View {
-		NBNavigationView(.localized("Add Entry"), displayMode: .inline) {
-			Form {
-				Section {
-					TextField(.localized("Key"), text: $newKey)
-						.textInputAutocapitalization(.never)
-						.autocorrectionDisabled()
-				} header: {
-					Label(.localized("Key"), systemImage: "key.fill")
-				}
-				
-				Section {
-					Picker(.localized("Type"), selection: $newValueType) {
-						ForEach(InfoPlistValueType.allCases, id: \.self) { type in
-							Label(type.rawValue, systemImage: type.icon)
-								.tag(type)
-						}
-					}
-					.pickerStyle(.segmented)
-					
-					switch newValueType {
-					case .string:
-						TextField(.localized("Value"), text: $newStringValue)
-					case .boolean:
-						Toggle(.localized("Value"), isOn: $newBoolValue)
-					case .number:
-						TextField(.localized("Value"), text: $newNumberValue)
-							.keyboardType(.numbersAndPunctuation)
-					case .array:
-						Text(.localized("Array values can be added after creation"))
-							.font(.caption)
-							.foregroundStyle(.secondary)
-					}
-				} header: {
-					Label(.localized("Value"), systemImage: "text.alignleft")
-				}
-				
-				Section {
-					Button {
-						addEntry()
-					} label: {
-						Label(.localized("Add"), systemImage: "plus.circle.fill")
-							.frame(maxWidth: .infinity)
-					}
-					.disabled(newKey.isEmpty)
-				}
-			}
-			.toolbar {
-				ToolbarItem(placement: .cancellationAction) {
-					Button(.localized("Cancel")) {
-						showAddEntryDialog = false
-						resetForm()
-					}
-				}
-			}
-		}
-	}
-	
-	@ViewBuilder
-	private var presetOptionsSheet: some View {
-		NBNavigationView(.localized("Preset Options"), displayMode: .inline) {
-			List {
-				Section {
-					Button {
-						addOrientationPreset(.portrait)
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Portrait Only"))
-									.font(.body)
-								Text(.localized("Lock Orientation To Portrait"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "rectangle.portrait.fill")
-								.foregroundStyle(.blue)
-						}
-					}
-					
-					Button {
-						addOrientationPreset(.landscape)
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Landscape Only"))
-									.font(.body)
-								Text(.localized("Lock Orientation To Landscape"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "rectangle.fill")
-								.foregroundStyle(.green)
-						}
-					}
-					
-					Button {
-						addOrientationPreset(.all)
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("All Orientations"))
-									.font(.body)
-								Text(.localized("Allow All Device Orientations"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "rotate.3d.fill")
-								.foregroundStyle(.purple)
-						}
-					}
-				} header: {
-					Label(.localized("App Orientation"), systemImage: "rotate.right.fill")
-				}
-				
-				Section {
-					Button {
-						addBackgroundMode(.audio)
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Background Audio"))
-									.font(.body)
-								Text(.localized("Play Audio In Background"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "music.note.circle.fill")
-								.foregroundStyle(.pink)
-						}
-					}
-					
-					Button {
-						addBackgroundMode(.location)
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Background Location"))
-									.font(.body)
-								Text(.localized("Access Location In Background"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "location.circle.fill")
-								.foregroundStyle(.orange)
-						}
-					}
-					
-					Button {
-						addBackgroundMode(.voip)
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("VoIP"))
-									.font(.body)
-								Text(.localized("Voice Over IP In Background"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "phone.circle.fill")
-								.foregroundStyle(.indigo)
-						}
-					}
-					
-					Button {
-						addBackgroundMode(.fetch)
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Background Fetch"))
-									.font(.body)
-								Text(.localized("Fetch Content In Background"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "arrow.down.circle.fill")
-								.foregroundStyle(.teal)
-						}
-					}
-					
-					Button {
-						addBackgroundMode(.processing)
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Background Processing"))
-									.font(.body)
-								Text(.localized("Run Background Tasks"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "cpu.fill")
-								.foregroundStyle(.purple)
-						}
-					}
-					
-					Button {
-						addBackgroundMode(.remoteNotification)
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Remote Notifications"))
-									.font(.body)
-								Text(.localized("Receive Push Notifications. Note this might not work as intended."))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-						}
-					} icon: {
-							Image(systemName: "bell.badge.fill")
-								.foregroundStyle(.red)
-						}
-					}
-				} header: {
-					Label(.localized("Background Modes"), systemImage: "gear.circle.fill")
-				}
-				
-				Section {
-					Button {
-						addSimpleEntry(key: "UIRequiresFullScreen", value: true)
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Require Full Screen"))
-									.font(.body)
-								Text(.localized("App Requires Full Screen Mode"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "rectangle.expand.vertical")
-								.foregroundStyle(.purple)
-						}
-					}
-					
-					Button {
-						addSimpleEntry(key: "UIStatusBarHidden", value: true)
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Hide Status Bar"))
-									.font(.body)
-								Text(.localized("Hide The Status Bar On The App"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "eye.slash.fill")
-								.foregroundStyle(.gray)
-						}
-					}
-					
-					Button {
-						addSimpleEntry(key: "UILaunchStoryboardName", value: "LaunchScreen")
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Launch Screen"))
-									.font(.body)
-								Text(.localized("Set Launch Screen Name"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "play.rectangle.fill")
-								.foregroundStyle(.green)
-						}
-					}
-				} header: {
-					Label(.localized("Display & UI"), systemImage: "paintbrush.fill")
-				}
-				
-				Section {
-					Button {
-						addSimpleEntry(key: "UIFileSharingEnabled", value: true)
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("File Sharing"))
-									.font(.body)
-								Text(.localized("Enable iTunes File Sharing"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "folder.fill")
-								.foregroundStyle(.cyan)
-						}
-					}
-					
-					Button {
-						addSimpleEntry(key: "UISupportsDocumentBrowser", value: true)
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Document Browser"))
-									.font(.body)
-								Text(.localized("Support Document Browser"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "doc.fill")
-								.foregroundStyle(.brown)
-						}
-					}
-				} header: {
-					Label(.localized("File Access"), systemImage: "filemenu.and.selection")
-				}
-				
-				Section {
-					Button {
-						addSimpleEntry(key: "NSCameraUsageDescription", value: "This app needs camera access. Modified .plist entry.")
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Camera Usage"))
-									.font(.body)
-								Text(.localized("Add Camera Permission Description"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "camera.fill")
-								.foregroundStyle(.blue)
-						}
-					}
-					
-					Button {
-						addSimpleEntry(key: "NSPhotoLibraryUsageDescription", value: "This app needs photo library access. Modified .plist entry.")
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Photo Library Usage"))
-									.font(.body)
-								Text(.localized("Add Photo Library Permission"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "photo.fill")
-								.foregroundStyle(.purple)
-						}
-					}
-					
-					Button {
-						addSimpleEntry(key: "NSMicrophoneUsageDescription", value: "This app needs microphone access. Modified .plist entry.")
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Microphone Usage"))
-									.font(.body)
-								Text(.localized("Add Microphone Permission"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "mic.fill")
-								.foregroundStyle(.red)
-						}
-					}
-					
-					Button {
-						addSimpleEntry(key: "NSLocationWhenInUseUsageDescription", value: "This app needs location access. Modified .plist entry.")
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Location Usage"))
-									.font(.body)
-								Text(.localized("Add Location Permission"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "location.fill")
-								.foregroundStyle(.green)
-						}
-					}
-				} header: {
-					Label(.localized("Privacy Permissions"), systemImage: "hand.raised.fill")
-				}
-				
-				Section {
-					Button {
-						addURLScheme("myapp")
-					} label: {
-						Label {
-							VStack(alignment: .leading, spacing: 2) {
-								Text(.localized("Add URL Scheme"))
-									.font(.body)
-								Text(.localized("Custom URL Scheme For Deep Linking"))
-									.font(.caption)
-									.foregroundStyle(.secondary)
-							}
-						} icon: {
-							Image(systemName: "link.circle.fill")
-								.foregroundStyle(.orange)
-						}
-					}
-				} header: {
-					Label(.localized("URL Schemes"), systemImage: "link.badge.plus")
-				}
-			}
-			.toolbar {
-				ToolbarItem(placement: .cancellationAction) {
-					Button(.localized("Done")) {
-						showPresetSheet = false
-					}
-				}
-			}
-		}
-	}
-	
-	private enum Orientation {
-		case portrait, landscape, all
-	}
-	
-	private enum BackgroundMode: String {
-		case audio = "audio"
-		case location = "location"
-		case voip = "voip"
-		case fetch = "fetch"
-		case processing = "processing"
-		case remoteNotification = "remote-notification"
-	}
-	
-	private func addOrientationPreset(_ orientation: Orientation) {
-		let orientations: [String]
-		switch orientation {
-		case .portrait:
-			orientations = ["UIInterfaceOrientationPortrait"]
-		case .landscape:
-			orientations = ["UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"]
-		case .all:
-			orientations = [
-				"UIInterfaceOrientationPortrait",
-				"UIInterfaceOrientationPortraitUpsideDown",
-				"UIInterfaceOrientationLandscapeLeft",
-				"UIInterfaceOrientationLandscapeRight"
-			]
-		}
-		
-		withAnimation {
-			options.customInfoPlistEntries["UISupportedInterfaceOrientations"] = AnyCodable(orientations)
-		}
-		
-		HapticsManager.shared.success()
-		showPresetSheet = false
-	}
-	
-	private func addBackgroundMode(_ mode: BackgroundMode) {
-		var modes: [String] = []
-		
-		if let existing = options.customInfoPlistEntries["UIBackgroundModes"]?.value as? [String] {
-			modes = existing
-		}
-		
-		if !modes.contains(mode.rawValue) {
-			modes.append(mode.rawValue)
-		}
-		
-		withAnimation {
-			options.customInfoPlistEntries["UIBackgroundModes"] = AnyCodable(modes)
-		}
-		
-		HapticsManager.shared.success()
-		showPresetSheet = false
-	}
-	
-	private func addSimpleEntry(key: String, value: Any) {
-		withAnimation {
-			options.customInfoPlistEntries[key] = AnyCodable(value)
-		}
-		
-		HapticsManager.shared.success()
-		showPresetSheet = false
-	}
-	
-	private func addURLScheme(_ scheme: String) {
-		// CFBundleURLTypes is an array of dictionaries
-		var urlTypes: [[String: Any]] = []
-		
-		if let existing = options.customInfoPlistEntries["CFBundleURLTypes"]?.value as? [[String: Any]] {
-			urlTypes = existing
-		}
-		
-		// Add new URL type
-		let newType: [String: Any] = [
-			"CFBundleURLName": scheme,
-			"CFBundleURLSchemes": [scheme]
-		]
-		urlTypes.append(newType)
-		
-		withAnimation {
-			options.customInfoPlistEntries["CFBundleURLTypes"] = AnyCodable(urlTypes)
-		}
-		
-		HapticsManager.shared.success()
-		showPresetSheet = false
-	}
-	
-	private func addEntry() {
-		guard !newKey.isEmpty else { return }
-		
-		let value: Any
-		switch newValueType {
-		case .string:
-			value = newStringValue
-		case .boolean:
-			value = newBoolValue
-		case .number:
-			if let intValue = Int(newNumberValue) {
-				value = intValue
-			} else if let doubleValue = Double(newNumberValue) {
-				value = doubleValue
-			} else {
-				value = newNumberValue
-			}
-		case .array:
-			value = [String]()
-		}
-		
-		withAnimation {
-			options.customInfoPlistEntries[newKey] = AnyCodable(value)
-		}
-		
-		HapticsManager.shared.success()
-		showAddEntryDialog = false
-		resetForm()
-	}
-	
-	private func importPlistFile(url: URL) {
-		do {
-			let data = try Data(contentsOf: url)
-			guard let plist = try PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
-				UIAlertController.showAlertWithOk(
-					title: .localized("Error"),
-					message: .localized("Invalid Plist Format")
-				)
-				return
-			}
-			
-			// Merge imported entries with existing ones
-			withAnimation {
-				for (key, value) in plist {
-					options.customInfoPlistEntries[key] = AnyCodable(value)
-				}
-			}
-			
-			HapticsManager.shared.success()
-			UIAlertController.showAlertWithOk(
-				title: .localized("Success"),
-				message: .localized("Imported \(plist.count) Entries From .plist file.")
-			)
-		} catch {
-			HapticsManager.shared.error()
-			UIAlertController.showAlertWithOk(
-				title: .localized("Error"),
-				message: .localized("Failed to import plist: \(error.localizedDescription)")
-			)
-		}
-	}
-	
-	private func exportPlistFile() {
-		do {
-			// Convert AnyCodable entries to plain dictionary
-			var exportDict: [String: Any] = [:]
-			for (key, anyCodable) in options.customInfoPlistEntries {
-				exportDict[key] = anyCodable.value
-			}
-			
-			// Serialize to plist format
-			let data = try PropertyListSerialization.data(fromPropertyList: exportDict, format: .xml, options: 0)
-			
-			// Create temp file
-			let tempDir = FileManager.default.temporaryDirectory
-			let fileName = "ModifiedInfoPlistEntries_\(Date().timeIntervalSince1970).plist"
-			let fileURL = tempDir.appendingPathComponent(fileName)
-			
-			// Write data
-			try data.write(to: fileURL)
-			
-			// Share the file
-			let activityVC = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
-			if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-			   let window = windowScene.windows.first,
-			   let rootVC = window.rootViewController {
-				var topVC = rootVC
-				while let presented = topVC.presentedViewController {
-					topVC = presented
-				}
-				activityVC.popoverPresentationController?.sourceView = topVC.view
-				activityVC.popoverPresentationController?.sourceRect = CGRect(x: topVC.view.bounds.midX, y: topVC.view.bounds.midY, width: 0, height: 0)
-				activityVC.popoverPresentationController?.permittedArrowDirections = []
-				topVC.present(activityVC, animated: true)
-			}
-			
-			HapticsManager.shared.success()
-		} catch {
-			HapticsManager.shared.error()
-			UIAlertController.showAlertWithOk(
-				title: .localized("Error"),
-				message: .localized("Failed to export plist: \(error.localizedDescription)")
-			)
-		}
-	}
-	
-	private func resetForm() {
-		newKey = ""
-		newValueType = .string
-		newStringValue = ""
-		newBoolValue = false
-		newNumberValue = ""
-	}
+    @Environment(\.dismiss) var dismiss
+    @Environment(\.colorScheme) var colorScheme
+    @Binding var options: Options
+    
+    @State private var editingKey: String?
+    @State private var showAddEntryDialog = false
+    @State private var showImportSheet = false
+    @State private var showPresetSheet = false
+    @State private var showEditSheet = false
+    @State private var searchText = ""
+    @State private var selectedCategory: EntryCategory = .all
+    @State private var showDeleteConfirmation = false
+    @State private var entryToDelete: String?
+    @State private var showBatchActionsSheet = false
+    @State private var selectedEntries: Set<String> = []
+    @State private var isSelectionMode = false
+    
+    @State private var newKey = ""
+    @State private var newValueType: InfoPlistValueType = .string
+    @State private var newStringValue = ""
+    @State private var newBoolValue = false
+    @State private var newNumberValue = ""
+    @State private var newArrayItems: [String] = []
+    @State private var newDictItems: [String: String] = [:]
+    
+    @State private var editKey = ""
+    @State private var editValueType: InfoPlistValueType = .string
+    @State private var editStringValue = ""
+    @State private var editBoolValue = false
+    @State private var editNumberValue = ""
+    
+    @State private var floatingAnimation = false
+    @State private var appearAnimation = false
+    
+    enum InfoPlistValueType: String, CaseIterable {
+        case string = "String"
+        case boolean = "Boolean"
+        case number = "Number"
+        case array = "Array"
+        case dictionary = "Dictionary"
+        
+        var icon: String {
+            switch self {
+            case .string: return "text.quote"
+            case .boolean: return "togglepower"
+            case .number: return "number"
+            case .array: return "list.bullet.rectangle"
+            case .dictionary: return "curlybraces"
+            }
+        }
+        
+        var color: Color {
+            switch self {
+            case .string: return .blue
+            case .boolean: return .green
+            case .number: return .orange
+            case .array: return .purple
+            case .dictionary: return .pink
+            }
+        }
+    }
+    
+    enum EntryCategory: String, CaseIterable {
+        case all = "All"
+        case display = "Display"
+        case permissions = "Permissions"
+        case background = "Background"
+        case custom = "Custom"
+        
+        var icon: String {
+            switch self {
+            case .all: return "square.grid.2x2"
+            case .display: return "paintbrush"
+            case .permissions: return "hand.raised"
+            case .background: return "moon.fill"
+            case .custom: return "wrench"
+            }
+        }
+    }
+    
+    private var filteredEntries: [(key: String, value: AnyCodable)] {
+        let entries = options.customInfoPlistEntries.map { ($0.key, $0.value) }
+        var result = entries
+        
+        if !searchText.isEmpty {
+            result = result.filter { $0.key.localizedCaseInsensitiveContains(searchText) || 
+                valueDescription(for: $0.value.value).localizedCaseInsensitiveContains(searchText) }
+        }
+        
+        if selectedCategory != .all {
+            result = result.filter { categorizeEntry($0.key) == selectedCategory }
+        }
+        
+        return result.sorted { $0.key < $1.key }
+    }
+    
+    private func categorizeEntry(_ key: String) -> EntryCategory {
+        let displayKeys = ["UIRequiresFullScreen", "UIStatusBarHidden", "UILaunchStoryboardName", "UISupportedInterfaceOrientations", "UIUserInterfaceStyle"]
+        let permissionKeys = ["NSCameraUsageDescription", "NSPhotoLibraryUsageDescription", "NSMicrophoneUsageDescription", "NSLocationWhenInUseUsageDescription", "NSLocationAlwaysUsageDescription", "NSContactsUsageDescription", "NSCalendarsUsageDescription", "NSFaceIDUsageDescription", "NSBluetoothAlwaysUsageDescription"]
+        let backgroundKeys = ["UIBackgroundModes"]
+        
+        if displayKeys.contains(key) { return .display }
+        if permissionKeys.contains(key) { return .permissions }
+        if backgroundKeys.contains(key) { return .background }
+        return .custom
+    }
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                modernBackground
+                
+                VStack(spacing: 0) {
+                    headerSection
+                    categoryPicker
+                    searchBar
+                    mainContent
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { toolbarContent }
+            .sheet(isPresented: $showAddEntryDialog) { addEntrySheet }
+            .sheet(isPresented: $showPresetSheet) { presetOptionsSheet }
+            .sheet(isPresented: $showEditSheet) { editEntrySheet }
+            .sheet(isPresented: $showBatchActionsSheet) { batchActionsSheet }
+            .sheet(isPresented: $showImportSheet) {
+                FileImporterRepresentableView(
+                    allowedContentTypes: [.propertyList, .xml],
+                    allowsMultipleSelection: false,
+                    onDocumentsPicked: { urls in
+                        guard let url = urls.first else { return }
+                        importPlistFile(url: url)
+                    }
+                )
+                .ignoresSafeArea()
+            }
+            .confirmationDialog(.localized("Delete Entry"), isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
+                Button(.localized("Delete"), role: .destructive) {
+                    if let key = entryToDelete {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            _ = options.customInfoPlistEntries.removeValue(forKey: key)
+                        }
+                        HapticsManager.shared.success()
+                    }
+                }
+                Button(.localized("Cancel"), role: .cancel) { }
+            } message: {
+                Text(.localized("Are you sure you want to delete this entry?"))
+            }
+            .onAppear {
+                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                    appearAnimation = true
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var modernBackground: some View {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color.indigo.opacity(0.08),
+                    Color.purple.opacity(0.04),
+                    Color(UIColor.systemBackground).opacity(0.95),
+                    Color(UIColor.systemBackground)
+                ],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            
+            GeometryReader { geo in
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Color.indigo.opacity(0.15), Color.indigo.opacity(0)],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 140
+                        )
+                    )
+                    .frame(width: 280, height: 280)
+                    .blur(radius: 60)
+                    .offset(x: floatingAnimation ? -30 : 30, y: floatingAnimation ? -20 : 20)
+                    .position(x: geo.size.width * 0.85, y: geo.size.height * 0.15)
+                
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [Color.purple.opacity(0.12), Color.purple.opacity(0)],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 100
+                        )
+                    )
+                    .frame(width: 200, height: 200)
+                    .blur(radius: 50)
+                    .offset(x: floatingAnimation ? 20 : -20, y: floatingAnimation ? 15 : -15)
+                    .position(x: geo.size.width * 0.15, y: geo.size.height * 0.7)
+            }
+            .ignoresSafeArea()
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) {
+                floatingAnimation = true
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var headerSection: some View {
+        VStack(spacing: 8) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.indigo.opacity(0.3), Color.purple.opacity(0.2)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 56, height: 56)
+                    .shadow(color: Color.indigo.opacity(0.3), radius: 10, x: 0, y: 5)
+                
+                Image(systemName: "doc.badge.gearshape.fill")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            .scaleEffect(appearAnimation ? 1 : 0.5)
+            .opacity(appearAnimation ? 1 : 0)
+            
+            VStack(spacing: 4) {
+                Text(.localized("Info.plist Entries"))
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(.primary)
+                
+                Text(.localized("\(options.customInfoPlistEntries.count) Custom Entries"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .opacity(appearAnimation ? 1 : 0)
+        }
+        .padding(.top, 16)
+        .padding(.bottom, 8)
+    }
+    
+    @ViewBuilder
+    private var categoryPicker: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(EntryCategory.allCases, id: \.self) { category in
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                            selectedCategory = category
+                        }
+                        HapticsManager.shared.light()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: category.icon)
+                                .font(.system(size: 12, weight: .semibold))
+                            Text(category.rawValue)
+                                .font(.system(size: 13, weight: .medium))
+                        }
+                        .foregroundStyle(selectedCategory == category ? .white : .secondary)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(selectedCategory == category ? 
+                                      LinearGradient(colors: [.indigo, .purple], startPoint: .leading, endPoint: .trailing) :
+                                      LinearGradient(colors: [Color(.systemGray5)], startPoint: .leading, endPoint: .trailing))
+                        )
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+        .padding(.vertical, 8)
+    }
+    
+    @ViewBuilder
+    private var searchBar: some View {
+        HStack(spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.secondary)
+                
+                TextField(.localized("Search entries..."), text: $searchText)
+                    .font(.system(size: 15))
+                    .textInputAutocapitalization(.never)
+                
+                if !searchText.isEmpty {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+            
+            if !options.customInfoPlistEntries.isEmpty {
+                Button {
+                    withAnimation {
+                        isSelectionMode.toggle()
+                        if !isSelectionMode {
+                            selectedEntries.removeAll()
+                        }
+                    }
+                } label: {
+                    Image(systemName: isSelectionMode ? "checkmark.circle.fill" : "checklist")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundStyle(isSelectionMode ? .indigo : .secondary)
+                        .frame(width: 40, height: 40)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(Color(.secondarySystemGroupedBackground))
+                        )
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.bottom, 8)
+    }
+    
+    @ViewBuilder
+    private var mainContent: some View {
+        ScrollView {
+            LazyVStack(spacing: 12) {
+                quickActionsSection
+                    .padding(.horizontal, 16)
+                
+                if filteredEntries.isEmpty {
+                    emptyStateView
+                        .padding(.top, 40)
+                } else {
+                    entriesSection
+                        .padding(.horizontal, 16)
+                }
+                
+                if isSelectionMode && !selectedEntries.isEmpty {
+                    batchActionBar
+                }
+            }
+            .padding(.vertical, 12)
+            .padding(.bottom, 80)
+        }
+    }
+    
+    @ViewBuilder
+    private var quickActionsSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(.localized("QUICK ACTIONS"))
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .padding(.leading, 4)
+            
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    QuickActionCard(
+                        icon: "sparkles",
+                        title: .localized("Presets"),
+                        subtitle: .localized("Common options"),
+                        gradient: [.purple, .indigo]
+                    ) {
+                        showPresetSheet = true
+                    }
+                    
+                    QuickActionCard(
+                        icon: "square.and.arrow.down",
+                        title: .localized("Import"),
+                        subtitle: .localized("From .plist"),
+                        gradient: [.green, .teal]
+                    ) {
+                        showImportSheet = true
+                    }
+                    
+                    QuickActionCard(
+                        icon: "square.and.arrow.up",
+                        title: .localized("Export"),
+                        subtitle: .localized("Save entries"),
+                        gradient: [.blue, .cyan]
+                    ) {
+                        exportPlistFile()
+                    }
+                    .opacity(options.customInfoPlistEntries.isEmpty ? 0.5 : 1)
+                    .disabled(options.customInfoPlistEntries.isEmpty)
+                    
+                    if !options.customInfoPlistEntries.isEmpty {
+                        QuickActionCard(
+                            icon: "arrow.counterclockwise",
+                            title: .localized("Clear All"),
+                            subtitle: .localized("Remove all"),
+                            gradient: [.red, .orange]
+                        ) {
+                            withAnimation {
+                                options.customInfoPlistEntries.removeAll()
+                            }
+                            HapticsManager.shared.success()
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var emptyStateView: some View {
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(Color.indigo.opacity(0.1))
+                    .frame(width: 80, height: 80)
+                
+                Image(systemName: "doc.text.fill")
+                    .font(.system(size: 32))
+                    .foregroundStyle(.indigo)
+            }
+            
+            VStack(spacing: 8) {
+                Text(.localized("No Entries Yet"))
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                
+                Text(.localized("Add custom Info.plist entries\nto modify app behavior"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            
+            Button {
+                showAddEntryDialog = true
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "plus.circle.fill")
+                    Text(.localized("Add Entry"))
+                }
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(
+                    LinearGradient(
+                        colors: [.indigo, .purple],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .clipShape(Capsule())
+                .shadow(color: .indigo.opacity(0.4), radius: 10, x: 0, y: 5)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var entriesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(.localized("ENTRIES (\(filteredEntries.count))"))
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                
+                Spacer()
+                
+                if isSelectionMode {
+                    Button {
+                        if selectedEntries.count == filteredEntries.count {
+                            selectedEntries.removeAll()
+                        } else {
+                            selectedEntries = Set(filteredEntries.map { $0.key })
+                        }
+                    } label: {
+                        Text(selectedEntries.count == filteredEntries.count ? .localized("Deselect All") : .localized("Select All"))
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.indigo)
+                    }
+                }
+            }
+            .padding(.leading, 4)
+            
+            VStack(spacing: 2) {
+                ForEach(Array(filteredEntries.enumerated()), id: \.element.key) { index, entry in
+                    ModernEntryRow(
+                        key: entry.key,
+                        value: entry.value,
+                        isFirst: index == 0,
+                        isLast: index == filteredEntries.count - 1,
+                        isSelected: selectedEntries.contains(entry.key),
+                        isSelectionMode: isSelectionMode,
+                        onTap: {
+                            if isSelectionMode {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    if selectedEntries.contains(entry.key) {
+                                        selectedEntries.remove(entry.key)
+                                    } else {
+                                        selectedEntries.insert(entry.key)
+                                    }
+                                }
+                            } else {
+                                prepareEdit(key: entry.key, value: entry.value)
+                                showEditSheet = true
+                            }
+                        },
+                        onToggle: entry.value.value is Bool ? { newValue in
+                            withAnimation {
+                                options.customInfoPlistEntries[entry.key] = AnyCodable(newValue)
+                            }
+                            HapticsManager.shared.light()
+                        } : nil,
+                        onDelete: {
+                            entryToDelete = entry.key
+                            showDeleteConfirmation = true
+                        },
+                        onDuplicate: {
+                            duplicateEntry(key: entry.key, value: entry.value)
+                        }
+                    )
+                }
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+        }
+    }
+    
+    @ViewBuilder
+    private var batchActionBar: some View {
+        HStack(spacing: 16) {
+            Text(.localized("\(selectedEntries.count) selected"))
+                .font(.system(size: 14, weight: .medium))
+                .foregroundStyle(.secondary)
+            
+            Spacer()
+            
+            Button {
+                withAnimation {
+                    for key in selectedEntries {
+                        _ = options.customInfoPlistEntries.removeValue(forKey: key)
+                    }
+                    selectedEntries.removeAll()
+                    isSelectionMode = false
+                }
+                HapticsManager.shared.success()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "trash")
+                    Text(.localized("Delete"))
+                }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(Color.red)
+                .clipShape(Capsule())
+            }
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: -5)
+        )
+        .padding(.horizontal, 16)
+    }
+    
+    @ToolbarContentBuilder
+    private var toolbarContent: some ToolbarContent {
+        ToolbarItem(placement: .topBarLeading) {
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        
+        ToolbarItem(placement: .topBarTrailing) {
+            Button {
+                showAddEntryDialog = true
+            } label: {
+                Image(systemName: "plus.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.indigo)
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var addEntrySheet: some View {
+        NavigationStack {
+            ZStack {
+                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(.localized("KEY"))
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                                .padding(.leading, 4)
+                            
+                            TextField(.localized("Enter key name"), text: $newKey)
+                                .font(.system(size: 16))
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .padding(14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(Color(.secondarySystemGroupedBackground))
+                                )
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(.localized("TYPE"))
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                                .padding(.leading, 4)
+                            
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 8) {
+                                    ForEach(InfoPlistValueType.allCases, id: \.self) { type in
+                                        Button {
+                                            withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
+                                                newValueType = type
+                                            }
+                                        } label: {
+                                            HStack(spacing: 6) {
+                                                Image(systemName: type.icon)
+                                                    .font(.system(size: 12, weight: .semibold))
+                                                Text(type.rawValue)
+                                                    .font(.system(size: 13, weight: .medium))
+                                            }
+                                            .foregroundStyle(newValueType == type ? .white : type.color)
+                                            .padding(.horizontal, 14)
+                                            .padding(.vertical, 10)
+                                            .background(
+                                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                                    .fill(newValueType == type ? type.color : type.color.opacity(0.15))
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(.localized("VALUE"))
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                                .padding(.leading, 4)
+                            
+                            valueInputView
+                        }
+                        
+                        Button {
+                            addEntry()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "plus.circle.fill")
+                                Text(.localized("Add Entry"))
+                            }
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                LinearGradient(
+                                    colors: newKey.isEmpty ? [.gray] : [.indigo, .purple],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .shadow(color: newKey.isEmpty ? .clear : .indigo.opacity(0.4), radius: 10, x: 0, y: 5)
+                        }
+                        .disabled(newKey.isEmpty)
+                        .padding(.top, 8)
+                    }
+                    .padding(20)
+                }
+            }
+            .navigationTitle(.localized("Add Entry"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(.localized("Cancel")) {
+                        showAddEntryDialog = false
+                        resetForm()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+    
+    @ViewBuilder
+    private var valueInputView: some View {
+        switch newValueType {
+        case .string:
+            TextField(.localized("Enter string value"), text: $newStringValue)
+                .font(.system(size: 16))
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color(.secondarySystemGroupedBackground))
+                )
+            
+        case .boolean:
+            HStack {
+                Text(.localized("Value"))
+                    .font(.system(size: 16))
+                    .foregroundStyle(.primary)
+                Spacer()
+                Toggle("", isOn: $newBoolValue)
+                    .labelsHidden()
+                    .tint(.indigo)
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+            
+        case .number:
+            TextField(.localized("Enter number"), text: $newNumberValue)
+                .font(.system(size: 16))
+                .keyboardType(.numbersAndPunctuation)
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color(.secondarySystemGroupedBackground))
+                )
+            
+        case .array:
+            VStack(spacing: 8) {
+                ForEach(newArrayItems.indices, id: \.self) { index in
+                    HStack {
+                        TextField(.localized("Item \(index + 1)"), text: $newArrayItems[index])
+                            .font(.system(size: 15))
+                        
+                        Button {
+                            newArrayItems.remove(at: index)
+                        } label: {
+                            Image(systemName: "minus.circle.fill")
+                                .foregroundStyle(.red)
+                        }
+                    }
+                    .padding(12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Color(.tertiarySystemGroupedBackground))
+                    )
+                }
+                
+                Button {
+                    newArrayItems.append("")
+                } label: {
+                    HStack {
+                        Image(systemName: "plus.circle.fill")
+                        Text(.localized("Add Item"))
+                    }
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.indigo)
+                    .padding(.vertical, 8)
+                }
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+            
+        case .dictionary:
+            VStack(spacing: 8) {
+                Text(.localized("Dictionary entries will be created empty"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+        }
+    }
+    
+    @ViewBuilder
+    private var editEntrySheet: some View {
+        NavigationStack {
+            ZStack {
+                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
+                
+                ScrollView {
+                    VStack(spacing: 20) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(.localized("KEY"))
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                                .padding(.leading, 4)
+                            
+                            Text(editKey)
+                                .font(.system(size: 16, weight: .medium, design: .monospaced))
+                                .foregroundStyle(.primary)
+                                .padding(14)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(Color(.secondarySystemGroupedBackground))
+                                )
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(.localized("VALUE"))
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                                .padding(.leading, 4)
+                            
+                            editValueInputView
+                        }
+                        
+                        Button {
+                            saveEdit()
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "checkmark.circle.fill")
+                                Text(.localized("Save Changes"))
+                            }
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(
+                                LinearGradient(
+                                    colors: [.indigo, .purple],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                            .shadow(color: .indigo.opacity(0.4), radius: 10, x: 0, y: 5)
+                        }
+                        .padding(.top, 8)
+                    }
+                    .padding(20)
+                }
+            }
+            .navigationTitle(.localized("Edit Entry"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(.localized("Cancel")) {
+                        showEditSheet = false
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
+    }
+    
+    @ViewBuilder
+    private var editValueInputView: some View {
+        switch editValueType {
+        case .string:
+            TextField(.localized("Enter string value"), text: $editStringValue)
+                .font(.system(size: 16))
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color(.secondarySystemGroupedBackground))
+                )
+            
+        case .boolean:
+            HStack {
+                Text(.localized("Value"))
+                    .font(.system(size: 16))
+                    .foregroundStyle(.primary)
+                Spacer()
+                Toggle("", isOn: $editBoolValue)
+                    .labelsHidden()
+                    .tint(.indigo)
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+            
+        case .number:
+            TextField(.localized("Enter number"), text: $editNumberValue)
+                .font(.system(size: 16))
+                .keyboardType(.numbersAndPunctuation)
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color(.secondarySystemGroupedBackground))
+                )
+            
+        default:
+            Text(.localized("Complex types cannot be edited directly"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color(.secondarySystemGroupedBackground))
+                )
+        }
+    }
+    
+    @ViewBuilder
+    private var presetOptionsSheet: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 24) {
+                    PresetSection(
+                        title: .localized("Orientation"),
+                        icon: "rotate.right.fill",
+                        color: .blue
+                    ) {
+                        PresetButton(
+                            title: .localized("Portrait Only"),
+                            subtitle: .localized("Lock to portrait mode"),
+                            icon: "rectangle.portrait.fill",
+                            color: .blue
+                        ) {
+                            addOrientationPreset(.portrait)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Landscape Only"),
+                            subtitle: .localized("Lock to landscape mode"),
+                            icon: "rectangle.fill",
+                            color: .green
+                        ) {
+                            addOrientationPreset(.landscape)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("All Orientations"),
+                            subtitle: .localized("Allow all rotations"),
+                            icon: "rotate.3d.fill",
+                            color: .purple
+                        ) {
+                            addOrientationPreset(.all)
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("Background Modes"),
+                        icon: "moon.fill",
+                        color: .indigo
+                    ) {
+                        PresetButton(
+                            title: .localized("Background Audio"),
+                            subtitle: .localized("Play audio in background"),
+                            icon: "music.note",
+                            color: .pink
+                        ) {
+                            addBackgroundMode(.audio)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Background Location"),
+                            subtitle: .localized("Access location in background"),
+                            icon: "location.fill",
+                            color: .orange
+                        ) {
+                            addBackgroundMode(.location)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("VoIP"),
+                            subtitle: .localized("Voice over IP support"),
+                            icon: "phone.fill",
+                            color: .cyan
+                        ) {
+                            addBackgroundMode(.voip)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Background Fetch"),
+                            subtitle: .localized("Fetch content periodically"),
+                            icon: "arrow.down.circle.fill",
+                            color: .teal
+                        ) {
+                            addBackgroundMode(.fetch)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Background Processing"),
+                            subtitle: .localized("Run background tasks"),
+                            icon: "cpu.fill",
+                            color: .purple
+                        ) {
+                            addBackgroundMode(.processing)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Remote Notifications"),
+                            subtitle: .localized("Receive push notifications"),
+                            icon: "bell.badge.fill",
+                            color: .red
+                        ) {
+                            addBackgroundMode(.remoteNotification)
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("Display & UI"),
+                        icon: "paintbrush.fill",
+                        color: .purple
+                    ) {
+                        PresetButton(
+                            title: .localized("Require Full Screen"),
+                            subtitle: .localized("Disable multitasking"),
+                            icon: "rectangle.expand.vertical",
+                            color: .purple
+                        ) {
+                            addSimpleEntry(key: "UIRequiresFullScreen", value: true)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Hide Status Bar"),
+                            subtitle: .localized("Hide the system status bar"),
+                            icon: "eye.slash.fill",
+                            color: .gray
+                        ) {
+                            addSimpleEntry(key: "UIStatusBarHidden", value: true)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Force Dark Mode"),
+                            subtitle: .localized("Always use dark appearance"),
+                            icon: "moon.fill",
+                            color: .indigo
+                        ) {
+                            addSimpleEntry(key: "UIUserInterfaceStyle", value: "Dark")
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Force Light Mode"),
+                            subtitle: .localized("Always use light appearance"),
+                            icon: "sun.max.fill",
+                            color: .orange
+                        ) {
+                            addSimpleEntry(key: "UIUserInterfaceStyle", value: "Light")
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("File Access"),
+                        icon: "folder.fill",
+                        color: .cyan
+                    ) {
+                        PresetButton(
+                            title: .localized("File Sharing"),
+                            subtitle: .localized("Enable iTunes/Finder file sharing"),
+                            icon: "folder.fill",
+                            color: .cyan
+                        ) {
+                            addSimpleEntry(key: "UIFileSharingEnabled", value: true)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Document Browser"),
+                            subtitle: .localized("Support document browser"),
+                            icon: "doc.fill",
+                            color: .brown
+                        ) {
+                            addSimpleEntry(key: "UISupportsDocumentBrowser", value: true)
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("Privacy Permissions"),
+                        icon: "hand.raised.fill",
+                        color: .red
+                    ) {
+                        PresetButton(
+                            title: .localized("Camera Usage"),
+                            subtitle: .localized("Add camera permission"),
+                            icon: "camera.fill",
+                            color: .blue
+                        ) {
+                            addSimpleEntry(key: "NSCameraUsageDescription", value: "This app needs camera access.")
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Photo Library"),
+                            subtitle: .localized("Add photo library permission"),
+                            icon: "photo.fill",
+                            color: .purple
+                        ) {
+                            addSimpleEntry(key: "NSPhotoLibraryUsageDescription", value: "This app needs photo library access.")
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Microphone"),
+                            subtitle: .localized("Add microphone permission"),
+                            icon: "mic.fill",
+                            color: .red
+                        ) {
+                            addSimpleEntry(key: "NSMicrophoneUsageDescription", value: "This app needs microphone access.")
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Location"),
+                            subtitle: .localized("Add location permission"),
+                            icon: "location.fill",
+                            color: .green
+                        ) {
+                            addSimpleEntry(key: "NSLocationWhenInUseUsageDescription", value: "This app needs location access.")
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Contacts"),
+                            subtitle: .localized("Add contacts permission"),
+                            icon: "person.crop.circle.fill",
+                            color: .orange
+                        ) {
+                            addSimpleEntry(key: "NSContactsUsageDescription", value: "This app needs contacts access.")
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Face ID"),
+                            subtitle: .localized("Add Face ID permission"),
+                            icon: "faceid",
+                            color: .indigo
+                        ) {
+                            addSimpleEntry(key: "NSFaceIDUsageDescription", value: "This app uses Face ID for authentication.")
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Bluetooth"),
+                            subtitle: .localized("Add Bluetooth permission"),
+                            icon: "antenna.radiowaves.left.and.right",
+                            color: .blue
+                        ) {
+                            addSimpleEntry(key: "NSBluetoothAlwaysUsageDescription", value: "This app needs Bluetooth access.")
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("URL Schemes"),
+                        icon: "link.badge.plus",
+                        color: .orange
+                    ) {
+                        PresetButton(
+                            title: .localized("Add URL Scheme"),
+                            subtitle: .localized("Custom deep linking scheme"),
+                            icon: "link.circle.fill",
+                            color: .orange
+                        ) {
+                            addURLScheme("myapp")
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("App Transport Security"),
+                        icon: "lock.shield.fill",
+                        color: .green
+                    ) {
+                        PresetButton(
+                            title: .localized("Allow HTTP"),
+                            subtitle: .localized("Allow insecure HTTP connections"),
+                            icon: "network",
+                            color: .orange
+                        ) {
+                            let atsDict: [String: Any] = ["NSAllowsArbitraryLoads": true]
+                            addSimpleEntry(key: "NSAppTransportSecurity", value: atsDict)
+                        }
+                    }
+                }
+                .padding(20)
+            }
+            .background(Color(UIColor.systemGroupedBackground))
+            .navigationTitle(.localized("Preset Options"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(.localized("Done")) {
+                        showPresetSheet = false
+                    }
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var batchActionsSheet: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Button(role: .destructive) {
+                        withAnimation {
+                            options.customInfoPlistEntries.removeAll()
+                        }
+                        showBatchActionsSheet = false
+                        HapticsManager.shared.success()
+                    } label: {
+                        Label(.localized("Clear All Entries"), systemImage: "trash.fill")
+                    }
+                }
+            }
+            .navigationTitle(.localized("Batch Actions"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(.localized("Cancel")) {
+                        showBatchActionsSheet = false
+                    }
+                }
+            }
+        }
+    }
+    
+    private enum Orientation {
+        case portrait, landscape, all
+    }
+    
+    private enum BackgroundMode: String {
+        case audio = "audio"
+        case location = "location"
+        case voip = "voip"
+        case fetch = "fetch"
+        case processing = "processing"
+        case remoteNotification = "remote-notification"
+    }
+    
+    private func addOrientationPreset(_ orientation: Orientation) {
+        let orientations: [String]
+        switch orientation {
+        case .portrait:
+            orientations = ["UIInterfaceOrientationPortrait"]
+        case .landscape:
+            orientations = ["UIInterfaceOrientationLandscapeLeft", "UIInterfaceOrientationLandscapeRight"]
+        case .all:
+            orientations = [
+                "UIInterfaceOrientationPortrait",
+                "UIInterfaceOrientationPortraitUpsideDown",
+                "UIInterfaceOrientationLandscapeLeft",
+                "UIInterfaceOrientationLandscapeRight"
+            ]
+        }
+        
+        withAnimation {
+            options.customInfoPlistEntries["UISupportedInterfaceOrientations"] = AnyCodable(orientations)
+        }
+        
+        HapticsManager.shared.success()
+        showPresetSheet = false
+    }
+    
+    private func addBackgroundMode(_ mode: BackgroundMode) {
+        var modes: [String] = []
+        
+        if let existing = options.customInfoPlistEntries["UIBackgroundModes"]?.value as? [String] {
+            modes = existing
+        }
+        
+        if !modes.contains(mode.rawValue) {
+            modes.append(mode.rawValue)
+        }
+        
+        withAnimation {
+            options.customInfoPlistEntries["UIBackgroundModes"] = AnyCodable(modes)
+        }
+        
+        HapticsManager.shared.success()
+        showPresetSheet = false
+    }
+    
+    private func addSimpleEntry(key: String, value: Any) {
+        withAnimation {
+            options.customInfoPlistEntries[key] = AnyCodable(value)
+        }
+        
+        HapticsManager.shared.success()
+        showPresetSheet = false
+    }
+    
+    private func addURLScheme(_ scheme: String) {
+        var urlTypes: [[String: Any]] = []
+        
+        if let existing = options.customInfoPlistEntries["CFBundleURLTypes"]?.value as? [[String: Any]] {
+            urlTypes = existing
+        }
+        
+        let newType: [String: Any] = [
+            "CFBundleURLName": scheme,
+            "CFBundleURLSchemes": [scheme]
+        ]
+        urlTypes.append(newType)
+        
+        withAnimation {
+            options.customInfoPlistEntries["CFBundleURLTypes"] = AnyCodable(urlTypes)
+        }
+        
+        HapticsManager.shared.success()
+        showPresetSheet = false
+    }
+    
+    private func addEntry() {
+        guard !newKey.isEmpty else { return }
+        
+        let value: Any
+        switch newValueType {
+        case .string:
+            value = newStringValue
+        case .boolean:
+            value = newBoolValue
+        case .number:
+            if let intValue = Int(newNumberValue) {
+                value = intValue
+            } else if let doubleValue = Double(newNumberValue) {
+                value = doubleValue
+            } else {
+                value = newNumberValue
+            }
+        case .array:
+            value = newArrayItems.filter { !$0.isEmpty }
+        case .dictionary:
+            value = [String: Any]()
+        }
+        
+        withAnimation {
+            options.customInfoPlistEntries[newKey] = AnyCodable(value)
+        }
+        
+        HapticsManager.shared.success()
+        showAddEntryDialog = false
+        resetForm()
+    }
+    
+    private func prepareEdit(key: String, value: AnyCodable) {
+        editKey = key
+        
+        if let stringValue = value.value as? String {
+            editValueType = .string
+            editStringValue = stringValue
+        } else if let boolValue = value.value as? Bool {
+            editValueType = .boolean
+            editBoolValue = boolValue
+        } else if let intValue = value.value as? Int {
+            editValueType = .number
+            editNumberValue = "\(intValue)"
+        } else if let doubleValue = value.value as? Double {
+            editValueType = .number
+            editNumberValue = "\(doubleValue)"
+        } else if value.value is [Any] {
+            editValueType = .array
+        } else if value.value is [String: Any] {
+            editValueType = .dictionary
+        } else {
+            editValueType = .string
+            editStringValue = "\(value.value)"
+        }
+    }
+    
+    private func saveEdit() {
+        let value: Any
+        switch editValueType {
+        case .string:
+            value = editStringValue
+        case .boolean:
+            value = editBoolValue
+        case .number:
+            if let intValue = Int(editNumberValue) {
+                value = intValue
+            } else if let doubleValue = Double(editNumberValue) {
+                value = doubleValue
+            } else {
+                value = editNumberValue
+            }
+        default:
+            showEditSheet = false
+            return
+        }
+        
+        withAnimation {
+            options.customInfoPlistEntries[editKey] = AnyCodable(value)
+        }
+        
+        HapticsManager.shared.success()
+        showEditSheet = false
+    }
+    
+    private func duplicateEntry(key: String, value: AnyCodable) {
+        var newKey = key + "_copy"
+        var counter = 1
+        while options.customInfoPlistEntries.keys.contains(newKey) {
+            newKey = "\(key)_copy\(counter)"
+            counter += 1
+        }
+        
+        withAnimation {
+            options.customInfoPlistEntries[newKey] = value
+        }
+        
+        HapticsManager.shared.success()
+    }
+    
+    private func resetForm() {
+        newKey = ""
+        newValueType = .string
+        newStringValue = ""
+        newBoolValue = false
+        newNumberValue = ""
+        newArrayItems = []
+        newDictItems = [:]
+    }
+    
+    private func valueDescription(for value: Any?) -> String {
+        guard let value = value else { return "Unknown" }
+        
+        if let string = value as? String {
+            return string
+        } else if let bool = value as? Bool {
+            return bool ? "true" : "false"
+        } else if let number = value as? Int {
+            return "\(number)"
+        } else if let number = value as? Double {
+            return "\(number)"
+        } else if let array = value as? [Any] {
+            return "Array (\(array.count) items)"
+        } else if let dict = value as? [String: Any] {
+            return "Dictionary (\(dict.count) keys)"
+        } else {
+            return "\(value)"
+        }
+    }
+    
+    private func importPlistFile(url: URL) {
+        do {
+            let data = try Data(contentsOf: url)
+            guard let plist = try PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
+                UIAlertController.showAlertWithOk(
+                    title: .localized("Error"),
+                    message: .localized("Invalid Plist Format")
+                )
+                return
+            }
+            
+            withAnimation {
+                for (key, value) in plist {
+                    options.customInfoPlistEntries[key] = AnyCodable(value)
+                }
+            }
+            
+            HapticsManager.shared.success()
+            UIAlertController.showAlertWithOk(
+                title: .localized("Success"),
+                message: .localized("Imported \(plist.count) entries from .plist file.")
+            )
+        } catch {
+            HapticsManager.shared.error()
+            UIAlertController.showAlertWithOk(
+                title: .localized("Error"),
+                message: .localized("Failed to import plist: \(error.localizedDescription)")
+            )
+        }
+    }
+    
+    private func exportPlistFile() {
+        do {
+            var exportDict: [String: Any] = [:]
+            for (key, anyCodable) in options.customInfoPlistEntries {
+                exportDict[key] = anyCodable.value
+            }
+            
+            let data = try PropertyListSerialization.data(fromPropertyList: exportDict, format: .xml, options: 0)
+            
+            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("CustomInfoPlist.plist")
+            try data.write(to: tempURL)
+            
+            let activityVC = UIActivityViewController(activityItems: [tempURL], applicationActivities: nil)
+            
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let rootViewController = windowScene.windows.first?.rootViewController {
+                var topController = rootViewController
+                while let presented = topController.presentedViewController {
+                    topController = presented
+                }
+                
+                if let popover = activityVC.popoverPresentationController {
+                    popover.sourceView = topController.view
+                    popover.sourceRect = CGRect(x: topController.view.bounds.midX, y: topController.view.bounds.midY, width: 0, height: 0)
+                    popover.permittedArrowDirections = []
+                }
+                
+                topController.present(activityVC, animated: true)
+            }
+            
+            HapticsManager.shared.success()
+        } catch {
+            HapticsManager.shared.error()
+            UIAlertController.showAlertWithOk(
+                title: .localized("Error"),
+                message: .localized("Failed to export plist: \(error.localizedDescription)")
+            )
+        }
+    }
+}
+
+struct QuickActionCard: View {
+    let icon: String
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
+    let gradient: [Color]
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 8) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(colors: gradient, startPoint: .topLeading, endPoint: .bottomTrailing)
+                        )
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.primary)
+                    
+                    Text(subtitle)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(width: 100)
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+struct ModernEntryRow: View {
+    let key: String
+    let value: AnyCodable
+    let isFirst: Bool
+    let isLast: Bool
+    let isSelected: Bool
+    let isSelectionMode: Bool
+    let onTap: () -> Void
+    var onToggle: ((Bool) -> Void)?
+    let onDelete: () -> Void
+    let onDuplicate: () -> Void
+    
+    private var valueType: InfoPlistEntriesView.InfoPlistValueType {
+        if value.value is String { return .string }
+        if value.value is Bool { return .boolean }
+        if value.value is Int || value.value is Double { return .number }
+        if value.value is [Any] { return .array }
+        if value.value is [String: Any] { return .dictionary }
+        return .string
+    }
+    
+    private var valueDescription: String {
+        if let string = value.value as? String {
+            return string.isEmpty ? "(empty)" : string
+        } else if let bool = value.value as? Bool {
+            return bool ? "true" : "false"
+        } else if let number = value.value as? Int {
+            return "\(number)"
+        } else if let number = value.value as? Double {
+            return "\(number)"
+        } else if let array = value.value as? [Any] {
+            return "Array (\(array.count) items)"
+        } else if let dict = value.value as? [String: Any] {
+            return "Dictionary (\(dict.count) keys)"
+        }
+        return "\(value.value)"
+    }
+    
+    var body: some View {
+        Button(action: onTap) {
+            HStack(spacing: 12) {
+                if isSelectionMode {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 20))
+                        .foregroundStyle(isSelected ? .indigo : .secondary)
+                }
+                
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(valueType.color.opacity(0.15))
+                        .frame(width: 32, height: 32)
+                    
+                    Image(systemName: valueType.icon)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(valueType.color)
+                }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(key)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                    
+                    Text(valueDescription)
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                
+                Spacer()
+                
+                if let onToggle = onToggle, let boolValue = value.value as? Bool {
+                    Toggle("", isOn: Binding(
+                        get: { boolValue },
+                        set: { onToggle($0) }
+                    ))
+                    .labelsHidden()
+                    .tint(.indigo)
+                } else if !isSelectionMode {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.quaternary)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .background(isSelected ? Color.indigo.opacity(0.1) : Color.clear)
+        }
+        .buttonStyle(.plain)
+        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+            Button(role: .destructive, action: onDelete) {
+                Label(.localized("Delete"), systemImage: "trash.fill")
+            }
+            
+            Button(action: onDuplicate) {
+                Label(.localized("Duplicate"), systemImage: "doc.on.doc.fill")
+            }
+            .tint(.blue)
+        }
+        .contextMenu {
+            Button(action: onDuplicate) {
+                Label(.localized("Duplicate"), systemImage: "doc.on.doc")
+            }
+            
+            Button {
+                UIPasteboard.general.string = key
+                HapticsManager.shared.light()
+            } label: {
+                Label(.localized("Copy Key"), systemImage: "doc.on.clipboard")
+            }
+            
+            Button(role: .destructive, action: onDelete) {
+                Label(.localized("Delete"), systemImage: "trash")
+            }
+        }
+    }
+}
+
+struct PresetSection<Content: View>: View {
+    let title: LocalizedStringKey
+    let icon: String
+    let color: Color
+    @ViewBuilder let content: () -> Content
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(color)
+                
+                Text(title)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+            }
+            .padding(.leading, 4)
+            
+            VStack(spacing: 2) {
+                content()
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
+            )
+        }
+    }
+}
+
+struct PresetButton: View {
+    let title: LocalizedStringKey
+    let subtitle: LocalizedStringKey
+    let icon: String
+    let color: Color
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(color.opacity(0.15))
+                        .frame(width: 32, height: 32)
+                    
+                    Image(systemName: icon)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(color)
+                }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.primary)
+                    
+                    Text(subtitle)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+                
+                Image(systemName: "plus.circle.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+        }
+        .buttonStyle(.plain)
+    }
 }

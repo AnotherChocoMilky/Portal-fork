@@ -28,6 +28,10 @@ struct ModernSigningView: View {
     @State private var _selectedTab = 0
     @State private var _showAdvancedDebugSheet = false
     
+    @State private var _editingName = ""
+    @State private var _editingBundleId = ""
+    @State private var _editingVersion = ""
+    
     // Animation states
     @State private var _appearAnimation = false
     @State private var _headerScale: CGFloat = 0.8
@@ -168,32 +172,70 @@ struct ModernSigningView: View {
                 CertificatesAddView()
                     .presentationDetents([.medium])
             }
-            .alert("Name", isPresented: $_isNameDialogPresenting) {
-                TextField(_temporaryOptions.appName ?? (app.name ?? ""), text: Binding(
-                    get: { _temporaryOptions.appName ?? app.name ?? "" },
-                    set: { _temporaryOptions.appName = $0 }
-                ))
-                .textInputAutocapitalization(.none)
-                Button("Cancel", role: .cancel) { }
-                Button("Save") { }
+            .sheet(isPresented: $_isNameDialogPresenting) {
+                ModernEditSheet(
+                    title: "App Name",
+                    icon: "textformat",
+                    iconColor: .blue,
+                    placeholder: "Enter app name",
+                    value: $_editingName,
+                    onSave: {
+                        _temporaryOptions.appName = _editingName.isEmpty ? nil : _editingName
+                        _isNameDialogPresenting = false
+                    },
+                    onCancel: {
+                        _isNameDialogPresenting = false
+                    }
+                )
+                .onAppear {
+                    _editingName = _temporaryOptions.appName ?? app.name ?? ""
+                }
+                .presentationDetents([.height(280)])
+                .presentationDragIndicator(.visible)
             }
-            .alert("Bundle ID", isPresented: $_isIdentifierDialogPresenting) {
-                TextField(_temporaryOptions.appIdentifier ?? (app.identifier ?? ""), text: Binding(
-                    get: { _temporaryOptions.appIdentifier ?? app.identifier ?? "" },
-                    set: { _temporaryOptions.appIdentifier = $0 }
-                ))
-                .textInputAutocapitalization(.none)
-                Button("Cancel", role: .cancel) { }
-                Button("Save") { }
+            .sheet(isPresented: $_isIdentifierDialogPresenting) {
+                ModernEditSheet(
+                    title: "Bundle ID",
+                    icon: "barcode",
+                    iconColor: .purple,
+                    placeholder: "com.example.app",
+                    value: $_editingBundleId,
+                    keyboardType: .URL,
+                    onSave: {
+                        _temporaryOptions.appIdentifier = _editingBundleId.isEmpty ? nil : _editingBundleId
+                        _isIdentifierDialogPresenting = false
+                    },
+                    onCancel: {
+                        _isIdentifierDialogPresenting = false
+                    }
+                )
+                .onAppear {
+                    _editingBundleId = _temporaryOptions.appIdentifier ?? app.identifier ?? ""
+                }
+                .presentationDetents([.height(280)])
+                .presentationDragIndicator(.visible)
             }
-            .alert("Version", isPresented: $_isVersionDialogPresenting) {
-                TextField(_temporaryOptions.appVersion ?? (app.version ?? ""), text: Binding(
-                    get: { _temporaryOptions.appVersion ?? app.version ?? "" },
-                    set: { _temporaryOptions.appVersion = $0 }
-                ))
-                .textInputAutocapitalization(.none)
-                Button("Cancel", role: .cancel) { }
-                Button("Save") { }
+            .sheet(isPresented: $_isVersionDialogPresenting) {
+                ModernEditSheet(
+                    title: "Version",
+                    icon: "tag",
+                    iconColor: .green,
+                    placeholder: "1.0.0",
+                    value: $_editingVersion,
+                    keyboardType: .numbersAndPunctuation,
+                    onSave: {
+                        _temporaryOptions.appVersion = _editingVersion.isEmpty ? nil : _editingVersion
+                        _isVersionDialogPresenting = false
+                    },
+                    onCancel: {
+                        _isVersionDialogPresenting = false
+                    }
+                )
+                .onAppear {
+                    _editingVersion = _temporaryOptions.appVersion ?? app.version ?? ""
+                }
+                .presentationDetents([.height(280)])
+                .presentationDragIndicator(.visible)
             }
     }
 
@@ -5064,6 +5106,120 @@ private struct SigningInfoRow: View {
             Spacer()
             Text(value)
                 .font(.system(.body, design: .monospaced))
+        }
+    }
+}
+
+
+// MARK: - Modern Edit Sheet
+struct ModernEditSheet: View {
+    let title: String
+    let icon: String
+    let iconColor: Color
+    let placeholder: String
+    @Binding var value: String
+    var keyboardType: UIKeyboardType = .default
+    let onSave: () -> Void
+    let onCancel: () -> Void
+    
+    @FocusState private var isFocused: Bool
+    
+    var body: some View {
+        NavigationStack {
+            ZStack {
+                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
+                
+                VStack(spacing: 24) {
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [iconColor.opacity(0.3), iconColor.opacity(0.15)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 56, height: 56)
+                            .shadow(color: iconColor.opacity(0.3), radius: 10, x: 0, y: 5)
+                        
+                        Image(systemName: icon)
+                            .font(.system(size: 24, weight: .semibold))
+                            .foregroundStyle(iconColor)
+                    }
+                    
+                    VStack(spacing: 8) {
+                        Text(title)
+                            .font(.title3.weight(.bold))
+                            .foregroundStyle(.primary)
+                        
+                        Text("Enter a new value below")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    TextField(placeholder, text: $value)
+                        .font(.system(size: 17))
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .keyboardType(keyboardType)
+                        .focused($isFocused)
+                        .padding(16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color(.secondarySystemGroupedBackground))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .stroke(isFocused ? iconColor.opacity(0.5) : Color.clear, lineWidth: 2)
+                        )
+                        .padding(.horizontal, 20)
+                    
+                    HStack(spacing: 12) {
+                        Button {
+                            onCancel()
+                        } label: {
+                            Text("Cancel")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(Color(.secondarySystemGroupedBackground))
+                                )
+                        }
+                        
+                        Button {
+                            onSave()
+                        } label: {
+                            Text("Save")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(
+                                    LinearGradient(
+                                        colors: [iconColor, iconColor.opacity(0.8)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .shadow(color: iconColor.opacity(0.4), radius: 8, x: 0, y: 4)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    
+                    Spacer()
+                }
+                .padding(.top, 20)
+            }
+            .navigationBarHidden(true)
+        }
+        .onAppear {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                isFocused = true
+            }
         }
     }
 }
