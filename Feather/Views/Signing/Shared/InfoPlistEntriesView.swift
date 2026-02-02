@@ -221,7 +221,7 @@ struct InfoPlistEntriesView: View {
 		} else if let number = value as? Double {
 			return "\(number)"
 		} else if let array = value as? [Any] {
-			return "Array (\(array.count) items)"
+			return "Array (\(array.count) Items)"
 		} else if let dict = value as? [String: Any] {
 			return "Dictionary (\(dict.count) Keys)"
 		} else {
@@ -478,7 +478,7 @@ struct InfoPlistEntriesView: View {
 							VStack(alignment: .leading, spacing: 2) {
 								Text(.localized("Hide Status Bar"))
 									.font(.body)
-								Text(.localized("Hide The Status Bar"))
+								Text(.localized("Hide The Status Bar On The App"))
 									.font(.caption)
 									.foregroundStyle(.secondary)
 							}
