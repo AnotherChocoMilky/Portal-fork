@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreData
+import IDeviceSwift
 
 // MARK: - Batch Signing View
 struct BatchSigningView: View {
@@ -231,35 +232,35 @@ struct BatchSigningView: View {
                 }
                 
                 // Perform actual signing
-                do {
-                    let selectedCert = certificates[selectedCertificateIndex]
-                    AppLogManager.shared.info("Signing app \(index + 1)/\(Int(totalApps)): \(app.name ?? "Unknown")", category: "BatchSign")
-                    
-                    try await SigningManager.shared.signApp(
+                let selectedCert = certificates[selectedCertificateIndex]
+                AppLogManager.shared.info("Signing app \(index + 1)/\(Int(totalApps)): \(app.name ?? "Unknown")", category: "BatchSign")
+                
+                await withCheckedContinuation { continuation in
+                    FR.signPackageFile(
                         app,
-                        cert: selectedCert,
-                        withOptions: OptionsManager.shared.options
-                    )
-                    
-                    await MainActor.run {
-                        let result = BatchSignResult(
-                            appName: app.name ?? "Unknown",
-                            success: true,
-                            message: "Signed Successfully"
-                        )
-                        batchResults.append(result)
-                        signedAppsForInstall.append(app)
-                        AppLogManager.shared.success("Batch signing succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
-                    }
-                } catch {
-                    await MainActor.run {
-                        let result = BatchSignResult(
-                            appName: app.name ?? "Unknown",
-                            success: false,
-                            message: error.localizedDescription
-                        )
-                        batchResults.append(result)
-                        AppLogManager.shared.error("Batch signing failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
+                        using: OptionsManager.shared.options,
+                        icon: nil,
+                        certificate: selectedCert
+                    ) { error in
+                        if let error {
+                            let result = BatchSignResult(
+                                appName: app.name ?? "Unknown",
+                                success: false,
+                                message: error.localizedDescription
+                            )
+                            batchResults.append(result)
+                            AppLogManager.shared.error("Batch signing failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
+                        } else {
+                            let result = BatchSignResult(
+                                appName: app.name ?? "Unknown",
+                                success: true,
+                                message: "Signed Successfully"
+                            )
+                            batchResults.append(result)
+                            signedAppsForInstall.append(app)
+                            AppLogManager.shared.success("Batch signing succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
+                        }
+                        continuation.resume()
                     }
                 }
             }
@@ -301,17 +302,50 @@ struct BatchSigningView: View {
             AppLogManager.shared.info("Installing App \(index + 1)/\(Int(totalApps)): \(app.name ?? "Unknown")", category: "BatchSign")
             
             do {
-                try await InstallationManager.shared.installApp(app, method: InstallationMethod(rawValue: installationMethod) ?? .auto)
+                // Create ViewModel for installation
+                let viewModel = InstallerStatusViewModel(isIdevice: installationMethod == 1)
                 
-                await MainActor.run {
-                    if let resultIndex = batchResults.firstIndex(where: { $0.appName == (app.name ?? "Unknown") && $0.success }) {
-                        batchResults[resultIndex] = BatchSignResult(
-                            appName: app.name ?? "Unknown",
-                            success: true,
-                            message: "Signed and Installed Successfully"
-                        )
+                // Archive the signed app
+                let handler = ArchiveHandler(app: app, viewModel: viewModel)
+                try await handler.move()
+                let packageUrl = try await handler.archive()
+                
+                // Install using selected method
+                if installationMethod == 0 {
+                    // Server-based installation - notify user to open in browser/iTunes
+                    let installer = try ServerInstaller(app: app, viewModel: viewModel)
+                    await MainActor.run {
+                        installer.packageUrl = packageUrl
+                        viewModel.status = .ready
                     }
-                    AppLogManager.shared.success("Batch installation succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
+                    
+                    // For batch operations, we can't wait for user interaction
+                    // Just mark as ready for installation
+                    await MainActor.run {
+                        if let resultIndex = batchResults.firstIndex(where: { $0.appName == (app.name ?? "Unknown") && $0.success }) {
+                            batchResults[resultIndex] = BatchSignResult(
+                                appName: app.name ?? "Unknown",
+                                success: true,
+                                message: "Signed Successfully (Server Ready)"
+                            )
+                        }
+                        AppLogManager.shared.success("Batch installation ready for \(app.name ?? "Unknown")", category: "BatchSign")
+                    }
+                } else if installationMethod == 1 {
+                    // Direct device installation
+                    let installProxy = InstallationProxy(viewModel: viewModel)
+                    try await installProxy.install(at: packageUrl, suspend: app.identifier == Bundle.main.bundleIdentifier!)
+                    
+                    await MainActor.run {
+                        if let resultIndex = batchResults.firstIndex(where: { $0.appName == (app.name ?? "Unknown") && $0.success }) {
+                            batchResults[resultIndex] = BatchSignResult(
+                                appName: app.name ?? "Unknown",
+                                success: true,
+                                message: "Signed and Installed Successfully"
+                            )
+                        }
+                        AppLogManager.shared.success("Batch installation succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
+                    }
                 }
             } catch {
                 await MainActor.run {
