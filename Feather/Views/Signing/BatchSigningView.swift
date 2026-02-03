@@ -1,5 +1,6 @@
 import SwiftUI
 import CoreData
+import IDeviceSwift
 
 // MARK: - Batch Signing View
 struct BatchSigningView: View {
@@ -28,6 +29,11 @@ struct BatchSigningView: View {
     @State private var currentPhase: BatchPhase = .signing
     @State private var installationIndex = 0
     @State private var signedAppsForInstall: [AppInfoPresentable] = []
+    
+    // Edit functionality
+    @State private var appOptions: [String: Options] = [:] // UUID -> Custom Options
+    @State private var editingAppId: String? = nil
+    @State private var showEditSheet = false
     
     @AppStorage("Feather.installationMethod") private var installationMethod: Int = 0
     
@@ -84,8 +90,13 @@ struct BatchSigningView: View {
                                 BatchAppRow(
                                     app: app,
                                     isSelected: selectedApps.contains(app.uuid ?? ""),
+                                    hasCustomOptions: appOptions[app.uuid ?? ""] != nil,
                                     onToggle: {
                                         toggleAppSelection(app)
+                                    },
+                                    onEdit: {
+                                        editingAppId = app.uuid
+                                        showEditSheet = true
                                     }
                                 )
                             }
@@ -196,7 +207,31 @@ struct BatchSigningView: View {
                     }
                 }
             }
+            .sheet(isPresented: $showEditSheet) {
+                if let appId = editingAppId,
+                   let app = apps.first(where: { $0.uuid == appId }) {
+                    BatchAppEditSheet(
+                        app: app,
+                        options: Binding(
+                            get: { appOptions[appId] ?? createDefaultOptions(for: app) },
+                            set: { appOptions[appId] = $0 }
+                        ),
+                        onDismiss: {
+                            showEditSheet = false
+                        }
+                    )
+                }
+            }
         }
+    }
+    
+    private func createDefaultOptions(for app: AppInfoPresentable) -> Options {
+        var options = OptionsManager.shared.options
+        // Populate with app's existing values
+        options.appName = app.name
+        options.appVersion = app.version
+        options.appIdentifier = app.identifier
+        return options
     }
     
     private func toggleAppSelection(_ app: AppInfoPresentable) {
@@ -231,35 +266,38 @@ struct BatchSigningView: View {
                 }
                 
                 // Perform actual signing
-                do {
-                    let selectedCert = certificates[selectedCertificateIndex]
-                    AppLogManager.shared.info("Signing app \(index + 1)/\(Int(totalApps)): \(app.name ?? "Unknown")", category: "BatchSign")
-                    
-                    try await SigningManager.shared.signApp(
+                let selectedCert = certificates[selectedCertificateIndex]
+                AppLogManager.shared.info("Signing app \(index + 1)/\(Int(totalApps)): \(app.name ?? "Unknown")", category: "BatchSign")
+                
+                // Use custom options if available, otherwise use global options
+                let signingOptions = appOptions[app.uuid ?? ""] ?? OptionsManager.shared.options
+                
+                await withCheckedContinuation { continuation in
+                    FR.signPackageFile(
                         app,
-                        cert: selectedCert,
-                        withOptions: OptionsManager.shared.options
-                    )
-                    
-                    await MainActor.run {
-                        let result = BatchSignResult(
-                            appName: app.name ?? "Unknown",
-                            success: true,
-                            message: "Signed Successfully"
-                        )
-                        batchResults.append(result)
-                        signedAppsForInstall.append(app)
-                        AppLogManager.shared.success("Batch signing succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
-                    }
-                } catch {
-                    await MainActor.run {
-                        let result = BatchSignResult(
-                            appName: app.name ?? "Unknown",
-                            success: false,
-                            message: error.localizedDescription
-                        )
-                        batchResults.append(result)
-                        AppLogManager.shared.error("Batch signing failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
+                        using: signingOptions,
+                        icon: nil,
+                        certificate: selectedCert
+                    ) { error in
+                        if let error {
+                            let result = BatchSignResult(
+                                appName: app.name ?? "Unknown",
+                                success: false,
+                                message: error.localizedDescription
+                            )
+                            batchResults.append(result)
+                            AppLogManager.shared.error("Batch signing failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
+                        } else {
+                            let result = BatchSignResult(
+                                appName: app.name ?? "Unknown",
+                                success: true,
+                                message: "Signed Successfully"
+                            )
+                            batchResults.append(result)
+                            signedAppsForInstall.append(app)
+                            AppLogManager.shared.success("Batch signing succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
+                        }
+                        continuation.resume()
                     }
                 }
             }
@@ -301,17 +339,50 @@ struct BatchSigningView: View {
             AppLogManager.shared.info("Installing App \(index + 1)/\(Int(totalApps)): \(app.name ?? "Unknown")", category: "BatchSign")
             
             do {
-                try await InstallationManager.shared.installApp(app, method: InstallationMethod(rawValue: installationMethod) ?? .auto)
+                // Create ViewModel for installation
+                let viewModel = InstallerStatusViewModel(isIdevice: installationMethod == 1)
                 
-                await MainActor.run {
-                    if let resultIndex = batchResults.firstIndex(where: { $0.appName == (app.name ?? "Unknown") && $0.success }) {
-                        batchResults[resultIndex] = BatchSignResult(
-                            appName: app.name ?? "Unknown",
-                            success: true,
-                            message: "Signed and Installed Successfully"
-                        )
+                // Archive the signed app
+                let handler = ArchiveHandler(app: app, viewModel: viewModel)
+                try await handler.move()
+                let packageUrl = try await handler.archive()
+                
+                // Install using selected method
+                if installationMethod == 0 {
+                    // Server-based installation - notify user to open in browser/iTunes
+                    let installer = try ServerInstaller(app: app, viewModel: viewModel)
+                    await MainActor.run {
+                        installer.packageUrl = packageUrl
+                        viewModel.status = .ready
                     }
-                    AppLogManager.shared.success("Batch installation succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
+                    
+                    // For batch operations, we can't wait for user interaction
+                    // Just mark as ready for installation
+                    await MainActor.run {
+                        if let resultIndex = batchResults.firstIndex(where: { $0.appName == (app.name ?? "Unknown") && $0.success }) {
+                            batchResults[resultIndex] = BatchSignResult(
+                                appName: app.name ?? "Unknown",
+                                success: true,
+                                message: "Signed Successfully (Server Ready)"
+                            )
+                        }
+                        AppLogManager.shared.success("Batch installation ready for \(app.name ?? "Unknown")", category: "BatchSign")
+                    }
+                } else if installationMethod == 1 {
+                    // Direct device installation
+                    let installProxy = InstallationProxy(viewModel: viewModel)
+                    try await installProxy.install(at: packageUrl, suspend: app.identifier == Bundle.main.bundleIdentifier!)
+                    
+                    await MainActor.run {
+                        if let resultIndex = batchResults.firstIndex(where: { $0.appName == (app.name ?? "Unknown") && $0.success }) {
+                            batchResults[resultIndex] = BatchSignResult(
+                                appName: app.name ?? "Unknown",
+                                success: true,
+                                message: "Signed and Installed Successfully"
+                            )
+                        }
+                        AppLogManager.shared.success("Batch installation succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
+                    }
                 }
             } catch {
                 await MainActor.run {
@@ -343,30 +414,165 @@ struct BatchSigningView: View {
 struct BatchAppRow: View {
     let app: AppInfoPresentable
     let isSelected: Bool
+    let hasCustomOptions: Bool
     let onToggle: () -> Void
+    let onEdit: () -> Void
     
     var body: some View {
-        Button(action: onToggle) {
-            HStack(spacing: 12) {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.title2)
-                    .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
-                
-                FRAppIconView(app: app, size: 40)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(app.name ?? "Unknown App")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.primary)
+        HStack(spacing: 12) {
+            Button(action: onToggle) {
+                HStack(spacing: 12) {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.title2)
+                        .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
                     
-                    Text(app.identifier ?? "Unknown Bundle ID")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    FRAppIconView(app: app, size: 40)
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        HStack(spacing: 4) {
+                            Text(app.name ?? "Unknown App")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.primary)
+                            
+                            if hasCustomOptions {
+                                Image(systemName: "pencil.circle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                            }
+                        }
+                        
+                        Text(app.identifier ?? "Unknown Bundle ID")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .buttonStyle(.plain)
+            
+            Spacer()
+            
+            Button(action: onEdit) {
+                Image(systemName: "pencil.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(.accentColor)
+            }
+            .buttonStyle(.plain)
+        }
+    }
+}
+
+// MARK: - Batch App Edit Sheet
+struct BatchAppEditSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let app: AppInfoPresentable
+    @Binding var options: Options
+    let onDismiss: () -> Void
+    
+    @State private var editedName: String = ""
+    @State private var editedBundleId: String = ""
+    @State private var editedVersion: String = ""
+    
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    HStack {
+                        FRAppIconView(app: app, size: 60)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(app.name ?? "Unknown App")
+                                .font(.headline)
+                            Text(app.identifier ?? "Unknown Bundle ID")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                } header: {
+                    Text("App Information")
                 }
                 
-                Spacer()
+                Section {
+                    TextField("App Name", text: $editedName)
+                        .textInputAutocapitalization(.words)
+                    
+                    TextField("Bundle ID", text: $editedBundleId)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    
+                    TextField("Version", text: $editedVersion)
+                } header: {
+                    Text("Modify App Metadata")
+                } footer: {
+                    Text("Leave fields empty to keep original values")
+                }
+                
+                Section {
+                    NavigationLink {
+                        SigningTweaksView(options: $options)
+                    } label: {
+                        HStack {
+                            Image(systemName: "wrench.and.screwdriver.fill")
+                                .foregroundStyle(.green)
+                            Text("Add Tweaks")
+                            Spacer()
+                            if !options.injectionFiles.isEmpty {
+                                Text("\(options.injectionFiles.count)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                } header: {
+                    Text("Tweaks & Modifications")
+                } footer: {
+                    Text("Inject custom tweaks, dylibs, or frameworks into this app")
+                }
+                
+                Section {
+                    Button("Reset to Default") {
+                        editedName = app.name ?? ""
+                        editedBundleId = app.identifier ?? ""
+                        editedVersion = app.version ?? ""
+                        options.injectionFiles = []
+                    }
+                    .foregroundStyle(.orange)
+                }
+            }
+            .navigationTitle("Edit App")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                        onDismiss()
+                    }
+                }
+                
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        // Apply changes to options
+                        if !editedName.isEmpty {
+                            options.appName = editedName
+                        }
+                        if !editedBundleId.isEmpty {
+                            options.appIdentifier = editedBundleId
+                        }
+                        if !editedVersion.isEmpty {
+                            options.appVersion = editedVersion
+                        }
+                        
+                        dismiss()
+                        onDismiss()
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+            .onAppear {
+                // Initialize with current values
+                editedName = options.appName ?? app.name ?? ""
+                editedBundleId = options.appIdentifier ?? app.identifier ?? ""
+                editedVersion = options.appVersion ?? app.version ?? ""
             }
         }
-        .buttonStyle(.plain)
     }
 }
