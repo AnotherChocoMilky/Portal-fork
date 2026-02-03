@@ -155,7 +155,7 @@ struct BatchSigningView: View {
                             .transition(.opacity)
 
                         VStack(spacing: 20) {
-                            ProgressView(value: batchProgress)
+                            ProgressView()
                                 .progressViewStyle(.circular)
                                 .tint(.white)
                                 .scaleEffect(1.5)

@@ -1165,12 +1165,12 @@ struct InfoPlistEntriesView: View {
                             icon: "gamecontroller.fill",
                             color: .mint
                         ) {
-                            addSimpleEntry(key: "UIRequiresPersistentWiFi", value: true)
+                            addSimpleEntry(key: "UIRequiredDeviceCapabilities", value: ["gamekit"])
                         }
                         
                         PresetButton(
-                            title: .localized("High Performance"),
-                            subtitle: .localized("Optimize for high performance"),
+                            title: .localized("Hide Launch Screen"),
+                            subtitle: .localized("Remove launch storyboard"),
                             icon: "gauge.high",
                             color: .pink
                         ) {
@@ -1193,8 +1193,8 @@ struct InfoPlistEntriesView: View {
                         color: .red
                     ) {
                         PresetButton(
-                            title: .localized("Badge Settings"),
-                            subtitle: .localized("Configure app badge behavior"),
+                            title: .localized("Shake to Undo"),
+                            subtitle: .localized("Enable shake to undo/edit"),
                             icon: "app.badge",
                             color: .red
                         ) {
