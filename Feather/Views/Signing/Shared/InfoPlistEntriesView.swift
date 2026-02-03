@@ -13,7 +13,6 @@ struct InfoPlistEntriesView: View {
     @State private var showPresetSheet = false
     @State private var showEditSheet = false
     @State private var searchText = ""
-    @State private var selectedCategory: EntryCategory = .all
     @State private var showDeleteConfirmation = false
     @State private var entryToDelete: String?
     @State private var showBatchActionsSheet = false
@@ -65,24 +64,6 @@ struct InfoPlistEntriesView: View {
         }
     }
     
-    enum EntryCategory: String, CaseIterable {
-        case all = "All"
-        case display = "Display"
-        case permissions = "Permissions"
-        case background = "Background"
-        case custom = "Custom"
-        
-        var icon: String {
-            switch self {
-            case .all: return "square.grid.2x2"
-            case .display: return "paintbrush"
-            case .permissions: return "hand.raised"
-            case .background: return "moon.fill"
-            case .custom: return "wrench"
-            }
-        }
-    }
-    
     private var filteredEntries: [(key: String, value: AnyCodable)] {
         let entries = options.customInfoPlistEntries.map { (key: $0.key, value: $0.value) }
         var result = entries
@@ -92,22 +73,7 @@ struct InfoPlistEntriesView: View {
                 valueDescription(for: $0.value.value).localizedCaseInsensitiveContains(searchText) }
         }
         
-        if selectedCategory != .all {
-            result = result.filter { categorizeEntry($0.key) == selectedCategory }
-        }
-        
         return result.sorted { $0.key < $1.key }
-    }
-    
-    private func categorizeEntry(_ key: String) -> EntryCategory {
-        let displayKeys = ["UIRequiresFullScreen", "UIStatusBarHidden", "UILaunchStoryboardName", "UISupportedInterfaceOrientations", "UIUserInterfaceStyle"]
-        let permissionKeys = ["NSCameraUsageDescription", "NSPhotoLibraryUsageDescription", "NSMicrophoneUsageDescription", "NSLocationWhenInUseUsageDescription", "NSLocationAlwaysUsageDescription", "NSContactsUsageDescription", "NSCalendarsUsageDescription", "NSFaceIDUsageDescription", "NSBluetoothAlwaysUsageDescription"]
-        let backgroundKeys = ["UIBackgroundModes"]
-        
-        if displayKeys.contains(key) { return .display }
-        if permissionKeys.contains(key) { return .permissions }
-        if backgroundKeys.contains(key) { return .background }
-        return .custom
     }
     
     var body: some View {
@@ -117,7 +83,6 @@ struct InfoPlistEntriesView: View {
                 
                 VStack(spacing: 0) {
                     headerSection
-                    categoryPicker
                     searchBar
                     mainContent
                 }
@@ -248,40 +213,6 @@ struct InfoPlistEntriesView: View {
         }
         .padding(.top, 16)
         .padding(.bottom, 8)
-    }
-    
-    @ViewBuilder
-    private var categoryPicker: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(EntryCategory.allCases, id: \.self) { category in
-                    Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                            selectedCategory = category
-                        }
-                        HapticsManager.shared.softImpact()
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: category.icon)
-                                .font(.system(size: 12, weight: .semibold))
-                            Text(category.rawValue)
-                                .font(.system(size: 13, weight: .medium))
-                        }
-                        .foregroundStyle(selectedCategory == category ? .white : .secondary)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(
-                            Capsule()
-                                .fill(selectedCategory == category ? 
-                                      LinearGradient(colors: [.indigo, .purple], startPoint: .leading, endPoint: .trailing) :
-                                      LinearGradient(colors: [Color(.systemGray5)], startPoint: .leading, endPoint: .trailing))
-                        )
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-        }
-        .padding(.vertical, 8)
     }
     
     @ViewBuilder
@@ -1187,6 +1118,267 @@ struct InfoPlistEntriesView: View {
                         ) {
                             let atsDict: [String: Any] = ["NSAllowsArbitraryLoads": true]
                             addSimpleEntry(key: "NSAppTransportSecurity", value: atsDict)
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("Jailbreak & Device"),
+                        icon: "gear.badge.checkmark",
+                        color: .yellow
+                    ) {
+                        PresetButton(
+                            title: .localized("Substrate Safe Mode"),
+                            subtitle: .localized("Run in safe mode on jailbroken devices"),
+                            icon: "shield.checkered",
+                            color: .yellow
+                        ) {
+                            addSimpleEntry(key: "SBAppTags", value: ["hidden"])
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Unrestricted Web GL"),
+                            subtitle: .localized("Allow WebGL without restrictions"),
+                            icon: "cube.transparent",
+                            color: .cyan
+                        ) {
+                            addSimpleEntry(key: "WebKitWebGLEnabled", value: true)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Disable Tracking"),
+                            subtitle: .localized("Disable app tracking transparency"),
+                            icon: "hand.raised.slash.fill",
+                            color: .red
+                        ) {
+                            addSimpleEntry(key: "NSUserTrackingUsageDescription", value: "This app does not track you.")
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("Game & Performance"),
+                        icon: "gamecontroller.fill",
+                        color: .mint
+                    ) {
+                        PresetButton(
+                            title: .localized("Game Center"),
+                            subtitle: .localized("Enable Game Center integration"),
+                            icon: "gamecontroller.fill",
+                            color: .mint
+                        ) {
+                            addSimpleEntry(key: "UIRequiresPersistentWiFi", value: true)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("High Performance"),
+                            subtitle: .localized("Optimize for high performance"),
+                            icon: "gauge.high",
+                            color: .pink
+                        ) {
+                            addSimpleEntry(key: "UILaunchStoryboardName", value: "")
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Metal Support"),
+                            subtitle: .localized("Enable Metal graphics API"),
+                            icon: "cpu",
+                            color: .purple
+                        ) {
+                            addSimpleEntry(key: "MetalCaptureEnabled", value: true)
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("Notifications & Badges"),
+                        icon: "bell.badge.fill",
+                        color: .red
+                    ) {
+                        PresetButton(
+                            title: .localized("Badge Settings"),
+                            subtitle: .localized("Configure app badge behavior"),
+                            icon: "app.badge",
+                            color: .red
+                        ) {
+                            addSimpleEntry(key: "UIApplicationSupportsShakeToEdit", value: true)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Critical Alerts"),
+                            subtitle: .localized("Allow critical alerts permission"),
+                            icon: "exclamationmark.triangle.fill",
+                            color: .orange
+                        ) {
+                            addSimpleEntry(key: "UNAuthorizationOptionCriticalAlert", value: true)
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("Keyboard & Input"),
+                        icon: "keyboard.fill",
+                        color: .gray
+                    ) {
+                        PresetButton(
+                            title: .localized("Third-Party Keyboards"),
+                            subtitle: .localized("Allow third-party keyboard extensions"),
+                            icon: "keyboard.badge.ellipsis",
+                            color: .blue
+                        ) {
+                            addSimpleEntry(key: "UIKeyboardExtensionPointIdentifier", value: true)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Dictation"),
+                            subtitle: .localized("Enable voice dictation"),
+                            icon: "mic.badge.plus",
+                            color: .purple
+                        ) {
+                            addSimpleEntry(key: "UIDictationEnabled", value: true)
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("Networking & Wireless"),
+                        icon: "wifi",
+                        color: .blue
+                    ) {
+                        PresetButton(
+                            title: .localized("WiFi Required"),
+                            subtitle: .localized("Require WiFi connection"),
+                            icon: "wifi",
+                            color: .blue
+                        ) {
+                            addSimpleEntry(key: "UIRequiresPersistentWiFi", value: true)
+                        }
+                        
+                        PresetButton(
+                            title: .localized("AirDrop Support"),
+                            subtitle: .localized("Enable AirDrop sharing"),
+                            icon: "airplayaudio",
+                            color: .cyan
+                        ) {
+                            addSimpleEntry(key: "UIActivityContinuationTypes", value: ["public.data"])
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Local Network"),
+                            subtitle: .localized("Add local network permission"),
+                            icon: "network",
+                            color: .green
+                        ) {
+                            addSimpleEntry(key: "NSLocalNetworkUsageDescription", value: "This app needs access to local network.")
+                        }
+                        
+                        PresetButton(
+                            title: .localized("NFC Reader"),
+                            subtitle: .localized("Add NFC reader permission"),
+                            icon: "wave.3.right",
+                            color: .orange
+                        ) {
+                            addSimpleEntry(key: "NFCReaderUsageDescription", value: "This app needs NFC access.")
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("Media & Content"),
+                        icon: "photo.on.rectangle.angled",
+                        color: .pink
+                    ) {
+                        PresetButton(
+                            title: .localized("Photo Library Add"),
+                            subtitle: .localized("Permission to add photos"),
+                            icon: "photo.badge.plus",
+                            color: .pink
+                        ) {
+                            addSimpleEntry(key: "NSPhotoLibraryAddUsageDescription", value: "This app needs to save photos.")
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Media Library"),
+                            subtitle: .localized("Access music and media library"),
+                            icon: "music.note.list",
+                            color: .red
+                        ) {
+                            addSimpleEntry(key: "NSAppleMusicUsageDescription", value: "This app needs access to your music library.")
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Speech Recognition"),
+                            subtitle: .localized("Enable speech recognition"),
+                            icon: "waveform",
+                            color: .purple
+                        ) {
+                            addSimpleEntry(key: "NSSpeechRecognitionUsageDescription", value: "This app uses speech recognition.")
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("Health & Fitness"),
+                        icon: "heart.fill",
+                        color: .red
+                    ) {
+                        PresetButton(
+                            title: .localized("Health Kit"),
+                            subtitle: .localized("Access health data"),
+                            icon: "heart.text.square.fill",
+                            color: .red
+                        ) {
+                            addSimpleEntry(key: "NSHealthShareUsageDescription", value: "This app needs access to your health data.")
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Motion & Fitness"),
+                            subtitle: .localized("Access motion and fitness data"),
+                            icon: "figure.walk",
+                            color: .orange
+                        ) {
+                            addSimpleEntry(key: "NSMotionUsageDescription", value: "This app needs access to motion data.")
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("Calendar & Reminders"),
+                        icon: "calendar",
+                        color: .orange
+                    ) {
+                        PresetButton(
+                            title: .localized("Calendars Access"),
+                            subtitle: .localized("Access calendar events"),
+                            icon: "calendar.badge.plus",
+                            color: .orange
+                        ) {
+                            addSimpleEntry(key: "NSCalendarsUsageDescription", value: "This app needs calendar access.")
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Reminders Access"),
+                            subtitle: .localized("Access reminders"),
+                            icon: "checklist",
+                            color: .blue
+                        ) {
+                            addSimpleEntry(key: "NSRemindersUsageDescription", value: "This app needs reminders access.")
+                        }
+                    }
+                    
+                    PresetSection(
+                        title: .localized("HomeKit & Siri"),
+                        icon: "house.fill",
+                        color: .brown
+                    ) {
+                        PresetButton(
+                            title: .localized("HomeKit"),
+                            subtitle: .localized("Control HomeKit accessories"),
+                            icon: "homekit",
+                            color: .brown
+                        ) {
+                            addSimpleEntry(key: "NSHomeKitUsageDescription", value: "This app needs HomeKit access.")
+                        }
+                        
+                        PresetButton(
+                            title: .localized("Siri Integration"),
+                            subtitle: .localized("Enable Siri shortcuts and intents"),
+                            icon: "sparkles",
+                            color: .purple
+                        ) {
+                            addSimpleEntry(key: "NSSiriUsageDescription", value: "This app uses Siri.")
                         }
                     }
                 }
