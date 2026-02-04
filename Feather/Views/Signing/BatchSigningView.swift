@@ -300,6 +300,11 @@ struct BatchSigningView: View {
                         continuation.resume()
                     }
                 }
+                
+                // Immediately trigger installation for this app after signing
+                if autoInstall && signedAppsForInstall.contains(where: { $0.uuid == app.uuid }) {
+                    await triggerInstallation(for: app, appIndex: index)
+                }
             }
 
             await MainActor.run {
@@ -307,17 +312,95 @@ struct BatchSigningView: View {
                 AppLogManager.shared.success("Batch signing completed for \(Int(totalApps)) apps", category: "BatchSign")
             }
             
-            // Start installation phase if autoInstall is enabled
-            if autoInstall && !signedAppsForInstall.isEmpty {
-                await startBatchInstallation()
-            } else {
+            // Clean up signed apps to save space
+            await cleanupSignedApps()
+            
+            await MainActor.run {
+                isSigningBatch = false
+                selectedApps.removeAll()
+                HapticsManager.shared.success()
+                ToastManager.shared.show("✅ Batch Signing Completed", type: .success)
+            }
+        }
+    }
+    
+    private func triggerInstallation(for app: AppInfoPresentable, appIndex: Int) async {
+        AppLogManager.shared.info("Triggering installation for app: \(app.name ?? "Unknown")", category: "BatchSign")
+        
+        do {
+            // Create ViewModel for installation
+            let viewModel = InstallerStatusViewModel(isIdevice: installationMethod == 1)
+            
+            // Archive the signed app
+            let handler = ArchiveHandler(app: app, viewModel: viewModel)
+            try await handler.move()
+            let packageUrl = try await handler.archive()
+            
+            // Install using selected method
+            if installationMethod == 0 {
+                // Server-based installation - trigger itms link
+                let installer = try ServerInstaller(app: app, viewModel: viewModel)
                 await MainActor.run {
-                    isSigningBatch = false
-                    selectedApps.removeAll()
-                    HapticsManager.shared.success()
-                    ToastManager.shared.show("✅ Batch Signing Completed", type: .success)
+                    installer.packageUrl = packageUrl
+                    viewModel.status = .ready
+                }
+                
+                // Trigger the itms link to install the app
+                await MainActor.run {
+                    if let url = URL(string: installer.iTunesLink) {
+                        UIApplication.shared.open(url)
+                        AppLogManager.shared.success("Triggered installation link for \(app.name ?? "Unknown")", category: "BatchSign")
+                        
+                        // Update result to show installation was triggered
+                        if let resultIndex = batchResults.firstIndex(where: { $0.appName == (app.name ?? "Unknown") && $0.success }) {
+                            batchResults[resultIndex] = BatchSignResult(
+                                appName: app.name ?? "Unknown",
+                                success: true,
+                                message: "Signed - Installation Link Opened"
+                            )
+                        }
+                    }
+                }
+            } else if installationMethod == 1 {
+                // Direct device installation
+                let installProxy = InstallationProxy(viewModel: viewModel)
+                try await installProxy.install(at: packageUrl, suspend: app.identifier == Bundle.main.bundleIdentifier!)
+                
+                await MainActor.run {
+                    if let resultIndex = batchResults.firstIndex(where: { $0.appName == (app.name ?? "Unknown") && $0.success }) {
+                        batchResults[resultIndex] = BatchSignResult(
+                            appName: app.name ?? "Unknown",
+                            success: true,
+                            message: "Signed and Installed Successfully"
+                        )
+                    }
+                    AppLogManager.shared.success("Batch installation succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
                 }
             }
+        } catch {
+            await MainActor.run {
+                if let resultIndex = batchResults.firstIndex(where: { $0.appName == (app.name ?? "Unknown") && $0.success }) {
+                    batchResults[resultIndex] = BatchSignResult(
+                        appName: app.name ?? "Unknown",
+                        success: true,
+                        message: "Signed Successfully, Installation Failed: \(error.localizedDescription)"
+                    )
+                }
+                AppLogManager.shared.error("Installation failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
+            }
+        }
+    }
+    
+    private func cleanupSignedApps() async {
+        AppLogManager.shared.info("Cleaning up signed apps to save space", category: "BatchSign")
+        
+        await MainActor.run {
+            for app in signedAppsForInstall {
+                Storage.shared.deleteApp(for: app)
+                AppLogManager.shared.info("Deleted app: \(app.name ?? "Unknown")", category: "BatchSign")
+            }
+            
+            AppLogManager.shared.success("Cleanup completed: \(signedAppsForInstall.count) apps deleted", category: "BatchSign")
         }
     }
     
