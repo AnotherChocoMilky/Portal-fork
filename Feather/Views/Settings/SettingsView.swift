@@ -125,8 +125,7 @@ struct SettingsView: View {
     
     private var appSection: some View {
         Section {
-            SettingsRow(icon: "app.badge.fill", title: "App Icons", color: .blue
-                        \, destination: AppIconView())
+            SettingsRow(icon: "app.badge.fill", title: "App Icons", color: .blue, destination: AppIconView())
             Button {
                 navigateToCheckForUpdates = true
             } label: {
