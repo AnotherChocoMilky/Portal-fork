@@ -24,7 +24,7 @@ struct ConfigurationDictAddView: View {
 			}
 			.autocapitalization(.none)
 		}
-		.toolbar {
+		.toolbar(content: {
 			NBToolbarButton(
 				.localized("Save"),
 				style: .text,
@@ -35,6 +35,6 @@ struct ConfigurationDictAddView: View {
 				OptionsManager.shared.saveOptions()
 				dismiss()
 			}
-		}
+		})
     }
 }

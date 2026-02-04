@@ -147,7 +147,7 @@ struct SourceAppsView: View {
             prompt: totalAppCount > 0 ? Text("Search \(totalAppCount) Apps") : Text("Search Apps")
         )
         .toolbarTitleMenu { titleMenuContent }
-        .toolbar { toolbarContent }
+        .toolbar(content: { toolbarContent }
         .onAppear(perform: handleOnAppear)
         .onChange(of: viewModel.isFinished) { _ in loadSources() }
         .onChange(of: sortOption) { sortOptionRawValue = $0.rawValue }
@@ -155,7 +155,7 @@ struct SourceAppsView: View {
         .navigationDestinationIfAvailable(item: $selectedRoute) { route in
             SourceAppsDetailView(source: route.source, app: route.app)
         }
-    }
+    })
     
     // MARK: - Background
     @ViewBuilder

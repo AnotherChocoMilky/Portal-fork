@@ -44,13 +44,13 @@ struct CertificatesAddView: View {
         .background(Color(UIColor.systemGroupedBackground))
         .navigationTitle("Add Certificate")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
+        .toolbar(content: {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {
                     dismiss()
                 }
             }
-        }
+        })
         .sheet(isPresented: $_isImportingP12Presenting) {
             p12ImportSheet
         }

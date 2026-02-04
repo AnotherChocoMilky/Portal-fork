@@ -10,7 +10,7 @@ struct DefaultFrameworksView: View {
         NBList(.localized("Default Frameworks")) {
             frameworksSection
         }
-        .toolbar {
+        .toolbar(content: {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     isAddingPresenting = true
@@ -20,7 +20,7 @@ struct DefaultFrameworksView: View {
                         .symbolRenderingMode(.hierarchical)
                 }
             }
-        }
+        })
         .sheet(isPresented: $isAddingPresenting) {
             FileImporterRepresentableView(
                 allowedContentTypes: [.dylib, .deb],

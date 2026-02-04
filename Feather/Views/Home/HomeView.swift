@@ -2238,13 +2238,13 @@ struct SignAndInstallPickerView: View {
             }
             .navigationTitle("Sign & Install")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
-            }
+            })
             .sheet(isPresented: $_showFilePicker) {
                 FileImporterRepresentableView(
                     allowedContentTypes: [.ipa, .tipa],
@@ -2450,13 +2450,13 @@ struct AppUpdatesListSheet: View {
             }
             .navigationTitle("App Updates")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
                 }
-            }
+            })
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)

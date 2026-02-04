@@ -88,7 +88,7 @@ struct InfoPlistEntriesView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { toolbarContent }
+            .toolbar(content: { toolbarContent }
             .sheet(isPresented: $showAddEntryDialog) { addEntrySheet }
             .sheet(isPresented: $showPresetSheet) { presetOptionsSheet }
             .sheet(isPresented: $showEditSheet) { editEntrySheet }
@@ -122,7 +122,7 @@ struct InfoPlistEntriesView: View {
                     appearAnimation = true
                 }
             }
-        }
+        })
     }
     
     @ViewBuilder
@@ -629,14 +629,14 @@ struct InfoPlistEntriesView: View {
             }
             .navigationTitle(.localized("Add Entry"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(.localized("Cancel")) {
                         showAddEntryDialog = false
                         resetForm()
                     }
                 }
-            }
+            })
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
@@ -795,13 +795,13 @@ struct InfoPlistEntriesView: View {
             }
             .navigationTitle(.localized("Edit Entry"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(.localized("Cancel")) {
                         showEditSheet = false
                     }
                 }
-            }
+            })
         }
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
@@ -1387,13 +1387,13 @@ struct InfoPlistEntriesView: View {
             .background(Color(UIColor.systemGroupedBackground))
             .navigationTitle(.localized("Preset Options"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(.localized("Done")) {
                         showPresetSheet = false
                     }
                 }
-            }
+            })
         }
     }
     
@@ -1415,13 +1415,13 @@ struct InfoPlistEntriesView: View {
             }
             .navigationTitle(.localized("Batch Actions"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(.localized("Cancel")) {
                         showBatchActionsSheet = false
                     }
                 }
-            }
+            })
         }
     }
     

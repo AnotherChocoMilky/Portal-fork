@@ -37,13 +37,13 @@ struct FolderCustomizationView: View {
                     Text(.localized("Icon"))
                 }
             }
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(.localized("Done")) {
                         dismiss()
                     }
                 }
-            }
+            })
         }
         .onAppear {
             loadIcon()

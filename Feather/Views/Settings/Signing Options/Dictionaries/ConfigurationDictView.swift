@@ -19,7 +19,7 @@ struct ConfigurationDictView: View {
 				}
 			}
 		}
-		.toolbar {
+		.toolbar(content: {
 			NBToolbarButton(
 				systemImage: "plus",
 				style: .icon,
@@ -27,7 +27,7 @@ struct ConfigurationDictView: View {
 			) {
 				_isAddingPresenting = true
 			}
-		}
+		})
 		.navigationDestination(isPresented: $_isAddingPresenting) {
 			ConfigurationDictAddView(dataDict: $dataDict)
 		}

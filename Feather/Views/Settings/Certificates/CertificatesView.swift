@@ -56,7 +56,7 @@ struct CertificatesView: View {
 				emptyStateView
 			}
 		}
-		.toolbar {
+		.toolbar(content: {
 			if _bindingSelectedCert == nil {
 				ToolbarItem(placement: .topBarTrailing) {
 					Button {
@@ -68,7 +68,7 @@ struct CertificatesView: View {
 					}
 				}
 			}
-		}
+		})
 		.sheet(item: $_isSelectedInfoPresenting) { cert in
 			CertificatesInfoView(cert: cert)
 		}

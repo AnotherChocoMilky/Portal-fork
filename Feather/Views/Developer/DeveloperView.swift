@@ -724,7 +724,7 @@ struct ModernPasscodeSetupView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         onComplete(false)
@@ -732,7 +732,7 @@ struct ModernPasscodeSetupView: View {
                     }
                     .foregroundStyle(.orange)
                 }
-            }
+            })
         }
     }
     
@@ -1535,7 +1535,7 @@ struct AppLogsView: View {
         }
         .navigationTitle("App Logs")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
+        .toolbar(content: {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 // Auto-scroll toggle
                 Button(action: { autoScroll.toggle() }) {
@@ -1566,7 +1566,7 @@ struct AppLogsView: View {
                     Image(systemName: "square.and.arrow.up")
                 }
             }
-        }
+        })
         .sheet(isPresented: $showShareSheet) {
             ActivityViewController(activityItems: [shareText])
         }
@@ -5594,7 +5594,7 @@ struct CrashLogViewer: View {
         .onAppear {
             loadCrashLogs()
         }
-        .toolbar {
+        .toolbar(content: {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     loadCrashLogs()
@@ -5602,7 +5602,7 @@ struct CrashLogViewer: View {
                     Image(systemName: "arrow.clockwise")
                 }
             }
-        }
+        })
     }
     
     private func loadCrashLogs() {
@@ -6211,7 +6211,7 @@ struct SigningLogsView: View {
         }
         .searchable(text: $searchText, prompt: "Search Logs")
         .navigationTitle("Signing Logs")
-        .toolbar {
+        .toolbar(content: {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Button {
@@ -6237,7 +6237,7 @@ struct SigningLogsView: View {
                     Image(systemName: "ellipsis.circle")
                 }
             }
-        }
+        })
     }
     
     private func exportLogs() {
