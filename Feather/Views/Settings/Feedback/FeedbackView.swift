@@ -3758,7 +3758,7 @@ struct GitHubMarkdownWebView: UIViewRepresentable {
         let isDark = colorScheme == .dark
         let textColor = isDark ? "#FFFFFF" : "#000000"
         let secondaryColor = isDark ? "#8E8E93" : "#6C6C70"
-        let bgColor = isDark ? "#1C1C1E" : "#FFFFFF"
+        _ = isDark ? "#1C1C1E" : "#FFFFFF"
         let codeBgColor = isDark ? "#2C2C2E" : "#F2F2F7"
         let borderColor = isDark ? "#38383A" : "#E5E5EA"
         let linkColor = "#007AFF"

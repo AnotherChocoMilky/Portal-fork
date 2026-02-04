@@ -258,7 +258,7 @@ struct BatchSigningView: View {
             }
             .navigationTitle("Batch Signing")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(content: {
+            .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         dismiss()
@@ -269,7 +269,7 @@ struct BatchSigningView: View {
                             .symbolRenderingMode(.hierarchical)
                     }
                 }
-            })
+            }
             .sheet(isPresented: $showEditSheet) {
                 if let appId = editingAppId,
                    let app = apps.first(where: { $0.uuid == appId }) {
