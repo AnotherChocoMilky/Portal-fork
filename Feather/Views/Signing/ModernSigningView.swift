@@ -100,7 +100,7 @@ struct ModernSigningView: View {
                 .onAppear {
                     _editingName = _temporaryOptions.appName ?? app.name ?? ""
                 }
-                .presentationDetents([.height(280)])
+                .presentationDetents([.height(240)])
                 .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $_isIdentifierDialogPresenting) {
@@ -122,7 +122,7 @@ struct ModernSigningView: View {
                 .onAppear {
                     _editingBundleId = _temporaryOptions.appIdentifier ?? app.identifier ?? ""
                 }
-                .presentationDetents([.height(280)])
+                .presentationDetents([.height(240)])
                 .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $_isVersionDialogPresenting) {
@@ -144,7 +144,7 @@ struct ModernSigningView: View {
                 .onAppear {
                     _editingVersion = _temporaryOptions.appVersion ?? app.version ?? ""
                 }
-                .presentationDetents([.height(280)])
+                .presentationDetents([.height(240)])
                 .presentationDragIndicator(.visible)
             }
         }
@@ -5157,86 +5157,80 @@ struct ModernEditSheet: View {
                 )
                 .ignoresSafeArea()
                 
-                VStack(spacing: 28) {
-                    // Modern animated icon with glow effect
-                    ZStack {
-                        // Outer glow
-                        Circle()
-                            .fill(
-                                RadialGradient(
-                                    colors: [iconColor.opacity(0.3), iconColor.opacity(0.1), .clear],
-                                    center: .center,
-                                    startRadius: 10,
-                                    endRadius: 50
+                VStack(spacing: 16) {
+                    HStack(spacing: 20) {
+                        // Modern animated icon with glow effect
+                        ZStack {
+                            // Outer glow
+                            Circle()
+                                .fill(
+                                    RadialGradient(
+                                        colors: [iconColor.opacity(0.3), iconColor.opacity(0.1), .clear],
+                                        center: .center,
+                                        startRadius: 5,
+                                        endRadius: 30
+                                    )
                                 )
-                            )
-                            .frame(width: 100, height: 100)
-                            .scaleEffect(iconScale)
-                        
-                        // Icon background
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [iconColor.opacity(0.25), iconColor.opacity(0.15)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
+                                .frame(width: 60, height: 60)
+                                .scaleEffect(iconScale)
+
+                            // Icon background
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [iconColor.opacity(0.25), iconColor.opacity(0.15)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
                                 )
-                            )
-                            .frame(width: 70, height: 70)
-                            .shadow(color: iconColor.opacity(0.4), radius: 15, x: 0, y: 8)
-                        
-                        // Icon
-                        Image(systemName: icon)
-                            .font(.system(size: 28, weight: .semibold))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [iconColor, iconColor.opacity(0.8)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                    .scaleEffect(iconScale)
-                    
-                    // Title section with better spacing
-                    VStack(spacing: 6) {
-                        Text(title)
-                            .font(.system(size: 24, weight: .bold, design: .rounded))
-                            .foregroundStyle(.primary)
-                        
-                        Text("Enter a new value below")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(.secondary)
-                    }
-                    .opacity(contentOpacity)
-                    
-                    // Modern text field with enhanced design
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 8) {
+                                .frame(width: 44, height: 44)
+                                .shadow(color: iconColor.opacity(0.4), radius: 10, x: 0, y: 4)
+
+                            // Icon
                             Image(systemName: icon)
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(iconColor.opacity(0.7))
-                            Text(title)
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(.secondary)
-                                .textCase(.uppercase)
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [iconColor, iconColor.opacity(0.8)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .symbolRenderingMode(.hierarchical)
                         }
-                        .padding(.horizontal, 4)
+                        .scaleEffect(iconScale)
                         
+                        // Title section
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(title)
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
+                                .foregroundStyle(.primary)
+
+                            Text("Enter new \(title.lowercased())")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(.horizontal, 24)
+                    .opacity(contentOpacity)
+
+                    // Modern text field with enhanced design
+                    VStack(alignment: .leading, spacing: 6) {
                         TextField(placeholder, text: $value)
-                            .font(.system(size: 17, weight: .medium))
+                            .font(.system(size: 16, weight: .medium))
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
                             .keyboardType(keyboardType)
                             .focused($isFocused)
-                            .padding(18)
+                            .padding(14)
                             .background(
                                 ZStack {
-                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
                                         .fill(Color(.secondarySystemGroupedBackground))
                                     
-                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
                                         .fill(
                                             LinearGradient(
                                                 colors: isFocused ? [iconColor.opacity(0.05), .clear] : [.clear, .clear],
@@ -5247,76 +5241,54 @@ struct ModernEditSheet: View {
                                 }
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
                                     .strokeBorder(
                                         LinearGradient(
                                             colors: isFocused ? [iconColor.opacity(0.6), iconColor.opacity(0.3)] : [Color.clear, Color.clear],
                                             startPoint: .topLeading,
                                             endPoint: .bottomTrailing
                                         ),
-                                        lineWidth: isFocused ? 2.5 : 0
+                                        lineWidth: isFocused ? 2 : 0
                                     )
-                                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isFocused)
                             )
-                            .shadow(color: isFocused ? iconColor.opacity(0.15) : .clear, radius: 12, x: 0, y: 6)
                     }
                     .padding(.horizontal, 24)
                     .opacity(contentOpacity)
                     
                     // Modern action buttons with enhanced design
-                    HStack(spacing: 14) {
+                    HStack(spacing: 12) {
                         Button {
                             onCancel()
                         } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "xmark")
-                                    .font(.system(size: 15, weight: .semibold))
-                                Text("Cancel")
-                                    .font(.system(size: 17, weight: .semibold))
-                            }
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color(.secondarySystemGroupedBackground))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .strokeBorder(Color.secondary.opacity(0.2), lineWidth: 1)
-                            )
+                            Text("Cancel")
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(Color(.secondarySystemGroupedBackground))
+                                )
                         }
                         .buttonStyle(.plain)
                         
                         Button {
                             onSave()
                         } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 15, weight: .bold))
-                                Text("Save")
-                                    .font(.system(size: 17, weight: .bold))
-                            }
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                ZStack {
+                            Text("Save")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(
                                     LinearGradient(
                                         colors: [iconColor, iconColor.opacity(0.85)],
                                         startPoint: .topLeading,
                                         endPoint: .bottomTrailing
                                     )
-                                    
-                                    LinearGradient(
-                                        colors: [.white.opacity(0.3), .clear],
-                                        startPoint: .top,
-                                        endPoint: .center
-                                    )
-                                }
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            .shadow(color: iconColor.opacity(0.5), radius: 12, x: 0, y: 6)
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                                .shadow(color: iconColor.opacity(0.3), radius: 8, x: 0, y: 4)
                         }
                         .buttonStyle(.plain)
                     }
