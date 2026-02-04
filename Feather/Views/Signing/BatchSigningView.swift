@@ -57,25 +57,40 @@ struct BatchSigningView: View {
                     // Certificate Selection
                     Section {
                         if certificates.isEmpty {
-                            Text("No Certificates Available")
-                                .foregroundStyle(.secondary)
+                            HStack(spacing: 12) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(.orange)
+                                Text("No Certificates Available")
+                                    .foregroundStyle(.secondary)
+                            }
                         } else {
                             Picker("Signing Certificate", selection: $selectedCertificateIndex) {
                                 ForEach(Array(certificates.enumerated()), id: \.element.uuid) { index, cert in
-                                    Text(cert.nickname ?? "Certificate \(index + 1)")
-                                        .tag(index)
+                                    HStack {
+                                        Image(systemName: "checkmark.seal.fill")
+                                            .foregroundStyle(.blue)
+                                        Text(cert.nickname ?? "Certificate \(index + 1)")
+                                    }
+                                    .tag(index)
                                 }
                             }
                         }
                     } header: {
-                        Text("Certificate")
+                        Label("Certificate", systemImage: "checkmark.seal.fill")
                     }
                     
                     // Auto Install Toggle
                     Section {
-                        Toggle("Auto Install After Signing", isOn: $autoInstall)
+                        Toggle(isOn: $autoInstall) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "arrow.down.circle.fill")
+                                    .foregroundStyle(.green)
+                                Text("Auto Install After Signing")
+                            }
+                        }
                     } header: {
-                        Text("Options")
+                        Label("Options", systemImage: "gearshape.fill")
                     } footer: {
                         Text("Automatically install apps after successful signing")
                     }
@@ -83,8 +98,13 @@ struct BatchSigningView: View {
                     // App Selection
                     Section {
                         if apps.isEmpty {
-                            Text("No Apps Available For Signing")
-                                .foregroundStyle(.secondary)
+                            HStack(spacing: 12) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(.orange)
+                                Text("No Apps Available For Signing")
+                                    .foregroundStyle(.secondary)
+                            }
                         } else {
                             ForEach(apps, id: \.uuid) { app in
                                 BatchAppRow(
@@ -103,7 +123,7 @@ struct BatchSigningView: View {
                         }
                     } header: {
                         HStack {
-                            Text("Select Apps (\(selectedApps.count) Selected)")
+                            Label("Select Apps (\(selectedApps.count) Selected)", systemImage: "app.badge.checkmark.fill")
                             Spacer()
                             if !apps.isEmpty {
                                 Button(selectedApps.count == apps.count ? "Deselect All" : "Select All") {
@@ -125,35 +145,40 @@ struct BatchSigningView: View {
                         Button {
                             startBatchSigning()
                         } label: {
-                            HStack {
+                            HStack(spacing: 12) {
                                 Image(systemName: "signature")
+                                    .font(.title3)
                                 Text("Sign Selected Apps (\(selectedApps.count))")
+                                    .font(.headline)
                             }
                             .frame(maxWidth: .infinity)
+                            .padding(.vertical, 8)
                         }
                         .disabled(selectedApps.isEmpty || certificates.isEmpty || isSigningBatch)
                     } header: {
-                        Text("Actions")
+                        Label("Actions", systemImage: "bolt.fill")
                     }
                     
                     // Results Section
                     if !batchResults.isEmpty {
                         Section {
                             ForEach(batchResults) { result in
-                                HStack {
+                                HStack(spacing: 12) {
                                     Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                        .font(.title2)
                                         .foregroundStyle(result.success ? .green : .red)
-                                    VStack(alignment: .leading) {
+                                    VStack(alignment: .leading, spacing: 4) {
                                         Text(result.appName)
-                                            .font(.subheadline)
+                                            .font(.subheadline.weight(.medium))
                                         Text(result.message)
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
+                                    Spacer()
                                 }
                             }
                         } header: {
-                            Text("Results")
+                            Label("Results", systemImage: "checklist")
                         }
                     }
                 }
@@ -161,35 +186,72 @@ struct BatchSigningView: View {
                 // Progress Overlay
                 if isSigningBatch {
                     ZStack {
-                        Color.black.opacity(0.3)
+                        Color.black.opacity(0.4)
                             .ignoresSafeArea()
                             .transition(.opacity)
 
-                        VStack(spacing: 20) {
-                            ProgressView()
-                                .progressViewStyle(.circular)
-                                .tint(.white)
-                                .scaleEffect(1.5)
+                        VStack(spacing: 24) {
+                            // Animated Icon
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color.accentColor.opacity(0.3), Color.accentColor.opacity(0.1)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 80, height: 80)
+                                    .blur(radius: 8)
+                                
+                                Image(systemName: currentPhase == .signing ? "signature" : "arrow.down.circle.fill")
+                                    .font(.system(size: 32, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .symbolEffect(.pulse, options: .repeating)
+                            }
 
-                            VStack(spacing: 8) {
-                                Text(currentPhase == .signing ? "Signing Apps..." : "Installing Apps...")
-                                    .font(.headline)
+                            VStack(spacing: 12) {
+                                Text(currentPhase == .signing ? "Signing Apps" : "Installing Apps")
+                                    .font(.title3.weight(.bold))
                                     .foregroundStyle(.white)
 
                                 Text(currentSigningApp)
                                     .font(.subheadline)
                                     .foregroundStyle(.white.opacity(0.8))
                                     .lineLimit(1)
+                                    .frame(maxWidth: 250)
 
-                                Text("\(Int(batchProgress * 100))%")
-                                    .font(.caption.bold())
-                                    .foregroundStyle(.white.opacity(0.6))
+                                // Progress Bar
+                                VStack(spacing: 8) {
+                                    GeometryReader { geometry in
+                                        ZStack(alignment: .leading) {
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(Color.white.opacity(0.2))
+                                            
+                                            RoundedRectangle(cornerRadius: 8)
+                                                .fill(
+                                                    LinearGradient(
+                                                        colors: [.accentColor, .accentColor.opacity(0.7)],
+                                                        startPoint: .leading,
+                                                        endPoint: .trailing
+                                                    )
+                                                )
+                                                .frame(width: geometry.size.width * batchProgress)
+                                        }
+                                    }
+                                    .frame(height: 8)
+                                    
+                                    Text("\(Int(batchProgress * 100))%")
+                                        .font(.caption.bold().monospacedDigit())
+                                        .foregroundStyle(.white.opacity(0.7))
+                                }
+                                .padding(.horizontal, 20)
                             }
                         }
                         .padding(40)
                         .background(.ultraThinMaterial)
-                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-                        .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
+                        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                        .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 15)
                         .transition(.scale.combined(with: .opacity))
                     }
                 }
@@ -204,6 +266,7 @@ struct BatchSigningView: View {
                         Image(systemName: "xmark.circle.fill")
                             .font(.title3)
                             .foregroundStyle(.secondary)
+                            .symbolRenderingMode(.hierarchical)
                     }
                 }
             }
@@ -312,19 +375,33 @@ struct BatchSigningView: View {
                 AppLogManager.shared.success("Batch signing completed for \(Int(totalApps)) apps", category: "BatchSign")
             }
             
-            // Clean up signed apps to save space
-            await cleanupSignedApps()
+            // Only clean up for direct device installations
+            // For server-based installations, keep the files available
+            if installationMethod == 1 {
+                await cleanupSignedApps()
+            } else {
+                AppLogManager.shared.info("Skipping cleanup for server-based installation", category: "BatchSign")
+            }
             
             await MainActor.run {
                 isSigningBatch = false
                 selectedApps.removeAll()
                 HapticsManager.shared.success()
-                ToastManager.shared.show("✅ Batch Signing Completed", type: .success)
+                
+                if autoInstall && installationMethod == 0 {
+                    ToastManager.shared.show("✅ Apps Signed - Check Device for Installation", type: .success)
+                } else {
+                    ToastManager.shared.show("✅ Batch Signing Completed", type: .success)
+                }
             }
         }
     }
     
     private func triggerInstallation(for app: AppInfoPresentable, appIndex: Int) async {
+        await MainActor.run {
+            currentPhase = .installing
+        }
+        
         AppLogManager.shared.info("Triggering installation for app: \(app.name ?? "Unknown")", category: "BatchSign")
         
         do {
@@ -371,6 +448,11 @@ struct BatchSigningView: View {
                 updateBatchResult(for: app, message: "Signed Successfully, Installation Failed: \(error.localizedDescription)")
                 AppLogManager.shared.error("Installation failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
             }
+        }
+        
+        // Reset phase back to signing for next app
+        await MainActor.run {
+            currentPhase = .signing
         }
     }
     
