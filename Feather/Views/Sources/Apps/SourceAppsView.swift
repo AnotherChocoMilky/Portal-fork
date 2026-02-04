@@ -155,7 +155,7 @@ struct SourceAppsView: View {
         .navigationDestinationIfAvailable(item: $selectedRoute) { route in
             SourceAppsDetailView(source: route.source, app: route.app)
         }
-    })
+    }
     
     // MARK: - Background
     @ViewBuilder

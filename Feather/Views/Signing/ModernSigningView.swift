@@ -771,6 +771,7 @@ struct ModernSigningView: View {
                         .fill(Color(.secondarySystemGroupedBackground))
                 )
             }
+            .buttonStyle(.plain)
         }
     }
     

@@ -122,7 +122,7 @@ struct InfoPlistEntriesView: View {
                     appearAnimation = true
                 }
             }
-        })
+        }
     }
     
     @ViewBuilder
