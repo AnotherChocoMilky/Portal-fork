@@ -82,6 +82,71 @@ struct ModernSigningView: View {
             .onAppear {
                 _onAppearAction()
             }
+            .sheet(isPresented: $_isNameDialogPresenting) {
+                ModernEditSheet(
+                    title: "App Name",
+                    icon: "textformat",
+                    iconColor: .blue,
+                    placeholder: "Enter app name",
+                    value: $_editingName,
+                    onSave: {
+                        _temporaryOptions.appName = _editingName.isEmpty ? nil : _editingName
+                        _isNameDialogPresenting = false
+                    },
+                    onCancel: {
+                        _isNameDialogPresenting = false
+                    }
+                )
+                .onAppear {
+                    _editingName = _temporaryOptions.appName ?? app.name ?? ""
+                }
+                .presentationDetents([.height(280)])
+                .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $_isIdentifierDialogPresenting) {
+                ModernEditSheet(
+                    title: "Bundle ID",
+                    icon: "barcode",
+                    iconColor: .purple,
+                    placeholder: "com.example.app",
+                    value: $_editingBundleId,
+                    keyboardType: .URL,
+                    onSave: {
+                        _temporaryOptions.appIdentifier = _editingBundleId.isEmpty ? nil : _editingBundleId
+                        _isIdentifierDialogPresenting = false
+                    },
+                    onCancel: {
+                        _isIdentifierDialogPresenting = false
+                    }
+                )
+                .onAppear {
+                    _editingBundleId = _temporaryOptions.appIdentifier ?? app.identifier ?? ""
+                }
+                .presentationDetents([.height(280)])
+                .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $_isVersionDialogPresenting) {
+                ModernEditSheet(
+                    title: "Version",
+                    icon: "tag",
+                    iconColor: .green,
+                    placeholder: "1.0.0",
+                    value: $_editingVersion,
+                    keyboardType: .numbersAndPunctuation,
+                    onSave: {
+                        _temporaryOptions.appVersion = _editingVersion.isEmpty ? nil : _editingVersion
+                        _isVersionDialogPresenting = false
+                    },
+                    onCancel: {
+                        _isVersionDialogPresenting = false
+                    }
+                )
+                .onAppear {
+                    _editingVersion = _temporaryOptions.appVersion ?? app.version ?? ""
+                }
+                .presentationDetents([.height(280)])
+                .presentationDragIndicator(.visible)
+            }
         }
     }
 
@@ -171,71 +236,6 @@ struct ModernSigningView: View {
             .sheet(isPresented: $_isAddingCertificatePresenting) {
                 CertificatesAddView()
                     .presentationDetents([.medium])
-            }
-            .sheet(isPresented: $_isNameDialogPresenting) {
-                ModernEditSheet(
-                    title: "App Name",
-                    icon: "textformat",
-                    iconColor: .blue,
-                    placeholder: "Enter app name",
-                    value: $_editingName,
-                    onSave: {
-                        _temporaryOptions.appName = _editingName.isEmpty ? nil : _editingName
-                        _isNameDialogPresenting = false
-                    },
-                    onCancel: {
-                        _isNameDialogPresenting = false
-                    }
-                )
-                .onAppear {
-                    _editingName = _temporaryOptions.appName ?? app.name ?? ""
-                }
-                .presentationDetents([.height(280)])
-                .presentationDragIndicator(.visible)
-            }
-            .sheet(isPresented: $_isIdentifierDialogPresenting) {
-                ModernEditSheet(
-                    title: "Bundle ID",
-                    icon: "barcode",
-                    iconColor: .purple,
-                    placeholder: "com.example.app",
-                    value: $_editingBundleId,
-                    keyboardType: .URL,
-                    onSave: {
-                        _temporaryOptions.appIdentifier = _editingBundleId.isEmpty ? nil : _editingBundleId
-                        _isIdentifierDialogPresenting = false
-                    },
-                    onCancel: {
-                        _isIdentifierDialogPresenting = false
-                    }
-                )
-                .onAppear {
-                    _editingBundleId = _temporaryOptions.appIdentifier ?? app.identifier ?? ""
-                }
-                .presentationDetents([.height(280)])
-                .presentationDragIndicator(.visible)
-            }
-            .sheet(isPresented: $_isVersionDialogPresenting) {
-                ModernEditSheet(
-                    title: "Version",
-                    icon: "tag",
-                    iconColor: .green,
-                    placeholder: "1.0.0",
-                    value: $_editingVersion,
-                    keyboardType: .numbersAndPunctuation,
-                    onSave: {
-                        _temporaryOptions.appVersion = _editingVersion.isEmpty ? nil : _editingVersion
-                        _isVersionDialogPresenting = false
-                    },
-                    onCancel: {
-                        _isVersionDialogPresenting = false
-                    }
-                )
-                .onAppear {
-                    _editingVersion = _temporaryOptions.appVersion ?? app.version ?? ""
-                }
-                .presentationDetents([.height(280)])
-                .presentationDragIndicator(.visible)
             }
     }
 
