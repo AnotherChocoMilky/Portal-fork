@@ -315,7 +315,7 @@ struct CustomColorPickerView: View {
 			}
 			.navigationTitle("Custom Color")
 			.navigationBarTitleDisplayMode(.inline)
-			.toolbar {
+			.toolbar(content: {
 				ToolbarItem(placement: .cancellationAction) {
 					Button("Cancel") { dismiss() }
 				}
@@ -331,7 +331,7 @@ struct CustomColorPickerView: View {
 						dismiss()
 					}
 				}
-			}
+			})
 		}
 		.presentationDetents([.large])
 		.onAppear {

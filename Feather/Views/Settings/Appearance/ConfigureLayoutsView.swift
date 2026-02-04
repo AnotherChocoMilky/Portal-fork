@@ -73,14 +73,14 @@ struct ConfigureLayoutsView: View {
             .background(Color(UIColor.systemGroupedBackground))
             .navigationTitle("Configure Layouts")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
                     .fontWeight(.semibold)
                 }
-            }
+            })
         }
     }
     

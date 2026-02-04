@@ -39,14 +39,14 @@ struct InstallationOptionsSplashView: View {
             }
             .navigationTitle("Installation")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
                     .fontWeight(.semibold)
                 }
-            }
+            })
         }
         .onAppear {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
@@ -193,7 +193,7 @@ struct ConfigurationView: View {
         }
         .background(Color(UIColor.systemGroupedBackground))
         .navigationTitle("Signing Options")
-        .toolbar {
+        .toolbar(content: {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Section(optionsManager.options.ppqString) {
@@ -215,7 +215,7 @@ struct ConfigurationView: View {
                         .font(.system(size: 17))
                 }
             }
-        }
+        })
         .sheet(isPresented: $showInstallationOptions) {
             InstallationOptionsSplashView()
         }

@@ -358,7 +358,7 @@ struct SourcesView: View {
             }
             .navigationTitle("Developer Certificates")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         _showCertificateTooltip = false
@@ -370,7 +370,7 @@ struct SourcesView: View {
                     }
                     .contentShape(Rectangle())
                 }
-            }
+            })
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.visible)

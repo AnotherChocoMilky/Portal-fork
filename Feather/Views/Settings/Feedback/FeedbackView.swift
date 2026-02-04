@@ -1457,13 +1457,13 @@ struct FeedbackView: View {
             .sheet(item: $selectedIssue) { issue in
                 FeedbackDetailSheet(issue: issue)
             }
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItemGroup(placement: .keyboard) {
                     if focusedField == .message {
                         ModernFormattingToolbar(text: $feedbackMessage, showLinkDialog: $showLinkDialog)
                     }
                 }
-            }
+            })
             
             // Link Dialog Overlay
             if showLinkDialog {
@@ -2827,7 +2827,7 @@ struct CodeEditorSheet: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Code Snippet")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .topBarLeading) {
                     Button {
                         dismiss()
@@ -2848,7 +2848,7 @@ struct CodeEditorSheet: View {
                     }
                     .disabled(localCode.isEmpty)
                 }
-            }
+            })
         }
         .onAppear {
             localCode = code
@@ -3705,14 +3705,14 @@ struct FeedbackDetailSheet: View {
             .background(Color(.systemBackground))
             .navigationTitle("Feedback Details")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Done") {
                         dismiss()
                     }
                     .font(.system(size: 16, weight: .medium))
                 }
-            }
+            })
         }
     }
 }

@@ -117,7 +117,7 @@ struct LibraryView: View {
                     .padding(.bottom, 100)
                 }
                 .navigationTitle("Library")
-                .toolbar {
+                .toolbar(content: {
                     ToolbarItem(placement: .topBarTrailing) {
                         Menu {
                             _importActions()
@@ -128,7 +128,7 @@ struct LibraryView: View {
                                 .symbolRenderingMode(.hierarchical)
                         }
                     }
-                }
+                })
             }
                         .sheet(item: $_selectedInfoAppPresenting) { app in
                                 LibraryInfoView(app: app.base)

@@ -125,7 +125,7 @@ struct SigningTweaksView: View {
 				}
 			}
 		}
-		.toolbar {
+		.toolbar(content: {
 			NBToolbarButton(
 				systemImage: "plus",
 				style: .icon,
@@ -133,7 +133,7 @@ struct SigningTweaksView: View {
 			) {
 				_isAddingPresenting = true
 			}
-		}
+		})
 		.sheet(isPresented: $_isAddingPresenting) {
 			FileImporterRepresentableView(
 				allowedContentTypes: [.dylib, .deb],
