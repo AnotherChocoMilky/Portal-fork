@@ -352,42 +352,35 @@ struct BatchSigningView: View {
                         AppLogManager.shared.success("Triggered installation link for \(app.name ?? "Unknown")", category: "BatchSign")
                         
                         // Update result to show installation was triggered
-                        if let resultIndex = batchResults.firstIndex(where: { $0.appName == (app.name ?? "Unknown") && $0.success }) {
-                            batchResults[resultIndex] = BatchSignResult(
-                                appName: app.name ?? "Unknown",
-                                success: true,
-                                message: "Signed - Installation Link Opened"
-                            )
-                        }
+                        updateBatchResult(for: app, message: "Signed - Installation Link Opened")
                     }
                 }
             } else if installationMethod == 1 {
                 // Direct device installation
                 let installProxy = InstallationProxy(viewModel: viewModel)
-                try await installProxy.install(at: packageUrl, suspend: app.identifier == Bundle.main.bundleIdentifier!)
+                let shouldSuspend = app.identifier == Bundle.main.bundleIdentifier
+                try await installProxy.install(at: packageUrl, suspend: shouldSuspend ?? false)
                 
                 await MainActor.run {
-                    if let resultIndex = batchResults.firstIndex(where: { $0.appName == (app.name ?? "Unknown") && $0.success }) {
-                        batchResults[resultIndex] = BatchSignResult(
-                            appName: app.name ?? "Unknown",
-                            success: true,
-                            message: "Signed and Installed Successfully"
-                        )
-                    }
+                    updateBatchResult(for: app, message: "Signed and Installed Successfully")
                     AppLogManager.shared.success("Batch installation succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
                 }
             }
         } catch {
             await MainActor.run {
-                if let resultIndex = batchResults.firstIndex(where: { $0.appName == (app.name ?? "Unknown") && $0.success }) {
-                    batchResults[resultIndex] = BatchSignResult(
-                        appName: app.name ?? "Unknown",
-                        success: true,
-                        message: "Signed Successfully, Installation Failed: \(error.localizedDescription)"
-                    )
-                }
+                updateBatchResult(for: app, message: "Signed Successfully, Installation Failed: \(error.localizedDescription)")
                 AppLogManager.shared.error("Installation failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
             }
+        }
+    }
+    
+    private func updateBatchResult(for app: AppInfoPresentable, message: String) {
+        if let resultIndex = batchResults.firstIndex(where: { $0.appName == (app.name ?? "Unknown") && $0.success }) {
+            batchResults[resultIndex] = BatchSignResult(
+                appName: app.name ?? "Unknown",
+                success: true,
+                message: message
+            )
         }
     }
     
@@ -401,6 +394,7 @@ struct BatchSigningView: View {
             }
             
             AppLogManager.shared.success("Cleanup completed: \(signedAppsForInstall.count) apps deleted", category: "BatchSign")
+            signedAppsForInstall.removeAll()
         }
     }
     
