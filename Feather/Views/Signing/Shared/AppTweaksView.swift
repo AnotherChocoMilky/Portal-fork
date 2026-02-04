@@ -143,7 +143,7 @@ struct AppTweaksView: View {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(.secondary)
 
-                TextField("Search Tweaks...", text: $searchText)
+                TextField("Search Tweaks", text: $searchText)
                     .font(.system(size: 15))
                     .textInputAutocapitalization(.never)
                     .focused($searchFieldFocused)
@@ -193,7 +193,7 @@ struct AppTweaksView: View {
     private var overviewSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("OVERVIEW")
+                Text("Overview")
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(.secondary)
                     .tracking(0.5)
@@ -247,12 +247,12 @@ struct AppTweaksView: View {
     private var injectionSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text("INJECTION QUEUE")
+                Text("Injection Queue")
                     .font(.system(size: 11, weight: .bold))
                     .foregroundStyle(.secondary)
                     .tracking(0.5)
                 Spacer()
-                Text("\(options.injectionFiles.count) files")
+                Text("\(options.injectionFiles.count) Files")
                     .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.secondary)
             }
@@ -268,7 +268,7 @@ struct AppTweaksView: View {
                             Image(systemName: "plus.circle")
                                 .font(.title2)
                                 .foregroundStyle(.secondary)
-                            Text("Tap to add custom tweaks")
+                            Text("Tap To Add Custom Tweaks")
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(.secondary)
                         }
@@ -331,7 +331,7 @@ struct AppTweaksView: View {
     @ViewBuilder
     private var componentsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("COMPONENTS")
+            Text("Components")
                 .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(.secondary)
                 .tracking(0.5)
@@ -412,7 +412,7 @@ struct AppTweaksView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 15, weight: .semibold))
-                    Text("\(count) items found")
+                    Text("\(count) Items Found")
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
                 }
@@ -436,7 +436,7 @@ struct AppTweaksView: View {
 
         VStack(spacing: 0) {
             if filteredItems.isEmpty {
-                Text("No items matching search")
+                Text("No Items Matching Search")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .padding(.vertical, 16)
@@ -466,7 +466,7 @@ struct AppTweaksView: View {
                             Button(role: .destructive) {
                                 removeComponent(item, from: prefix, key: optionsKey)
                             } label: {
-                                Label("Remove from List", systemImage: "trash")
+                                Label("Remove From List", systemImage: "trash")
                             }
                         } label: {
                             Image(systemName: "ellipsis")
@@ -500,7 +500,7 @@ struct AppTweaksView: View {
                 Button {
                     showAddUrlView = true
                 } label: {
-                    Label("Add from URL", systemImage: "link")
+                    Label("Add From URL", systemImage: "link")
                 }
 
                 Button {
@@ -645,7 +645,7 @@ struct AddTweakUrlView: View {
                 }
                 .disabled(urlString.isEmpty || URL(string: urlString) == nil)
             }
-            .navigationTitle("Add from URL")
+            .navigationTitle("Add From URL")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -680,7 +680,7 @@ struct ExtractTweaksView: View {
                         VStack(spacing: 20) {
                             ProgressView()
                                 .scaleEffect(1.5)
-                            Text("Extracting components...")
+                            Text("Extracting Components...")
                                 .font(.system(size: 16, weight: .medium))
                                 .foregroundStyle(.secondary)
                         }
