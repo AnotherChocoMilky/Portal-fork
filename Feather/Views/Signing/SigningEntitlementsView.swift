@@ -267,7 +267,7 @@ struct SigningEntitlementsView: View {
             VStack(alignment: .leading, spacing: 10) {
                 infoRow(icon: "checkmark.shield.fill", text: "Override Default App Permissions", color: .green)
                 infoRow(icon: "key.fill", text: "Add Custom Capabilities", color: .blue)
-                infoRow(icon: "exclamationmark.triangle.fill", text: "Notice: Incorrect entitlements may cause app crashes which means you have to resign the app", color: .orange)
+                infoRow(icon: "exclamationmark.triangle.fill", text: "Notice: Incorrect entitlements may cause app crashes which means you have to resign the app.", color: .orange)
             }
             .padding(16)
             .background(

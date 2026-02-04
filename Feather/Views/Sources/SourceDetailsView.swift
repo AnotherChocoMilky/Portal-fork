@@ -611,7 +611,7 @@ struct SourceAppsListView: View {
                         // Results count when searching
                         if !searchText.isEmpty {
                             HStack {
-                                Text("\(filteredApps.count) result\(filteredApps.count == 1 ? "" : "s")")
+                                Text("\(filteredApps.count) Result\(filteredApps.count == 1 ? "" : "s")")
                                     .font(.system(size: 13, weight: .medium))
                                     .foregroundStyle(.secondary)
                                 Spacer()

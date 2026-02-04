@@ -162,7 +162,7 @@ extension SourcesCellView {
 		
 		if viewModel.isRequiredSource(source) {
 			Divider()
-			Label(.localized("Default Source (Cannot Remove)"), systemImage: "lock.shield.fill")
+			Label(.localized("Default Source"), systemImage: "lock.shield.fill")
 				.foregroundStyle(.secondary)
 		}
 	}

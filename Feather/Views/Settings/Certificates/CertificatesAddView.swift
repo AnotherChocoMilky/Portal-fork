@@ -90,7 +90,7 @@ struct CertificatesAddView: View {
             
             compactImportCard(
                 title: "ZIP",
-                subtitle: "Import Bundle",
+                subtitle: "Import ZIP",
                 icon: "doc.zipper",
                 isSelected: false,
                 color: .purple
@@ -100,8 +100,8 @@ struct CertificatesAddView: View {
 
             if usePortalCert {
                 compactImportCard(
-                    title: ".portalcert",
-                    subtitle: "Portal",
+                    title: "Portal",
+                    subtitle: "Custom",
                     icon: "shippingbox.fill",
                     isSelected: false,
                     color: .indigo

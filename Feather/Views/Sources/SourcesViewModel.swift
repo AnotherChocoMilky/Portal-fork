@@ -240,7 +240,7 @@ final class SourcesViewModel: ObservableObject {
         }
         
         if !failedSources.isEmpty {
-            errorMessage = "\(failedSources.count) sources failed to load"
+            errorMessage = "\(failedSources.count) sources failed to load."
             fetchState = .error(errorMessage!)
         } else {
             fetchState = .loaded

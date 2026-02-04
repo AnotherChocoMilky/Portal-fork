@@ -303,7 +303,7 @@ struct SourcesAddView: View {
 					VStack(spacing: 12) {
 						ProgressView()
 							.scaleEffect(1.2)
-						Text(.localized("Loading Featured Sources..."))
+						Text(.localized("Loading Featured Sources"))
 							.font(.subheadline)
 							.foregroundStyle(.secondary)
 					}

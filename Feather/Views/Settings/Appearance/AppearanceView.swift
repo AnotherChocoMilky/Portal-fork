@@ -60,7 +60,7 @@ struct AppearanceView: View {
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
         } header: {
-            AppearanceSectionHeader(title: "Accent Color", icon: "paintpalette.fill")
+            AppearanceSectionHeader(title: "Color", icon: "paintpalette.fill")
         }
     }
     
@@ -112,7 +112,7 @@ struct AppearanceView: View {
                 }
             }
         } header: {
-            AppearanceSectionHeader(title: "Haptics", icon: "waveform")
+            AppearanceSectionHeader(title: "App Haptics", icon: "waveform")
         }
     }
     
@@ -159,9 +159,9 @@ struct AppearanceView: View {
     private var experimentsSection: some View {
         if #available(iOS 19.0, *) {
             Section {
-                AppearanceToggle(icon: "sparkles", title: "Liquid Glass", isOn: $ignoreSolariumLinkedOnCheck, color: .pink)
+                AppearanceToggle(icon: "sparkles", title: "Enable Liquid Glass", isOn: $ignoreSolariumLinkedOnCheck, color: .pink)
             } header: {
-                AppearanceSectionHeader(title: "Experiments", icon: "flask.fill")
+                AppearanceSectionHeader(title: "Liquid Glass", icon: "sparkle")
             } footer: {
                 Text("Requires Portal to restart so Liquid Glass can be applied.")
             }
