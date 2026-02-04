@@ -216,7 +216,7 @@ struct ModernImportURLView: View {
                     Image(systemName: "clock.arrow.circlepath")
                         .foregroundStyle(.secondary)
                         .font(.system(size: 14))
-                    Text(.localized("Recents))
+                    Text(.localized("Recents"))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.secondary)
                     Spacer()
