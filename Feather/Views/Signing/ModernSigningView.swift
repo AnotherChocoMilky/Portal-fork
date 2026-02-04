@@ -5339,7 +5339,9 @@ struct ModernEditSheet: View {
             
             withAnimation(.easeIn(duration: 0.8)) {
                 iconScale = 1.1
-            } completion: {
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                 withAnimation(.easeOut(duration: 0.8).repeatForever(autoreverses: true)) {
                     iconScale = 1.05
                 }
