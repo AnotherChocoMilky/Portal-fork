@@ -88,7 +88,7 @@ struct InfoPlistEntriesView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(content: { toolbarContent }
+            .toolbar(content: { toolbarContent })
             .sheet(isPresented: $showAddEntryDialog) { addEntrySheet }
             .sheet(isPresented: $showPresetSheet) { presetOptionsSheet }
             .sheet(isPresented: $showEditSheet) { editEntrySheet }
