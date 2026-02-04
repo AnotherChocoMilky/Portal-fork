@@ -54,6 +54,26 @@ struct BatchSigningView: View {
         NavigationStack {
             ZStack {
                 List {
+                    // Custom Header
+                    Section {
+                        HStack {
+                            Text("Batch Signing")
+                                .font(.system(.title2, design: .rounded).bold())
+                            Spacer()
+                            Button {
+                                dismiss()
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.title2)
+                                    .foregroundStyle(.secondary)
+                                    .symbolRenderingMode(.hierarchical)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 8, trailing: 16))
+
                     // Certificate Selection
                     Section {
                         if certificates.isEmpty {
@@ -65,14 +85,30 @@ struct BatchSigningView: View {
                                     .foregroundStyle(.secondary)
                             }
                         } else {
-                            Picker("Signing Certificate", selection: $selectedCertificateIndex) {
-                                ForEach(Array(certificates.enumerated()), id: \.element.uuid) { index, cert in
-                                    HStack {
-                                        Image(systemName: "checkmark.seal.fill")
-                                            .foregroundStyle(.blue)
-                                        Text(cert.nickname ?? "Certificate \(index + 1)")
+                            HStack {
+                                Label("Signing Certificate", systemImage: "checkmark.seal.fill")
+                                Spacer()
+                                Menu {
+                                    ForEach(Array(certificates.enumerated()), id: \.element.uuid) { index, cert in
+                                        Button {
+                                            selectedCertificateIndex = index
+                                        } label: {
+                                            HStack {
+                                                if selectedCertificateIndex == index {
+                                                    Image(systemName: "checkmark")
+                                                }
+                                                Text(cert.nickname ?? "Certificate \(index + 1)")
+                                            }
+                                        }
                                     }
-                                    .tag(index)
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Text(certificates[selectedCertificateIndex].nickname ?? "Certificate \(selectedCertificateIndex + 1)")
+                                            .foregroundStyle(.secondary)
+                                        Image(systemName: "chevron.up.chevron.down")
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                    }
                                 }
                             }
                         }
@@ -256,20 +292,7 @@ struct BatchSigningView: View {
                     }
                 }
             }
-            .navigationTitle("Batch Signing")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar(content: {
-                SwiftUI.ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title3)
-                            .foregroundStyle(.secondary)
-                            .symbolRenderingMode(.hierarchical)
-                    }
-                }
-            })
+            .navigationBarHidden(true)
             .sheet(isPresented: $showEditSheet) {
                 if let appId = editingAppId,
                    let app = apps.first(where: { $0.uuid == appId }) {
@@ -636,6 +659,16 @@ struct BatchAppEditSheet: View {
             Form {
                 Section {
                     HStack {
+                        Text("Edit App Information")
+                            .font(.system(.title3, design: .rounded).bold())
+                        Spacer()
+                    }
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+
+                Section {
+                    HStack {
                         FRAppIconView(app: app, size: 60)
                         VStack(alignment: .leading, spacing: 4) {
                             Text(app.name ?? "Unknown App")
@@ -696,19 +729,9 @@ struct BatchAppEditSheet: View {
                     }
                     .foregroundStyle(.orange)
                 }
-            }
-            .navigationTitle("Edit App")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar(content: {
-                SwiftUI.ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                        onDismiss()
-                    }
-                }
-                
-                SwiftUI.ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
+
+                Section {
+                    Button {
                         // Apply changes to options
                         if !editedName.isEmpty {
                             options.appName = editedName
@@ -722,10 +745,29 @@ struct BatchAppEditSheet: View {
                         
                         dismiss()
                         onDismiss()
+                    } label: {
+                        Text("Save Changes")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
                     }
-                    .fontWeight(.semibold)
+                    .buttonStyle(.borderedProminent)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
+
+                    Button {
+                        dismiss()
+                        onDismiss()
+                    } label: {
+                        Text("Discard Changes")
+                            .font(.subheadline.weight(.medium))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .foregroundStyle(.red)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
                 }
-            })
+            }
+            .navigationBarHidden(true)
             .onAppear {
                 // Initialize with current values
                 editedName = options.appName ?? app.name ?? ""
