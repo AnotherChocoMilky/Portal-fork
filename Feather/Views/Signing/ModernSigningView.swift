@@ -477,7 +477,22 @@ struct ModernSigningView: View {
             
             // Certificate Section
             VStack(alignment: .leading, spacing: 12) {
-                cleanSectionHeader(title: "Certificate", icon: "checkmark.seal.fill")
+                HStack {
+                    cleanSectionHeader(title: "Certificate", icon: "checkmark.seal.fill")
+                    Spacer()
+                    Button {
+                        _isAddingCertificatePresenting = true
+                    } label: {
+                        HStack(spacing: 4) {
+                            Image(systemName: "plus")
+                                .font(.system(size: 12, weight: .semibold))
+                            Text("Add")
+                                .font(.system(size: 12, weight: .semibold))
+                        }
+                        .foregroundStyle(.accentColor)
+                    }
+                }
+                .padding(.trailing, 4)
                 certificateCard
             }
             
