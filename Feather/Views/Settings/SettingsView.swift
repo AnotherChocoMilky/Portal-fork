@@ -73,7 +73,7 @@ struct SettingsView: View {
     private var preferencesSection: some View {
         Section {
             SettingsRow(icon: "house.fill", title: "Customize Home", color: .blue, destination: HomeSettingsView())
-            SettingsRow(icon: "paintbrush.fill", title: "App Appearance", color: .pink, destination: AppearanceView())
+            SettingsRow(icon: "paintbrush.fill", title: "App Appearance", color: .blue, destination: AppearanceView())
         } header: {
             SettingsSectionHeader(title: "Preferences", icon: "slider.horizontal.3")
         }
@@ -81,8 +81,8 @@ struct SettingsView: View {
     
     private var signingSection: some View {
         Section {
-            SettingsRow(icon: "checkmark.seal.fill", title: "Certificates", color: .green, destination: CertificatesView())
-            SettingsRow(icon: "signature", title: "Signing Options", color: .orange, destination: ConfigurationView())
+            SettingsRow(icon: "checkmark.seal.fill", title: "Certificates", color: .blue, destination: CertificatesView())
+            SettingsRow(icon: "signature", title: "Signing Options", color: .blue, destination: ConfigurationView())
         } header: {
             SettingsSectionHeader(title: "Signing", icon: "lock.shield.fill")
         }
@@ -97,11 +97,11 @@ struct SettingsView: View {
         Section {
             SettingsRow(icon: "folder.fill", title: "Files", color: .blue, destination: FilesSettingsView())
             if !isEnterprise {
-                SettingsRow(icon: "internaldrive.fill", title: "Storage", color: .gray, destination: ManageStorageView())
+                SettingsRow(icon: "internaldrive.fill", title: "Storage", color: .blue, destination: ManageStorageView())
             }
-            SettingsRow(icon: "arrow.counterclockwise.circle.fill", title: "Backup & Restore", color: .green, destination: BackupRestoreView())
+            SettingsRow(icon: "arrow.counterclockwise.circle.fill", title: "Backup & Restore", color: .blue, destination: BackupRestoreView())
 
-            SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: "Fetch Full Data", color: .cyan, isLoading: _isFetchingFullData) {
+            SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: "Fetch Full Data", color: .blue, isLoading: _isFetchingFullData) {
                 Task {
                     _isFetchingFullData = true
                     await SourcesViewModel.shared.forceFetchAllSources(_sources)
@@ -117,7 +117,7 @@ struct SettingsView: View {
     private var resourcesSection: some View {
         Section {
             SettingsRow(icon: "apple.intelligence", title: "Guides With AI", color: .blue, destination: GuidesSettingsView())
-            SettingsRow(icon: "bubble.left.and.bubble.right.fill", title: "Feedback", color: .purple, destination: FeedbackView())
+            SettingsRow(icon: "bubble.left.and.bubble.right.fill", title: "Feedback", color: .blue, destination: FeedbackView())
         } header: {
             SettingsSectionHeader(title: "Resources", icon: "books.vertical.fill")
         }
@@ -125,11 +125,12 @@ struct SettingsView: View {
     
     private var appSection: some View {
         Section {
-            SettingsRow(icon: "app.badge.fill", title: "App Icons", color: .pink, destination: AppIconView())
+            SettingsRow(icon: "app.badge.fill", title: "App Icons", color: .blue
+                        \, destination: AppIconView())
             Button {
                 navigateToCheckForUpdates = true
             } label: {
-                SettingsRowContent(icon: "arrow.triangle.2.circlepath", title: "Check For Updates", color: .green)
+                SettingsRowContent(icon: "arrow.triangle.2.circlepath", title: "Check For Updates", color: .blue)
             }
             .navigationDestination(isPresented: $navigateToCheckForUpdates) {
                 CheckForUpdatesView()

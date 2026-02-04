@@ -4,6 +4,7 @@ import Combine
 
 // MARK: - Network Monitor
 /// Monitors network connectivity status (WiFi, Cellular, or None)
+// This logic poweres the OfflineView
 final class NetworkMonitor: ObservableObject {
     static let shared = NetworkMonitor()
     
@@ -25,7 +26,7 @@ final class NetworkMonitor: ObservableObject {
             case .wifi: return "Wi-Fi"
             case .cellular: return "Cellular"
             case .ethernet: return "Ethernet"
-            case .none: return "No Connection"
+            case .none: return "No Network Connection"
             case .unknown: return "Unknown"
             }
         }

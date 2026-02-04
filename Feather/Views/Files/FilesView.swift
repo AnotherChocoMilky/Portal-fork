@@ -556,7 +556,7 @@ struct FilesView: View {
                     .font(.title2)
                     .fontWeight(.bold)
                 
-                Text(.localized("The File Manager is emmpty. Import files or create new content to get started."))
+                Text(.localized("The File Manager is empty. Import files or create new content to get started."))
                     .font(.body)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

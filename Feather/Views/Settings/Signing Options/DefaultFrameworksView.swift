@@ -70,7 +70,7 @@ struct DefaultFrameworksView: View {
                     .font(.headline)
                     .foregroundStyle(.primary)
                 
-                Text(.localized("Tap + to add your first framework."))
+                Text(.localized("Tap + above to add your first default framework."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }

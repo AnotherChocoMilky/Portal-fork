@@ -116,7 +116,7 @@ struct InstallationOptionsSplashView: View {
                 Text("Installation Settings")
                     .font(.system(size: 22, weight: .bold, design: .rounded))
                 
-                Text("Configure how apps are installed")
+                Text("Configure how apps are installed.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
@@ -154,7 +154,7 @@ struct InstallationOptionsSplashView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text("About Installation")
                     .font(.subheadline.weight(.semibold))
-                Text("Apps are installed using a local server that communicates with iOS. Choose the method that works best for your network.")
+                Text("Apps are installed using a local server that communicates with iOS. Choose the method that works best for you.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -539,7 +539,7 @@ struct ModernSigningOptionsCard: View {
                 icon: "gamecontroller.fill",
                 iconColor: .indigo,
                 title: "Game Mode",
-                subtitle: "Gaming mode (iOS 18+)",
+                subtitle: "Gaming Mode (iOS 18+)",
                 isOn: $options.gameMode
             )
             

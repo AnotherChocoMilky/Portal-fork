@@ -11,16 +11,16 @@ struct AppIconsPageView: View {
 			Form {
 				Section {
 					VStack(spacing: 16) {
-						Image(systemName: "app.dashed")
+						Image(systemName: "questionmark.circle.fill")
 							.font(.system(size: 60))
 							.foregroundColor(.secondary)
 						
-						Text("App Icons Soon")
+						Text("Are You Lost?")
 							.font(.title2)
 							.fontWeight(.semibold)
 							.foregroundColor(.primary)
 						
-						Text("Customize your app icon. Coming soon!")
+						Text("Why are you here? It's rare for you to be here, how did you even get here in the first place.")
 							.font(.subheadline)
 							.foregroundColor(.secondary)
 							.multilineTextAlignment(.center)

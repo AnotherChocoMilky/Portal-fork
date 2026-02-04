@@ -881,7 +881,7 @@ struct HomeView: View {
                     }
                     
                     if _sources.count > 4 {
-                        Text("+ \(_sources.count - 4) more sources")
+                        Text("+ \(_sources.count - 4) More Sources")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
@@ -1075,7 +1075,7 @@ struct HomeView: View {
                     Image(systemName: "arrow.down.circle")
                         .font(.system(size: 18))
                         .foregroundStyle(.secondary)
-                    Text("No active downloads")
+                    Text("No Active Downloads")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -2082,7 +2082,7 @@ struct SignAndInstallPickerView: View {
                         VStack(spacing: 16) {
                             // URL Input Section
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Import from URL")
+                                Text("Import From URL")
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundStyle(.secondary)
                                 

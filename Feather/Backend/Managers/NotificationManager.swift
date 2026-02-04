@@ -26,9 +26,9 @@ final class NotificationManager: NSObject, ObservableObject {
                 if let error = error {
                     AppLogManager.shared.error("Failed to request notification authorization: \(error.localizedDescription)", category: "Notifications")
                 } else if granted {
-                    AppLogManager.shared.success("Notification authorization granted", category: "Notifications")
+                    AppLogManager.shared.success("Notification Authorization Granted", category: "Notifications")
                 } else {
-                    AppLogManager.shared.warning("Notification authorization denied", category: "Notifications")
+                    AppLogManager.shared.warning("Notification Authorization Denied", category: "Notifications")
                 }
                 
                 completion(granted)
@@ -64,7 +64,7 @@ final class NotificationManager: NSObject, ObservableObject {
         }
         
         guard isAuthorized else {
-            AppLogManager.shared.warning("Cannot send notification: not authorized", category: "Notifications")
+            AppLogManager.shared.warning("Cannot send notification: Not Authorized", category: "Notifications")
             return
         }
         

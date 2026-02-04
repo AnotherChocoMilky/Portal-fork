@@ -115,11 +115,11 @@ struct ModernImportURLView: View {
     @ViewBuilder
     private var titleSection: some View {
         VStack(spacing: 8) {
-            Text(.localized("Import IPA from URL"))
+            Text(.localized("Import IPA From URL"))
                 .font(.title2.bold())
                 .foregroundStyle(.primary)
 
-            Text(.localized("Enter the URL of the IPA file you want to install"))
+            Text(.localized("Enter the URL of the IPA file you want to install."))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -216,7 +216,7 @@ struct ModernImportURLView: View {
                     Image(systemName: "clock.arrow.circlepath")
                         .foregroundStyle(.secondary)
                         .font(.system(size: 14))
-                    Text(.localized("Recent URLs"))
+                    Text(.localized("Recents))
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -365,7 +365,7 @@ struct ModernImportURLView: View {
 		DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
 			// Check if empty
 			guard !urlText.isEmpty else {
-				showErrorWithAnimation(.localized("Please enter a URL"))
+				showErrorWithAnimation(.localized("Please Enter A URL"))
 				return
 			}
 			
@@ -391,7 +391,7 @@ struct ModernImportURLView: View {
 			
 			// Check if it has a host
 			guard let host = url.host, !host.isEmpty else {
-				showErrorWithAnimation(.localized("Invalid URL - missing host"))
+				showErrorWithAnimation(.localized("Invalid URL - Missing Host"))
 				return
 			}
 			

@@ -62,7 +62,7 @@ struct LogEntry: Identifiable, Codable {
         [\(formattedTimestamp)] \(level.icon) [\(level.rawValue)]
         Category: \(category)
         Message: \(message)
-        Location: \(file):\(line) in \(function)
+        Location: \(file):\(line) In \(function)
         """
     }
 }
@@ -201,7 +201,7 @@ final class AppLogManager: ObservableObject {
         // Remove from UserDefaults to permanently delete
         UserDefaults.standard.removeObject(forKey: persistenceKey)
         UserDefaults.standard.synchronize()
-        AppLogManager.shared.info("Logs cleared successfully", category: "AppLogs")
+        AppLogManager.shared.info("Logs Cleared Successfully", category: "AppLogs")
     }
     
     // MARK: - Persistence
@@ -229,7 +229,7 @@ final class AppLogManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.info("App became active", category: "Lifecycle")
+            self?.info("Portal Became Active", category: "Lifecycle")
         }
         
         NotificationCenter.default.addObserver(
@@ -245,7 +245,7 @@ final class AppLogManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.info("App entered background", category: "Lifecycle")
+            self?.info("Portal is now on the background", category: "Lifecycle")
             self?.persistLogs()
         }
         #endif

@@ -100,8 +100,8 @@ struct CertificatesAddView: View {
 
             if usePortalCert {
                 compactImportCard(
-                    title: "PortalCert",
-                    subtitle: "Proprietary",
+                    title: ".portalcert",
+                    subtitle: "Portal",
                     icon: "shippingbox.fill",
                     isSelected: false,
                     color: .indigo

@@ -350,7 +350,7 @@ struct CertificatesView: View {
 			.replacingOccurrences(of: "/", with: "-")
 			.replacingOccurrences(of: "\\", with: "-")
 			.replacingOccurrences(of: ":", with: "-")
-		let fileName = "\(sanitizedName)_entitlements.txt"
+		let fileName = "\(sanitizedName)_Entitlements.txt"
 		let fileURL = tempDir.appendingPathComponent(fileName)
 		
 		do {

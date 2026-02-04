@@ -11,19 +11,16 @@ class DefaultFrameworksManager: ObservableObject {
 	private let _frameworksDirectory: URL
 	
 	private init() {
-		// Store frameworks in Documents/Feather/DefaultFrameworks
+		// Store frameworks in Documents/Portal/DefaultFrameworks
 		_frameworksDirectory = _fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
 			.appendingPathComponent("Feather", isDirectory: true)
 			.appendingPathComponent("DefaultFrameworks", isDirectory: true)
-		
-		// Create directory if needed
+
 		try? _fileManager.createDirectoryIfNeeded(at: _frameworksDirectory)
-		
-		// Load existing frameworks
+
 		loadFrameworks()
 	}
 	
-	/// Load all frameworks from storage
 	func loadFrameworks() {
 		do {
 			let contents = try _fileManager.contentsOfDirectory(
@@ -41,17 +38,12 @@ class DefaultFrameworksManager: ObservableObject {
 		}
 	}
 	
-	/// Add a framework file to default frameworks
-	/// - Parameters:
-	///   - url: Source URL of the framework file
-	///   - completion: Completion handler with the stored URL or error
 	func addFramework(_ url: URL, completion: @escaping (Result<URL, Error>) -> Void) {
 		DispatchQueue.global(qos: .userInitiated).async {
 			do {
-				// Ensure directory exists
+				
 				try self._fileManager.createDirectoryIfNeeded(at: self._frameworksDirectory)
 				
-				// Create unique filename if needed
 				var destinationURL = self._frameworksDirectory.appendingPathComponent(url.lastPathComponent)
 				var counter = 1
 				while self._fileManager.fileExists(atPath: destinationURL.path) {
@@ -61,7 +53,6 @@ class DefaultFrameworksManager: ObservableObject {
 					counter += 1
 				}
 				
-				// Copy file to storage
 				try self._fileManager.copyItem(at: url, to: destinationURL)
 				
 				Logger.misc.info("Added default framework: \(destinationURL.lastPathComponent)")
@@ -81,10 +72,6 @@ class DefaultFrameworksManager: ObservableObject {
 		}
 	}
 	
-	/// Remove a framework from default frameworks
-	/// - Parameters:
-	///   - url: URL of the framework to remove
-	///   - completion: Completion handler
 	func removeFramework(_ url: URL, completion: @escaping () -> Void) {
 		DispatchQueue.global(qos: .userInitiated).async {
 			do {
@@ -106,8 +93,7 @@ class DefaultFrameworksManager: ObservableObject {
 		}
 	}
 	
-	/// Get all .dylib files from default frameworks, extracting from .deb files if needed
-	/// - Returns: Tuple containing array of .dylib file URLs and the temp directory path for cleanup
+
 	func extractDylibsFromFrameworks() async throws -> (dylibURLs: [URL], tempDir: URL) {
 		var dylibURLs: [URL] = []
 		let tempDir = _fileManager.temporaryDirectory.appendingPathComponent("DefaultFrameworks_\(UUID().uuidString)", isDirectory: true)
@@ -119,7 +105,7 @@ class DefaultFrameworksManager: ObservableObject {
 			
 			switch ext {
 			case "dylib":
-				// Copy dylib directly
+
 				let destURL = tempDir.appendingPathComponent(frameworkURL.lastPathComponent)
 				try? _fileManager.copyItem(at: frameworkURL, to: destURL)
 				dylibURLs.append(destURL)
@@ -137,11 +123,7 @@ class DefaultFrameworksManager: ObservableObject {
 		return (dylibURLs, tempDir)
 	}
 	
-	/// Extract .dylib files from a .deb archive
-	/// - Parameters:
-	///   - debURL: URL of the .deb file
-	///   - outputDir: Directory to extract to
-	/// - Returns: Array of extracted .dylib file URLs
+
 	private func extractDylibsFromDeb(_ debURL: URL, to outputDir: URL) async throws -> [URL] {
 		var dylibURLs: [URL] = []
 		
@@ -156,13 +138,11 @@ class DefaultFrameworksManager: ObservableObject {
 			let outputPath = uniqueSubDir.appendingPathComponent(arFile.name)
 			try arFile.content.write(to: outputPath)
 			
-			// Look for data.tar archives
 			if ["data.tar.lzma", "data.tar.gz", "data.tar.xz", "data.tar.bz2"].contains(arFile.name) {
 				var fileToProcess = outputPath
 				try extractFile(at: &fileToProcess)
 				try extractFile(at: &fileToProcess)
 				
-				// Search for dylibs in extracted content
 				let foundDylibs = try await searchForDylibs(in: fileToProcess)
 				dylibURLs.append(contentsOf: foundDylibs)
 			}
@@ -177,9 +157,6 @@ class DefaultFrameworksManager: ObservableObject {
 		return dylibURLs
 	}
 	
-	/// Recursively search for .dylib files in a directory
-	/// - Parameter directory: Directory to search
-	/// - Returns: Array of found .dylib file URLs
 	private func searchForDylibs(in directory: URL) async throws -> [URL] {
 		var dylibURLs: [URL] = []
 		
@@ -187,7 +164,6 @@ class DefaultFrameworksManager: ObservableObject {
 			return dylibURLs
 		}
 		
-		// Common paths for dylibs in deb packages
 		let searchPaths = [
 			"Library/Frameworks/",
 			"var/jb/Library/Frameworks/",
@@ -206,9 +182,6 @@ class DefaultFrameworksManager: ObservableObject {
 		return dylibURLs
 	}
 	
-	/// Find all .dylib files in a directory (non-recursive)
-	/// - Parameter directory: Directory to search
-	/// - Returns: Array of found .dylib file URLs
 	private func findDylibsInDirectory(_ directory: URL) throws -> [URL] {
 		let contents = try _fileManager.contentsOfDirectory(
 			at: directory,

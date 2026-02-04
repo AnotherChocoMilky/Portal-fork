@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import UIKit
 
+// oh no, UIKit
 // MARK: - Download Errors
 enum DownloadError: LocalizedError {
 	case invalidFileFormat(String)
@@ -342,7 +343,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
 		// If there's an error, handle it
 		if let error = error {
 			let appName = download.fileName.replacingOccurrences(of: ".ipa", with: "").replacingOccurrences(of: ".tipa", with: "")
-			AppLogManager.shared.error("Download failed: \(error.localizedDescription)", category: "Download")
+			AppLogManager.shared.error("Download Failed: \(error.localizedDescription)", category: "Download")
 			
 			// Post failure notification for manual downloads
 			if isManualDownload(download.id) {
