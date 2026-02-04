@@ -101,7 +101,7 @@ struct SettingsView: View {
             }
             SettingsRow(icon: "arrow.counterclockwise.circle.fill", title: "Backup & Restore", color: .blue, destination: BackupRestoreView())
 
-            SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: "Fetch Full Data", color: .blue, isLoading: _isFetchingFullData) {
+            SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: _isFetchingFullData ? "Fetching Source Data..." : "Fetch Full Data", color: Color("AccentColor"), isLoading: _isFetchingFullData) {
                 Task {
                     _isFetchingFullData = true
                     await SourcesViewModel.shared.forceFetchAllSources(_sources)
@@ -228,7 +228,7 @@ private struct SettingsSectionHeader: View {
         HStack(spacing: 5) {
             Image(systemName: icon)
                 .font(.system(size: 10, weight: .semibold))
-            Text(title.uppercased())
+            Text(title)
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
         }
         .foregroundStyle(.secondary)
