@@ -12,7 +12,10 @@ struct InfoPlistEntriesView: View {
     @State private var showImportSheet = false
     @State private var showPresetSheet = false
     @State private var showEditSheet = false
+    @State private var showSearchReplaceSheet = false
     @State private var searchText = ""
+    @State private var searchReplaceTarget = ""
+    @State private var searchReplaceNewValue = ""
     @State private var showDeleteConfirmation = false
     @State private var entryToDelete: String?
     @State private var showBatchActionsSheet = false
@@ -93,6 +96,7 @@ struct InfoPlistEntriesView: View {
             .sheet(isPresented: $showPresetSheet) { presetOptionsSheet }
             .sheet(isPresented: $showEditSheet) { editEntrySheet }
             .sheet(isPresented: $showBatchActionsSheet) { batchActionsSheet }
+            .sheet(isPresented: $showSearchReplaceSheet) { searchReplaceSheet }
             .sheet(isPresented: $showImportSheet) {
                 FileImporterRepresentableView(
                     allowedContentTypes: [.propertyList, .xml],
@@ -320,6 +324,15 @@ struct InfoPlistEntriesView: View {
                         showImportSheet = true
                     }
                     
+                    QuickActionCard(
+                        icon: "magnifyingglass",
+                        title: .localized("Replace"),
+                        subtitle: .localized("Bulk edit"),
+                        gradient: [.orange, .red]
+                    ) {
+                        showSearchReplaceSheet = true
+                    }
+
                     QuickActionCard(
                         icon: "square.and.arrow.up",
                         title: .localized("Export"),
@@ -863,6 +876,30 @@ struct InfoPlistEntriesView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     PresetSection(
+                        title: .localized("Essential & Identity"),
+                        icon: "person.text.rectangle.fill",
+                        color: .indigo
+                    ) {
+                        PresetButton(
+                            title: .localized("Custom Display Name"),
+                            subtitle: .localized("Overwrite app name"),
+                            icon: "textformat",
+                            color: .blue
+                        ) {
+                            addSimpleEntry(key: "CFBundleDisplayName", value: "New Name")
+                        }
+
+                        PresetButton(
+                            title: .localized("Custom Version"),
+                            subtitle: .localized("Overwrite version string"),
+                            icon: "tag",
+                            color: .purple
+                        ) {
+                            addSimpleEntry(key: "CFBundleShortVersionString", value: "1.0.0")
+                        }
+                    }
+
+                    PresetSection(
                         title: .localized("Orientation"),
                         icon: "rotate.right.fill",
                         color: .blue
@@ -1381,6 +1418,39 @@ struct InfoPlistEntriesView: View {
                             addSimpleEntry(key: "NSSiriUsageDescription", value: "This app uses Siri.")
                         }
                     }
+
+                    PresetSection(
+                        title: .localized("Advanced & System"),
+                        icon: "cpu.fill",
+                        color: .gray
+                    ) {
+                        PresetButton(
+                            title: .localized("Enable JIT"),
+                            subtitle: .localized("Allow Just-In-Time compilation"),
+                            icon: "bolt.fill",
+                            color: .orange
+                        ) {
+                            addSimpleEntry(key: "dynamic-codesigning", value: true)
+                        }
+
+                        PresetButton(
+                            title: .localized("Allow Insecure Loads"),
+                            subtitle: .localized("Bypass ATS restrictions"),
+                            icon: "lock.open.fill",
+                            color: .red
+                        ) {
+                            addSimpleEntry(key: "NSAppTransportSecurity", value: ["NSAllowsArbitraryLoads": true])
+                        }
+
+                        PresetButton(
+                            title: .localized("Hide iPad Home Bar"),
+                            subtitle: .localized("Auto-hide home indicator"),
+                            icon: "minus",
+                            color: .blue
+                        ) {
+                            addSimpleEntry(key: "UIViewControllerPrefersHomeIndicatorAutoHidden", value: true)
+                        }
+                    }
                 }
                 .padding(20)
             }
@@ -1397,6 +1467,66 @@ struct InfoPlistEntriesView: View {
         }
     }
     
+    @ViewBuilder
+    private var searchReplaceSheet: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField(.localized("Find"), text: $searchReplaceTarget)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                    TextField(.localized("Replace with"), text: $searchReplaceNewValue)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                } header: {
+                    Text(.localized("Search and Replace values"))
+                } footer: {
+                    Text(.localized("This will replace all occurrences in string values."))
+                }
+
+                Button {
+                    performSearchReplace()
+                } label: {
+                    Text(.localized("Replace All"))
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                }
+                .disabled(searchReplaceTarget.isEmpty)
+            }
+            .navigationTitle(.localized("Search and Replace"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(.localized("Done")) {
+                        showSearchReplaceSheet = false
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func performSearchReplace() {
+        var count = 0
+        withAnimation {
+            for (key, value) in options.customInfoPlistEntries {
+                if let strValue = value.value as? String {
+                    if strValue.contains(searchReplaceTarget) {
+                        let newValue = strValue.replacingOccurrences(of: searchReplaceTarget, with: searchReplaceNewValue)
+                        options.customInfoPlistEntries[key] = AnyCodable(newValue)
+                        count += 1
+                    }
+                }
+            }
+        }
+        HapticsManager.shared.success()
+        if count > 0 {
+            ToastManager.shared.show("Replaced \(count) values", type: .success)
+        }
+        showSearchReplaceSheet = false
+    }
+
     @ViewBuilder
     private var batchActionsSheet: some View {
         NavigationStack {

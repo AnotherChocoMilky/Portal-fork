@@ -36,6 +36,7 @@ struct BatchSigningView: View {
     @State private var showEditSheet = false
     
     @AppStorage("Feather.installationMethod") private var installationMethod: Int = 0
+    @AppStorage("Feather.serverMethod") private var _serverMethod: Int = 0
     
     enum BatchPhase {
         case signing
@@ -365,36 +366,76 @@ struct BatchSigningView: View {
                 let signingOptions = appOptions[app.uuid ?? ""] ?? OptionsManager.shared.options
                 
                 await withCheckedContinuation { continuation in
-                    FR.signPackageFile(
-                        app,
-                        using: signingOptions,
-                        icon: nil,
-                        certificate: selectedCert
-                    ) { error in
-                        if let error {
-                            let result = BatchSignResult(
-                                appName: app.name ?? "Unknown",
-                                success: false,
-                                message: error.localizedDescription
-                            )
-                            batchResults.append(result)
-                            AppLogManager.shared.error("Batch signing failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
-                        } else {
-                            let result = BatchSignResult(
-                                appName: app.name ?? "Unknown",
-                                success: true,
-                                message: "Signed Successfully"
-                            )
-                            batchResults.append(result)
-                            signedAppsForInstall.append(app)
-                            AppLogManager.shared.success("Batch signing succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
+                    if _serverMethod == 2 {
+                        // Remote Signing
+                        FR.remoteSignPackageFile(
+                            app,
+                            using: signingOptions,
+                            certificate: selectedCert
+                        ) { result in
+                            DispatchQueue.main.async {
+                                switch result {
+                                case .success(let installLink):
+                                    let result = BatchSignResult(
+                                        appName: app.name ?? "Unknown",
+                                        success: true,
+                                        message: "Signed Successfully (Remote)"
+                                    )
+                                    batchResults.append(result)
+                                    AppLogManager.shared.success("Batch remote signing succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
+
+                                    // Auto install for remote signing means opening the itms link
+                                    if autoInstall {
+                                        if let url = URL(string: installLink) {
+                                            UIApplication.shared.open(url)
+                                            updateBatchResult(for: app, message: "Signed - Installation Link Opened")
+                                        }
+                                    }
+                                case .failure(let error):
+                                    let result = BatchSignResult(
+                                        appName: app.name ?? "Unknown",
+                                        success: false,
+                                        message: error.localizedDescription
+                                    )
+                                    batchResults.append(result)
+                                    AppLogManager.shared.error("Batch remote signing failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
+                                }
+                                continuation.resume()
+                            }
                         }
-                        continuation.resume()
+                    } else {
+                        // Local Signing
+                        FR.signPackageFile(
+                            app,
+                            using: signingOptions,
+                            icon: nil,
+                            certificate: selectedCert
+                        ) { error in
+                            if let error {
+                                let result = BatchSignResult(
+                                    appName: app.name ?? "Unknown",
+                                    success: false,
+                                    message: error.localizedDescription
+                                )
+                                batchResults.append(result)
+                                AppLogManager.shared.error("Batch signing failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
+                            } else {
+                                let result = BatchSignResult(
+                                    appName: app.name ?? "Unknown",
+                                    success: true,
+                                    message: "Signed Successfully"
+                                )
+                                batchResults.append(result)
+                                signedAppsForInstall.append(app)
+                                AppLogManager.shared.success("Batch signing succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
+                            }
+                            continuation.resume()
+                        }
                     }
                 }
                 
-                // Immediately trigger installation for this app after signing
-                if autoInstall && signedAppsForInstall.contains(where: { $0.uuid == app.uuid }) {
+                // Immediately trigger installation for this app after signing (Local only)
+                if _serverMethod != 2 && autoInstall && signedAppsForInstall.contains(where: { $0.uuid == app.uuid }) {
                     await triggerInstallation(for: app, appIndex: index)
                 }
             }

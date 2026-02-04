@@ -57,15 +57,13 @@ struct CertificatesView: View {
 			}
 		}
 		.toolbar(content: {
-			if _bindingSelectedCert == nil {
-				ToolbarItem(placement: .topBarTrailing) {
-					Button {
-						_isAddingPresenting = true
-					} label: {
-						Image(systemName: "plus.circle.fill")
-							.font(.system(size: 22, weight: .medium))
-							.foregroundStyle(Color.accentColor)
-					}
+			ToolbarItem(placement: .topBarTrailing) {
+				Button {
+					_isAddingPresenting = true
+				} label: {
+					Image(systemName: "plus.circle.fill")
+						.font(.system(size: 22, weight: .medium))
+						.foregroundStyle(Color.accentColor)
 				}
 			}
 		})

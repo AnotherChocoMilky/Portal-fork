@@ -7,6 +7,7 @@ struct SigningOptionsView: View {
     var temporaryOptions: Options?
     @State private var accentColor: Color = .accentColor
     @State private var showPPQInfo = false
+    @State private var floatingAnimation = false
     @AppStorage("Feather.certificateExperience") private var certificateExperience: String = "Developer"
     
     // Check if any certificate has PPQCheck
@@ -27,379 +28,319 @@ struct SigningOptionsView: View {
     
     // MARK: Body
     var body: some View {
-        if (temporaryOptions == nil) {
-            Section {
-                Toggle(isOn: Binding(
-                    get: { 
-                        // Always return true if forced, false if dynamicProtection is enabled
-                        if options.dynamicProtection {
-                            return false
-                        }
-                        return isPPQProtectionForced ? true : options.ppqProtection 
-                    },
-                    set: { newValue in
-                        // Only allow disabling if not forced and dynamic protection is off
-                        if !isPPQProtectionForced || newValue {
-                            options.ppqProtection = newValue
-                            if newValue {
-                                // Disable dynamic protection when PPQ is enabled
-                                options.dynamicProtection = false
-                            }
-                        }
-                    }
-                )) {
-                    Label(.localized("PPQ Protection"), systemImage: "shield.checkered")
-                }
-                .disabled(isPPQProtectionForced || options.dynamicProtection)
-                
-                Toggle(isOn: Binding(
-                    get: { options.dynamicProtection },
-                    set: { newValue in
-                        options.dynamicProtection = newValue
-                        if newValue {
-                            // Disable PPQ protection when Dynamic is enabled (only if not forced)
-                            // When PPQ is forced, Dynamic Protection cannot be enabled
-                            if isPPQProtectionForced {
-                                options.dynamicProtection = false
-                            } else {
-                                options.ppqProtection = false
-                            }
-                        }
-                    }
-                )) {
-                    Label(.localized("Dynamic Protection"), systemImage: "wand.and.stars")
-                }
-                .disabled(isPPQProtectionForced)
-                
-                Button {
-                    HapticsManager.shared.impact()
-                    showPPQInfo = true
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "questionmark.circle.fill")
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [accentColor, accentColor.opacity(0.7)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
+        ZStack {
+            // Modern animated background
+            modernBackground
+
+            ScrollView {
+                VStack(spacing: 24) {
+                    if temporaryOptions == nil {
+                        // Protection Section
+                        modernSection(title: "Protection", icon: "shield.lefthalf.filled", color: .blue) {
+                            modernToggle(
+                                title: "PPQ Protection",
+                                subtitle: isPPQProtectionForced ? "Required for your certificate." : "Append random string to Bundle IDs to avoid Apple flagging this certificate.",
+                                icon: "shield.checkered",
+                                color: .blue,
+                                isOn: Binding(
+                                    get: { isPPQProtectionForced ? true : options.ppqProtection },
+                                    set: { newValue in
+                                        if !isPPQProtectionForced || newValue {
+                                            options.ppqProtection = newValue
+                                            if newValue { options.dynamicProtection = false }
+                                        }
+                                    }
+                                ),
+                                disabled: isPPQProtectionForced
                             )
-                        Text(.localized("What is PPQ?"))
-                            .foregroundStyle(.primary)
-                        Spacer()
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-                }
-            } header: {
-                HStack(spacing: 8) {
-                    Image(systemName: "shield.lefthalf.filled")
-                        .font(.subheadline)
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [accentColor, accentColor.opacity(0.7)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
+
+                            Divider().padding(.leading, 56)
+
+                            modernToggle(
+                                title: "Dynamic Protection",
+                                subtitle: "Only apply random strings to apps matching those in the App Store.",
+                                icon: "wand.and.stars",
+                                color: .indigo,
+                                isOn: Binding(
+                                    get: { options.dynamicProtection },
+                                    set: { newValue in
+                                        options.dynamicProtection = newValue
+                                        if newValue {
+                                            if isPPQProtectionForced {
+                                                options.dynamicProtection = false
+                                            } else {
+                                                options.ppqProtection = false
+                                            }
+                                        }
+                                    }
+                                ),
+                                disabled: isPPQProtectionForced
                             )
+
+                            Divider().padding(.leading, 56)
+
+                            Button {
+                                HapticsManager.shared.impact()
+                                showPPQInfo = true
+                            } label: {
+                                HStack(spacing: 14) {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                            .fill(Color.accentColor.opacity(0.12))
+                                            .frame(width: 36, height: 36)
+                                        Image(systemName: "questionmark.circle.fill")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundStyle(Color.accentColor)
+                                    }
+                                    Text("What is PPQ?")
+                                        .font(.system(size: 15, weight: .medium))
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundStyle(.quaternary)
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 12)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+
+                    // General Section
+                    modernSection(title: "General", icon: "gearshape.2.fill", color: .gray) {
+                        modernPicker(
+                            title: "Appearance",
+                            icon: "paintpalette.fill",
+                            color: .pink,
+                            selection: $options.appAppearance,
+                            values: Options.AppAppearance.allCases
                         )
-                    Text(.localized("Protection"))
-                        .fontWeight(.semibold)
+
+                        Divider().padding(.leading, 56)
+
+                        modernPicker(
+                            title: "Minimum Requirement",
+                            icon: "ruler.fill",
+                            color: .indigo,
+                            selection: $options.minimumAppRequirement,
+                            values: Options.MinimumAppRequirement.allCases
+                        )
+                    }
+
+                    // Signing Section
+                    modernSection(title: "Signing", icon: "signature", color: .purple) {
+                        modernPicker(
+                            title: "Signing Type",
+                            icon: "pencil.and.scribble",
+                            color: .purple,
+                            selection: $options.signingOption,
+                            values: Options.SigningOption.allCases
+                        )
+                    }
+
+                    // App Features Section
+                    modernSection(title: "App Features", icon: "sparkles", color: .yellow) {
+                        modernToggle(title: "File Sharing", subtitle: "Enable Document Sharing.", icon: "folder.fill.badge.person.crop", color: .blue, isOn: $options.fileSharing)
+                        Divider().padding(.leading, 56)
+                        modernToggle(title: "iTunes File Sharing", subtitle: "Access Via iTunes/Finder.", icon: "music.note.list", color: .pink, isOn: $options.itunesFileSharing)
+                        Divider().padding(.leading, 56)
+                        modernToggle(title: "ProMotion", subtitle: "120Hz Display Support.", icon: "gauge.with.dots.needle.67percent", color: .green, isOn: $options.proMotion)
+                        Divider().padding(.leading, 56)
+                        modernToggle(title: "Game Mode", subtitle: "Turn on Gaming Mode (iOS 18+).", icon: "gamecontroller.fill", color: .purple, isOn: $options.gameMode)
+                        Divider().padding(.leading, 56)
+                        modernToggle(title: "iPad Fullscreen", subtitle: "Full Screen On iPad.", icon: "ipad.landscape", color: .orange, isOn: $options.ipadFullscreen)
+                    }
+
+                    // Removal Section
+                    modernSection(title: "Removal", icon: "trash.slash.fill", color: .red) {
+                        modernToggle(title: "Remove URL Scheme", subtitle: "Strip URL Handlers.", icon: "link.badge.minus", color: .red, isOn: $options.removeURLScheme)
+                        Divider().padding(.leading, 56)
+                        modernToggle(title: "Remove Provisioning", subtitle: "Exclude .mobileprovision.", icon: "doc.badge.minus", color: .orange, isOn: $options.removeProvisioning)
+                    }
+
+                    // Localization Section
+                    modernSection(title: "Localization", icon: "globe.badge.chevron.backward", color: .green) {
+                        modernToggle(title: "Force Localize", subtitle: "Override Localized Titles.", icon: "character.bubble.fill", color: .green, isOn: $options.changeLanguageFilesForCustomDisplayName)
+                    }
+
+                    // Post Signing Section
+                    modernSection(title: "Post Signing", icon: "clock.arrow.circlepath", color: .orange) {
+                        modernToggle(title: "Install After Signing", subtitle: "Auto Install When Done.", icon: "arrow.down.circle.fill", color: .green, isOn: $options.post_installAppAfterSigned)
+                        Divider().padding(.leading, 56)
+                        modernToggle(title: "Delete After Signing", subtitle: "Remove Original File.", icon: "trash.fill", color: .red, isOn: $options.post_deleteAppAfterSigned)
+                    }
+
+                    // Experiments Section
+                    modernSection(title: "Experiments", icon: "flask.fill", color: .purple, isBeta: true) {
+                        modernToggle(title: "Replace Substrate", subtitle: "Use ElleKit Instead.", icon: "arrow.triangle.2.circlepath.circle.fill", color: .cyan, isOn: $options.experiment_replaceSubstrateWithEllekit)
+                        Divider().padding(.leading, 56)
+                        modernToggle(title: "Liquid Glass", subtitle: "Use iOS 26 Redesign Support.", icon: "sparkles.rectangle.stack.fill", color: .purple, isOn: $options.experiment_supportLiquidGlass)
+                    }
                 }
-                .textCase(.none)
-            } footer: {
-                if isEnterpriseCertificate {
-                    Text(.localized("PPQ Protection is automatically enabled and required for Enterprise certificates. This helps protect your certificate from being revoked by Apple."))
-                } else if hasCertificateWithPPQCheck {
-                    Text(.localized("PPQ Protection is automatically enabled and required because one or more of your certificates has PPQCheck. This helps protect your Apple ID from being flagged."))
-                } else {
-                    Text(.localized("Enabling any protection will append a random string to the Bundle Identifiers of the apps you sign. Dynamic Protection only applies random strings to apps with Bundle IDs matching those in the App Store, helping to avoid detection while preserving functionality for non-App Store apps."))
-                }
-            }
-            .onAppear {
-                // Force enable PPQ Protection when Enterprise is selected
-                if isPPQProtectionForced && !options.ppqProtection {
-                    options.ppqProtection = true
-                }
-            }
-            .onChange(of: certificateExperience) { _ in
-                // Force enable PPQ Protection when switching to Enterprise
-                if isPPQProtectionForced && !options.ppqProtection {
-                    options.ppqProtection = true
-                }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                .padding(.bottom, 40)
             }
         }
-		
-		Section {
-			Self.picker(
-				.localized("Appearance"),
-				systemImage: "paintpalette.fill",
-				selection: $options.appAppearance,
-				values: Options.AppAppearance.allCases
-			)
-			
-			Self.picker(
-				.localized("Minimum Requirement"),
-				systemImage: "ruler.fill",
-				selection: $options.minimumAppRequirement,
-				values: Options.MinimumAppRequirement.allCases
-			)
-		} header: {
-			HStack(spacing: 8) {
-				Image(systemName: "gearshape.2.fill")
-					.font(.subheadline)
-					.foregroundStyle(
-						LinearGradient(
-							colors: [accentColor, accentColor.opacity(0.7)],
-							startPoint: .topLeading,
-							endPoint: .bottomTrailing
-						)
-					)
-				Text(.localized("General"))
-					.fontWeight(.semibold)
-			}
-			.textCase(.none)
-		}
-		
-		Section {
-			Self.picker(
-				.localized("Signing Type"),
-				systemImage: "signature",
-				selection: $options.signingOption,
-				values: Options.SigningOption.allCases
-			)
-		} header: {
-			HStack(spacing: 8) {
-				Image(systemName: "pencil.and.scribble")
-					.font(.subheadline)
-					.foregroundStyle(
-						LinearGradient(
-							colors: [accentColor, accentColor.opacity(0.7)],
-							startPoint: .topLeading,
-							endPoint: .bottomTrailing
-						)
-					)
-				Text(.localized("Signing"))
-					.fontWeight(.semibold)
-			}
-			.textCase(.none)
-		}
-		
-		Section {
-			_toggle(
-				.localized("File Sharing"),
-				systemImage: "folder.fill.badge.person.crop",
-				isOn: $options.fileSharing,
-				temporaryValue: temporaryOptions?.fileSharing
-			)
-			
-			_toggle(
-				.localized("iTunes File Sharing"),
-				systemImage: "music.note.list",
-				isOn: $options.itunesFileSharing,
-				temporaryValue: temporaryOptions?.itunesFileSharing
-			)
-			
-			_toggle(
-				.localized("Pro Motion"),
-				systemImage: "gauge.with.dots.needle.67percent",
-				isOn: $options.proMotion,
-				temporaryValue: temporaryOptions?.proMotion
-			)
-			
-			_toggle(
-				.localized("Game Mode"),
-				systemImage: "gamecontroller.fill",
-				isOn: $options.gameMode,
-				temporaryValue: temporaryOptions?.gameMode
-			)
-			
-			_toggle(
-				.localized("iPad Fullscreen"),
-				systemImage: "ipad.landscape",
-				isOn: $options.ipadFullscreen,
-				temporaryValue: temporaryOptions?.ipadFullscreen
-			)
-		} header: {
-			HStack(spacing: 8) {
-				Image(systemName: "sparkles")
-					.font(.subheadline)
-					.foregroundStyle(
-						LinearGradient(
-							colors: [accentColor, accentColor.opacity(0.7)],
-							startPoint: .topLeading,
-							endPoint: .bottomTrailing
-						)
-					)
-				Text(.localized("App Features"))
-					.fontWeight(.semibold)
-			}
-			.textCase(.none)
-		}
-		
-		Section {
-			_toggle(
-				.localized("Remove URL Scheme"),
-				systemImage: "link.badge.minus",
-				isOn: $options.removeURLScheme,
-				temporaryValue: temporaryOptions?.removeURLScheme
-			)
-			
-			_toggle(
-				.localized("Remove Provisioning"),
-				systemImage: "doc.badge.minus",
-				isOn: $options.removeProvisioning,
-				temporaryValue: temporaryOptions?.removeProvisioning
-			)
-		} header: {
-			HStack(spacing: 8) {
-				Image(systemName: "trash.slash.fill")
-					.font(.subheadline)
-					.foregroundStyle(
-						LinearGradient(
-							colors: [Color.red, Color.red.opacity(0.7)],
-							startPoint: .topLeading,
-							endPoint: .bottomTrailing
-						)
-					)
-				Text(.localized("Removal"))
-					.fontWeight(.semibold)
-			}
-			.textCase(.none)
-		} footer: {
-			Text(.localized("Removing the provisioning file will exclude the .mobileprovision file from being embedded inside of the application when signing, to help prevent any detection."))
-		}
-		
-		Section {
-			_toggle(
-				.localized("Force Localize"),
-				systemImage: "character.bubble.fill",
-				isOn: $options.changeLanguageFilesForCustomDisplayName,
-				temporaryValue: temporaryOptions?.changeLanguageFilesForCustomDisplayName
-			)
-		} header: {
-			HStack(spacing: 8) {
-				Image(systemName: "globe.badge.chevron.backward")
-					.font(.subheadline)
-					.foregroundStyle(
-						LinearGradient(
-							colors: [accentColor, accentColor.opacity(0.7)],
-							startPoint: .topLeading,
-							endPoint: .bottomTrailing
-						)
-					)
-				Text(.localized("Localization"))
-					.fontWeight(.semibold)
-			}
-			.textCase(.none)
-		} footer: {
-			Text(.localized("By default, localized titles for the app won't be changed, however this option overrides it."))
-		}
-		
-		Section {
-            _toggle(
-                .localized("Install After Signing"),
-                systemImage: "arrow.down.circle.fill",
-                isOn: $options.post_installAppAfterSigned,
-                temporaryValue: temporaryOptions?.post_installAppAfterSigned
+        .alert("What is PPQ?", isPresented: $showPPQInfo) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text("PPQ is a check Apple has added to certificates. If you have this check on the certificate, change your Bundle IDs when signing apps to avoid Apple revoking your certificates.")
+        }
+        .onAppear {
+            if isPPQProtectionForced && !options.ppqProtection {
+                options.ppqProtection = true
+            }
+            withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true)) {
+                floatingAnimation = true
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var modernBackground: some View {
+        ZStack {
+            Color(UIColor.systemGroupedBackground)
+                .ignoresSafeArea()
+
+            GeometryReader { geo in
+                Circle()
+                    .fill(Color.accentColor.opacity(0.08))
+                    .frame(width: 300, height: 300)
+                    .blur(radius: 60)
+                    .offset(x: floatingAnimation ? -20 : 20, y: floatingAnimation ? -30 : 30)
+                    .position(x: geo.size.width * 0.9, y: geo.size.height * 0.1)
+
+                Circle()
+                    .fill(Color.purple.opacity(0.06))
+                    .frame(width: 250, height: 250)
+                    .blur(radius: 50)
+                    .offset(x: floatingAnimation ? 30 : -30, y: floatingAnimation ? 20 : -20)
+                    .position(x: geo.size.width * 0.1, y: geo.size.height * 0.8)
+            }
+            .ignoresSafeArea()
+        }
+    }
+
+    @ViewBuilder
+    private func modernSection<Content: View>(title: String, icon: String, color: Color, isBeta: Bool = false, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(color)
+                Text(title.uppercased())
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.5)
+
+                if isBeta {
+                    Text("BETA")
+                        .font(.system(size: 8, weight: .black))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(color))
+                }
+
+                Spacer()
+            }
+            .padding(.leading, 4)
+
+            VStack(spacing: 0) {
+                content()
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground))
             )
-			_toggle(
-				.localized("Delete After Signing"),
-				systemImage: "trash.fill",
-				isOn: $options.post_deleteAppAfterSigned,
-				temporaryValue: temporaryOptions?.post_deleteAppAfterSigned
-			)
-		} header: {
-			HStack(spacing: 8) {
-				Image(systemName: "clock.arrow.circlepath")
-					.font(.subheadline)
-					.foregroundStyle(
-						LinearGradient(
-							colors: [accentColor, accentColor.opacity(0.7)],
-							startPoint: .topLeading,
-							endPoint: .bottomTrailing
-						)
-					)
-				Text(.localized("Post Signing"))
-					.fontWeight(.semibold)
-			}
-			.textCase(.none)
-		} footer: {
-			Text(.localized("This will delete your imported application after signing, to save on using unneeded space."))
-		}
-		
-		Section {
-			_toggle(
-				.localized("Replace Substrate with ElleKit"),
-				systemImage: "arrow.triangle.2.circlepath.circle.fill",
-				isOn: $options.experiment_replaceSubstrateWithEllekit,
-				temporaryValue: temporaryOptions?.experiment_replaceSubstrateWithEllekit
-			)
-			
-			_toggle(
-				.localized("Enable Liquid Glass"),
-				systemImage: "sparkles.rectangle.stack.fill",
-				isOn: $options.experiment_supportLiquidGlass,
-				temporaryValue: temporaryOptions?.experiment_supportLiquidGlass
-			)
-		} header: {
-			HStack(spacing: 8) {
-				Image(systemName: "flask.fill")
-					.font(.subheadline)
-					.foregroundStyle(
-						LinearGradient(
-							colors: [Color.purple, Color.purple.opacity(0.7)],
-							startPoint: .topLeading,
-							endPoint: .bottomTrailing
-						)
-					)
-				Text(.localized("Experiments"))
-					.fontWeight(.semibold)
-			}
-			.textCase(.none)
-		} footer: {
-			Text(.localized("This option force converts apps to try to use the new Liquid Glass redesign iOS 26 introduced by changing the SDK build, this may not work for all applications due to differing frameworks."))
-		}
-		.alert(.localized("What is PPQ?"), isPresented: $showPPQInfo) {
-			Button(.localized("OK"), role: .cancel) {}
-		} message: {
-			Text(.localized("PPQ is a check Apple has added to certificates. If you have this check on the certificate, change your Bundle IDs when signing apps to avoid Apple revoking your certificates."))
-		}
-	}
-	
-	@ViewBuilder
-	static func picker<SelectionValue: Hashable, T: Hashable & LocalizedDescribable>(
-		_ title: String,
-		systemImage: String,
-		selection: Binding<SelectionValue>,
-		values: [T]
-	) -> some View {
-		Picker(selection: selection) {
-			ForEach(values, id: \.self) { value in
-				Text(value.localizedDescription)
-			}
-		} label: {
-			Label(title, systemImage: systemImage)
-		}
-	}
-	
-	@ViewBuilder
-	private func _toggle(
-		_ title: String,
-		systemImage: String,
-		isOn: Binding<Bool>,
-		temporaryValue: Bool? = nil
-	) -> some View {
-		Toggle(isOn: isOn) {
-			Label {
-				if let tempValue = temporaryValue, tempValue != isOn.wrappedValue {
-					Text(title).bold()
-				} else {
-					Text(title)
-				}
-			} icon: {
-				Image(systemName: systemImage)
-			}
-		}
-	}
+            .overlay(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .stroke(Color.black.opacity(0.03), lineWidth: 0.5)
+            )
+            .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
+        }
+    }
+
+    @ViewBuilder
+    private func modernToggle(title: String, subtitle: String? = nil, icon: String, color: Color, isOn: Binding<Bool>, disabled: Bool = false) -> some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(color.opacity(0.12))
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(color)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(.primary)
+                if let subtitle = subtitle {
+                    Text(subtitle)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+            }
+
+            Spacer()
+
+            Toggle("", isOn: isOn)
+                .labelsHidden()
+                .disabled(disabled)
+                .tint(accentColor)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+    }
+
+    @ViewBuilder
+    private func modernPicker<T: Hashable & LocalizedDescribable>(title: String, icon: String, color: Color, selection: Binding<T>, values: [T]) -> some View {
+        HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(color.opacity(0.12))
+                    .frame(width: 36, height: 36)
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(color)
+            }
+
+            Text(title)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.primary)
+
+            Spacer()
+
+            Picker("", selection: selection) {
+                ForEach(values, id: \.self) { value in
+                    Text(value.localizedDescription).tag(value)
+                }
+            }
+            .labelsHidden()
+            .tint(.secondary)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+    }
+
+    // Keep the static picker for compatibility
+    @ViewBuilder
+    static func picker<SelectionValue: Hashable, T: Hashable & LocalizedDescribable>(
+        _ title: String,
+        systemImage: String,
+        selection: Binding<SelectionValue>,
+        values: [T]
+    ) -> some View {
+        Picker(selection: selection) {
+            ForEach(values, id: \.self) { value in
+                Text(value.localizedDescription)
+            }
+        } label: {
+            Label(title, systemImage: systemImage)
+        }
+    }
 }
