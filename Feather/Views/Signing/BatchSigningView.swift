@@ -129,7 +129,7 @@ struct BatchSigningView: View {
                     } header: {
                         Label("Options", systemImage: "gearshape.fill")
                     } footer: {
-                        Text("Automatically install apps after successful signing")
+                        Text("Automatically install apps after successful signing. This does not work as of now, you can install manually from Library after the Batch Signing is completed.")
                     }
 
                     // App Selection

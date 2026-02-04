@@ -227,7 +227,7 @@ struct InfoPlistEntriesView: View {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(.secondary)
                 
-                TextField(.localized("Search entries..."), text: $searchText)
+                TextField(.localized("Search Entries"), text: $searchText)
                     .font(.system(size: 15))
                     .textInputAutocapitalization(.never)
                 
@@ -299,7 +299,7 @@ struct InfoPlistEntriesView: View {
     @ViewBuilder
     private var quickActionsSection: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text(.localized("QUICK ACTIONS"))
+            Text(.localized("Quick Actions"))
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.secondary)
                 .padding(.leading, 4)
@@ -309,7 +309,7 @@ struct InfoPlistEntriesView: View {
                     QuickActionCard(
                         icon: "sparkles",
                         title: .localized("Presets"),
-                        subtitle: .localized("Common options"),
+                        subtitle: .localized("Common Options"),
                         gradient: [.purple, .indigo]
                     ) {
                         showPresetSheet = true
@@ -327,7 +327,7 @@ struct InfoPlistEntriesView: View {
                     QuickActionCard(
                         icon: "magnifyingglass",
                         title: .localized("Replace"),
-                        subtitle: .localized("Bulk edit"),
+                        subtitle: .localized("Bulk Edit"),
                         gradient: [.orange, .red]
                     ) {
                         showSearchReplaceSheet = true
@@ -336,7 +336,7 @@ struct InfoPlistEntriesView: View {
                     QuickActionCard(
                         icon: "square.and.arrow.up",
                         title: .localized("Export"),
-                        subtitle: .localized("Save entries"),
+                        subtitle: .localized("Save Entries"),
                         gradient: [.blue, .cyan]
                     ) {
                         exportPlistFile()
@@ -348,7 +348,7 @@ struct InfoPlistEntriesView: View {
                         QuickActionCard(
                             icon: "arrow.counterclockwise",
                             title: .localized("Clear All"),
-                            subtitle: .localized("Remove all"),
+                            subtitle: .localized("Remove All"),
                             gradient: [.red, .orange]
                         ) {
                             withAnimation {
@@ -414,7 +414,7 @@ struct InfoPlistEntriesView: View {
     private var entriesSection: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Text(.localized("ENTRIES (\(filteredEntries.count))"))
+                Text(.localized("Entries (\(filteredEntries.count))"))
                     .font(.system(size: 11, weight: .semibold))
                     .foregroundStyle(.secondary)
                 
@@ -485,7 +485,7 @@ struct InfoPlistEntriesView: View {
     @ViewBuilder
     private var batchActionBar: some View {
         HStack(spacing: 16) {
-            Text(.localized("\(selectedEntries.count) selected"))
+            Text(.localized("\(selectedEntries.count) Selected"))
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(.secondary)
             
@@ -555,12 +555,12 @@ struct InfoPlistEntriesView: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(.localized("KEY"))
+                            Text(.localized("Key"))
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(.secondary)
                                 .padding(.leading, 4)
                             
-                            TextField(.localized("Enter key name"), text: $newKey)
+                            TextField(.localized("Enter Key Name"), text: $newKey)
                                 .font(.system(size: 16))
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled()
@@ -572,7 +572,7 @@ struct InfoPlistEntriesView: View {
                         }
                         
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(.localized("TYPE"))
+                            Text(.localized("Type"))
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(.secondary)
                                 .padding(.leading, 4)
@@ -605,7 +605,7 @@ struct InfoPlistEntriesView: View {
                         }
                         
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(.localized("VALUE"))
+                            Text(.localized("Value"))
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(.secondary)
                                 .padding(.leading, 4)
@@ -659,7 +659,7 @@ struct InfoPlistEntriesView: View {
     private var valueInputView: some View {
         switch newValueType {
         case .string:
-            TextField(.localized("Enter string value"), text: $newStringValue)
+            TextField(.localized("Enter String Value"), text: $newStringValue)
                 .font(.system(size: 16))
                 .padding(14)
                 .background(
@@ -684,7 +684,7 @@ struct InfoPlistEntriesView: View {
             )
             
         case .number:
-            TextField(.localized("Enter number"), text: $newNumberValue)
+            TextField(.localized("Enter Number"), text: $newNumberValue)
                 .font(.system(size: 16))
                 .keyboardType(.numbersAndPunctuation)
                 .padding(14)
@@ -755,7 +755,7 @@ struct InfoPlistEntriesView: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(.localized("KEY"))
+                            Text(.localized("Key"))
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(.secondary)
                                 .padding(.leading, 4)
@@ -772,7 +772,7 @@ struct InfoPlistEntriesView: View {
                         }
                         
                         VStack(alignment: .leading, spacing: 12) {
-                            Text(.localized("VALUE"))
+                            Text(.localized("Value"))
                                 .font(.system(size: 11, weight: .semibold))
                                 .foregroundStyle(.secondary)
                                 .padding(.leading, 4)
@@ -824,7 +824,7 @@ struct InfoPlistEntriesView: View {
     private var editValueInputView: some View {
         switch editValueType {
         case .string:
-            TextField(.localized("Enter string value"), text: $editStringValue)
+            TextField(.localized("Enter String Value"), text: $editStringValue)
                 .font(.system(size: 16))
                 .padding(14)
                 .background(
@@ -849,7 +849,7 @@ struct InfoPlistEntriesView: View {
             )
             
         case .number:
-            TextField(.localized("Enter number"), text: $editNumberValue)
+            TextField(.localized("Enter Number"), text: $editNumberValue)
                 .font(.system(size: 16))
                 .keyboardType(.numbersAndPunctuation)
                 .padding(14)
@@ -1426,7 +1426,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("Enable JIT"),
-                            subtitle: .localized("Allow Just-In-Time compilation"),
+                            subtitle: .localized("Allow Just-In-Time compilation. Requires a Developer certificate so the get-task entitlement can be present."),
                             icon: "bolt.fill",
                             color: .orange
                         ) {
@@ -1444,7 +1444,7 @@ struct InfoPlistEntriesView: View {
 
                         PresetButton(
                             title: .localized("Hide iPad Home Bar"),
-                            subtitle: .localized("Auto-hide home indicator"),
+                            subtitle: .localized("Auto hide home indicator"),
                             icon: "minus",
                             color: .blue
                         ) {
@@ -1475,11 +1475,11 @@ struct InfoPlistEntriesView: View {
                     TextField(.localized("Find"), text: $searchReplaceTarget)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
-                    TextField(.localized("Replace with"), text: $searchReplaceNewValue)
+                    TextField(.localized("Replace With"), text: $searchReplaceNewValue)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                 } header: {
-                    Text(.localized("Search and Replace values"))
+                    Text(.localized("Search And Replace Values"))
                 } footer: {
                     Text(.localized("This will replace all occurrences in string values."))
                 }
@@ -1494,7 +1494,7 @@ struct InfoPlistEntriesView: View {
                 }
                 .disabled(searchReplaceTarget.isEmpty)
             }
-            .navigationTitle(.localized("Search and Replace"))
+            .navigationTitle(.localized("Search And Replace"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
@@ -1522,7 +1522,7 @@ struct InfoPlistEntriesView: View {
         }
         HapticsManager.shared.success()
         if count > 0 {
-            ToastManager.shared.show("Replaced \(count) values", type: .success)
+            ToastManager.shared.show("Replaced \(count) Values", type: .success)
         }
         showSearchReplaceSheet = false
     }
@@ -1763,9 +1763,9 @@ struct InfoPlistEntriesView: View {
         } else if let number = value as? Double {
             return "\(number)"
         } else if let array = value as? [Any] {
-            return "Array (\(array.count) items)"
+            return "Array (\(array.count) Items)"
         } else if let dict = value as? [String: Any] {
-            return "Dictionary (\(dict.count) keys)"
+            return "Dictionary (\(dict.count) Keys)"
         } else {
             return "\(value)"
         }
@@ -1874,9 +1874,9 @@ struct ModernEntryRow: View {
         } else if let number = value.value as? Double {
             return "\(number)"
         } else if let array = value.value as? [Any] {
-            return "Array (\(array.count) items)"
+            return "Array (\(array.count) Items)"
         } else if let dict = value.value as? [String: Any] {
-            return "Dictionary (\(dict.count) keys)"
+            return "Dictionary (\(dict.count) Keys)"
         }
         return "\(value.value)"
     }

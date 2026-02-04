@@ -768,11 +768,11 @@ struct ExtractTweaksView: View {
 
                 // Copy selected bundles
                 if !selectedBundles.isEmpty {
-                    let bundlesDir = tempDir.appendingPathComponent("PlugIns")
+                    let bundlesDir = tempDir.appendingPathComponent("Plugins")
                     try FileManager.default.createDirectory(at: bundlesDir, withIntermediateDirectories: true)
 
                     for bundle in selectedBundles {
-                        let source = appPath.appendingPathComponent("PlugIns").appendingPathComponent(bundle)
+                        let source = appPath.appendingPathComponent("Plugins").appendingPathComponent(bundle)
                         let dest = bundlesDir.appendingPathComponent(bundle)
                         try FileManager.default.copyItem(at: source, to: dest)
                     }

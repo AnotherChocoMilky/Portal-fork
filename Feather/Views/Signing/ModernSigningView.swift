@@ -87,7 +87,7 @@ struct ModernSigningView: View {
                     title: "App Name",
                     icon: "textformat",
                     iconColor: .blue,
-                    placeholder: "Enter app name",
+                    placeholder: "Enter New App Name",
                     value: $_editingName,
                     onSave: {
                         _temporaryOptions.appName = _editingName.isEmpty ? nil : _editingName
@@ -108,7 +108,7 @@ struct ModernSigningView: View {
                     title: "Bundle ID",
                     icon: "barcode",
                     iconColor: .purple,
-                    placeholder: "com.example.app",
+                    placeholder: "New Bundle ID",
                     value: $_editingBundleId,
                     keyboardType: .URL,
                     onSave: {
@@ -130,7 +130,7 @@ struct ModernSigningView: View {
                     title: "Version",
                     icon: "tag",
                     iconColor: .green,
-                    placeholder: "1.0.0",
+                    placeholder: "New Version",
                     value: $_editingVersion,
                     keyboardType: .numbersAndPunctuation,
                     onSave: {
@@ -376,12 +376,12 @@ struct ModernSigningView: View {
                 Button {
                     _isFilePickerPresenting = true
                 } label: {
-                    Label("Choose from Files", systemImage: "folder.fill")
+                    Label("Choose From Files", systemImage: "folder.fill")
                 }
                 Button {
                     _isImagePickerPresenting = true
                 } label: {
-                    Label("Choose from Photos", systemImage: "photo.fill")
+                    Label("Choose From Photos", systemImage: "photo.fill")
                 }
             } label: {
                 ZStack(alignment: .bottomTrailing) {
@@ -754,7 +754,7 @@ struct ModernSigningView: View {
                         Text(.localized("No Certificate"))
                             .font(.body.weight(.medium))
                             .foregroundStyle(.primary)
-                        Text(.localized("Tap to add"))
+                        Text(.localized("Tap To Add"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
