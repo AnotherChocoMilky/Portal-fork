@@ -6366,7 +6366,7 @@ struct DeveloperBatchSigningView: View {
                             .foregroundStyle(.secondary)
                     } else {
                         ForEach(importedApps, id: \.uuid) { app in
-                            BatchAppRow(
+                            DeveloperBatchAppRow(
                                 app: app,
                                 isSelected: selectedApps.contains(app.uuid ?? ""),
                                 onToggle: {
@@ -6526,8 +6526,8 @@ struct DeveloperBatchSigningView: View {
     }
 }
 
-// MARK: - Batch App Row
-struct BatchAppRow: View {
+// MARK: - Developer Batch App Row
+struct DeveloperBatchAppRow: View {
     let app: Imported
     let isSelected: Bool
     let onToggle: () -> Void

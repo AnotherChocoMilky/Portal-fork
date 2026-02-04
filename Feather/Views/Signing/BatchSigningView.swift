@@ -454,7 +454,7 @@ struct BatchAppRow: View {
             Button(action: onEdit) {
                 Image(systemName: "pencil.circle.fill")
                     .font(.title3)
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
             }
             .buttonStyle(.plain)
         }
