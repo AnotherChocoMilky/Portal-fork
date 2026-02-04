@@ -359,7 +359,7 @@ struct BatchSigningView: View {
                 // Direct device installation
                 let installProxy = InstallationProxy(viewModel: viewModel)
                 let shouldSuspend = app.identifier == Bundle.main.bundleIdentifier
-                try await installProxy.install(at: packageUrl, suspend: shouldSuspend ?? false)
+                try await installProxy.install(at: packageUrl, suspend: shouldSuspend)
                 
                 await MainActor.run {
                     updateBatchResult(for: app, message: "Signed and Installed Successfully")
