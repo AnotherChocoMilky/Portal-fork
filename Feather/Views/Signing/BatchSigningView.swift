@@ -375,19 +375,33 @@ struct BatchSigningView: View {
                 AppLogManager.shared.success("Batch signing completed for \(Int(totalApps)) apps", category: "BatchSign")
             }
             
-            // Clean up signed apps to save space
-            await cleanupSignedApps()
+            // Only clean up for direct device installations
+            // For server-based installations, keep the files available
+            if installationMethod == 1 {
+                await cleanupSignedApps()
+            } else {
+                AppLogManager.shared.info("Skipping cleanup for server-based installation", category: "BatchSign")
+            }
             
             await MainActor.run {
                 isSigningBatch = false
                 selectedApps.removeAll()
                 HapticsManager.shared.success()
-                ToastManager.shared.show("✅ Batch Signing Completed", type: .success)
+                
+                if autoInstall && installationMethod == 0 {
+                    ToastManager.shared.show("✅ Apps Signed - Check Device for Installation", type: .success)
+                } else {
+                    ToastManager.shared.show("✅ Batch Signing Completed", type: .success)
+                }
             }
         }
     }
     
     private func triggerInstallation(for app: AppInfoPresentable, appIndex: Int) async {
+        await MainActor.run {
+            currentPhase = .installing
+        }
+        
         AppLogManager.shared.info("Triggering installation for app: \(app.name ?? "Unknown")", category: "BatchSign")
         
         do {
@@ -434,6 +448,11 @@ struct BatchSigningView: View {
                 updateBatchResult(for: app, message: "Signed Successfully, Installation Failed: \(error.localizedDescription)")
                 AppLogManager.shared.error("Installation failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
             }
+        }
+        
+        // Reset phase back to signing for next app
+        await MainActor.run {
+            currentPhase = .signing
         }
     }
     
