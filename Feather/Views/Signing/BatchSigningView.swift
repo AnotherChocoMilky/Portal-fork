@@ -259,7 +259,7 @@ struct BatchSigningView: View {
             .navigationTitle("Batch Signing")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                SwiftUI.ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         dismiss()
                     } label: {
@@ -700,14 +700,14 @@ struct BatchAppEditSheet: View {
             .navigationTitle("Edit App")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                SwiftUI.ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
                         onDismiss()
                     }
                 }
                 
-                ToolbarItem(placement: .topBarTrailing) {
+                SwiftUI.ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         // Apply changes to options
                         if !editedName.isEmpty {
