@@ -489,7 +489,7 @@ struct ModernSigningView: View {
                             Text("Add")
                                 .font(.system(size: 12, weight: .semibold))
                         }
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                     }
                 }
                 .padding(.trailing, 4)
