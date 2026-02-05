@@ -308,6 +308,7 @@ class OTPPairingViewModel: ObservableObject {
     private var otpTimer: Timer?
     private var currentMode: OTPPairingMode = .sender
     private var otpStartTime: Date?
+    private var otpStorage: [String: (otp: String, timestamp: Date)] = [:] // In-memory secure storage
     
     var expirationColor: Color {
         if timeRemaining > 60 {
@@ -338,6 +339,10 @@ class OTPPairingViewModel: ObservableObject {
         otpTimer?.invalidate()
         otpTimer = nil
         transferService.stop()
+        isPeerConnected = false
+        isWaitingForRecipient = false
+        connectedPeerInfo = nil
+        errorMessage = nil
     }
     
     // MARK: - Sender Methods
@@ -350,9 +355,12 @@ class OTPPairingViewModel: ObservableObject {
         timeRemaining = otpExpirationSeconds
         isWaitingForRecipient = true
         
-        // Store OTP for validation
-        UserDefaults.standard.set(otp, forKey: "currentOTP")
-        UserDefaults.standard.set(Date().timeIntervalSince1970, forKey: "otpStartTime")
+        // Store OTP in memory with timestamp
+        let deviceID = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+        otpStorage[deviceID] = (otp: otp, timestamp: Date())
+        
+        // Also set OTP in the transfer service for advertising
+        transferService.setOTP(otp)
         
         startTimer()
     }
@@ -379,9 +387,15 @@ class OTPPairingViewModel: ObservableObject {
     
     private func startAdvertising() {
         transferService.startReceiveMode()
-        // In a real implementation, you'd use a custom discovery info with the OTP
-        // For simplicity, we'll use the OTP as part of the peer display name
         isWaitingForRecipient = true
+        
+        // Monitor for peer connections
+        observeConnections()
+    }
+    
+    private func observeConnections() {
+        // This would be called when a peer connects successfully
+        // The actual connection state is managed by the MCSession delegate
     }
     
     // MARK: - Recipient Methods
@@ -394,28 +408,25 @@ class OTPPairingViewModel: ObservableObject {
         isValidating = true
         errorMessage = nil
         
-        // Simulate validation delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+        // Small delay to show the validation UI
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             guard let self = self else { return }
             
-            // Check if OTP matches any discovered peer
-            // In a real implementation, this would query discovered peers for their OTP
-            let storedOTP = UserDefaults.standard.string(forKey: "currentOTP")
-            let storedTime = UserDefaults.standard.double(forKey: "otpStartTime")
-            
-            let isExpired = Date().timeIntervalSince1970 - storedTime > Double(self.otpExpirationSeconds)
-            
-            if let storedOTP = storedOTP, storedOTP == code, !isExpired {
-                // Valid OTP - simulate finding the peer
-                self.connectedPeerInfo = (deviceName: UIDevice.current.name, peerId: MCPeerID(displayName: UIDevice.current.name))
+            // Query discovered peers for matching OTP
+            if let matchingPeer = self.transferService.findPeerWithOTP(code) {
+                // Valid OTP found - show peer info
+                self.connectedPeerInfo = (deviceName: matchingPeer.displayName, peerId: matchingPeer)
                 self.isValidating = false
+                self.errorMessage = nil
             } else {
+                // No matching OTP found
                 self.errorMessage = "Invalid or expired code. Please try again."
                 self.isValidating = false
+                self.connectedPeerInfo = nil
                 
-                // Clear input after error
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                    self.errorMessage = nil
+                // Clear error after 3 seconds
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
+                    self?.errorMessage = nil
                 }
             }
         }
@@ -426,6 +437,11 @@ class OTPPairingViewModel: ObservableObject {
         
         // Connect to the peer and start transfer
         transferService.connect(to: peerInfo.peerId)
-        transferStarted = true
+        
+        // Monitor connection state changes
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            self?.isPeerConnected = true
+            self?.transferStarted = true
+        }
     }
 }

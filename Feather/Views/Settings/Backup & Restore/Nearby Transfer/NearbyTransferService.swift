@@ -26,6 +26,7 @@ class NearbyTransferService: NSObject, ObservableObject {
     
     @Published var state: TransferState = .idle
     @Published var discoveredPeers: [MCPeerID] = []
+    @Published var discoveredPeersWithOTP: [(peer: MCPeerID, otp: String)] = []
     @Published var currentItem: String = ""
     @Published var canRetry: Bool = false
     
@@ -40,6 +41,7 @@ class NearbyTransferService: NSObject, ObservableObject {
     private var lastSpeedUpdate: Date?
     
     var mode: TransferMode = .receive
+    var currentOTP: String?
     
     override init() {
         let deviceName = UIDevice.current.name
@@ -84,9 +86,23 @@ class NearbyTransferService: NSObject, ObservableObject {
     }
     
     private func startAdvertising() {
-        advertiser = MCNearbyServiceAdvertiser(peer: peerID, discoveryInfo: nil, serviceType: Self.serviceType)
+        // Include OTP in discovery info if available
+        var discoveryInfo: [String: String]? = nil
+        if let otp = currentOTP {
+            discoveryInfo = ["otp": otp, "timestamp": "\(Date().timeIntervalSince1970)"]
+        }
+        advertiser = MCNearbyServiceAdvertiser(peer: peerID, discoveryInfo: discoveryInfo, serviceType: Self.serviceType)
         advertiser?.delegate = self
         advertiser?.startAdvertisingPeer()
+    }
+    
+    func setOTP(_ otp: String) {
+        currentOTP = otp
+        // Restart advertising with new OTP if already advertising
+        if advertiser != nil {
+            advertiser?.stopAdvertisingPeer()
+            startAdvertising()
+        }
     }
     
     private func startBrowsing() {
@@ -315,6 +331,20 @@ extension NearbyTransferService: MCNearbyServiceAdvertiserDelegate {
 extension NearbyTransferService: MCNearbyServiceBrowserDelegate {
     func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String : String]?) {
         DispatchQueue.main.async {
+            // Extract OTP from discovery info if available
+            if let otp = info?["otp"], let timestampString = info?["timestamp"], 
+               let timestamp = Double(timestampString) {
+                // Check if OTP is not expired (within 5 minutes)
+                let elapsed = Date().timeIntervalSince1970 - timestamp
+                if elapsed < 300 { // 5 minutes
+                    // Store peer with its OTP
+                    if !self.discoveredPeersWithOTP.contains(where: { $0.peer == peerID }) {
+                        self.discoveredPeersWithOTP.append((peer: peerID, otp: otp))
+                    }
+                }
+            }
+            
+            // Also maintain the regular peer list for backward compatibility
             if !self.discoveredPeers.contains(peerID) {
                 self.discoveredPeers.append(peerID)
             }
@@ -324,6 +354,7 @@ extension NearbyTransferService: MCNearbyServiceBrowserDelegate {
     func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {
         DispatchQueue.main.async {
             self.discoveredPeers.removeAll { $0 == peerID }
+            self.discoveredPeersWithOTP.removeAll { $0.peer == peerID }
         }
     }
     
@@ -331,5 +362,10 @@ extension NearbyTransferService: MCNearbyServiceBrowserDelegate {
         DispatchQueue.main.async {
             self.state = .failed(error)
         }
+    }
+    
+    // MARK: - OTP Validation
+    func findPeerWithOTP(_ otp: String) -> MCPeerID? {
+        return discoveredPeersWithOTP.first(where: { $0.otp == otp })?.peer
     }
 }
