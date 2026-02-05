@@ -27,7 +27,7 @@ struct PreflightCheckView: View {
                     if viewModel.isScanning {
                         ProgressView()
                             .padding()
-                        Text("Scanning backup data...")
+                        Text("Scanning Backup Data")
                             .foregroundStyle(.secondary)
                     } else {
                         Image(systemName: viewModel.hasIssues ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
@@ -139,7 +139,7 @@ struct PreflightItemRow: View {
                     .font(.headline)
                 
                 HStack {
-                    Text("\(item.count) items")
+                    Text("\(item.count) Items")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     
@@ -157,7 +157,7 @@ struct PreflightItemRow: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.caption2)
                             .foregroundStyle(.orange)
-                        Text("\(item.issues.count) issue\(item.issues.count == 1 ? "" : "s")")
+                        Text("\(item.issues.count) Issue\(item.issues.count == 1 ? "" : "s")")
                             .font(.caption2)
                             .foregroundStyle(.orange)
                     }
@@ -181,9 +181,9 @@ class PreflightCheckViewModel: ObservableObject {
     
     var summaryTitle: String {
         if hasIssues {
-            return "Ready with Warnings"
+            return "Ready With Warnings"
         } else {
-            return "Ready to Transfer"
+            return "Ready To Transfer"
         }
     }
     
@@ -230,7 +230,7 @@ class PreflightCheckViewModel: ObservableObject {
         }
         
         if expiredCount > 0 {
-            certIssues.append("\(expiredCount) expired certificate\(expiredCount == 1 ? "" : "s")")
+            certIssues.append("\(expiredCount) Expired Certificate\(expiredCount == 1 ? "" : "s")")
         }
         
         let certSize = calculateDirectorySize(FileManager.default.certificates)

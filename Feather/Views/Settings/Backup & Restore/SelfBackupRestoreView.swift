@@ -39,7 +39,7 @@ struct SelfBackupRestoreView: View {
                                 )
                             )
                         
-                        Text(.localized("Create and restore backups locally on your device"))
+                        Text(.localized("Create and restore backups locally on your device."))
                             .font(.system(.subheadline, design: .rounded))
                             .multilineTextAlignment(.center)
                             .foregroundStyle(.secondary)
@@ -72,7 +72,7 @@ struct SelfBackupRestoreView: View {
                             Text(.localized("Create Backup"))
                                 .font(.headline)
                                 .foregroundStyle(.primary)
-                            Text(.localized("Save your current data"))
+                            Text(.localized("Save your current data."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -106,7 +106,7 @@ struct SelfBackupRestoreView: View {
                             Text(.localized("Restore Backup"))
                                 .font(.headline)
                                 .foregroundStyle(.primary)
-                            Text(.localized("Load previously saved data"))
+                            Text(.localized("Load previously saved data."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -140,7 +140,7 @@ struct SelfBackupRestoreView: View {
                             Text(.localized("Import Backup"))
                                 .font(.headline)
                                 .foregroundStyle(.primary)
-                            Text(.localized("Import .backup file"))
+                            Text(.localized("Import .backup file."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -167,7 +167,7 @@ struct SelfBackupRestoreView: View {
                     AppearanceSectionHeader(title: String.localized("Saved Backups"), icon: "archivebox.fill")
                 } footer: {
                     let count = viewModel.localBackups.count
-                    let backupText = count == 1 ? "backup" : "backups"
+                    let backupText = count == 1 ? "Backup" : "Backups"
                     return Text("\(count) \(backupText) • \(viewModel.totalBackupSize)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -314,7 +314,7 @@ struct SelfBackupRestoreView: View {
                 viewModel.renameBackup(backup, to: newBackupName)
             }
         } message: { _ in
-            Text("Enter a new name for this backup")
+            Text("Enter a new name for this backup.")
         }
         .alert("Error", isPresented: $viewModel.showError, presenting: viewModel.errorMessage) { _ in
             Button("OK", role: .cancel) { }
@@ -376,7 +376,7 @@ struct SelfBackupRestoreView: View {
             Button {
                 viewModel.exportBackup(backup)
             } label: {
-                Label("Export as .backup", systemImage: "square.and.arrow.up")
+                Label("Export as .backup.", systemImage: "square.and.arrow.up")
             }
             
             Button(role: .destructive) {
@@ -504,7 +504,7 @@ class SelfBackupRestoreViewModel: ObservableObject {
     
     func createBackup(with options: BackupOptions) async {
         isCreatingBackup = true
-        currentOperation = "Preparing backup..."
+        currentOperation = "Preparing Backup"
         operationProgress = 0
         
         do {
@@ -516,19 +516,19 @@ class SelfBackupRestoreViewModel: ObservableObject {
             
             // Collect backup data (similar to BackupRestoreView logic)
             operationProgress = 0.1
-            currentOperation = "Collecting data..."
+            currentOperation = "Collecting Data"
             
             try await collectBackupData(to: tempBackupDir, options: options)
             
             operationProgress = 0.6
-            currentOperation = "Creating archive..."
+            currentOperation = "Creating Archive"
             
             // Create ZIP archive
             let backupZipPath = backupsDirectory.appendingPathComponent("\(backupID.uuidString).zip")
             try fileManager.zipItem(at: tempBackupDir, to: backupZipPath, shouldKeepParent: false)
             
             operationProgress = 0.8
-            currentOperation = "Encrypting backup..."
+            currentOperation = "Encrypting Backup"
             
             // Encrypt the backup
             let zipData = try Data(contentsOf: backupZipPath)
@@ -536,7 +536,7 @@ class SelfBackupRestoreViewModel: ObservableObject {
             try encryptedData.write(to: backupZipPath)
             
             operationProgress = 0.9
-            currentOperation = "Finalizing..."
+            currentOperation = "Finalizing"
             
             // Get file size
             let attributes = try fileManager.attributesOfItem(atPath: backupZipPath.path)
@@ -560,9 +560,9 @@ class SelfBackupRestoreViewModel: ObservableObject {
             try? fileManager.removeItem(at: tempBackupDir)
             
             operationProgress = 1.0
-            currentOperation = "Backup completed"
+            currentOperation = "Backup Completed"
             
-            successMessage = "Backup created successfully"
+            successMessage = "Backup created successfully!"
             showSuccess = true
             
         } catch {
@@ -577,23 +577,23 @@ class SelfBackupRestoreViewModel: ObservableObject {
     
     func restoreBackup(_ backup: LocalBackup) async {
         isRestoring = true
-        currentOperation = "Loading backup..."
+        currentOperation = "Loading Backup"
         operationProgress = 0
         
         do {
             guard fileManager.fileExists(atPath: backup.path) else {
-                throw NSError(domain: "SelfBackup", code: -1, userInfo: [NSLocalizedDescriptionKey: "Backup file not found"])
+                throw NSError(domain: "SelfBackup", code: -1, userInfo: [NSLocalizedDescriptionKey: "Backup file not found."])
             }
             
             operationProgress = 0.1
-            currentOperation = "Decrypting backup..."
+            currentOperation = "Decrypting Backup"
             
             // Decrypt the backup
             let encryptedData = try Data(contentsOf: URL(fileURLWithPath: backup.path))
             let decryptedData = try decryptData(encryptedData)
             
             operationProgress = 0.3
-            currentOperation = "Extracting backup..."
+            currentOperation = "Extracting Backup"
             
             // Create temp directory for extraction
             let tempRestoreDir = fileManager.temporaryDirectory.appendingPathComponent("Restore_\(UUID().uuidString)")
@@ -608,21 +608,21 @@ class SelfBackupRestoreViewModel: ObservableObject {
             try fileManager.unzipItem(at: tempZipFile, to: extractedDir)
             
             operationProgress = 0.5
-            currentOperation = "Restoring data..."
+            currentOperation = "Restoring Data..."
             
             // Restore the data
             try await restoreBackupData(from: extractedDir)
             
             operationProgress = 0.9
-            currentOperation = "Cleaning up..."
+            currentOperation = "Cleaning Up..."
             
             // Clean up temp directory
             try? fileManager.removeItem(at: tempRestoreDir)
             
             operationProgress = 1.0
-            currentOperation = "Restore completed"
+            currentOperation = "Restore Completed"
             
-            successMessage = "Backup restored successfully. Please restart the app to apply changes."
+            successMessage = "Backup restored successfully. Please restart Portal to apply changes."
             showSuccess = true
             
         } catch {
@@ -726,7 +726,7 @@ class SelfBackupRestoreViewModel: ObservableObject {
             localBackups.sort { $0.date > $1.date }
             saveMetadata()
             
-            successMessage = "Backup imported successfully"
+            successMessage = "Backup Imported Successfully"
             showSuccess = true
         } catch {
             errorMessage = "Failed to import backup: \(error.localizedDescription)"
@@ -1007,7 +1007,7 @@ struct ModernRestoreSelectionView: View {
                 ContentUnavailableView(
                     "No Backups",
                     systemImage: "archivebox",
-                    description: Text("Create a backup first before you can restore")
+                    description: Text("Create a backup first before you can restore.")
                 )
             } else {
                 Section {
@@ -1060,7 +1060,7 @@ struct ModernRestoreSelectionView: View {
                         }
                     }
                 } header: {
-                    Text("Select a backup to restore")
+                    Text("Select A Backup To Restore")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .textCase(nil)
@@ -1146,7 +1146,7 @@ struct LegacyRestoreSelectionView: View {
                         }
                     }
                 } header: {
-                    Text("Select a backup to restore")
+                    Text("Select A Backup To Restore")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .textCase(nil)

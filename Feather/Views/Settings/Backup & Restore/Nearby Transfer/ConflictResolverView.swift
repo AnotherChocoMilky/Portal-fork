@@ -66,7 +66,7 @@ struct ConflictResolverView: View {
                     Text("\(viewModel.conflicts.count) Conflict\(viewModel.conflicts.count == 1 ? "" : "s") Detected")
                         .font(.headline)
                     
-                    Text("Choose how to handle duplicate items")
+                    Text("Choose how to handle duplicate items.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -82,7 +82,7 @@ struct ConflictResolverView: View {
                     HStack {
                         ProgressView()
                             .padding(.trailing, 8)
-                        Text("Scanning for conflicts...")
+                        Text("Scanning For Conflicts")
                             .foregroundStyle(.secondary)
                     }
                     .padding(.vertical, 16)
@@ -189,7 +189,7 @@ struct ConflictItemSection: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                     
                     // VS Indicator
-                    Text("vs")
+                    Text("VS")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     
@@ -271,7 +271,7 @@ class ConflictResolverViewModel: ObservableObject {
                                 localName: localDetails.name,
                                 incomingName: certName,
                                 localDetails: "Expires: \(localDetails.expiration)",
-                                incomingDetails: "From backup",
+                                incomingDetails: "From Backup",
                                 path: "certificates/\(certName).p12",
                                 resolution: .keepLocal
                             ))

@@ -51,7 +51,7 @@ struct PostRestoreHealthCheckView: View {
                     if viewModel.isScanning {
                         ProgressView()
                             .padding()
-                        Text("Scanning restored data...")
+                        Text("Scanning Restored Data")
                             .foregroundStyle(.secondary)
                     } else {
                         Image(systemName: viewModel.healthIcon)
@@ -73,7 +73,7 @@ struct PostRestoreHealthCheckView: View {
             } header: {
                 AppearanceSectionHeader(title: String.localized("Scan Results"), icon: "stethoscope")
             } footer: {
-                Text("Do not close Feather while data is being applied.")
+                Text("Do NOT close Portal while data is being applied.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -134,11 +134,11 @@ struct PostRestoreHealthCheckView: View {
                             .font(.caption)
                             .foregroundStyle(.green)
                     } else if viewModel.hasCriticalIssues {
-                        Text("Critical issues remain. Consider re-importing affected certificates or apps.")
+                        Text("Critical issues remain. Consider importing again the affected certificates or apps.")
                             .font(.caption)
                             .foregroundStyle(.orange)
                     } else {
-                        Text("Your backup has been successfully restored.")
+                        Text("Your backup has been successfully restored!")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -159,7 +159,7 @@ struct PostRestoreHealthCheckView: View {
                 onComplete()
             }
         } message: {
-            Text("Backup applied successfully. Feather must restart to finalize changes. You can choose to restart now or later.")
+            Text("Backup applied successfully. Portal must restart to finalize changes. You can choose to restart now or later.")
         }
         .onAppear {
             viewModel.performHealthCheck()
@@ -197,7 +197,7 @@ struct HealthIssueRow: View {
                     if issue.canAutoFix {
                         HStack(spacing: 4) {
                             Image(systemName: "wrench.fill")
-                            Text("Auto-fixable")
+                            Text("Auto Fixable")
                         }
                         .font(.caption2)
                         .foregroundStyle(.green)
@@ -249,11 +249,11 @@ class PostRestoreHealthCheckViewModel: ObservableObject {
     
     var healthMessage: String {
         if hasCriticalIssues {
-            return "Some issues require attention before using restored data"
+            return "Some issues require attention before using restored data."
         } else if hasWarnings {
-            return "Minor issues detected but data is usable"
+            return "Minor issues detected but data is usable."
         } else {
-            return "Your backup was successfully restored and verified"
+            return "Your backup was successfully restored and verified."
         }
     }
     
@@ -436,7 +436,7 @@ class PostRestoreHealthCheckViewModel: ObservableObject {
                 
                 // Show success
                 HapticsManager.shared.success()
-                AppLogManager.shared.success("Fixed auto-repairable issues", category: "Health Check")
+                AppLogManager.shared.success("Fixed auto repairable issues using the AutoFix logic.", category: "Health Check")
             }
         }
     }

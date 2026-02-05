@@ -133,7 +133,7 @@ class NearbyTransferService: NSObject, ObservableObject {
         guard let session = session else { return }
         
         state = .connecting
-        currentItem = "Preparing backup..."
+        currentItem = "Preparing Backup..."
         
         Task {
             do {
@@ -142,7 +142,7 @@ class NearbyTransferService: NSObject, ObservableObject {
                 let encryptedData = try payload.encrypted(with: password)
                 
                 await MainActor.run {
-                    currentItem = "Sending backup..."
+                    currentItem = "Sending Backup..."
                     startTime = Date()
                     lastBytesTransferred = 0
                     lastSpeedUpdate = Date()
@@ -174,7 +174,7 @@ class NearbyTransferService: NSObject, ObservableObject {
                 
                 await MainActor.run {
                     state = .completed
-                    currentItem = "Transfer completed"
+                    currentItem = "Transfer Completed"
                 }
                 
             } catch {
@@ -246,13 +246,13 @@ extension NearbyTransferService: MCSessionDelegate {
             switch state {
             case .connected:
                 self.state = .connecting
-                self.currentItem = "Connected to \(peerID.displayName)"
+                self.currentItem = "Connected To \(peerID.displayName)"
             case .connecting:
-                self.currentItem = "Connecting to \(peerID.displayName)..."
+                self.currentItem = "Connecting To \(peerID.displayName)..."
             case .notConnected:
                 if case .transferring = self.state {
                     // Transfer was interrupted
-                    self.state = .failed(NSError(domain: "NearbyTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Connection lost"]))
+                    self.state = .failed(NSError(domain: "NearbyTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Connection Lost"]))
                     self.canRetry = true
                 }
             @unknown default:
@@ -268,16 +268,16 @@ extension NearbyTransferService: MCSessionDelegate {
                 if data.count >= 8 {
                     self.expectedSize = data.withUnsafeBytes { $0.load(as: Int64.self) }
                     if self.expectedSize <= 0 {
-                        self.state = .failed(NSError(domain: "NearbyTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid backup size"]))
+                        self.state = .failed(NSError(domain: "NearbyTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid Backup Size"]))
                         return
                     }
                     self.isReceivingSize = false
                     self.startTime = Date()
                     self.lastBytesTransferred = 0
                     self.lastSpeedUpdate = Date()
-                    self.currentItem = "Receiving backup..."
+                    self.currentItem = "Receiving Backup..."
                 } else {
-                    self.state = .failed(NSError(domain: "NearbyTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid size data received"]))
+                    self.state = .failed(NSError(domain: "NearbyTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid Size Data Received"]))
                 }
             } else {
                 self.receivedData.append(data)
@@ -314,7 +314,7 @@ extension NearbyTransferService: MCSessionDelegate {
                 
                 await MainActor.run {
                     state = .completed
-                    currentItem = "Backup received successfully"
+                    currentItem = "Backup Received Successfully"
                     // Store the temp directory path for later restoration
                     UserDefaults.standard.set(tempDir.path, forKey: "pendingNearbyBackupRestore")
                 }
@@ -332,7 +332,7 @@ extension NearbyTransferService: MCSessionDelegate {
 extension NearbyTransferService: MCNearbyServiceAdvertiserDelegate {
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         DispatchQueue.main.async {
-            self.currentItem = "Accepting connection from \(peerID.displayName)"
+            self.currentItem = "Accepting Connection From \(peerID.displayName)"
             invitationHandler(true, self.session)
         }
     }

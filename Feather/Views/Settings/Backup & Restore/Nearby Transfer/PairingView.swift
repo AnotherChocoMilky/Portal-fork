@@ -72,7 +72,7 @@ struct PairingView: View {
                                     .font(.headline)
                                 
                                 // Active indicator
-                                Text("ACTIVE")
+                                Text("Active")
                                     .font(.caption2.weight(.semibold))
                                     .foregroundStyle(.white)
                                     .padding(.horizontal, 6)
@@ -81,7 +81,7 @@ struct PairingView: View {
                                     .clipShape(Capsule())
                             }
                             
-                            Text("Devices on the same WiFi network")
+                            Text("Devices on the same WiFi network. Instant connection.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -131,7 +131,7 @@ struct PairingView: View {
                                     .font(.headline)
                                 
                                 // Recommended badge
-                                Text("SECURE")
+                                Text("Secure")
                                     .font(.caption2.weight(.semibold))
                                     .foregroundStyle(.white)
                                     .padding(.horizontal, 6)
@@ -140,7 +140,7 @@ struct PairingView: View {
                                     .clipShape(Capsule())
                             }
                             
-                            Text("Connect from anywhere with a code")
+                            Text("Connect from anywhere with a code.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -157,7 +157,7 @@ struct PairingView: View {
                 AppearanceSectionHeader(title: String.localized("Pairing Method"), icon: "rectangle.connected.to.line.below")
             } footer: {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Choose how to connect your devices:")
+                    Text("Choose How To Connect Your Devices:")
                         .font(.caption.weight(.semibold))
                     
                     Text("• Nearby pairing works automatically when both devices are on the same WiFi network")
@@ -176,7 +176,7 @@ struct PairingView: View {
                         HStack {
                             ProgressView()
                                 .padding(.trailing, 8)
-                            Text("Searching for devices...")
+                            Text("Searching For Devices")
                                 .foregroundStyle(.secondary)
                         }
                         .padding(.vertical, 8)
@@ -196,7 +196,7 @@ struct PairingView: View {
                                         Text(peer.displayName)
                                             .font(.headline)
                                             .foregroundStyle(.primary)
-                                        Text("Tap to send backup")
+                                        Text("Tap To Send Backup")
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
@@ -231,9 +231,9 @@ struct PairingView: View {
                         }
                         
                         VStack(spacing: 8) {
-                            Text("Ready to Receive")
+                            Text("Ready To Receive")
                                 .font(.headline)
-                            Text("Waiting for sender to connect...")
+                            Text("Waiting For Sender To Connect...")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
@@ -386,16 +386,16 @@ struct PairingView: View {
                 HStack(alignment: .top, spacing: 12) {
                     Image(systemName: "info.circle.fill")
                         .foregroundStyle(.blue)
-                    Text("Choose Send on your old device and keep Feather open until finished.")
+                    Text("Choose Send on your old device and keep Portal open until finished.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 
-                instructionRow(icon: "1.circle.fill", text: "Ensure both devices are on the same network")
-                instructionRow(icon: "2.circle.fill", text: "Select a device from the list below")
-                instructionRow(icon: "3.circle.fill", text: "Wait for the transfer to complete")
-                instructionRow(icon: "4.circle.fill", text: "The backup will be applied on the receiving device")
+                instructionRow(icon: "1.circle.fill", text: "Ensure both devices are on the same network.")
+                instructionRow(icon: "2.circle.fill", text: "Select a device from the list below.")
+                instructionRow(icon: "3.circle.fill", text: "Wait for the transfer to complete.")
+                instructionRow(icon: "4.circle.fill", text: "The backup will be applied on the receiving device.")
             }
             .padding(.vertical, 8)
         } else {
@@ -409,10 +409,10 @@ struct PairingView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 
-                instructionRow(icon: "1.circle.fill", text: "Keep this screen open")
-                instructionRow(icon: "2.circle.fill", text: "On the sending device, select this device")
-                instructionRow(icon: "3.circle.fill", text: "Accept the connection when prompted")
-                instructionRow(icon: "4.circle.fill", text: "Wait for the backup to transfer")
+                instructionRow(icon: "1.circle.fill", text: "Keep this screen open. DO NOT close Portal.")
+                instructionRow(icon: "2.circle.fill", text: "On the sending device, select this device.")
+                instructionRow(icon: "3.circle.fill", text: "Accept the connection when prompted.")
+                instructionRow(icon: "4.circle.fill", text: "Wait for the backup to transfer.")
             }
             .padding(.vertical, 8)
         }
@@ -453,7 +453,7 @@ struct PairingView: View {
                 await MainActor.run {
                     UIAlertController.showAlertWithOk(
                         title: .localized("Error"),
-                        message: .localized("Failed to prepare backup for transfer")
+                        message: .localized("Failed to prepare backup for transfer.")
                     )
                 }
             }
@@ -752,11 +752,11 @@ struct RestoreOptionsView: View {
                             HStack {
                                 Image(systemName: "arrow.triangle.merge")
                                     .foregroundStyle(.blue)
-                                Text("Merge with Existing Data")
+                                Text("Merge With Existing Data")
                                     .font(.headline)
                                     .foregroundStyle(.primary)
                             }
-                            Text("Keep existing data and add backup contents")
+                            Text("Keep existing data and add backup contents. Conflicts will be resolved automatically.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -774,7 +774,7 @@ struct RestoreOptionsView: View {
                                     .font(.headline)
                                     .foregroundStyle(.primary)
                             }
-                            Text("Remove existing data and restore from backup")
+                            Text("Remove existing data and restore from backup. This will overwrite all your current settings and apps.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -805,7 +805,7 @@ struct RestoreOptionsView: View {
                         VStack(spacing: 12) {
                             ProgressView()
                                 .tint(.white)
-                            Text("Restoring...")
+                            Text("Restoring")
                                 .foregroundStyle(.white)
                         }
                         .padding(24)
@@ -856,7 +856,7 @@ struct RestoreOptionsView: View {
                         isRestoring = false
                         UIAlertController.showAlertWithOk(
                             title: .localized("Invalid Backup"),
-                            message: .localized("The received backup is invalid or corrupted")
+                            message: .localized("The received backup is invalid or corrupted. Please run Nearby Transfer again or try manuallly.")
                         )
                     }
                     return

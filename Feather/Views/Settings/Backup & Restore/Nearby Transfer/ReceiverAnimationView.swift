@@ -325,9 +325,9 @@ struct ReceiverAnimationView: View {
     private var statusTitle: String {
         switch state {
         case .idle:
-            return "Ready to Receive"
+            return "Ready To Receive"
         case .discovering:
-            return "Waiting for Sender..."
+            return "Waiting For Sender..."
         case .connecting:
             return "Connecting..."
         case .transferring:
@@ -342,15 +342,15 @@ struct ReceiverAnimationView: View {
     private var statusSubtitle: String {
         switch state {
         case .idle:
-            return "Waiting to start transfer"
+            return "Waiting To Start Transfer"
         case .discovering:
-            return "Listening for sender devices"
+            return "Listening For Sender Devices"
         case .connecting:
-            return "Establishing secure connection"
+            return "Establishing Secure Connection"
         case .transferring:
-            return "Downloading your backup data"
+            return "Downloading Your Backup Data"
         case .completed:
-            return "Your backup has been received"
+            return "Your Backup Has Been Received"
         case .failed(let error):
             return error.localizedDescription
         }

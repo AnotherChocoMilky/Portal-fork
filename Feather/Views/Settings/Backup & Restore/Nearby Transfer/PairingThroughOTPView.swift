@@ -173,7 +173,7 @@ struct PairingThroughOTPView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
-                        Text("Recipient connected successfully")
+                        Text("Recipient Connected Successfully")
                             .font(.subheadline)
                             .foregroundStyle(.green)
                     }
@@ -190,7 +190,7 @@ struct PairingThroughOTPView: View {
                     HStack(spacing: 8) {
                         ProgressView()
                             .padding(.trailing, 4)
-                        Text("Waiting for recipient to connect...")
+                        Text("Waiting For Recipient To Connect...")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -230,7 +230,7 @@ struct PairingThroughOTPView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: viewModel.showCopyFeedback ? "checkmark" : "doc.on.doc.fill")
-                    Text(viewModel.showCopyFeedback ? "Copied!" : "Copy Code to Clipboard")
+                    Text(viewModel.showCopyFeedback ? "Copied!" : "Copy Code To Clipboard")
                 }
                 .frame(maxWidth: .infinity)
                 .font(.headline)
@@ -337,7 +337,7 @@ struct PairingThroughOTPView: View {
         } header: {
             AppearanceSectionHeader(title: String.localized("Enter Code"), icon: "keyboard.fill")
         } footer: {
-            Text("Enter the \(viewModel.otpLength)-digit numeric code from the sending device. The code will be validated automatically when complete.")
+            Text("Enter the \(viewModel.otpLength) digit numeric code from the sending device. The code will be validated automatically when complete.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -354,7 +354,7 @@ struct PairingThroughOTPView: View {
             } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "doc.on.clipboard.fill")
-                    Text("Paste Code from Clipboard")
+                    Text("Paste Code From Clipboard")
                 }
                 .frame(maxWidth: .infinity)
             }
@@ -383,9 +383,9 @@ struct PairingThroughOTPView: View {
                 HStack(spacing: 12) {
                     ProgressView()
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Validating code...")
+                        Text("Validating Code...")
                             .font(.subheadline.weight(.medium))
-                        Text("Searching for sender device")
+                        Text("Searching For Sender Device")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -438,9 +438,9 @@ struct PairingThroughOTPView: View {
                     // Trust Toggle
                     Toggle(isOn: $viewModel.trustDevice) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Trust this device")
+                            Text("Trust This Device")
                                 .font(.subheadline.weight(.medium))
-                            Text("Allow secure data transfer from this sender")
+                            Text("Allow secure data transfer from this sender?")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -471,7 +471,7 @@ struct PairingThroughOTPView: View {
                 .tint(viewModel.trustDevice ? .green : .gray)
             } footer: {
                 if !viewModel.trustDevice {
-                    Text("You must trust this device before beginning the transfer")
+                    Text("You must trust this device before beginning the transfer.")
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
@@ -509,27 +509,27 @@ struct PairingThroughOTPView: View {
                     
                     // Helpful suggestions
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Try these steps:")
+                        Text("Try These Steps:")
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.primary)
                         
                         HStack(alignment: .top, spacing: 8) {
                             Text("•")
-                            Text("Verify the code with the sender device")
+                            Text("Verify the code with the sender device.")
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         
                         HStack(alignment: .top, spacing: 8) {
                             Text("•")
-                            Text("Make sure both devices are on the same network")
+                            Text("Make sure both devices are on the same network.")
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         
                         HStack(alignment: .top, spacing: 8) {
                             Text("•")
-                            Text("Request a new code if this one has expired")
+                            Text("Request a new code if this one has expired.")
                         }
                         .font(.caption)
                         .foregroundStyle(.secondary)

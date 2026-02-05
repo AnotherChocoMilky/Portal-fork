@@ -28,7 +28,7 @@ struct NearbyTransferView: View {
                                 )
                             )
                         
-                        Text(.localized("Transfer backups wirelessly between devices"))
+                        Text(.localized("Transfer backups wirelessly between devices using Nearby Transfer."))
                             .font(.system(.subheadline, design: .rounded))
                             .multilineTextAlignment(.center)
                             .foregroundStyle(.secondary)
@@ -57,7 +57,7 @@ struct NearbyTransferView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(.localized("Start Transfer"))
                                 .font(.headline)
-                            Text(.localized("Send or receive a backup"))
+                            Text(.localized("Send or receive a backup."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -100,17 +100,17 @@ struct NearbyTransferView: View {
             Section {
                 requirementRow(
                     icon: "network",
-                    text: "Both devices must be on the same Wi-Fi network or within Bluetooth range"
+                    text: "Both devices must be on the same Wi-Fi network or within Bluetooth range."
                 )
                 
                 requirementRow(
                     icon: "iphone.gen2",
-                    text: "Both devices must have Portal installed"
+                    text: "Both devices must have the latest version of Portal installed."
                 )
                 
                 requirementRow(
                     icon: "battery.100",
-                    text: "Recommended to have sufficient battery or connect to power"
+                    text: "Recommended to have sufficient battery or connect to power."
                 )
             } header: {
                 AppearanceSectionHeader(title: String.localized("Requirements"), icon: "checkmark.circle.fill")
@@ -119,7 +119,7 @@ struct NearbyTransferView: View {
             // About Section
             Section {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(.localized("What gets transferred?"))
+                    Text(.localized("What Gets Transferred?"))
                         .font(.headline)
                     
                     VStack(alignment: .leading, spacing: 8) {

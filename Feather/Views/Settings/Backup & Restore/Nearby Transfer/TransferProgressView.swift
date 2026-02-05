@@ -17,16 +17,16 @@ struct TransferProgressView: View {
                 case .idle:
                     modernStatusCard(
                         icon: "antenna.radiowaves.left.and.right",
-                        title: "Ready",
-                        subtitle: "Waiting to begin transfer",
+                        title: "Ready!",
+                        subtitle: "Waiting To Begin Transfer",
                         color: .blue
                     )
                 
                 case .discovering:
                     modernStatusCard(
                         icon: "magnifyingglass",
-                        title: "Discovering devices...",
-                        subtitle: "Searching for nearby devices",
+                        title: "Discovering Devices",
+                        subtitle: "Searching For Nearby Devices",
                         color: .purple,
                         showProgress: true
                     )
@@ -34,8 +34,8 @@ struct TransferProgressView: View {
                 case .connecting:
                     modernStatusCard(
                         icon: "wifi",
-                        title: "Connecting...",
-                        subtitle: service.currentItem.isEmpty ? "Establishing connection" : service.currentItem,
+                        title: "Connecting",
+                        subtitle: service.currentItem.isEmpty ? "Establishing Connection" : service.currentItem,
                         color: .orange,
                         showProgress: true
                     )
@@ -52,7 +52,7 @@ struct TransferProgressView: View {
                     modernStatusCard(
                         icon: "checkmark.circle.fill",
                         title: "Transfer Complete",
-                        subtitle: service.currentItem.isEmpty ? "All files transferred successfully" : service.currentItem,
+                        subtitle: service.currentItem.isEmpty ? "All Files Transferred Successfully" : service.currentItem,
                         color: .green
                     )
                 
