@@ -302,13 +302,13 @@ class OTPPairingViewModel: ObservableObject {
     @Published var transferStarted: Bool = false
     
     let otpLength: Int = 6
-    let otpExpirationSeconds: Int = 300 // 5 minutes
+    let otpExpirationSeconds: Int = 300 // 5 minutes - shared with NearbyTransferService
     
     var transferService = NearbyTransferService()
     private var otpTimer: Timer?
     private var currentMode: OTPPairingMode = .sender
     private var otpStartTime: Date?
-    private var otpStorage: [String: (otp: String, timestamp: Date)] = [:] // In-memory secure storage
+    private var otpStorage: [String: (otp: String, timestamp: Date)] = [:] // In-memory temporary storage
     
     var expirationColor: Color {
         if timeRemaining > 60 {

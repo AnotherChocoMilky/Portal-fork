@@ -934,23 +934,22 @@ struct RestoreOptionsView: View {
             do {
                 // Process each conflict resolution
                 for conflict in resolvedConflicts {
+                    let backupFilePath = backupDir.appendingPathComponent(conflict.path)
+                    let destPath = URL.documentsDirectory.appendingPathComponent(conflict.path)
+                    
                     switch conflict.resolution {
                     case .keep:
                         // Keep existing data, skip restore for this item
                         continue
                     case .replace:
                         // Replace with backup data
-                        let backupFilePath = backupDir.appendingPathComponent(conflict.path)
                         if FileManager.default.fileExists(atPath: backupFilePath.path) {
-                            let destPath = URL.documentsDirectory.appendingPathComponent(conflict.path)
                             try? FileManager.default.removeItem(at: destPath)
                             try? FileManager.default.copyItem(at: backupFilePath, to: destPath)
                         }
                     case .merge:
                         // For merge, we'll prioritize backup data but preserve existing metadata
-                        let backupFilePath = backupDir.appendingPathComponent(conflict.path)
                         if FileManager.default.fileExists(atPath: backupFilePath.path) {
-                            let destPath = URL.documentsDirectory.appendingPathComponent(conflict.path)
                             // Copy backup file with a temporary name, then rename
                             let tempPath = destPath.appendingPathExtension("backup")
                             try? FileManager.default.copyItem(at: backupFilePath, to: tempPath)

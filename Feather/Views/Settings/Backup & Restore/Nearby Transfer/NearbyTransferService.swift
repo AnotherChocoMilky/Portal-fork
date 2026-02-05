@@ -3,6 +3,9 @@ import MultipeerConnectivity
 import Combine
 import UIKit
 
+// MARK: - Constants
+private let kOTPExpirationSeconds = 300 // 5 minutes
+
 // MARK: - Transfer State
 enum TransferState {
     case idle
@@ -334,9 +337,9 @@ extension NearbyTransferService: MCNearbyServiceBrowserDelegate {
             // Extract OTP from discovery info if available
             if let otp = info?["otp"], let timestampString = info?["timestamp"], 
                let timestamp = Double(timestampString) {
-                // Check if OTP is not expired (within 5 minutes)
+                // Check if OTP is not expired
                 let elapsed = Date().timeIntervalSince1970 - timestamp
-                if elapsed < 300 { // 5 minutes
+                if elapsed < Double(kOTPExpirationSeconds) {
                     // Store peer with its OTP
                     if !self.discoveredPeersWithOTP.contains(where: { $0.peer == peerID }) {
                         self.discoveredPeersWithOTP.append((peer: peerID, otp: otp))

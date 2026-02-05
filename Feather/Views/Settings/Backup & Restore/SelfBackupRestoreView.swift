@@ -130,7 +130,9 @@ struct SelfBackupRestoreView: View {
                 } header: {
                     AppearanceSectionHeader(title: String.localized("Saved Backups"), icon: "archivebox.fill")
                 } footer: {
-                    Text("\(viewModel.localBackups.count) backup(s) • \(viewModel.totalBackupSize)")
+                    let count = viewModel.localBackups.count
+                    let backupText = count == 1 ? "backup" : "backups"
+                    return Text("\(count) \(backupText) • \(viewModel.totalBackupSize)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -331,6 +333,11 @@ struct SelfBackupRestoreView: View {
     }
 }
 
+// MARK: - Constants
+private let kOTPExpirationSeconds = 300 // 5 minutes
+private let kBackupMarkerContent = "PORTAL_SELF_BACKUP"
+private let kBackupMarkerFilename = "PORTAL_BACKUP_MARKER.txt"
+
 // MARK: - Local Backup Model
 struct LocalBackup: Identifiable, Codable {
     let id: UUID
@@ -359,6 +366,10 @@ class SelfBackupRestoreViewModel: ObservableObject {
     
     private let fileManager = FileManager.default
     private let backupsDirectory: URL
+    // Note: This password provides basic encryption. For production use, consider:
+    // 1. Deriving password from device-specific secure storage (Keychain)
+    // 2. Allowing users to set their own password
+    // 3. Using biometric authentication for additional security
     private let password = "PortalLocalBackup2026"
     
     var totalBackupSize: String {
@@ -643,12 +654,12 @@ class SelfBackupRestoreViewModel: ObservableObject {
         }
         
         // Marker file
-        try "PORTAL_SELF_BACKUP".write(to: directory.appendingPathComponent("PORTAL_BACKUP_MARKER.txt"), atomically: true, encoding: .utf8)
+        try kBackupMarkerContent.write(to: directory.appendingPathComponent(kBackupMarkerFilename), atomically: true, encoding: .utf8)
     }
     
     private func restoreBackupData(from directory: URL) async throws {
         // Verify marker file
-        let markerFile = directory.appendingPathComponent("PORTAL_BACKUP_MARKER.txt")
+        let markerFile = directory.appendingPathComponent(kBackupMarkerFilename)
         guard fileManager.fileExists(atPath: markerFile.path) else {
             throw NSError(domain: "SelfBackup", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid backup file"])
         }
