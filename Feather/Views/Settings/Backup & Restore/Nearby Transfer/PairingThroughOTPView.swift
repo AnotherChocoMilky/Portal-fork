@@ -112,49 +112,94 @@ struct PairingThroughOTPView: View {
     private var senderSection: some View {
         Section {
             VStack(spacing: 20) {
-                // OTP Display
+                // OTP Display with modern styling
                 HStack(spacing: 8) {
                     ForEach(Array(viewModel.otpCode.enumerated()), id: \.offset) { index, char in
-                        Text(String(char))
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .frame(width: 50, height: 60)
-                            .background(Color.blue.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.blue.opacity(0.15), Color.purple.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 50, height: 60)
+                            
+                            Text(String(char))
+                                .font(.system(size: 36, weight: .bold, design: .rounded))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [.blue, .purple],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        }
                     }
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, 12)
                 
-                // Expiration Countdown
-                HStack {
-                    Image(systemName: "clock.fill")
-                        .foregroundStyle(viewModel.expirationColor)
-                    Text("Expires in \(viewModel.timeRemaining)s")
-                        .font(.headline)
-                        .foregroundStyle(viewModel.expirationColor)
+                // Expiration Countdown with enhanced design
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(viewModel.expirationColor.opacity(0.15))
+                            .frame(width: 32, height: 32)
+                        
+                        Image(systemName: "clock.fill")
+                            .font(.system(size: 14))
+                            .foregroundStyle(viewModel.expirationColor)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Code Expires In")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Text("\(viewModel.timeRemaining)s")
+                            .font(.headline)
+                            .foregroundStyle(viewModel.expirationColor)
+                    }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color(UIColor.tertiarySystemGroupedBackground))
+                )
                 
                 // Status
                 if viewModel.isPeerConnected {
-                    HStack {
+                    HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
-                        Text("Recipient connected")
+                        Text("Recipient connected successfully")
                             .font(.subheadline)
                             .foregroundStyle(.green)
                     }
-                    .padding(.top, 8)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.green.opacity(0.1))
+                    )
                 }
                 
                 // Waiting State
                 if viewModel.isWaitingForRecipient && !viewModel.isPeerConnected {
-                    HStack {
+                    HStack(spacing: 8) {
                         ProgressView()
-                            .padding(.trailing, 8)
-                        Text("Waiting for recipient...")
+                            .padding(.trailing, 4)
+                        Text("Waiting for recipient to connect...")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
-                    .padding(.top, 8)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color(UIColor.tertiarySystemGroupedBackground))
+                    )
                 }
             }
             .frame(maxWidth: .infinity)
@@ -162,37 +207,51 @@ struct PairingThroughOTPView: View {
         } header: {
             AppearanceSectionHeader(title: String.localized("Your Code"), icon: "key.fill")
         } footer: {
-            Text("Share this code with the receiving device. The code will expire in \(viewModel.otpExpirationSeconds) seconds.")
+            Text("Share this code with the receiving device. The code will expire in \(viewModel.otpExpirationSeconds) seconds for security.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
         
-        // Copy Button
+        // Action Buttons
         Section {
+            // Copy Button
             Button {
                 UIPasteboard.general.string = viewModel.otpCode
+                HapticsManager.shared.success()
+                // Show temporary feedback
+                withAnimation {
+                    viewModel.showCopyFeedback = true
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    withAnimation {
+                        viewModel.showCopyFeedback = false
+                    }
+                }
             } label: {
-                HStack {
-                    Image(systemName: "doc.on.doc.fill")
-                    Text("Copy Code")
+                HStack(spacing: 8) {
+                    Image(systemName: viewModel.showCopyFeedback ? "checkmark" : "doc.on.doc.fill")
+                    Text(viewModel.showCopyFeedback ? "Copied!" : "Copy Code to Clipboard")
                 }
                 .frame(maxWidth: .infinity)
+                .font(.headline)
             }
             .disabled(viewModel.otpCode.isEmpty || viewModel.isPeerConnected)
-        }
-        
-        // Regenerate Button
-        Section {
+            .buttonStyle(.borderedProminent)
+            .tint(viewModel.showCopyFeedback ? .green : .blue)
+            
+            // Regenerate Button
             Button {
                 viewModel.regenerateOTP()
+                HapticsManager.shared.light()
             } label: {
-                HStack {
+                HStack(spacing: 8) {
                     Image(systemName: "arrow.clockwise")
                     Text("Generate New Code")
                 }
                 .frame(maxWidth: .infinity)
             }
             .disabled(viewModel.isPeerConnected)
+            .buttonStyle(.bordered)
         }
     }
     
@@ -201,26 +260,52 @@ struct PairingThroughOTPView: View {
     private var recipientSection: some View {
         Section {
             VStack(spacing: 16) {
-                // OTP Input
+                // OTP Input with enhanced design
                 HStack(spacing: 8) {
                     ForEach(0..<viewModel.otpLength, id: \.self) { index in
-                        Text(index < otpInput.count ? String(Array(otpInput)[index]) : "")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                            .frame(width: 50, height: 60)
-                            .background(Color.secondary.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(index == otpInput.count ? Color.blue : Color.clear, lineWidth: 2)
-                            )
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(
+                                    index < otpInput.count
+                                        ? LinearGradient(
+                                            colors: [Color.blue.opacity(0.15), Color.purple.opacity(0.1)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                        : LinearGradient(
+                                            colors: [Color.secondary.opacity(0.1), Color.secondary.opacity(0.05)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                )
+                                .frame(width: 50, height: 60)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                        .stroke(
+                                            index == otpInput.count && isOTPFieldFocused ? Color.blue : Color.clear,
+                                            lineWidth: 2
+                                        )
+                                )
+                            
+                            if index < otpInput.count {
+                                Text(String(Array(otpInput)[index]))
+                                    .font(.system(size: 36, weight: .bold, design: .rounded))
+                                    .foregroundStyle(
+                                        LinearGradient(
+                                            colors: [.blue, .purple],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                            }
+                        }
                     }
                 }
                 .onTapGesture {
-                    // Focus on the hidden text field when tapping on the code display
                     isOTPFieldFocused = true
                 }
                 
-                // Keypad or TextField
+                // Hidden TextField for input
                 TextField("", text: $otpInput)
                     .keyboardType(.numberPad)
                     .textContentType(.oneTimeCode)
@@ -228,19 +313,23 @@ struct PairingThroughOTPView: View {
                     .opacity(0)
                     .focused($isOTPFieldFocused)
                     .onChange(of: otpInput) { newValue in
-                        // Limit input to OTP length
-                        if newValue.count > viewModel.otpLength {
-                            otpInput = String(newValue.prefix(viewModel.otpLength))
+                        // Limit input to OTP length and only numbers
+                        let filtered = newValue.filter { $0.isNumber }
+                        if filtered.count > viewModel.otpLength {
+                            otpInput = String(filtered.prefix(viewModel.otpLength))
+                        } else {
+                            otpInput = filtered
                         }
+                        
                         // Auto-validate when complete
                         if otpInput.count == viewModel.otpLength {
+                            isOTPFieldFocused = false
                             viewModel.validateOTP(otpInput)
                         }
                     }
             }
             .padding(.vertical, 16)
             .onAppear {
-                // Auto-focus when the recipient section appears
                 DispatchQueue.main.asyncAfter(deadline: .now() + keyboardFocusDelay) {
                     isOTPFieldFocused = true
                 }
@@ -248,55 +337,115 @@ struct PairingThroughOTPView: View {
         } header: {
             AppearanceSectionHeader(title: String.localized("Enter Code"), icon: "keyboard.fill")
         } footer: {
-            Text("Enter the \(viewModel.otpLength)-digit code from the sending device")
+            Text("Enter the \(viewModel.otpLength)-digit code from the sending device. The code is case-sensitive and will be validated automatically.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
         
-        // Paste Button
+        // Action Buttons
         Section {
+            // Paste Button
             Button {
                 if let pastedText = UIPasteboard.general.string {
-                    // Filter to only numbers and limit to OTP length
                     let filtered = pastedText.filter { $0.isNumber }
                     otpInput = String(filtered.prefix(viewModel.otpLength))
+                    HapticsManager.shared.light()
                 }
             } label: {
-                HStack {
+                HStack(spacing: 8) {
                     Image(systemName: "doc.on.clipboard.fill")
-                    Text("Paste Code")
+                    Text("Paste Code from Clipboard")
                 }
                 .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.bordered)
+            
+            // Clear Button
+            if !otpInput.isEmpty {
+                Button(role: .destructive) {
+                    otpInput = ""
+                    isOTPFieldFocused = true
+                    viewModel.errorMessage = nil
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "xmark.circle.fill")
+                        Text("Clear Code")
+                    }
+                    .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
             }
         }
         
         // Validation Status
         if viewModel.isValidating {
             Section {
-                HStack {
+                HStack(spacing: 12) {
                     ProgressView()
-                        .padding(.trailing, 8)
-                    Text("Validating code...")
-                        .foregroundStyle(.secondary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Validating code...")
+                            .font(.subheadline.weight(.medium))
+                        Text("Searching for sender device")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 12)
             }
         }
         
         // Device Preview (after successful validation)
         if let peerInfo = viewModel.connectedPeerInfo {
             Section {
-                VStack(spacing: 12) {
-                    Image(systemName: "iphone")
-                        .font(.system(size: 40))
-                        .foregroundStyle(.blue)
+                VStack(spacing: 16) {
+                    // Device icon with success animation
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [Color.green.opacity(0.2), Color.green.opacity(0.05)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 80, height: 80)
+                        
+                        Image(systemName: "iphone.gen2")
+                            .font(.system(size: 36))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [.green, .blue],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    }
                     
-                    Text(peerInfo.deviceName)
-                        .font(.headline)
+                    VStack(spacing: 8) {
+                        Text(peerInfo.deviceName)
+                            .font(.title3.weight(.semibold))
+                        
+                        HStack(spacing: 6) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                            Text("Verified Sender")
+                                .foregroundStyle(.green)
+                        }
+                        .font(.caption)
+                    }
                     
-                    Toggle("Trust this device", isOn: $viewModel.trustDevice)
-                        .padding(.top, 8)
+                    // Trust Toggle
+                    Toggle(isOn: $viewModel.trustDevice) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Trust this device")
+                                .font(.subheadline.weight(.medium))
+                            Text("Allow secure data transfer from this sender")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.top, 8)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
@@ -308,28 +457,86 @@ struct PairingThroughOTPView: View {
             Section {
                 Button {
                     viewModel.confirmConnection()
+                    HapticsManager.shared.success()
                 } label: {
-                    HStack {
-                        Image(systemName: "checkmark.circle.fill")
-                        Text("Begin Transfer")
+                    HStack(spacing: 8) {
+                        Image(systemName: "arrow.down.circle.fill")
+                        Text("Begin Receiving Transfer")
                     }
                     .frame(maxWidth: .infinity)
+                    .font(.headline)
                 }
                 .disabled(!viewModel.trustDevice)
+                .buttonStyle(.borderedProminent)
+                .tint(viewModel.trustDevice ? .green : .gray)
+            } footer: {
+                if !viewModel.trustDevice {
+                    Text("You must trust this device before beginning the transfer")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
             }
         }
         
-        // Error Display
+        // Enhanced Error Display
         if let error = viewModel.errorMessage {
             Section {
-                HStack {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
-                    Text(error)
-                        .foregroundStyle(.red)
-                        .font(.subheadline)
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.red.opacity(0.15))
+                                .frame(width: 40, height: 40)
+                            
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.red)
+                                .font(.system(size: 18))
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Validation Failed")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.red)
+                            
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        
+                        Spacer()
+                    }
+                    
+                    // Helpful suggestions
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Try these steps:")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.primary)
+                        
+                        HStack(alignment: .top, spacing: 8) {
+                            Text("•")
+                            Text("Verify the code with the sender device")
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        
+                        HStack(alignment: .top, spacing: 8) {
+                            Text("•")
+                            Text("Make sure both devices are on the same network")
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        
+                        HStack(alignment: .top, spacing: 8) {
+                            Text("•")
+                            Text("Request a new code if this one has expired")
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }
+                    .padding(.top, 8)
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, 12)
             }
         }
     }
@@ -346,6 +553,7 @@ class OTPPairingViewModel: ObservableObject {
     @Published var connectedPeerInfo: (deviceName: String, peerId: MCPeerID)?
     @Published var trustDevice: Bool = false
     @Published var transferStarted: Bool = false
+    @Published var showCopyFeedback: Bool = false
     
     let otpLength: Int = 6
     let otpExpirationSeconds: Int = 300 // 5 minutes - shared with NearbyTransferService
