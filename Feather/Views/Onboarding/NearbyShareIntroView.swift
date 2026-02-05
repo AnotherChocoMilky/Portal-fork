@@ -44,7 +44,7 @@ struct NearbyShareIntroView: View {
                 .offset(y: animateContent ? 0 : 20)
             
             // Subtitle
-            Text("With Portal 2.3, use Nearby Share to quickly transfer your backuops between devices on the same network.")
+            Text("With Portal 2.3, use Nearby Share to quickly transfer your backups between devices on the same network.")
                 .font(.system(size: 16, weight: .medium, design: .rounded))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -62,7 +62,7 @@ struct NearbyShareIntroView: View {
                 step: 1,
                 icon: "iphone.gen2",
                 title: "Open Nearby Share",
-                description: "Navigate to Settings, bakckup & Restore, Nearby Share tab in Portal to start.",
+                description: "Navigate to Settings, Backup & Restore, Nearby Share tab in Portal to start.",
                 delay: 0.2
             )
             
@@ -332,7 +332,7 @@ struct NearbyShareIntroViewLegacy: View {
                 .offset(y: animateContent ? 0 : 20)
             
             // Subtitle
-            Text("With Portal 2.3, use Nearby Share to quickly transfer Portal backupd between devices.")
+            Text("With Portal 2.3, use Nearby Share to quickly transfer Portal backups between devices.")
                 .font(.system(size: 16, weight: .medium, design: .rounded))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -350,7 +350,7 @@ struct NearbyShareIntroViewLegacy: View {
                 step: 1,
                 icon: "iphone.gen2",
                 title: "Open Nearby Share",
-                description: "Navigate to Srttings, Backup & Restore, Nearby Share tab in Portal",
+                description: "Navigate to Settings, Backup & Restore, Nearby Share tab in Portal",
                 delay: 0.2
             )
             
@@ -602,45 +602,51 @@ struct InteractiveDemoSection: View {
     @Binding var selectedDemo: DemoAction?
     @State private var isAnimating = false
     
-    var body: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Image(systemName: "hand.tap.fill")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.blue)
-                Text("Try It Out")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                    .foregroundColor(.primary)
-                Spacer()
-            }
-            
-            HStack(spacing: 12) {
-                ForEach(DemoAction.allCases, id: \.self) { action in
-                    DemoButton(
-                        action: action,
-                        isSelected: selectedDemo == action,
-                        isAnimating: isAnimating && selectedDemo == action
-                    ) {
-                        selectedDemo = action
-                        isAnimating = true
-                        HapticsManager.shared.lightImpact()
-                        
-                        // Reset animation after delay
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-                            isAnimating = false
-                            selectedDemo = nil
-                        }
-                    }
+    // MARK: - Header Section
+    private var headerView: some View {
+        HStack {
+            Image(systemName: "hand.tap.fill")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.blue)
+            Text("Try It Out")
+                .font(.system(size: 16, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
+            Spacer()
+        }
+    }
+    
+    // MARK: - Demo Buttons Row
+    private var demoButtonsRow: some View {
+        HStack(spacing: 12) {
+            ForEach(DemoAction.allCases, id: \.self) { action in
+                DemoButton(
+                    action: action,
+                    isSelected: selectedDemo == action,
+                    isAnimating: isAnimating && selectedDemo == action
+                ) {
+                    handleDemoSelection(action)
                 }
             }
-            
-            if let demo = selectedDemo {
-                Text(demo.description)
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .transition(.opacity)
-            }
+        }
+    }
+    
+    // MARK: - Description Text
+    @ViewBuilder
+    private var descriptionText: some View {
+        if let demo = selectedDemo {
+            Text(demo.description)
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .transition(.opacity)
+        }
+    }
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            headerView
+            demoButtonsRow
+            descriptionText
         }
         .padding(16)
         .background(
@@ -649,6 +655,19 @@ struct InteractiveDemoSection: View {
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         )
         .animation(.easeInOut, value: selectedDemo)
+    }
+    
+    // MARK: - Helper Methods
+    private func handleDemoSelection(_ action: DemoAction) {
+        selectedDemo = action
+        isAnimating = true
+        HapticsManager.shared.lightImpact()
+        
+        // Reset animation after delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+            isAnimating = false
+            selectedDemo = nil
+        }
     }
 }
 
