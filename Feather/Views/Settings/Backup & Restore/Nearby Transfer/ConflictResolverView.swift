@@ -344,9 +344,10 @@ class ConflictResolverViewModel: ObservableObject {
     private func getProvisionDetails(for cert: CertificatePair) -> (name: String, expiration: String) {
         if let provisionData = Storage.shared.getProvisionFileDecoded(for: cert) {
             let name = provisionData.Name
-            let expiration = provisionData.ExpirationDate.map {
-                $0.formatted(date: .abbreviated, time: .omitted)
-            } ?? "Unknown"
+            let expiration = provisionData.ExpirationDate.formatted(
+                date: Date.FormatStyle.DateStyle.abbreviated,
+                time: Date.FormatStyle.TimeStyle.omitted
+            )
             return (name, expiration)
         }
         return ("Unknown", "Unknown")
