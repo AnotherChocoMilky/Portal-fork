@@ -814,6 +814,7 @@ struct ModernPasscodeSetupView: View {
 struct DeveloperControlPanelView: View {
     @StateObject private var authManager = DeveloperAuthManager.shared
     @State private var showResetConfirmation = false
+    @State private var showNearbyShareIntro = false
     @AppStorage("Feather.enableCustomTabBar") private var enableCustomTabBar = false
     @AppStorage("Feather.simulateNearbyTransfer") private var simulateNearbyTransfer = false
     @Environment(\.scenePhase) private var scenePhase
@@ -871,6 +872,13 @@ struct DeveloperControlPanelView: View {
         .onChange(of: scenePhase) { newPhase in
             if newPhase == .background {
                 authManager.lockDeveloperMode()
+            }
+        }
+        .sheet(isPresented: $showNearbyShareIntro) {
+            if #available(iOS 17.0, *) {
+                NearbyShareIntroView()
+            } else {
+                NearbyShareIntroViewLegacy()
             }
         }
     }
@@ -1054,7 +1062,7 @@ struct DeveloperControlPanelView: View {
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text("\(category.items.count)")
+                Text("\(category.items.count + (category.title == "Interface" ? 1 : 0))")
                     .font(.caption2.weight(.semibold))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 8)
@@ -1069,7 +1077,41 @@ struct DeveloperControlPanelView: View {
             ForEach(category.items.indices, id: \.self) { index in
                 let item = category.items[index]
                 NavigationLink(destination: item.destination) {
-                    devMenuItemRow(item: item, isLast: index == category.items.count - 1)
+                    devMenuItemRow(item: item, isLast: (category.title != "Interface" && index == category.items.count - 1))
+                }
+                .buttonStyle(.plain)
+            }
+            
+            // Special button for Nearby Share Intro (Interface category only)
+            if category.title == "Interface" {
+                Button {
+                    showNearbyShareIntro = true
+                    HapticsManager.shared.softImpact()
+                } label: {
+                    VStack(spacing: 0) {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(Color.purple.opacity(0.15))
+                                    .frame(width: 36, height: 36)
+                                Image(systemName: "info.circle.fill")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundStyle(.purple)
+                            }
+                            
+                            Text("Nearby Share Intro")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.primary)
+                            
+                            Spacer()
+                            
+                            Image(systemName: "arrow.up.forward.circle.fill")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.tertiary)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 10)
+                    }
                 }
                 .buttonStyle(.plain)
             }
