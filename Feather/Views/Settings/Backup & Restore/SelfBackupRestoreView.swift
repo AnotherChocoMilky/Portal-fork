@@ -290,15 +290,18 @@ struct SelfBackupRestoreView: View {
         }
         .sheet(isPresented: $showingDocumentPicker) {
             if let backupType = UTType(filenameExtension: "backup") {
-                DocumentPicker(
+                FileImporterRepresentableView(
                     allowedContentTypes: [backupType],
-                    onPick: { url in
+                    allowsMultipleSelection: false,
+                    onDocumentsPicked: { urls in
+                        guard let url = urls.first else { return }
                         Task {
                             await viewModel.importBackup(from: url)
                         }
                         showingDocumentPicker = false
                     }
                 )
+                .ignoresSafeArea()
             } else {
                 Text("Error: Unable to create document picker")
                     .padding()
@@ -1149,38 +1152,6 @@ struct LegacyRestoreSelectionView: View {
                         .textCase(nil)
                 }
             }
-        }
-    }
-}
-
-// MARK: - Document Picker
-struct DocumentPicker: UIViewControllerRepresentable {
-    let allowedContentTypes: [UTType]
-    let onPick: (URL) -> Void
-    
-    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: allowedContentTypes)
-        picker.delegate = context.coordinator
-        picker.allowsMultipleSelection = false
-        return picker
-    }
-    
-    func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(onPick: onPick)
-    }
-    
-    class Coordinator: NSObject, UIDocumentPickerDelegate {
-        let onPick: (URL) -> Void
-        
-        init(onPick: @escaping (URL) -> Void) {
-            self.onPick = onPick
-        }
-        
-        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
-            guard let url = urls.first else { return }
-            onPick(url)
         }
     }
 }

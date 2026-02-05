@@ -7,183 +7,284 @@ struct TransferProgressView: View {
     let onRetry: () -> Void
     
     var body: some View {
-        VStack(spacing: 24) {
-            // Status Icon
-            statusIcon
-            
-            // Progress Information
-            switch service.state {
-            case .idle:
-                Text("Ready")
-                    .font(.headline)
-            
-            case .discovering:
-                VStack(spacing: 12) {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                    Text("Discovering devices...")
-                        .font(.headline)
+        ScrollView {
+            VStack(spacing: 32) {
+                // Status Icon
+                statusIcon
+                
+                // Progress Information
+                switch service.state {
+                case .idle:
+                    modernStatusCard(
+                        icon: "antenna.radiowaves.left.and.right",
+                        title: "Ready",
+                        subtitle: "Waiting to begin transfer",
+                        color: .blue
+                    )
+                
+                case .discovering:
+                    modernStatusCard(
+                        icon: "magnifyingglass",
+                        title: "Discovering devices...",
+                        subtitle: "Searching for nearby devices",
+                        color: .purple,
+                        showProgress: true
+                    )
+                
+                case .connecting:
+                    modernStatusCard(
+                        icon: "wifi",
+                        title: "Connecting...",
+                        subtitle: service.currentItem.isEmpty ? "Establishing connection" : service.currentItem,
+                        color: .orange,
+                        showProgress: true
+                    )
+                
+                case .transferring(let progress, let bytesTransferred, let totalBytes, let speed):
+                    modernTransferView(
+                        progress: progress,
+                        bytesTransferred: bytesTransferred,
+                        totalBytes: totalBytes,
+                        speed: speed
+                    )
+                
+                case .completed:
+                    modernStatusCard(
+                        icon: "checkmark.circle.fill",
+                        title: "Transfer Complete",
+                        subtitle: service.currentItem.isEmpty ? "All files transferred successfully" : service.currentItem,
+                        color: .green
+                    )
+                
+                case .failed(let error):
+                    modernStatusCard(
+                        icon: "xmark.circle.fill",
+                        title: "Transfer Failed",
+                        subtitle: error.localizedDescription,
+                        color: .red
+                    )
                 }
-            
-            case .connecting:
-                VStack(spacing: 12) {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                    Text("Connecting...")
-                        .font(.headline)
-                    if !service.currentItem.isEmpty {
-                        Text(service.currentItem)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            
-            case .transferring(let progress, let bytesTransferred, let totalBytes, let speed):
-                VStack(spacing: 16) {
-                    // Progress Circle
-                    ZStack {
-                        Circle()
-                            .stroke(Color.gray.opacity(0.2), lineWidth: 8)
-                            .frame(width: 120, height: 120)
-                        
-                        Circle()
-                            .trim(from: 0, to: progress)
-                            .stroke(
-                                LinearGradient(colors: [.blue, .green], startPoint: .topLeading, endPoint: .bottomTrailing),
-                                style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                            )
-                            .frame(width: 120, height: 120)
-                            .rotationEffect(.degrees(-90))
-                            .animation(.linear, value: progress)
-                        
-                        VStack(spacing: 4) {
-                            Text("\(Int(progress * 100))%")
-                                .font(.system(size: 28, weight: .bold, design: .rounded))
-                            Text(formatBytes(bytesTransferred))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    
-                    // Transfer Details
-                    VStack(spacing: 8) {
-                        HStack {
-                            Text("Progress:")
-                            Spacer()
-                            Text("\(formatBytes(bytesTransferred)) / \(formatBytes(totalBytes))")
-                                .foregroundStyle(.secondary)
-                        }
-                        
-                        HStack {
-                            Text("Speed:")
-                            Spacer()
-                            Text("\(formatSpeed(speed))")
-                                .foregroundStyle(.secondary)
-                        }
-                        
-                        if !service.currentItem.isEmpty {
-                            HStack {
-                                Text("Current:")
-                                Spacer()
-                                Text(service.currentItem)
-                                    .foregroundStyle(.secondary)
-                                    .lineLimit(1)
-                            }
-                        }
-                        
-                        if totalBytes > 0 && speed > 0 {
-                            let remaining = Double(totalBytes - bytesTransferred) / speed
-                            HStack {
-                                Text("Remaining:")
-                                Spacer()
-                                Text(formatTime(remaining))
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                    .font(.subheadline)
-                    .padding(.horizontal)
-                }
-            
-            case .completed:
-                VStack(spacing: 12) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 60))
-                        .foregroundStyle(.green)
-                    Text("Transfer Complete")
-                        .font(.headline)
-                    if !service.currentItem.isEmpty {
-                        Text(service.currentItem)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            
-            case .failed(let error):
-                VStack(spacing: 12) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 60))
-                        .foregroundStyle(.red)
-                    Text("Transfer Failed")
-                        .font(.headline)
-                    Text(error.localizedDescription)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
+                
+                // Action Buttons
+                actionButtons
             }
-            
-            // Action Buttons
-            HStack(spacing: 16) {
-                if case .transferring = service.state {
-                    Button(action: onCancel) {
-                        Text("Cancel")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(Color.red.opacity(0.2))
-                            .foregroundStyle(.red)
-                            .cornerRadius(12)
-                    }
-                } else if service.canRetry {
-                    Button(action: onRetry) {
-                        HStack {
-                            Image(systemName: "arrow.clockwise")
-                            Text("Retry")
-                        }
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.blue.opacity(0.2))
-                        .foregroundStyle(.blue)
-                        .cornerRadius(12)
-                    }
-                }
-            }
-            .padding(.horizontal)
+            .padding(24)
         }
-        .padding(24)
+    }
+    
+    // MARK: - Modern Transfer View
+    @ViewBuilder
+    private func modernTransferView(progress: Double, bytesTransferred: Int64, totalBytes: Int64, speed: Double) -> some View {
+        VStack(spacing: 24) {
+            // Large Progress Circle with Gradient
+            ZStack {
+                // Background circle
+                Circle()
+                    .stroke(Color.gray.opacity(0.15), lineWidth: 12)
+                    .frame(width: 180, height: 180)
+                
+                // Progress circle with gradient
+                Circle()
+                    .trim(from: 0, to: progress)
+                    .stroke(
+                        AngularGradient(
+                            colors: [.blue, .purple, .pink, .blue],
+                            center: .center,
+                            startAngle: .degrees(0),
+                            endAngle: .degrees(360)
+                        ),
+                        style: StrokeStyle(lineWidth: 12, lineCap: .round)
+                    )
+                    .frame(width: 180, height: 180)
+                    .rotationEffect(.degrees(-90))
+                    .animation(.linear(duration: 0.3), value: progress)
+                
+                // Center content
+                VStack(spacing: 6) {
+                    Text("\(Int(progress * 100))%")
+                        .font(.system(size: 42, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                    
+                    Text(formatBytes(bytesTransferred))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.vertical, 12)
+            
+            // Modern Info Cards
+            VStack(spacing: 12) {
+                infoCard(
+                    icon: "arrow.up.arrow.down",
+                    label: "Progress",
+                    value: "\(formatBytes(bytesTransferred)) / \(formatBytes(totalBytes))",
+                    color: .blue
+                )
+                
+                infoCard(
+                    icon: "speedometer",
+                    label: "Speed",
+                    value: formatSpeed(speed),
+                    color: .green
+                )
+                
+                if !service.currentItem.isEmpty {
+                    infoCard(
+                        icon: "doc.fill",
+                        label: "Current File",
+                        value: service.currentItem,
+                        color: .purple
+                    )
+                }
+                
+                if totalBytes > 0 && speed > 0 {
+                    let remaining = Double(totalBytes - bytesTransferred) / speed
+                    infoCard(
+                        icon: "clock.fill",
+                        label: "Time Remaining",
+                        value: formatTime(remaining),
+                        color: .orange
+                    )
+                }
+            }
+        }
+    }
+    
+    // MARK: - Modern Status Card
+    @ViewBuilder
+    private func modernStatusCard(icon: String, title: String, subtitle: String, color: Color, showProgress: Bool = false) -> some View {
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [color.opacity(0.2), color.opacity(0.05)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 100, height: 100)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 44))
+                    .foregroundStyle(color)
+            }
+            
+            VStack(spacing: 8) {
+                Text(title)
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.primary)
+                
+                Text(subtitle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(3)
+            }
+            
+            if showProgress {
+                ProgressView()
+                    .scaleEffect(1.2)
+                    .padding(.top, 8)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
+        .background(
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
+        )
+    }
+    
+    // MARK: - Info Card
+    @ViewBuilder
+    private func infoCard(icon: String, label: String, value: String, color: Color) -> some View {
+        HStack(spacing: 16) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(color.opacity(0.15))
+                    .frame(width: 44, height: 44)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(color)
+            }
+            
+            VStack(alignment: .leading, spacing: 3) {
+                Text(label)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                
+                Text(value)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+            
+            Spacer()
+        }
+        .frame(maxWidth: .infinity)
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(UIColor.tertiarySystemGroupedBackground))
+        )
+    }
+    
+    // MARK: - Action Buttons
+    @ViewBuilder
+    private var actionButtons: some View {
+        HStack(spacing: 12) {
+            if case .transferring = service.state {
+                Button(action: onCancel) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "xmark")
+                        Text("Cancel Transfer")
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        LinearGradient(
+                            colors: [Color.red.opacity(0.15), Color.red.opacity(0.1)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .foregroundStyle(.red)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+            } else if service.canRetry {
+                Button(action: onRetry) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "arrow.clockwise")
+                        Text("Retry Transfer")
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(
+                        LinearGradient(
+                            colors: [Color.blue.opacity(0.15), Color.blue.opacity(0.1)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .foregroundStyle(.blue)
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                }
+            }
+        }
     }
     
     @ViewBuilder
     private var statusIcon: some View {
         switch service.state {
         case .idle:
-            Image(systemName: "antenna.radiowaves.left.and.right")
-                .font(.system(size: 50))
-                .foregroundStyle(.blue)
+            EmptyView()
         case .discovering, .connecting:
-            if #available(iOS 17.0, *) {
-                Image(systemName: "antenna.radiowaves.left.and.right")
-                    .font(.system(size: 50))
-                    .foregroundStyle(.blue)
-                    .symbolEffect(.pulse, options: .repeating)
-            } else {
-                Image(systemName: "antenna.radiowaves.left.and.right")
-                    .font(.system(size: 50))
-                    .foregroundStyle(.blue)
-            }
+            EmptyView()
         case .transferring:
             EmptyView()
         case .completed:
