@@ -1,6 +1,7 @@
 import Foundation
 import MultipeerConnectivity
 import Combine
+import UIKit
 
 // MARK: - Transfer State
 enum TransferState {
@@ -231,12 +232,20 @@ extension NearbyTransferService: MCSessionDelegate {
         DispatchQueue.main.async {
             if self.isReceivingSize {
                 // First 8 bytes are the total size
-                self.expectedSize = data.withUnsafeBytes { $0.load(as: Int64.self) }
-                self.isReceivingSize = false
-                self.startTime = Date()
-                self.lastBytesTransferred = 0
-                self.lastSpeedUpdate = Date()
-                self.currentItem = "Receiving backup..."
+                if data.count >= 8 {
+                    self.expectedSize = data.withUnsafeBytes { $0.load(as: Int64.self) }
+                    if self.expectedSize <= 0 {
+                        self.state = .failed(NSError(domain: "NearbyTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid backup size"]))
+                        return
+                    }
+                    self.isReceivingSize = false
+                    self.startTime = Date()
+                    self.lastBytesTransferred = 0
+                    self.lastSpeedUpdate = Date()
+                    self.currentItem = "Receiving backup..."
+                } else {
+                    self.state = .failed(NSError(domain: "NearbyTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid size data received"]))
+                }
             } else {
                 self.receivedData.append(data)
                 self.updateProgress(bytesTransferred: Int64(self.receivedData.count), totalBytes: self.expectedSize)
