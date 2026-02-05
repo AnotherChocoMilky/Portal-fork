@@ -279,12 +279,11 @@ class PostRestoreHealthCheckViewModel: ObservableObject {
         
         for cert in certificates {
             if let provisionData = Storage.shared.getProvisionFileDecoded(for: cert) {
-                if let expirationDate = provisionData.ExpirationDate {
-                    if expirationDate < Date() {
-                        expiredCerts += 1
-                    } else if expirationDate < Date().addingTimeInterval(7 * 24 * 60 * 60) { // 7 days
-                        expiringSoon += 1
-                    }
+                let expirationDate = provisionData.ExpirationDate
+                if expirationDate < Date() {
+                    expiredCerts += 1
+                } else if expirationDate < Date().addingTimeInterval(7 * 24 * 60 * 60) { // 7 days
+                    expiringSoon += 1
                 }
             }
         }
