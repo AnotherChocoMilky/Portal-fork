@@ -16,6 +16,10 @@ struct PairingThroughOTPView: View {
     @State private var selectedMode: OTPPairingMode = .sender
     @State private var otpInput: String = ""
     @State private var showingTransfer = false
+    @FocusState private var isOTPFieldFocused: Bool
+    
+    // Delay to allow view to fully render before focusing keyboard
+    private let keyboardFocusDelay: TimeInterval = 0.5
     
     var body: some View {
         NBList(.localized("Remote Pairing")) {
@@ -163,6 +167,20 @@ struct PairingThroughOTPView: View {
                 .foregroundStyle(.secondary)
         }
         
+        // Copy Button
+        Section {
+            Button {
+                UIPasteboard.general.string = viewModel.otpCode
+            } label: {
+                HStack {
+                    Image(systemName: "doc.on.doc.fill")
+                    Text("Copy Code")
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .disabled(viewModel.otpCode.isEmpty || viewModel.isPeerConnected)
+        }
+        
         // Regenerate Button
         Section {
             Button {
@@ -197,13 +215,18 @@ struct PairingThroughOTPView: View {
                             )
                     }
                 }
+                .onTapGesture {
+                    // Focus on the hidden text field when tapping on the code display
+                    isOTPFieldFocused = true
+                }
                 
                 // Keypad or TextField
                 TextField("", text: $otpInput)
                     .keyboardType(.numberPad)
                     .textContentType(.oneTimeCode)
-                    .opacity(0.01)
-                    .frame(height: 1)
+                    .frame(height: 0)
+                    .opacity(0)
+                    .focused($isOTPFieldFocused)
                     .onChange(of: otpInput) { newValue in
                         // Limit input to OTP length
                         if newValue.count > viewModel.otpLength {
@@ -216,12 +239,35 @@ struct PairingThroughOTPView: View {
                     }
             }
             .padding(.vertical, 16)
+            .onAppear {
+                // Auto-focus when the recipient section appears
+                DispatchQueue.main.asyncAfter(deadline: .now() + keyboardFocusDelay) {
+                    isOTPFieldFocused = true
+                }
+            }
         } header: {
             AppearanceSectionHeader(title: String.localized("Enter Code"), icon: "keyboard.fill")
         } footer: {
             Text("Enter the \(viewModel.otpLength)-digit code from the sending device")
                 .font(.caption)
                 .foregroundStyle(.secondary)
+        }
+        
+        // Paste Button
+        Section {
+            Button {
+                if let pastedText = UIPasteboard.general.string {
+                    // Filter to only numbers and limit to OTP length
+                    let filtered = pastedText.filter { $0.isNumber }
+                    otpInput = String(filtered.prefix(viewModel.otpLength))
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "doc.on.clipboard.fill")
+                    Text("Paste Code")
+                }
+                .frame(maxWidth: .infinity)
+            }
         }
         
         // Validation Status

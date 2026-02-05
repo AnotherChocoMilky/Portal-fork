@@ -2,6 +2,7 @@ import SwiftUI
 import NimbleViews
 import ZIPFoundation
 import CryptoKit
+import UniformTypeIdentifiers
 
 // MARK: - Self Backup Restore View
 struct SelfBackupRestoreView: View {
@@ -10,6 +11,10 @@ struct SelfBackupRestoreView: View {
     @State private var showingBackupOptions = false
     @State private var showingRestoreList = false
     @State private var backupOptions = BackupOptions()
+    @State private var showingDocumentPicker = false
+    @State private var showingRenameAlert = false
+    @State private var backupToRename: LocalBackup?
+    @State private var newBackupName = ""
     
     var body: some View {
         NBList(.localized("Self Backup & Restore")) {
@@ -115,6 +120,36 @@ struct SelfBackupRestoreView: View {
                     .padding(.vertical, 8)
                 }
                 .disabled(viewModel.isCreatingBackup || viewModel.isRestoring || viewModel.localBackups.isEmpty)
+                
+                // Import Backup
+                Button {
+                    showingDocumentPicker = true
+                } label: {
+                    HStack(spacing: 16) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color.purple.opacity(0.15))
+                                .frame(width: 50, height: 50)
+                            
+                            Image(systemName: "square.and.arrow.down.on.square.fill")
+                                .font(.title2)
+                                .foregroundStyle(.purple)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(.localized("Import Backup"))
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                            Text(.localized("Import .backup file"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        Spacer()
+                    }
+                    .padding(.vertical, 8)
+                }
+                .disabled(viewModel.isCreatingBackup || viewModel.isRestoring)
             } header: {
                 AppearanceSectionHeader(title: String.localized("Quick Actions"), icon: "bolt.fill")
             }
@@ -222,7 +257,7 @@ struct SelfBackupRestoreView: View {
         }
         .sheet(isPresented: $showingRestoreList) {
             NavigationStack {
-                RestoreSelectionView(
+                ModernRestoreSelectionView(
                     backups: viewModel.localBackups,
                     onRestore: { backup in
                         showingRestoreList = false
@@ -241,6 +276,31 @@ struct SelfBackupRestoreView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $showingDocumentPicker) {
+            if let backupType = UTType(filenameExtension: "backup") {
+                DocumentPicker(
+                    allowedContentTypes: [backupType],
+                    onPick: { url in
+                        Task {
+                            await viewModel.importBackup(from: url)
+                        }
+                        showingDocumentPicker = false
+                    }
+                )
+            } else {
+                Text("Error: Unable to create document picker")
+                    .padding()
+            }
+        }
+        .alert("Rename Backup", isPresented: $showingRenameAlert, presenting: backupToRename) { backup in
+            TextField("Backup Name", text: $newBackupName)
+            Button("Cancel", role: .cancel) { }
+            Button("Rename") {
+                viewModel.renameBackup(backup, to: newBackupName)
+            }
+        } message: { _ in
+            Text("Enter a new name for this backup")
         }
         .alert("Error", isPresented: $viewModel.showError, presenting: viewModel.errorMessage) { _ in
             Button("OK", role: .cancel) { }
@@ -290,6 +350,29 @@ struct SelfBackupRestoreView: View {
             Spacer()
         }
         .padding(.vertical, 4)
+        .contextMenu {
+            Button {
+                backupToRename = backup
+                newBackupName = backup.name
+                showingRenameAlert = true
+            } label: {
+                Label("Rename", systemImage: "pencil")
+            }
+            
+            Button {
+                viewModel.exportBackup(backup)
+            } label: {
+                Label("Export as .backup", systemImage: "square.and.arrow.up")
+            }
+            
+            Button(role: .destructive) {
+                if let index = viewModel.localBackups.firstIndex(where: { $0.id == backup.id }) {
+                    viewModel.deleteBackups(at: IndexSet(integer: index))
+                }
+            } label: {
+                Label("Delete", systemImage: "trash")
+            }
+        }
     }
     
     @ViewBuilder
@@ -342,7 +425,7 @@ private let kBackupMarkerFilename = "PORTAL_BACKUP_MARKER.txt"
 // MARK: - Local Backup Model
 struct LocalBackup: Identifiable, Codable {
     let id: UUID
-    let name: String
+    var name: String
     let date: Date
     let size: Int64
     let path: String
@@ -545,6 +628,96 @@ class SelfBackupRestoreViewModel: ObservableObject {
         }
         localBackups.remove(atOffsets: indexSet)
         saveMetadata()
+    }
+    
+    func renameBackup(_ backup: LocalBackup, to newName: String) {
+        guard let index = localBackups.firstIndex(where: { $0.id == backup.id }) else { return }
+        
+        var updatedBackup = backup
+        updatedBackup.name = newName
+        localBackups[index] = updatedBackup
+        saveMetadata()
+    }
+    
+    func exportBackup(_ backup: LocalBackup) {
+        guard fileManager.fileExists(atPath: backup.path) else {
+            errorMessage = "Backup file not found"
+            showError = true
+            return
+        }
+        
+        do {
+            let sourceURL = URL(fileURLWithPath: backup.path)
+            // Sanitize filename by removing invalid characters
+            let invalidCharacters = CharacterSet(charactersIn: ":/\\?%*|\"<>")
+            let sanitizedName = backup.name.components(separatedBy: invalidCharacters).joined(separator: "_")
+            let fileName = "\(sanitizedName).backup"
+            let destinationURL = fileManager.temporaryDirectory.appendingPathComponent(fileName)
+            
+            // Copy to temp location with .backup extension
+            if fileManager.fileExists(atPath: destinationURL.path) {
+                try fileManager.removeItem(at: destinationURL)
+            }
+            try fileManager.copyItem(at: sourceURL, to: destinationURL)
+            
+            // Present share sheet
+            DispatchQueue.main.async {
+                let activityVC = UIActivityViewController(activityItems: [destinationURL], applicationActivities: nil)
+                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                   let rootVC = windowScene.windows.first?.rootViewController {
+                    var topVC = rootVC
+                    while let presentedVC = topVC.presentedViewController {
+                        topVC = presentedVC
+                    }
+                    topVC.present(activityVC, animated: true)
+                }
+            }
+        } catch {
+            errorMessage = "Failed to export backup: \(error.localizedDescription)"
+            showError = true
+        }
+    }
+    
+    func importBackup(from url: URL) async {
+        do {
+            // Access the security-scoped resource
+            guard url.startAccessingSecurityScopedResource() else {
+                throw NSError(domain: "SelfBackup", code: -1, userInfo: [NSLocalizedDescriptionKey: "Cannot access file"])
+            }
+            defer { url.stopAccessingSecurityScopedResource() }
+            
+            // Copy to backups directory
+            let backupID = UUID()
+            let destinationURL = backupsDirectory.appendingPathComponent("\(backupID.uuidString).zip")
+            try fileManager.copyItem(at: url, to: destinationURL)
+            
+            // Get file size
+            let attributes = try fileManager.attributesOfItem(atPath: destinationURL.path)
+            let fileSize = attributes[.size] as? Int64 ?? 0
+            
+            // Create backup metadata
+            let fileName = url.deletingPathExtension().lastPathComponent
+            // Sanitize filename by removing invalid characters
+            let invalidCharacters = CharacterSet(charactersIn: ":/\\?%*|\"<>")
+            let sanitizedName = fileName.components(separatedBy: invalidCharacters).joined(separator: "_")
+            let backup = LocalBackup(
+                id: backupID,
+                name: sanitizedName.isEmpty ? "Imported Backup" : sanitizedName,
+                date: Date(),
+                size: fileSize,
+                path: destinationURL.path
+            )
+            
+            localBackups.append(backup)
+            localBackups.sort { $0.date > $1.date }
+            saveMetadata()
+            
+            successMessage = "Backup imported successfully"
+            showSuccess = true
+        } catch {
+            errorMessage = "Failed to import backup: \(error.localizedDescription)"
+            showError = true
+        }
     }
     
     // MARK: - Private Helpers
@@ -804,6 +977,112 @@ struct RestoreSelectionView: View {
                     .padding(.vertical, 4)
                 }
             }
+        }
+    }
+}
+
+// MARK: - Modern Restore Selection View
+struct ModernRestoreSelectionView: View {
+    let backups: [LocalBackup]
+    let onRestore: (LocalBackup) -> Void
+    
+    var body: some View {
+        List {
+            if backups.isEmpty {
+                ContentUnavailableView(
+                    "No Backups",
+                    systemImage: "archivebox",
+                    description: Text("Create a backup first before you can restore")
+                )
+            } else {
+                Section {
+                    ForEach(backups) { backup in
+                        Button {
+                            onRestore(backup)
+                        } label: {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(Color.blue.opacity(0.15))
+                                        .frame(width: 50, height: 50)
+                                    
+                                    Image(systemName: "archivebox.fill")
+                                        .font(.title2)
+                                        .foregroundStyle(.blue)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(backup.name)
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+                                    
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "calendar")
+                                            .font(.caption2)
+                                        Text(backup.date, style: .date)
+                                        Text("•")
+                                        Text(backup.date, style: .time)
+                                    }
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "internaldrive")
+                                            .font(.caption2)
+                                        Text(backup.sizeString)
+                                    }
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(.vertical, 8)
+                        }
+                    }
+                } header: {
+                    Text("Select a backup to restore")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .textCase(nil)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Document Picker
+struct DocumentPicker: UIViewControllerRepresentable {
+    let allowedContentTypes: [UTType]
+    let onPick: (URL) -> Void
+    
+    func makeUIViewController(context: Context) -> UIDocumentPickerViewController {
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: allowedContentTypes)
+        picker.delegate = context.coordinator
+        picker.allowsMultipleSelection = false
+        return picker
+    }
+    
+    func updateUIViewController(_ uiViewController: UIDocumentPickerViewController, context: Context) {}
+    
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onPick: onPick)
+    }
+    
+    class Coordinator: NSObject, UIDocumentPickerDelegate {
+        let onPick: (URL) -> Void
+        
+        init(onPick: @escaping (URL) -> Void) {
+            self.onPick = onPick
+        }
+        
+        func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+            guard let url = urls.first else { return }
+            onPick(url)
         }
     }
 }
