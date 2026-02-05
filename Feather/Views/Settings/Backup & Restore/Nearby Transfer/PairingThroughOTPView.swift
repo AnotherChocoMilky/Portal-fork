@@ -337,7 +337,7 @@ struct PairingThroughOTPView: View {
         } header: {
             AppearanceSectionHeader(title: String.localized("Enter Code"), icon: "keyboard.fill")
         } footer: {
-            Text("Enter the \(viewModel.otpLength)-digit code from the sending device. The code is case-sensitive and will be validated automatically.")
+            Text("Enter the \(viewModel.otpLength)-digit numeric code from the sending device. The code will be validated automatically when complete.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

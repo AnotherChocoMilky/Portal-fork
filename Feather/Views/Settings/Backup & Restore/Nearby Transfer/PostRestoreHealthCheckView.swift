@@ -149,7 +149,7 @@ struct PostRestoreHealthCheckView: View {
         .navigationBarTitleDisplayMode(.inline)
         .interactiveDismissDisabled(viewModel.isScanning || viewModel.isFixing || showRestartDialog)
         .alert("Backup Applied", isPresented: $showRestartDialog) {
-            Button("Restart Now", role: .none) {
+            Button("Restart Now", role: .destructive) {
                 HapticsManager.shared.success()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     UIApplication.shared.suspendAndReopen()
