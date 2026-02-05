@@ -10,6 +10,153 @@ struct NearbyShareIntroView: View {
     @State private var animateButton = false
     @State private var selectedDemo: DemoAction? = nil
     
+    // MARK: - Header Icon Section
+    private var headerIcon: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [Color.purple.opacity(0.6), Color.blue.opacity(0.6)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 100, height: 100)
+                .shadow(color: Color.purple.opacity(0.3), radius: 20, x: 0, y: 10)
+            
+            Image(systemName: "antenna.radiowaves.left.and.right")
+                .font(.system(size: 40, weight: .semibold))
+                .foregroundColor(.white)
+        }
+        .scaleEffect(animateContent ? 1.0 : 0.8)
+        .opacity(animateContent ? 1.0 : 0.0)
+    }
+    
+    // MARK: - Title and Subtitle Section
+    private var titleSection: some View {
+        VStack(spacing: 12) {
+            // Title
+            Text("Nearby Share")
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
+                .multilineTextAlignment(.center)
+                .opacity(animateContent ? 1.0 : 0.0)
+                .offset(y: animateContent ? 0 : 20)
+            
+            // Subtitle
+            Text("With Portal 2.3, use Nearby Share to quickly transfer your backuops between devices on the same network.")
+                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .opacity(animateContent ? 1.0 : 0.0)
+                .offset(y: animateContent ? 0 : 20)
+        }
+        .padding(.horizontal, 32)
+    }
+    
+    // MARK: - Steps Section
+    private var stepsSection: some View {
+        VStack(spacing: 16) {
+            StepRow(
+                step: 1,
+                icon: "iphone.gen2",
+                title: "Open Nearby Share",
+                description: "Navigate to Settings, bakckup & Restore, Nearby Share tab in Portal to start.",
+                delay: 0.2
+            )
+            
+            StepRow(
+                step: 2,
+                icon: "person.2.fill",
+                title: "Select Mode",
+                description: "Choose to send or receive apps",
+                delay: 0.3
+            )
+            
+            StepRow(
+                step: 3,
+                icon: "wifi.circle.fill",
+                title: "Connect Devices",
+                description: "Devices must be on the same network.",
+                delay: 0.4
+            )
+            
+            StepRow(
+                step: 4,
+                icon: "arrow.down.circle.fill",
+                title: "Transfer Apps",
+                description: "Select apps and start the backup transfer instantly.",
+                delay: 0.5
+            )
+        }
+        .padding(.horizontal, 24)
+        .opacity(animateContent ? 1.0 : 0.0)
+    }
+    
+    // MARK: - Tips Section
+    private var tipsSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "lightbulb.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.yellow)
+                Text("Tips")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                Spacer()
+            }
+            
+            VStack(spacing: 8) {
+                TipRow(text: "Both devices need Portal 2.3 or later.")
+                TipRow(text: "Ensure WiFi is enabled on both devices.")
+                TipRow(text: "Keep devices close for better performance.")
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(uiColor: .secondarySystemBackground))
+                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+        )
+        .padding(.horizontal, 24)
+        .opacity(animateContent ? 1.0 : 0.0)
+    }
+    
+    // MARK: - Button Section
+    private var gotItButton: some View {
+        Button {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                hasSeenNearbyShareIntro = true
+            }
+            HapticsManager.shared.success()
+            dismiss()
+        } label: {
+            HStack(spacing: 12) {
+                Text("Got It!")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 24))
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 18)
+            .background(
+                LinearGradient(
+                    colors: [Color.purple.opacity(0.8), Color.blue.opacity(0.8)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .shadow(color: Color.purple.opacity(0.3), radius: 20, x: 0, y: 10)
+        }
+        .padding(.horizontal, 24)
+        .scaleEffect(animateButton ? 1.0 : 0.9)
+        .opacity(animateButton ? 1.0 : 0.0)
+    }
+    
     var body: some View {
         ZStack {
             // Background
@@ -22,146 +169,20 @@ struct NearbyShareIntroView: View {
                     
                     // Main content
                     VStack(spacing: 32) {
-                        // Header Icon
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.purple.opacity(0.6), Color.blue.opacity(0.6)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 100, height: 100)
-                                .shadow(color: Color.purple.opacity(0.3), radius: 20, x: 0, y: 10)
-                            
-                            Image(systemName: "antenna.radiowaves.left.and.right")
-                                .font(.system(size: 40, weight: .semibold))
-                                .foregroundColor(.white)
-                        }
-                        .scaleEffect(animateContent ? 1.0 : 0.8)
-                        .opacity(animateContent ? 1.0 : 0.0)
+                        headerIcon
                         
-                        VStack(spacing: 12) {
-                            // Title
-                            Text("Nearby Share")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
-                                .foregroundStyle(.primary)
-                                .multilineTextAlignment(.center)
-                                .opacity(animateContent ? 1.0 : 0.0)
-                                .offset(y: animateContent ? 0 : 20)
-                            
-                            // Subtitle
-                            Text("With Portal 2.3, use Nearby Share to quickly transfer your backuops between devices on the same network.")
-                                .font(.system(size: 16, weight: .medium, design: .rounded))
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .opacity(animateContent ? 1.0 : 0.0)
-                                .offset(y: animateContent ? 0 : 20)
-                        }
-                        .padding(.horizontal, 32)
+                        titleSection
                         
-                        // Steps
-                        VStack(spacing: 16) {
-                            StepRow(
-                                step: 1,
-                                icon: "iphone.gen2",
-                                title: "Open Nearby Share",
-                                description: "Navigate to Settings, bakckup & Restore, Nearby Share tab in Portal to start.",
-                                delay: 0.2
-                            )
-                            
-                            StepRow(
-                                step: 2,
-                                icon: "person.2.fill",
-                                title: "Select Mode",
-                                description: "Choose to send or receive apps",
-                                delay: 0.3
-                            )
-                            
-                            StepRow(
-                                step: 3,
-                                icon: "wifi.circle.fill",
-                                title: "Connect Devices",
-                                description: "Devices must be on the same network.",
-                                delay: 0.4
-                            )
-                            
-                            StepRow(
-                                step: 4,
-                                icon: "arrow.down.circle.fill",
-                                title: "Transfer Apps",
-                                description: "Select apps and start the backup transfer instantly.",
-                                delay: 0.5
-                            )
-                        }
-                        .padding(.horizontal, 24)
-                        .opacity(animateContent ? 1.0 : 0.0)
+                        stepsSection
                         
                         // Interactive Demo Section (iOS 17+)
                         InteractiveDemoSection(selectedDemo: $selectedDemo)
                             .padding(.horizontal, 24)
                             .opacity(animateContent ? 1.0 : 0.0)
                         
-                        // Tips Section
-                        VStack(spacing: 12) {
-                            HStack {
-                                Image(systemName: "lightbulb.fill")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.yellow)
-                                Text("Tips")
-                                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                                    .foregroundColor(.primary)
-                                Spacer()
-                            }
-                            
-                            VStack(spacing: 8) {
-                                TipRow(text: "Both devices need Portal 2.3 or later.")
-                                TipRow(text: "Ensure WiFi is enabled on both devices.")
-                                TipRow(text: "Keep devices close for better performance.")
-                            }
-                        }
-                        .padding(16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color(uiColor: .secondarySystemBackground))
-                                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
-                        )
-                        .padding(.horizontal, 24)
-                        .opacity(animateContent ? 1.0 : 0.0)
+                        tipsSection
                         
-                        // Got It Button
-                        Button {
-                            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-                                hasSeenNearbyShareIntro = true
-                            }
-                            HapticsManager.shared.success()
-                            dismiss()
-                        } label: {
-                            HStack(spacing: 12) {
-                                Text("Got It!")
-                                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                                
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 24))
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 18)
-                            .background(
-                                LinearGradient(
-                                    colors: [Color.purple.opacity(0.8), Color.blue.opacity(0.8)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                            .shadow(color: Color.purple.opacity(0.3), radius: 20, x: 0, y: 10)
-                        }
-                        .padding(.horizontal, 24)
-                        .scaleEffect(animateButton ? 1.0 : 0.9)
-                        .opacity(animateButton ? 1.0 : 0.0)
+                        gotItButton
                     }
                     .padding(.vertical, 32)
                     
@@ -277,6 +298,153 @@ struct NearbyShareIntroViewLegacy: View {
     @State private var animateContent = false
     @State private var animateButton = false
     
+    // MARK: - Header Icon Section
+    private var headerIcon: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [Color.purple.opacity(0.6), Color.blue.opacity(0.6)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 100, height: 100)
+                .shadow(color: Color.purple.opacity(0.3), radius: 20, x: 0, y: 10)
+            
+            Image(systemName: "antenna.radiowaves.left.and.right")
+                .font(.system(size: 40, weight: .semibold))
+                .foregroundColor(.white)
+        }
+        .scaleEffect(animateContent ? 1.0 : 0.8)
+        .opacity(animateContent ? 1.0 : 0.0)
+    }
+    
+    // MARK: - Title and Subtitle Section
+    private var titleSection: some View {
+        VStack(spacing: 12) {
+            // Title
+            Text("Nearby Share")
+                .font(.system(size: 32, weight: .bold, design: .rounded))
+                .foregroundColor(.primary)
+                .multilineTextAlignment(.center)
+                .opacity(animateContent ? 1.0 : 0.0)
+                .offset(y: animateContent ? 0 : 20)
+            
+            // Subtitle
+            Text("With Portal 2.3, use Nearby Share to quickly transfer Portal backupd between devices.")
+                .font(.system(size: 16, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .opacity(animateContent ? 1.0 : 0.0)
+                .offset(y: animateContent ? 0 : 20)
+        }
+        .padding(.horizontal, 32)
+    }
+    
+    // MARK: - Steps Section
+    private var stepsSection: some View {
+        VStack(spacing: 16) {
+            StepRowLegacy(
+                step: 1,
+                icon: "iphone.gen2",
+                title: "Open Nearby Share",
+                description: "Navigate to Srttings, Backup & Restore, Nearby Share tab in Portal",
+                delay: 0.2
+            )
+            
+            StepRowLegacy(
+                step: 2,
+                icon: "person.2.fill",
+                title: "Select Mode",
+                description: "Choose to send or receive the backup.",
+                delay: 0.3
+            )
+            
+            StepRowLegacy(
+                step: 3,
+                icon: "wifi.circle.fill",
+                title: "Connect Devices",
+                description: "Devices must be on the same network.",
+                delay: 0.4
+            )
+            
+            StepRowLegacy(
+                step: 4,
+                icon: "arrow.down.circle.fill",
+                title: "Transfer Apps",
+                description: "Select apps and start the transfer instantly.",
+                delay: 0.5
+            )
+        }
+        .padding(.horizontal, 24)
+        .opacity(animateContent ? 1.0 : 0.0)
+    }
+    
+    // MARK: - Tips Section
+    private var tipsSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "lightbulb.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.yellow)
+                Text("Tips")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                Spacer()
+            }
+            
+            VStack(spacing: 8) {
+                TipRowLegacy(text: "Both devices need Portal 2.3 or later.")
+                TipRowLegacy(text: "Ensure WiFi is enabled on both devices.")
+                TipRowLegacy(text: "Keep devices close for better performance.")
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(uiColor: .secondarySystemBackground))
+                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+        )
+        .padding(.horizontal, 24)
+        .opacity(animateContent ? 1.0 : 0.0)
+    }
+    
+    // MARK: - Button Section
+    private var gotItButton: some View {
+        Button {
+            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
+                hasSeenNearbyShareIntro = true
+            }
+            HapticsManager.shared.success()
+            dismiss()
+        } label: {
+            HStack(spacing: 12) {
+                Text("Got It!")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+                
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 24))
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 18)
+            .background(
+                LinearGradient(
+                    colors: [Color.purple.opacity(0.8), Color.blue.opacity(0.8)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .cornerRadius(16)
+            .shadow(color: Color.purple.opacity(0.3), radius: 20, x: 0, y: 10)
+        }
+        .padding(.horizontal, 24)
+        .scaleEffect(animateButton ? 1.0 : 0.9)
+        .opacity(animateButton ? 1.0 : 0.0)
+    }
+    
     var body: some View {
         ZStack {
             // Background
@@ -289,141 +457,15 @@ struct NearbyShareIntroViewLegacy: View {
                     
                     // Main content
                     VStack(spacing: 32) {
-                        // Header Icon
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.purple.opacity(0.6), Color.blue.opacity(0.6)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 100, height: 100)
-                                .shadow(color: Color.purple.opacity(0.3), radius: 20, x: 0, y: 10)
-                            
-                            Image(systemName: "antenna.radiowaves.left.and.right")
-                                .font(.system(size: 40, weight: .semibold))
-                                .foregroundColor(.white)
-                        }
-                        .scaleEffect(animateContent ? 1.0 : 0.8)
-                        .opacity(animateContent ? 1.0 : 0.0)
+                        headerIcon
                         
-                        VStack(spacing: 12) {
-                            // Title
-                            Text("Nearby Share")
-                                .font(.system(size: 32, weight: .bold, design: .rounded))
-                                .foregroundColor(.primary)
-                                .multilineTextAlignment(.center)
-                                .opacity(animateContent ? 1.0 : 0.0)
-                                .offset(y: animateContent ? 0 : 20)
-                            
-                            // Subtitle
-                            Text("With Portal 2.3, use Nearby Share to quickly transfer Portal backupd between devices.")
-                                .font(.system(size: 16, weight: .medium, design: .rounded))
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.center)
-                                .fixedSize(horizontal: false, vertical: true)
-                                .opacity(animateContent ? 1.0 : 0.0)
-                                .offset(y: animateContent ? 0 : 20)
-                        }
-                        .padding(.horizontal, 32)
+                        titleSection
                         
-                        // Steps
-                        VStack(spacing: 16) {
-                            StepRowLegacy(
-                                step: 1,
-                                icon: "iphone.gen2",
-                                title: "Open Nearby Share",
-                                description: "Navigate to Srttings, Backup & Restore, Nearby Share tab in Portal",
-                                delay: 0.2
-                            )
-                            
-                            StepRowLegacy(
-                                step: 2,
-                                icon: "person.2.fill",
-                                title: "Select Mode",
-                                description: "Choose to send or receive the backup.",
-                                delay: 0.3
-                            )
-                            
-                            StepRowLegacy(
-                                step: 3,
-                                icon: "wifi.circle.fill",
-                                title: "Connect Devices",
-                                description: "Devices must be on the same network.",
-                                delay: 0.4
-                            )
-                            
-                            StepRowLegacy(
-                                step: 4,
-                                icon: "arrow.down.circle.fill",
-                                title: "Transfer Apps",
-                                description: "Select apps and start the transfer instantly.",
-                                delay: 0.5
-                            )
-                        }
-                        .padding(.horizontal, 24)
-                        .opacity(animateContent ? 1.0 : 0.0)
+                        stepsSection
                         
-                        // Tips Section
-                        VStack(spacing: 12) {
-                            HStack {
-                                Image(systemName: "lightbulb.fill")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.yellow)
-                                Text("Tips")
-                                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                                    .foregroundColor(.primary)
-                                Spacer()
-                            }
-                            
-                            VStack(spacing: 8) {
-                                TipRowLegacy(text: "Both devices need Portal 2.3 or later.")
-                                TipRowLegacy(text: "Ensure WiFi is enabled on both devices.")
-                                TipRowLegacy(text: "Keep devices close for better performance.")
-                            }
-                        }
-                        .padding(16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color(uiColor: .secondarySystemBackground))
-                                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
-                        )
-                        .padding(.horizontal, 24)
-                        .opacity(animateContent ? 1.0 : 0.0)
+                        tipsSection
                         
-                        // Got It Button
-                        Button {
-                            withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-                                hasSeenNearbyShareIntro = true
-                            }
-                            HapticsManager.shared.success()
-                            dismiss()
-                        } label: {
-                            HStack(spacing: 12) {
-                                Text("Got It!")
-                                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                                
-                                Image(systemName: "checkmark.circle.fill")
-                                    .font(.system(size: 24))
-                            }
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 18)
-                            .background(
-                                LinearGradient(
-                                    colors: [Color.purple.opacity(0.8), Color.blue.opacity(0.8)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .cornerRadius(16)
-                            .shadow(color: Color.purple.opacity(0.3), radius: 20, x: 0, y: 10)
-                        }
-                        .padding(.horizontal, 24)
-                        .scaleEffect(animateButton ? 1.0 : 0.9)
-                        .opacity(animateButton ? 1.0 : 0.0)
+                        gotItButton
                     }
                     .padding(.vertical, 32)
                     
