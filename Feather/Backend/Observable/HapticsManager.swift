@@ -74,6 +74,13 @@ class HapticsManager: ObservableObject {
         generator.impactOccurred()
     }
     
+    func light() {
+        guard isEnabled else { return }
+        let generator = UIImpactFeedbackGenerator(style: .light)
+        generator.prepare()
+        generator.impactOccurred()
+    }
+    
     func success() {
         guard isEnabled else { return }
         let generator = UINotificationFeedbackGenerator()
