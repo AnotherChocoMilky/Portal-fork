@@ -51,7 +51,7 @@ struct NearbyShareIntroView: View {
                                 .offset(y: animateContent ? 0 : 20)
                             
                             // Subtitle
-                            Text("With Portal 2.3, use Nearby Share to quickly transfer apps between devices")
+                            Text("With Portal 2.3, use Nearby Share to quickly transfer your backuops between devices on the same network.")
                                 .font(.system(size: 16, weight: .medium, design: .rounded))
                                 .foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)
@@ -67,7 +67,7 @@ struct NearbyShareIntroView: View {
                                 step: 1,
                                 icon: "iphone.gen2",
                                 title: "Open Nearby Share",
-                                description: "Navigate to the Nearby Share tab in Portal",
+                                description: "Navigate to Settings, bakckup & Restore, Nearby Share tab in Portal to start.",
                                 delay: 0.2
                             )
                             
@@ -83,7 +83,7 @@ struct NearbyShareIntroView: View {
                                 step: 3,
                                 icon: "wifi.circle.fill",
                                 title: "Connect Devices",
-                                description: "Devices must be on the same network",
+                                description: "Devices must be on the same network.",
                                 delay: 0.4
                             )
                             
@@ -91,7 +91,7 @@ struct NearbyShareIntroView: View {
                                 step: 4,
                                 icon: "arrow.down.circle.fill",
                                 title: "Transfer Apps",
-                                description: "Select apps and start the transfer instantly",
+                                description: "Select apps and start the backup transfer instantly.",
                                 delay: 0.5
                             )
                         }
@@ -111,9 +111,9 @@ struct NearbyShareIntroView: View {
                             }
                             
                             VStack(spacing: 8) {
-                                TipRow(text: "Both devices need Portal 2.3 or later")
-                                TipRow(text: "Ensure WiFi is enabled on both devices")
-                                TipRow(text: "Keep devices close for better performance")
+                                TipRow(text: "Both devices need Portal 2.3 or later.")
+                                TipRow(text: "Ensure WiFi is enabled on both devices.")
+                                TipRow(text: "Keep devices close for better performance.")
                             }
                         }
                         .padding(16)
@@ -313,7 +313,7 @@ struct NearbyShareIntroViewLegacy: View {
                                 .offset(y: animateContent ? 0 : 20)
                             
                             // Subtitle
-                            Text("With Portal 2.3, use Nearby Share to quickly transfer apps between devices")
+                            Text("With Portal 2.3, use Nearby Share to quickly transfer Portal backupd between devices.")
                                 .font(.system(size: 16, weight: .medium, design: .rounded))
                                 .foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)
@@ -329,7 +329,7 @@ struct NearbyShareIntroViewLegacy: View {
                                 step: 1,
                                 icon: "iphone.gen2",
                                 title: "Open Nearby Share",
-                                description: "Navigate to the Nearby Share tab in Portal",
+                                description: "Navigate to Srttings, Backup & Restore, Nearby Share tab in Portal",
                                 delay: 0.2
                             )
                             
@@ -337,7 +337,7 @@ struct NearbyShareIntroViewLegacy: View {
                                 step: 2,
                                 icon: "person.2.fill",
                                 title: "Select Mode",
-                                description: "Choose to send or receive apps",
+                                description: "Choose to send or receive the backup.",
                                 delay: 0.3
                             )
                             
@@ -345,7 +345,7 @@ struct NearbyShareIntroViewLegacy: View {
                                 step: 3,
                                 icon: "wifi.circle.fill",
                                 title: "Connect Devices",
-                                description: "Devices must be on the same network",
+                                description: "Devices must be on the same network.",
                                 delay: 0.4
                             )
                             
@@ -353,7 +353,7 @@ struct NearbyShareIntroViewLegacy: View {
                                 step: 4,
                                 icon: "arrow.down.circle.fill",
                                 title: "Transfer Apps",
-                                description: "Select apps and start the transfer instantly",
+                                description: "Select apps and start the transfer instantly.",
                                 delay: 0.5
                             )
                         }
@@ -373,9 +373,9 @@ struct NearbyShareIntroViewLegacy: View {
                             }
                             
                             VStack(spacing: 8) {
-                                TipRowLegacy(text: "Both devices need Portal 2.3 or later")
-                                TipRowLegacy(text: "Ensure WiFi is enabled on both devices")
-                                TipRowLegacy(text: "Keep devices close for better performance")
+                                TipRowLegacy(text: "Both devices need Portal 2.3 or later.")
+                                TipRowLegacy(text: "Ensure WiFi is enabled on both devices.")
+                                TipRowLegacy(text: "Keep devices close for better performance.")
                             }
                         }
                         .padding(16)
