@@ -594,8 +594,8 @@ class SelfBackupRestoreViewModel: ObservableObject {
         
         // Sources
         if options.includeSources {
-            let sources = Storage.shared.fetchSources()
-            let sourcesData = sources.map { ["url": $0.url ?? "", "name": $0.name ?? "", "id": $0.id?.uuidString ?? ""] }
+            let sources = Storage.shared.getSources()
+            let sourcesData = sources.map { ["url": $0.sourceURL?.absoluteString ?? "", "name": $0.name ?? "", "id": $0.id?.uuidString ?? ""] }
             let sourcesJSON = try JSONSerialization.data(withJSONObject: sourcesData)
             try sourcesJSON.write(to: directory.appendingPathComponent("sources.json"))
         }
@@ -689,10 +689,11 @@ class SelfBackupRestoreViewModel: ObservableObject {
             let sourcesData = try Data(contentsOf: sourcesFile)
             if let sourcesArray = try JSONSerialization.jsonObject(with: sourcesData) as? [[String: String]] {
                 for sourceDict in sourcesArray {
-                    if let url = sourceDict["url"], let name = sourceDict["name"] {
-                        Storage.shared.createSource(url: url, name: name)
+                    if let urlString = sourceDict["url"], let name = sourceDict["name"], !urlString.isEmpty {
+                        Storage.shared.addSource(url: urlString, name: name, identifier: urlString, iconURL: nil, deferSave: true) { _ in }
                     }
                 }
+                Storage.shared.saveContext()
             }
         }
         

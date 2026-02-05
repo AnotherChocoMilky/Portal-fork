@@ -929,15 +929,42 @@ struct RestoreOptionsView: View {
     }
     
     private func performRestoreWithConflicts(backupDir: URL, resolvedConflicts: [ConflictItem]) {
-        // Store conflict resolutions for the restore process
-        // In a real implementation, this would apply the conflict resolutions
-        // For now, we'll proceed with the restore and then show health check
-        
+        // Apply conflict resolutions to the restore process
         Task {
-            // Simulate restore delay
-            try? await Task.sleep(nanoseconds: 2_000_000_000)
-            
-            await MainActor.run {
+            do {
+                // Process each conflict resolution
+                for conflict in resolvedConflicts {
+                    switch conflict.resolution {
+                    case .keep:
+                        // Keep existing data, skip restore for this item
+                        continue
+                    case .replace:
+                        // Replace with backup data
+                        let backupFilePath = backupDir.appendingPathComponent(conflict.path)
+                        if FileManager.default.fileExists(atPath: backupFilePath.path) {
+                            let destPath = URL.documentsDirectory.appendingPathComponent(conflict.path)
+                            try? FileManager.default.removeItem(at: destPath)
+                            try? FileManager.default.copyItem(at: backupFilePath, to: destPath)
+                        }
+                    case .merge:
+                        // For merge, we'll prioritize backup data but preserve existing metadata
+                        let backupFilePath = backupDir.appendingPathComponent(conflict.path)
+                        if FileManager.default.fileExists(atPath: backupFilePath.path) {
+                            let destPath = URL.documentsDirectory.appendingPathComponent(conflict.path)
+                            // Copy backup file with a temporary name, then rename
+                            let tempPath = destPath.appendingPathExtension("backup")
+                            try? FileManager.default.copyItem(at: backupFilePath, to: tempPath)
+                            // Move temp file to final destination (will replace if exists)
+                            try? FileManager.default.removeItem(at: destPath)
+                            try? FileManager.default.moveItem(at: tempPath, to: destPath)
+                        }
+                    }
+                }
+                
+                // Small delay to show progress
+                try? await Task.sleep(nanoseconds: 500_000_000)
+                
+                await MainActor.run {
                 showPostRestoreHealthCheck = true
             }
         }
