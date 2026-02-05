@@ -661,7 +661,7 @@ struct InteractiveDemoSection: View {
     private func handleDemoSelection(_ action: DemoAction) {
         selectedDemo = action
         isAnimating = true
-        HapticsManager.shared.lightImpact()
+        HapticsManager.shared.light()
         
         // Reset animation after delay
         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
