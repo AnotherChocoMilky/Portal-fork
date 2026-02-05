@@ -256,27 +256,24 @@ struct SelfBackupRestoreView: View {
             )
         }
         .sheet(isPresented: $showingRestoreList) {
+            let handleRestore: (LocalBackup) -> Void = { backup in
+                showingRestoreList = false
+                Task {
+                    await viewModel.restoreBackup(backup)
+                }
+            }
+            
             NavigationStack {
                 Group {
                     if #available(iOS 17.0, *) {
                         ModernRestoreSelectionView(
                             backups: viewModel.localBackups,
-                            onRestore: { backup in
-                                showingRestoreList = false
-                                Task {
-                                    await viewModel.restoreBackup(backup)
-                                }
-                            }
+                            onRestore: handleRestore
                         )
                     } else {
                         LegacyRestoreSelectionView(
                             backups: viewModel.localBackups,
-                            onRestore: { backup in
-                                showingRestoreList = false
-                                Task {
-                                    await viewModel.restoreBackup(backup)
-                                }
-                            }
+                            onRestore: handleRestore
                         )
                     }
                 }
