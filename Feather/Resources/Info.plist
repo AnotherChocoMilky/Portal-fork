@@ -32,6 +32,20 @@
 				<string>ayon1xw.Feather.tipa</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleTypeIconFile</key>
+			<string>feather_extension</string>
+			<key>CFBundleTypeName</key>
+			<string>Portal Backup File</string>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>LSHandlerRank</key>
+			<string>Owner</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>ayon1xw.Feather.backup</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleIcons</key>
 	<dict>
@@ -379,6 +393,35 @@
 				<key>public.mime-type</key>
 				<array>
 					<string>application/trollstore-ipa</string>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+				<string>public.content</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Portal Backup File</string>
+			<key>UTTypeIconFile</key>
+			<string>feather_extension</string>
+			<key>UTTypeIcons</key>
+			<dict>
+				<key>UTTypeIconText</key>
+				<string>BACKUP</string>
+			</dict>
+			<key>UTTypeIdentifier</key>
+			<string>ayon1xw.Feather.backup</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>backup</string>
+				</array>
+				<key>public.mime-type</key>
+				<array>
+					<string>application/x-portal-backup</string>
 				</array>
 			</dict>
 		</dict>
