@@ -256,16 +256,27 @@ struct SelfBackupRestoreView: View {
             )
         }
         .sheet(isPresented: $showingRestoreList) {
+            let handleRestore: (LocalBackup) -> Void = { backup in
+                showingRestoreList = false
+                Task {
+                    await viewModel.restoreBackup(backup)
+                }
+            }
+            
             NavigationStack {
-                ModernRestoreSelectionView(
-                    backups: viewModel.localBackups,
-                    onRestore: { backup in
-                        showingRestoreList = false
-                        Task {
-                            await viewModel.restoreBackup(backup)
-                        }
+                Group {
+                    if #available(iOS 17.0, *) {
+                        ModernRestoreSelectionView(
+                            backups: viewModel.localBackups,
+                            onRestore: handleRestore
+                        )
+                    } else {
+                        LegacyRestoreSelectionView(
+                            backups: viewModel.localBackups,
+                            onRestore: handleRestore
+                        )
                     }
-                )
+                }
                 .navigationTitle("Select Backup")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -982,6 +993,7 @@ struct RestoreSelectionView: View {
 }
 
 // MARK: - Modern Restore Selection View
+@available(iOS 17.0, *)
 struct ModernRestoreSelectionView: View {
     let backups: [LocalBackup]
     let onRestore: (LocalBackup) -> Void
@@ -994,6 +1006,92 @@ struct ModernRestoreSelectionView: View {
                     systemImage: "archivebox",
                     description: Text("Create a backup first before you can restore")
                 )
+            } else {
+                Section {
+                    ForEach(backups) { backup in
+                        Button {
+                            onRestore(backup)
+                        } label: {
+                            HStack(spacing: 16) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(Color.blue.opacity(0.15))
+                                        .frame(width: 50, height: 50)
+                                    
+                                    Image(systemName: "archivebox.fill")
+                                        .font(.title2)
+                                        .foregroundStyle(.blue)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(backup.name)
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+                                    
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "calendar")
+                                            .font(.caption2)
+                                        Text(backup.date, style: .date)
+                                        Text("•")
+                                        Text(backup.date, style: .time)
+                                    }
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "internaldrive")
+                                            .font(.caption2)
+                                        Text(backup.sizeString)
+                                    }
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                }
+                                
+                                Spacer()
+                                
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(.vertical, 8)
+                        }
+                    }
+                } header: {
+                    Text("Select a backup to restore")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .textCase(nil)
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Legacy Restore Selection View (iOS 16 compatibility)
+struct LegacyRestoreSelectionView: View {
+    let backups: [LocalBackup]
+    let onRestore: (LocalBackup) -> Void
+    
+    var body: some View {
+        List {
+            if backups.isEmpty {
+                VStack(spacing: 16) {
+                    Image(systemName: "archivebox")
+                        .font(.system(size: 60))
+                        .foregroundStyle(.secondary)
+                    
+                    Text("No Backups")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    
+                    Text("Create a backup first before you can restore")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .listRowBackground(Color.clear)
             } else {
                 Section {
                     ForEach(backups) { backup in
