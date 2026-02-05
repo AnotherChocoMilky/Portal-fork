@@ -8,7 +8,7 @@ struct LanguageSettingsView: View {
     @State private var selectedLanguage: AppLanguage = .english
     
     var body: some View {
-        NBNavigationView("Translation") {
+        NBNavigationView(.localized("Translation")) {
             List {
                 Section {
                     ForEach(AppLanguage.allCases, id: \.self) { language in
@@ -39,23 +39,23 @@ struct LanguageSettingsView: View {
                         }
                     }
                 } header: {
-                    Text("Select Language")
+                    Text(.localized("Select Language"))
                         .font(.system(size: 13, weight: .semibold))
                 } footer: {
-                    Text("Changing the language will restart the app to apply the changes.")
+                    Text(.localized("Changing the language will restart the app to apply the changes."))
                         .font(.system(size: 12))
                         .foregroundColor(.secondary)
                 }
             }
             .listStyle(.insetGrouped)
         }
-        .alert("Restart Required", isPresented: $showRestartAlert) {
-            Button("Cancel", role: .cancel) { }
-            Button("Restart App") {
+        .alert(.localized("Restart Required"), isPresented: $showRestartAlert) {
+            Button(.localized("Cancel"), role: .cancel) { }
+            Button(.localized("Restart App")) {
                 changeLanguageAndRestart(to: selectedLanguage)
             }
         } message: {
-            Text("The app needs to restart to change the language to \(selectedLanguage.displayName). Do you want to continue?")
+            Text(.localized("The app needs to restart to change the language to %@. Do you want to continue?", selectedLanguage.displayName))
         }
         .onAppear {
             // Set current language on appear
@@ -68,37 +68,12 @@ struct LanguageSettingsView: View {
     private func changeLanguageAndRestart(to language: AppLanguage) {
         // Save the language preference
         appLanguage = language.code
-        UserDefaults.standard.set([language.code], forKey: "AppleLanguages")
-        UserDefaults.standard.synchronize()
+        TranslationService.shared.setLanguage(language.code)
         
         // Give a moment for settings to save
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
             // Exit and restart the app
             exit(0)
-        }
-    }
-}
-
-// MARK: - App Language Enum
-enum AppLanguage: String, CaseIterable {
-    case english = "en"
-    case spanish = "es"
-    
-    var code: String {
-        rawValue
-    }
-    
-    var displayName: String {
-        switch self {
-        case .english: return "English"
-        case .spanish: return "Spanish"
-        }
-    }
-    
-    var nativeName: String {
-        switch self {
-        case .english: return "English"
-        case .spanish: return "Español"
         }
     }
 }
