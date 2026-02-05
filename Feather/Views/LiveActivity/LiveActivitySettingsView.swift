@@ -181,19 +181,19 @@ struct LiveActivitySettingsView: View {
     
     private var infoSection: some View {
         Section {
-            InfoRow(
+            LiveActivityInfoRow(
                 icon: "info.circle.fill",
                 title: "Dynamic Island",
                 description: "On iPhone 14 Pro and later, Live Activities appear in the Dynamic Island"
             )
             
-            InfoRow(
+            LiveActivityInfoRow(
                 icon: "lock.fill",
                 title: "Lock Screen",
                 description: "Live Activities also appear on the Lock Screen for all supported devices"
             )
             
-            InfoRow(
+            LiveActivityInfoRow(
                 icon: "app.badge.fill",
                 title: "Background Updates",
                 description: "Live Activities can be updated even when Portal is in the background"
@@ -207,7 +207,7 @@ struct LiveActivitySettingsView: View {
 
 // MARK: - Supporting Views
 
-private struct InfoRow: View {
+private struct LiveActivityInfoRow: View {
     let icon: String
     let title: String
     let description: String
