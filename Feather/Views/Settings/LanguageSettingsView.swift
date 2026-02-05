@@ -55,7 +55,7 @@ struct LanguageSettingsView: View {
                 changeLanguageAndRestart(to: selectedLanguage)
             }
         } message: {
-            Text(.localized("The app needs to restart to change the language to %@. Do you want to continue?", selectedLanguage.displayName))
+            Text(String.localized("The app needs to restart to change the language to %@. Do you want to continue?", arguments: selectedLanguage.displayName))
         }
         .onAppear {
             // Set current language on appear
