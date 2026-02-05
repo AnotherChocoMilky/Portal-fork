@@ -1,0 +1,782 @@
+import SwiftUI
+import NimbleViews
+import ZIPFoundation
+
+// MARK: - Self Backup Restore View
+struct SelfBackupRestoreView: View {
+    @Environment(\.dismiss) var dismiss
+    @StateObject private var viewModel = SelfBackupRestoreViewModel()
+    @State private var showingBackupOptions = false
+    @State private var showingRestoreList = false
+    @State private var backupOptions = BackupOptions()
+    
+    var body: some View {
+        NBList(.localized("Self Backup & Restore")) {
+            // Header Section
+            Section {
+                ZStack {
+                    LinearGradient(
+                        colors: [Color.green.opacity(0.1), Color.blue.opacity(0.1)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .cornerRadius(20)
+                    
+                    VStack(spacing: 12) {
+                        Image(systemName: "externaldrive.fill")
+                            .font(.system(size: 40))
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [.green, .blue],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                        
+                        Text(.localized("Create and restore backups locally on your device"))
+                            .font(.system(.subheadline, design: .rounded))
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.secondary)
+                            .padding(.horizontal)
+                    }
+                    .padding(.vertical, 30)
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+            }
+            
+            // Quick Actions Section
+            Section {
+                // Create Backup
+                Button {
+                    showingBackupOptions = true
+                } label: {
+                    HStack(spacing: 16) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color.green.opacity(0.15))
+                                .frame(width: 50, height: 50)
+                            
+                            Image(systemName: "square.and.arrow.down.fill")
+                                .font(.title2)
+                                .foregroundStyle(.green)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(.localized("Create Backup"))
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                            Text(.localized("Save your current data"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        if viewModel.isCreatingBackup {
+                            ProgressView()
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+                .disabled(viewModel.isCreatingBackup || viewModel.isRestoring)
+                
+                // Restore Backup
+                Button {
+                    showingRestoreList = true
+                } label: {
+                    HStack(spacing: 16) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(Color.blue.opacity(0.15))
+                                .frame(width: 50, height: 50)
+                            
+                            Image(systemName: "square.and.arrow.up.fill")
+                                .font(.title2)
+                                .foregroundStyle(.blue)
+                        }
+                        
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(.localized("Restore Backup"))
+                                .font(.headline)
+                                .foregroundStyle(.primary)
+                            Text(.localized("Load previously saved data"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        if viewModel.isRestoring {
+                            ProgressView()
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+                .disabled(viewModel.isCreatingBackup || viewModel.isRestoring || viewModel.localBackups.isEmpty)
+            } header: {
+                AppearanceSectionHeader(title: String.localized("Quick Actions"), icon: "bolt.fill")
+            }
+            
+            // Saved Backups Section
+            if !viewModel.localBackups.isEmpty {
+                Section {
+                    ForEach(viewModel.localBackups) { backup in
+                        backupRow(backup: backup)
+                    }
+                    .onDelete { indexSet in
+                        viewModel.deleteBackups(at: indexSet)
+                    }
+                } header: {
+                    AppearanceSectionHeader(title: String.localized("Saved Backups"), icon: "archivebox.fill")
+                } footer: {
+                    let count = viewModel.localBackups.count
+                    let backupText = count == 1 ? "backup" : "backups"
+                    return Text("\(count) \(backupText) • \(viewModel.totalBackupSize)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            
+            // Current Operation Status
+            if viewModel.isCreatingBackup || viewModel.isRestoring {
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
+                            ProgressView()
+                                .padding(.trailing, 8)
+                            Text(viewModel.currentOperation)
+                                .font(.subheadline)
+                        }
+                        
+                        if viewModel.operationProgress > 0 {
+                            ProgressView(value: viewModel.operationProgress)
+                                .progressViewStyle(.linear)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                } header: {
+                    AppearanceSectionHeader(title: String.localized("Status"), icon: "info.circle.fill")
+                }
+            }
+            
+            // Features Section
+            Section {
+                featureCard(
+                    icon: "lock.shield.fill",
+                    iconColor: .green,
+                    title: .localized("Encrypted Storage"),
+                    description: .localized("All backups are encrypted using AES-256 encryption for security.")
+                )
+                
+                featureCard(
+                    icon: "internaldrive.fill",
+                    iconColor: .blue,
+                    title: .localized("Local Storage"),
+                    description: .localized("Backups are stored locally on your device without any network transfer.")
+                )
+                
+                featureCard(
+                    icon: "clock.arrow.circlepath",
+                    iconColor: .orange,
+                    title: .localized("Quick Restore"),
+                    description: .localized("Restore your data instantly from any saved backup.")
+                )
+            } header: {
+                AppearanceSectionHeader(title: String.localized("Features"), icon: "star.fill")
+            }
+            
+            // Info Section
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(.localized("Backups include:"))
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    
+                    backupItemRow(icon: "checkmark.seal.fill", text: "Certificates & Profiles", color: .blue)
+                    backupItemRow(icon: "app.badge.fill", text: "Signed Apps", color: .green)
+                    backupItemRow(icon: "square.and.arrow.down.fill", text: "Imported Apps", color: .orange)
+                    backupItemRow(icon: "globe.fill", text: "Sources", color: .purple)
+                    backupItemRow(icon: "puzzlepiece.extension.fill", text: "Default Frameworks", color: .cyan)
+                    backupItemRow(icon: "archivebox.fill", text: "Archives", color: .indigo)
+                    backupItemRow(icon: "gearshape.fill", text: "Settings", color: .gray)
+                }
+                .padding(.vertical, 8)
+            } header: {
+                AppearanceSectionHeader(title: String.localized("What's Included"), icon: "list.bullet")
+            }
+        }
+        .navigationTitle("Self Backup & Restore")
+        .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showingBackupOptions) {
+            BackupOptionsView(
+                options: $backupOptions,
+                onConfirm: {
+                    showingBackupOptions = false
+                    Task {
+                        await viewModel.createBackup(with: backupOptions)
+                    }
+                }
+            )
+        }
+        .sheet(isPresented: $showingRestoreList) {
+            NavigationStack {
+                RestoreSelectionView(
+                    backups: viewModel.localBackups,
+                    onRestore: { backup in
+                        showingRestoreList = false
+                        Task {
+                            await viewModel.restoreBackup(backup)
+                        }
+                    }
+                )
+                .navigationTitle("Select Backup")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Cancel") {
+                            showingRestoreList = false
+                        }
+                    }
+                }
+            }
+        }
+        .alert("Error", isPresented: $viewModel.showError, presenting: viewModel.errorMessage) { _ in
+            Button("OK", role: .cancel) { }
+        } message: { error in
+            Text(error)
+        }
+        .alert("Success", isPresented: $viewModel.showSuccess, presenting: viewModel.successMessage) { _ in
+            Button("OK", role: .cancel) { }
+        } message: { message in
+            Text(message)
+        }
+        .onAppear {
+            viewModel.loadBackups()
+        }
+    }
+    
+    // MARK: - Helper Views
+    
+    @ViewBuilder
+    private func backupRow(backup: LocalBackup) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.blue.opacity(0.15))
+                    .frame(width: 44, height: 44)
+                
+                Image(systemName: "archivebox.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(.blue)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(backup.name)
+                    .font(.headline)
+                
+                HStack(spacing: 8) {
+                    Text(backup.date, style: .date)
+                    Text("•")
+                    Text(backup.date, style: .time)
+                    Text("•")
+                    Text(backup.sizeString)
+                }
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+            
+            Spacer()
+        }
+        .padding(.vertical, 4)
+    }
+    
+    @ViewBuilder
+    private func featureCard(icon: String, iconColor: Color, title: LocalizedStringKey, description: LocalizedStringKey) -> some View {
+        HStack(alignment: .top, spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(iconColor.opacity(0.15))
+                    .frame(width: 44, height: 44)
+                
+                Image(systemName: icon)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundStyle(iconColor)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(.system(.headline, design: .rounded))
+                    .foregroundStyle(.primary)
+                
+                Text(description)
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+    
+    @ViewBuilder
+    private func backupItemRow(icon: String, text: String, color: Color) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .foregroundStyle(color)
+                .font(.caption)
+                .frame(width: 20)
+            
+            Text(text)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
+// MARK: - Constants
+private let kOTPExpirationSeconds = 300 // 5 minutes
+private let kBackupMarkerContent = "PORTAL_SELF_BACKUP"
+private let kBackupMarkerFilename = "PORTAL_BACKUP_MARKER.txt"
+
+// MARK: - Local Backup Model
+struct LocalBackup: Identifiable, Codable {
+    let id: UUID
+    let name: String
+    let date: Date
+    let size: Int64
+    let path: String
+    
+    var sizeString: String {
+        ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
+    }
+}
+
+// MARK: - Self Backup Restore View Model
+@MainActor
+class SelfBackupRestoreViewModel: ObservableObject {
+    @Published var localBackups: [LocalBackup] = []
+    @Published var isCreatingBackup = false
+    @Published var isRestoring = false
+    @Published var currentOperation = ""
+    @Published var operationProgress: Double = 0
+    @Published var showError = false
+    @Published var showSuccess = false
+    @Published var errorMessage: String?
+    @Published var successMessage: String?
+    
+    private let fileManager = FileManager.default
+    private let backupsDirectory: URL
+    // Note: This password provides basic encryption. For production use, consider:
+    // 1. Deriving password from device-specific secure storage (Keychain)
+    // 2. Allowing users to set their own password
+    // 3. Using biometric authentication for additional security
+    private let password = "PortalLocalBackup2026"
+    
+    var totalBackupSize: String {
+        let totalBytes = localBackups.reduce(0) { $0 + $1.size }
+        return ByteCountFormatter.string(fromByteCount: totalBytes, countStyle: .file)
+    }
+    
+    init() {
+        // Create backups directory in app's documents
+        let documentsURL = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        backupsDirectory = documentsURL.appendingPathComponent("LocalBackups")
+        
+        try? fileManager.createDirectory(at: backupsDirectory, withIntermediateDirectories: true)
+    }
+    
+    func loadBackups() {
+        do {
+            let metadataFile = backupsDirectory.appendingPathComponent("backups_metadata.json")
+            if fileManager.fileExists(atPath: metadataFile.path) {
+                let data = try Data(contentsOf: metadataFile)
+                localBackups = try JSONDecoder().decode([LocalBackup].self, from: data)
+                
+                // Remove backups whose files no longer exist
+                localBackups = localBackups.filter { backup in
+                    fileManager.fileExists(atPath: backup.path)
+                }
+                
+                saveMetadata()
+            }
+        } catch {
+            AppLogManager.shared.error("Failed to load backups metadata: \(error.localizedDescription)", category: "Self Backup")
+        }
+    }
+    
+    func createBackup(with options: BackupOptions) async {
+        isCreatingBackup = true
+        currentOperation = "Preparing backup..."
+        operationProgress = 0
+        
+        do {
+            // Create temporary backup directory
+            let backupID = UUID()
+            let timestamp = Date()
+            let tempBackupDir = fileManager.temporaryDirectory.appendingPathComponent("SelfBackup_\(backupID.uuidString)")
+            try fileManager.createDirectory(at: tempBackupDir, withIntermediateDirectories: true)
+            
+            // Collect backup data (similar to BackupRestoreView logic)
+            operationProgress = 0.1
+            currentOperation = "Collecting data..."
+            
+            try await collectBackupData(to: tempBackupDir, options: options)
+            
+            operationProgress = 0.6
+            currentOperation = "Creating archive..."
+            
+            // Create ZIP archive
+            let backupZipPath = backupsDirectory.appendingPathComponent("\(backupID.uuidString).zip")
+            try fileManager.zipItem(at: tempBackupDir, to: backupZipPath, shouldKeepParent: false)
+            
+            operationProgress = 0.8
+            currentOperation = "Encrypting backup..."
+            
+            // Encrypt the backup
+            let zipData = try Data(contentsOf: backupZipPath)
+            let encryptedData = try encryptData(zipData)
+            try encryptedData.write(to: backupZipPath)
+            
+            operationProgress = 0.9
+            currentOperation = "Finalizing..."
+            
+            // Get file size
+            let attributes = try fileManager.attributesOfItem(atPath: backupZipPath.path)
+            let fileSize = attributes[.size] as? Int64 ?? 0
+            
+            // Create backup metadata
+            let backup = LocalBackup(
+                id: backupID,
+                name: "Backup \(timestamp.formatted(date: .abbreviated, time: .shortened))",
+                date: timestamp,
+                size: fileSize,
+                path: backupZipPath.path
+            )
+            
+            localBackups.append(backup)
+            localBackups.sort { $0.date > $1.date }
+            
+            saveMetadata()
+            
+            // Clean up temp directory
+            try? fileManager.removeItem(at: tempBackupDir)
+            
+            operationProgress = 1.0
+            currentOperation = "Backup completed"
+            
+            successMessage = "Backup created successfully"
+            showSuccess = true
+            
+        } catch {
+            errorMessage = "Failed to create backup: \(error.localizedDescription)"
+            showError = true
+            AppLogManager.shared.error("Backup creation failed: \(error.localizedDescription)", category: "Self Backup")
+        }
+        
+        isCreatingBackup = false
+        operationProgress = 0
+    }
+    
+    func restoreBackup(_ backup: LocalBackup) async {
+        isRestoring = true
+        currentOperation = "Loading backup..."
+        operationProgress = 0
+        
+        do {
+            guard fileManager.fileExists(atPath: backup.path) else {
+                throw NSError(domain: "SelfBackup", code: -1, userInfo: [NSLocalizedDescriptionKey: "Backup file not found"])
+            }
+            
+            operationProgress = 0.1
+            currentOperation = "Decrypting backup..."
+            
+            // Decrypt the backup
+            let encryptedData = try Data(contentsOf: URL(fileURLWithPath: backup.path))
+            let decryptedData = try decryptData(encryptedData)
+            
+            operationProgress = 0.3
+            currentOperation = "Extracting backup..."
+            
+            // Create temp directory for extraction
+            let tempRestoreDir = fileManager.temporaryDirectory.appendingPathComponent("Restore_\(UUID().uuidString)")
+            try fileManager.createDirectory(at: tempRestoreDir, withIntermediateDirectories: true)
+            
+            // Write decrypted data to temp file
+            let tempZipFile = tempRestoreDir.appendingPathComponent("backup.zip")
+            try decryptedData.write(to: tempZipFile)
+            
+            // Extract ZIP
+            let extractedDir = tempRestoreDir.appendingPathComponent("extracted")
+            try fileManager.unzipItem(at: tempZipFile, to: extractedDir)
+            
+            operationProgress = 0.5
+            currentOperation = "Restoring data..."
+            
+            // Restore the data
+            try await restoreBackupData(from: extractedDir)
+            
+            operationProgress = 0.9
+            currentOperation = "Cleaning up..."
+            
+            // Clean up temp directory
+            try? fileManager.removeItem(at: tempRestoreDir)
+            
+            operationProgress = 1.0
+            currentOperation = "Restore completed"
+            
+            successMessage = "Backup restored successfully. Please restart the app to apply changes."
+            showSuccess = true
+            
+        } catch {
+            errorMessage = "Failed to restore backup: \(error.localizedDescription)"
+            showError = true
+            AppLogManager.shared.error("Backup restoration failed: \(error.localizedDescription)", category: "Self Backup")
+        }
+        
+        isRestoring = false
+        operationProgress = 0
+    }
+    
+    func deleteBackups(at indexSet: IndexSet) {
+        for index in indexSet {
+            let backup = localBackups[index]
+            try? fileManager.removeItem(atPath: backup.path)
+        }
+        localBackups.remove(atOffsets: indexSet)
+        saveMetadata()
+    }
+    
+    // MARK: - Private Helpers
+    
+    private func saveMetadata() {
+        do {
+            let metadataFile = backupsDirectory.appendingPathComponent("backups_metadata.json")
+            let data = try JSONEncoder().encode(localBackups)
+            try data.write(to: metadataFile)
+        } catch {
+            AppLogManager.shared.error("Failed to save backups metadata: \(error.localizedDescription)", category: "Self Backup")
+        }
+    }
+    
+    private func collectBackupData(to directory: URL, options: BackupOptions) async throws {
+        // This implementation mirrors the prepareBackup logic from BackupRestoreView
+        
+        // Certificates
+        if options.includeCertificates {
+            let certsDir = directory.appendingPathComponent("certificates")
+            try fileManager.createDirectory(at: certsDir, withIntermediateDirectories: true)
+            
+            if fileManager.fileExists(atPath: fileManager.certificates.path) {
+                let certFiles = try fileManager.contentsOfDirectory(at: fileManager.certificates, includingPropertiesForKeys: nil)
+                for certFile in certFiles {
+                    let destURL = certsDir.appendingPathComponent(certFile.lastPathComponent)
+                    try? fileManager.copyItem(at: certFile, to: destURL)
+                }
+            }
+        }
+        
+        // Signed Apps
+        if options.includeSignedApps {
+            let signedDir = directory.appendingPathComponent("signed_apps")
+            try fileManager.createDirectory(at: signedDir, withIntermediateDirectories: true)
+            
+            if fileManager.fileExists(atPath: fileManager.signed.path) {
+                let signedApps = try fileManager.contentsOfDirectory(at: fileManager.signed, includingPropertiesForKeys: nil)
+                for appDir in signedApps {
+                    let destURL = signedDir.appendingPathComponent(appDir.lastPathComponent)
+                    try? fileManager.copyItem(at: appDir, to: destURL)
+                }
+            }
+        }
+        
+        // Imported Apps
+        if options.includeImportedApps {
+            let importedDir = directory.appendingPathComponent("imported_apps")
+            try fileManager.createDirectory(at: importedDir, withIntermediateDirectories: true)
+            
+            if fileManager.fileExists(atPath: fileManager.unsigned.path) {
+                let importedApps = try fileManager.contentsOfDirectory(at: fileManager.unsigned, includingPropertiesForKeys: nil)
+                for appFile in importedApps {
+                    let destURL = importedDir.appendingPathComponent(appFile.lastPathComponent)
+                    try? fileManager.copyItem(at: appFile, to: destURL)
+                }
+            }
+        }
+        
+        // Sources
+        if options.includeSources {
+            let sources = Storage.shared.getSources()
+            let sourcesData = sources.map { ["url": $0.sourceURL?.absoluteString ?? "", "name": $0.name ?? "", "id": $0.id?.uuidString ?? ""] }
+            let sourcesJSON = try JSONSerialization.data(withJSONObject: sourcesData)
+            try sourcesJSON.write(to: directory.appendingPathComponent("sources.json"))
+        }
+        
+        // Default Frameworks
+        if options.includeDefaultFrameworks {
+            let frameworksDir = directory.appendingPathComponent("default_frameworks")
+            let frameworksSource = Storage.shared.documentsURL.appendingPathComponent("DefaultFrameworks")
+            if fileManager.fileExists(atPath: frameworksSource.path) {
+                try? fileManager.copyItem(at: frameworksSource, to: frameworksDir)
+            }
+        }
+        
+        // Archives
+        if options.includeArchives {
+            let archivesDir = directory.appendingPathComponent("archives")
+            if fileManager.fileExists(atPath: fileManager.archives.path) {
+                try? fileManager.copyItem(at: fileManager.archives, to: archivesDir)
+            }
+        }
+        
+        // Database
+        let dbDir = directory.appendingPathComponent("database")
+        try fileManager.createDirectory(at: dbDir, withIntermediateDirectories: true)
+        
+        let storeURL = Storage.shared.container.persistentStoreDescriptions.first?.url
+        if let storeURL = storeURL {
+            try? fileManager.copyItem(at: storeURL, to: dbDir.appendingPathComponent(storeURL.lastPathComponent))
+            
+            // Copy WAL and SHM files if they exist
+            let walURL = storeURL.deletingPathExtension().appendingPathExtension("sqlite-wal")
+            let shmURL = storeURL.deletingPathExtension().appendingPathExtension("sqlite-shm")
+            try? fileManager.copyItem(at: walURL, to: dbDir.appendingPathComponent(walURL.lastPathComponent))
+            try? fileManager.copyItem(at: shmURL, to: dbDir.appendingPathComponent(shmURL.lastPathComponent))
+        }
+        
+        // Settings
+        if let userDefaults = UserDefaults(suiteName: Storage.appGroupID) {
+            let settingsDict = userDefaults.dictionaryRepresentation()
+            let filteredSettings = settingsDict.filter { key, _ in
+                !key.hasPrefix("NS") && !key.hasPrefix("Apple") && !key.hasPrefix("AK")
+            }
+            let settingsPlist = try PropertyListSerialization.data(fromPropertyList: filteredSettings, format: .xml, options: 0)
+            try settingsPlist.write(to: directory.appendingPathComponent("settings.plist"))
+        }
+        
+        // Marker file
+        try kBackupMarkerContent.write(to: directory.appendingPathComponent(kBackupMarkerFilename), atomically: true, encoding: .utf8)
+    }
+    
+    private func restoreBackupData(from directory: URL) async throws {
+        // Verify marker file
+        let markerFile = directory.appendingPathComponent(kBackupMarkerFilename)
+        guard fileManager.fileExists(atPath: markerFile.path) else {
+            throw NSError(domain: "SelfBackup", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid backup file"])
+        }
+        
+        // Restore certificates
+        let certsDir = directory.appendingPathComponent("certificates")
+        if fileManager.fileExists(atPath: certsDir.path) {
+            let certFiles = try fileManager.contentsOfDirectory(at: certsDir, includingPropertiesForKeys: nil)
+            for certFile in certFiles {
+                let destURL = fileManager.certificates.appendingPathComponent(certFile.lastPathComponent)
+                try? fileManager.copyItem(at: certFile, to: destURL)
+            }
+        }
+        
+        // Restore signed apps
+        let signedDir = directory.appendingPathComponent("signed_apps")
+        if fileManager.fileExists(atPath: signedDir.path) {
+            let signedApps = try fileManager.contentsOfDirectory(at: signedDir, includingPropertiesForKeys: nil)
+            for appDir in signedApps {
+                let destURL = fileManager.signed.appendingPathComponent(appDir.lastPathComponent)
+                try? fileManager.copyItem(at: appDir, to: destURL)
+            }
+        }
+        
+        // Restore imported apps
+        let importedDir = directory.appendingPathComponent("imported_apps")
+        if fileManager.fileExists(atPath: importedDir.path) {
+            let importedApps = try fileManager.contentsOfDirectory(at: importedDir, includingPropertiesForKeys: nil)
+            for appFile in importedApps {
+                let destURL = fileManager.unsigned.appendingPathComponent(appFile.lastPathComponent)
+                try? fileManager.copyItem(at: appFile, to: destURL)
+            }
+        }
+        
+        // Restore sources (would need to import into Core Data)
+        let sourcesFile = directory.appendingPathComponent("sources.json")
+        if fileManager.fileExists(atPath: sourcesFile.path) {
+            let sourcesData = try Data(contentsOf: sourcesFile)
+            if let sourcesArray = try JSONSerialization.jsonObject(with: sourcesData) as? [[String: String]] {
+                for sourceDict in sourcesArray {
+                    if let urlString = sourceDict["url"], let name = sourceDict["name"], !urlString.isEmpty {
+                        Storage.shared.addSource(url: urlString, name: name, identifier: urlString, iconURL: nil, deferSave: true) { _ in }
+                    }
+                }
+                Storage.shared.saveContext()
+            }
+        }
+        
+        // Restore default frameworks
+        let frameworksDir = directory.appendingPathComponent("default_frameworks")
+        if fileManager.fileExists(atPath: frameworksDir.path) {
+            let destDir = Storage.shared.documentsURL.appendingPathComponent("DefaultFrameworks")
+            try? fileManager.removeItem(at: destDir)
+            try? fileManager.copyItem(at: frameworksDir, to: destDir)
+        }
+        
+        // Restore archives
+        let archivesDir = directory.appendingPathComponent("archives")
+        if fileManager.fileExists(atPath: archivesDir.path) {
+            try? fileManager.removeItem(at: fileManager.archives)
+            try? fileManager.copyItem(at: archivesDir, to: fileManager.archives)
+        }
+        
+        // Restore settings
+        let settingsFile = directory.appendingPathComponent("settings.plist")
+        if fileManager.fileExists(atPath: settingsFile.path) {
+            let settingsData = try Data(contentsOf: settingsFile)
+            if let settings = try PropertyListSerialization.propertyList(from: settingsData, format: nil) as? [String: Any] {
+                if let userDefaults = UserDefaults(suiteName: Storage.appGroupID) {
+                    for (key, value) in settings {
+                        userDefaults.set(value, forKey: key)
+                    }
+                    userDefaults.synchronize()
+                }
+            }
+        }
+    }
+    
+    private func encryptData(_ data: Data) throws -> Data {
+        let payload = BackupPayload(version: "1.0", timestamp: Date().timeIntervalSince1970, data: data)
+        return try payload.encrypted(with: password)
+    }
+    
+    private func decryptData(_ encryptedData: Data) throws -> Data {
+        let payload = try BackupPayload.decrypted(from: encryptedData, password: password)
+        return payload.data
+    }
+}
+
+// MARK: - Restore Selection View
+struct RestoreSelectionView: View {
+    let backups: [LocalBackup]
+    let onRestore: (LocalBackup) -> Void
+    
+    var body: some View {
+        List {
+            ForEach(backups) { backup in
+                Button {
+                    onRestore(backup)
+                } label: {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(backup.name)
+                            .font(.headline)
+                        
+                        HStack(spacing: 8) {
+                            Text(backup.date, style: .date)
+                            Text("•")
+                            Text(backup.date, style: .time)
+                            Text("•")
+                            Text(backup.sizeString)
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+    }
+}

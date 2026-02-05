@@ -235,6 +235,29 @@ struct BackupRestoreView: View {
                 }
                 .padding(.vertical, 8)
             }
+            
+            NavigationLink(destination: SelfBackupRestoreView()) {
+                HStack(spacing: 16) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.green.opacity(0.15))
+                            .frame(width: 50, height: 50)
+                        
+                        Image(systemName: "externaldrive.fill")
+                            .font(.title2)
+                            .foregroundStyle(.green)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(.localized("Self Backup"))
+                            .font(.headline)
+                        Text(.localized("Backup and restore locally"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 8)
+            }
         } header: {
             AppearanceSectionHeader(title: String.localized("Wireless Transfer"), icon: "wifi")
         }
