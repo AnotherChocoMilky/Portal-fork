@@ -18,6 +18,9 @@ struct PairingThroughOTPView: View {
     @State private var showingTransfer = false
     @FocusState private var isOTPFieldFocused: Bool
     
+    // Delay to allow view to fully render before focusing keyboard
+    private let keyboardFocusDelay: TimeInterval = 0.5
+    
     var body: some View {
         NBList(.localized("Remote Pairing")) {
             // Mode Selection
@@ -214,6 +217,7 @@ struct PairingThroughOTPView: View {
                 }
                 .onTapGesture {
                     // Focus on the hidden text field when tapping on the code display
+                    isOTPFieldFocused = true
                 }
                 
                 // Keypad or TextField
@@ -237,7 +241,7 @@ struct PairingThroughOTPView: View {
             .padding(.vertical, 16)
             .onAppear {
                 // Auto-focus when the recipient section appears
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                DispatchQueue.main.asyncAfter(deadline: .now() + keyboardFocusDelay) {
                     isOTPFieldFocused = true
                 }
             }

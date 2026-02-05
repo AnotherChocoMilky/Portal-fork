@@ -7643,8 +7643,7 @@ struct NearbyTransferSimulationView: View {
                         .frame(height: 30)
                     
                     Button {
-                        let maxSteps = selectedMode == .sender ? 4 : 4
-                        if simulationStep < maxSteps {
+                        if simulationStep < 4 {
                             simulationStep += 1
                         }
                     } label: {
@@ -7654,11 +7653,11 @@ struct NearbyTransferSimulationView: View {
                         }
                         .frame(maxWidth: .infinity)
                     }
-                    .disabled(simulationStep == (selectedMode == .sender ? 4 : 4))
+                    .disabled(simulationStep == 4)
                 }
                 .buttonStyle(.bordered)
             } footer: {
-                Text("Step \(simulationStep + 1) of \(selectedMode == .sender ? 5 : 5)")
+                Text("Step \(simulationStep + 1) of 5")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

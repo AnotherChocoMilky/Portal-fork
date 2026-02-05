@@ -278,15 +278,20 @@ struct SelfBackupRestoreView: View {
             }
         }
         .sheet(isPresented: $showingDocumentPicker) {
-            DocumentPicker(
-                allowedContentTypes: [.init(filenameExtension: "backup")!],
-                onPick: { url in
-                    Task {
-                        await viewModel.importBackup(from: url)
+            if let backupType = UTType(filenameExtension: "backup") {
+                DocumentPicker(
+                    allowedContentTypes: [backupType],
+                    onPick: { url in
+                        Task {
+                            await viewModel.importBackup(from: url)
+                        }
+                        showingDocumentPicker = false
                     }
-                    showingDocumentPicker = false
-                }
-            )
+                )
+            } else {
+                Text("Error: Unable to create document picker")
+                    .padding()
+            }
         }
         .alert("Rename Backup", isPresented: $showingRenameAlert, presenting: backupToRename) { backup in
             TextField("Backup Name", text: $newBackupName)
@@ -643,7 +648,10 @@ class SelfBackupRestoreViewModel: ObservableObject {
         
         do {
             let sourceURL = URL(fileURLWithPath: backup.path)
-            let fileName = "\(backup.name.replacingOccurrences(of: " ", with: "_")).backup"
+            // Sanitize filename by removing invalid characters
+            let invalidCharacters = CharacterSet(charactersIn: ":/\\?%*|\"<>")
+            let sanitizedName = backup.name.components(separatedBy: invalidCharacters).joined(separator: "_")
+            let fileName = "\(sanitizedName).backup"
             let destinationURL = fileManager.temporaryDirectory.appendingPathComponent(fileName)
             
             // Copy to temp location with .backup extension
@@ -689,9 +697,12 @@ class SelfBackupRestoreViewModel: ObservableObject {
             
             // Create backup metadata
             let fileName = url.deletingPathExtension().lastPathComponent
+            // Sanitize filename by removing invalid characters
+            let invalidCharacters = CharacterSet(charactersIn: ":/\\?%*|\"<>")
+            let sanitizedName = fileName.components(separatedBy: invalidCharacters).joined(separator: "_")
             let backup = LocalBackup(
                 id: backupID,
-                name: fileName.isEmpty ? "Imported Backup" : fileName,
+                name: sanitizedName.isEmpty ? "Imported Backup" : sanitizedName,
                 date: Date(),
                 size: fileSize,
                 path: destinationURL.path
