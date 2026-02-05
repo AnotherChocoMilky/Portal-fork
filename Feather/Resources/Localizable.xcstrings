@@ -14439,7 +14439,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Envíar tu opinión"
+            "value": "Envíar Tu Opinión Al Equipo"
           }
         },
         "fr": {
@@ -14552,7 +14552,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Admite importación desde KravaSign/MapleSign y ESign."
+            "value": "Admite importación desde KravaShit/MapleSign y ESign."
           }
         }
       }
@@ -14682,7 +14682,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Team Nombre"
+            "value": "Nombre De Equipo"
           }
         }
       }
@@ -14918,7 +14918,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Estos cambios requieren un reinicio de la aplicación"
+            "value": "Estos cambios requieren un reinicio de Portal"
           }
         }
       }
@@ -14970,7 +14970,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Esta acción no se puede deshacer. ¿Desea continuar?"
+            "value": "Esta acción no se puede deshacer. ¿Deseas continuar?"
           }
         }
       }
@@ -15064,7 +15064,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Esto activa liquid glass para esta aplicación, requiere un reinicio de la aplicación para que surta efecto."
+            "value": "Esto activa Liquid Glass para Portal, requiere un reinicio de la aplicación para que surta efecto."
           }
         }
       }
@@ -15117,7 +15117,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Esta opción convierte forzadamente las aplicaciones para intentar usar el nuevo rediseño liquid glass que iOS 26 introdujo, esto puede no funcionar para todas las aplicaciones debido a frameworks diferentes."
+            "value": "Esta opción convierte forzadamente las aplicaciones para intentar usar el nuevo rediseño Liquid Glass que iOS 26 introdujo, esto puede no funcionar para todas las aplicaciones debido a frameworks diferentes."
           }
         }
       }
@@ -15775,7 +15775,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Versión History"
+            "value": "Historial De Versiónes"
           }
         }
       }
@@ -16483,7 +16483,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Use new Todo Aplicaciones Ver"
+            "value": "Usar la nueva Todas las Aplicaciones vista."
           }
         }
       }
@@ -16500,7 +16500,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Active la nueva vista moderna pero simple de Todas las Aplicaciones, tenga en cuenta que esto tiene errores cuando tiene demasiadas fuentes. Cuando está desactivada, las noticias de las fuentes no se mostrarán en la aplicación."
+            "value": "Active la nueva vista moderna pero simple de Todas las Aplicaciones, tenga en cuenta que esto tiene errores cuando tiene demasiadas Fuentes. Cuando está desactivada, las noticias de las fuentes no se mostrarán en la aplicación."
           }
         }
       }
@@ -16517,7 +16517,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "New Aplicaciones view couldn't load, using old as fallback"
+            "value": "La vista de Todas Applicaciones no esta disponible, usando la anterior."
           }
         }
       }
@@ -16534,7 +16534,7 @@
         "es": {
           "stringUnit": {
             "state": "translated",
-            "value": "Cargando Issue"
+            "value": "Problema Cargando"
           }
         }
       }
