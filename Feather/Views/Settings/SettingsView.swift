@@ -74,6 +74,7 @@ struct SettingsView: View {
         Section {
             SettingsRow(icon: "house.fill", title: "Customize Home", color: .blue, destination: HomeSettingsView())
             SettingsRow(icon: "paintbrush.fill", title: "App Appearance", color: .blue, destination: AppearanceView())
+            SettingsRow(icon: "globe", title: "Translation", color: .blue, destination: LanguageSettingsView())
         } header: {
             SettingsSectionHeader(title: "Preferences", icon: "slider.horizontal.3")
         }
