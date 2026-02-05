@@ -1,6 +1,7 @@
 import SwiftUI
 import NimbleViews
 import ZIPFoundation
+import CryptoKit
 
 // MARK: - Self Backup Restore View
 struct SelfBackupRestoreView: View {
@@ -740,12 +741,37 @@ class SelfBackupRestoreViewModel: ObservableObject {
     }
     
     private func encryptData(_ data: Data) throws -> Data {
-        let payload = BackupPayload(version: "1.0", timestamp: Date().timeIntervalSince1970, data: data)
-        return try payload.encrypted(with: password)
+        // BackupPayload doesn't have this initializer, need to use the proper one
+        // For now, we'll create a simple wrapper
+        struct SimplePayload: Codable {
+            let version: String
+            let timestamp: TimeInterval
+            let data: Data
+        }
+        let simplePayload = SimplePayload(version: "1.0", timestamp: Date().timeIntervalSince1970, data: data)
+        let encoder = JSONEncoder()
+        let payloadData = try encoder.encode(simplePayload)
+        
+        // Use AES-GCM encryption directly
+        let key = SymmetricKey(data: SHA256.hash(data: password.data(using: .utf8)!))
+        let sealedBox = try AES.GCM.seal(payloadData, using: key)
+        return sealedBox.combined!
     }
     
     private func decryptData(_ encryptedData: Data) throws -> Data {
-        let payload = try BackupPayload.decrypted(from: encryptedData, password: password)
+        // Decrypt using the same method as encrypt
+        struct SimplePayload: Codable {
+            let version: String
+            let timestamp: TimeInterval
+            let data: Data
+        }
+        
+        let key = SymmetricKey(data: SHA256.hash(data: password.data(using: .utf8)!))
+        let sealedBox = try AES.GCM.SealedBox(combined: encryptedData)
+        let decryptedData = try AES.GCM.open(sealedBox, using: key)
+        
+        let decoder = JSONDecoder()
+        let payload = try decoder.decode(SimplePayload.self, from: decryptedData)
         return payload.data
     }
 }

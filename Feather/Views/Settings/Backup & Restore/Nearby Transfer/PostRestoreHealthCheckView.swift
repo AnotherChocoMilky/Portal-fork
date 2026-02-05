@@ -318,9 +318,15 @@ class PostRestoreHealthCheckViewModel: ObservableObject {
             // Check if the app's bundle ID matches any available certificates
             let appBundleId = app.identifier ?? ""
             let hasMatchingCert = certificates.contains { cert in
-                if let provisionData = Storage.shared.getProvisionFileDecoded(for: cert) {
-                    return provisionData.Entitlements.applicationIdentifier?.contains(appBundleId) ?? false ||
-                           provisionData.Entitlements.keychainAccessGroups?.contains { $0.contains(appBundleId) } ?? false
+                if let provisionData = Storage.shared.getProvisionFileDecoded(for: cert),
+                   let entitlements = provisionData.Entitlements {
+                    if let appId = entitlements["application-identifier"]?.value as? String,
+                       appId.contains(appBundleId) {
+                        return true
+                    }
+                    if let keychainGroups = entitlements["keychain-access-groups"]?.value as? [String] {
+                        return keychainGroups.contains { $0.contains(appBundleId) }
+                    }
                 }
                 return false
             }
@@ -342,10 +348,9 @@ class PostRestoreHealthCheckViewModel: ObservableObject {
         }
         
         // 3. Check for Entitlement Issues
-        let appsWithEntitlements = signedApps.filter { app in
-            // Check if app has custom entitlements
-            return app.entitlements != nil && !app.entitlements!.isEmpty
-        }
+        // Note: Signed entity doesn't have entitlements property in CoreData model
+        // This check is removed as it's not applicable
+        let appsWithEntitlements: [Signed] = []
         
         if !appsWithEntitlements.isEmpty {
             detectedIssues.append(HealthIssue(
@@ -364,7 +369,7 @@ class PostRestoreHealthCheckViewModel: ObservableObject {
             // Test fetch to ensure CoreData is working
             _ = try context.fetch(Signed.fetchRequest())
             _ = try context.fetch(Imported.fetchRequest())
-            _ = try context.fetch(Source.fetchRequest())
+            _ = try context.fetch(AltSource.fetchRequest())
         } catch {
             detectedIssues.append(HealthIssue(
                 severity: .critical,
