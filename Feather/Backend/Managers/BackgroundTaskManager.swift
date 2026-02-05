@@ -230,7 +230,7 @@ class BackgroundTaskManager: ObservableObject {
     }
     
     private func processInstallations() async {
-        // Process each pending installation
+        // Process each active installation in downloading phase
         for installation in activeInstallations where installation.status == .downloading {
             logger.info("Processing installation: \(installation.appName)")
             // Implementation would integrate with InstallationProxy here
