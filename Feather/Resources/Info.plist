@@ -268,6 +268,13 @@
 			</dict>
 		</dict>
 	</dict>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>Portal needs access to your local network to discover nearby devices for wireless backup transfer.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_portal-backup._tcp</string>
+		<string>_portal-backup._udp</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>

@@ -41,6 +41,7 @@ struct BackupRestoreView: View {
         NBList(.localized("Backup & Restore")) {
             _headerSection
             _quickActionsSection
+            _nearbyTransferSection
             _advancedToolsSection
             _aboutSection
         }
@@ -206,6 +207,36 @@ struct BackupRestoreView: View {
             .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
         } header: {
             AppearanceSectionHeader(title: String.localized("Quick Actions"), icon: "bolt.fill")
+        }
+    }
+
+    @ViewBuilder
+    private var _nearbyTransferSection: some View {
+        Section {
+            NavigationLink(destination: NearbyTransferView()) {
+                HStack(spacing: 16) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .fill(Color.purple.opacity(0.15))
+                            .frame(width: 50, height: 50)
+                        
+                        Image(systemName: "antenna.radiowaves.left.and.right")
+                            .font(.title2)
+                            .foregroundStyle(.purple)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(.localized("Nearby Transfer"))
+                            .font(.headline)
+                        Text(.localized("Transfer backups wirelessly"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+        } header: {
+            AppearanceSectionHeader(title: String.localized("Wireless Transfer"), icon: "wifi")
         }
     }
 
