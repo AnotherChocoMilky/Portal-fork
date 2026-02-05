@@ -213,7 +213,7 @@ struct PairingThroughOTPView: View {
         }
         
         // Action Buttons
-        Section {
+        Section<Void> {
             // Copy Button
             Button {
                 UIPasteboard.general.string = viewModel.otpCode
