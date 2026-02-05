@@ -938,7 +938,7 @@ struct RestoreOptionsView: View {
                     let destPath = URL.documentsDirectory.appendingPathComponent(conflict.path)
                     
                     switch conflict.resolution {
-                    case .keep:
+                    case .keepLocal:
                         // Keep existing data, skip restore for this item
                         continue
                     case .replace:
@@ -947,8 +947,8 @@ struct RestoreOptionsView: View {
                             try? FileManager.default.removeItem(at: destPath)
                             try? FileManager.default.copyItem(at: backupFilePath, to: destPath)
                         }
-                    case .merge:
-                        // For merge, we'll prioritize backup data but preserve existing metadata
+                    case .duplicate:
+                        // For duplicate, we'll prioritize backup data but preserve existing metadata
                         if FileManager.default.fileExists(atPath: backupFilePath.path) {
                             // Copy backup file with a temporary name, then rename
                             let tempPath = destPath.appendingPathExtension("backup")
@@ -964,7 +964,15 @@ struct RestoreOptionsView: View {
                 try? await Task.sleep(nanoseconds: 500_000_000)
                 
                 await MainActor.run {
-                showPostRestoreHealthCheck = true
+                    showPostRestoreHealthCheck = true
+                }
+            } catch {
+                await MainActor.run {
+                    UIAlertController.showAlertWithOk(
+                        title: .localized("Restore Error"),
+                        message: .localized("Failed to apply conflict resolutions: \(error.localizedDescription)")
+                    )
+                }
             }
         }
     }
@@ -986,6 +994,6 @@ struct RestoreOptionsView: View {
         
         alert.addAction(UIAlertAction(title: .localized("Later"), style: .cancel))
         
-        UIApplication.shared.topController()?.present(alert, animated: true)
+        UIApplication.topViewController()?.present(alert, animated: true)
     }
 }

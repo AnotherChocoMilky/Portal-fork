@@ -174,10 +174,16 @@ struct TransferProgressView: View {
                 .font(.system(size: 50))
                 .foregroundStyle(.blue)
         case .discovering, .connecting:
-            Image(systemName: "antenna.radiowaves.left.and.right")
-                .font(.system(size: 50))
-                .foregroundStyle(.blue)
-                .symbolEffect(.pulse, options: .repeating)
+            if #available(iOS 17.0, *) {
+                Image(systemName: "antenna.radiowaves.left.and.right")
+                    .font(.system(size: 50))
+                    .foregroundStyle(.blue)
+                    .symbolEffect(.pulse, options: .repeating)
+            } else {
+                Image(systemName: "antenna.radiowaves.left.and.right")
+                    .font(.system(size: 50))
+                    .foregroundStyle(.blue)
+            }
         case .transferring:
             EmptyView()
         case .completed:

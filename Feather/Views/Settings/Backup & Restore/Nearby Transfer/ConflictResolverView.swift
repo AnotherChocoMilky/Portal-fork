@@ -17,6 +17,7 @@ struct ConflictItem: Identifiable {
     let incomingName: String
     let localDetails: String
     let incomingDetails: String
+    let path: String
     var resolution: ConflictResolution = .keepLocal
 }
 
@@ -271,6 +272,7 @@ class ConflictResolverViewModel: ObservableObject {
                                 incomingName: certName,
                                 localDetails: "Expires: \(localDetails.expiration)",
                                 incomingDetails: "From backup",
+                                path: "certificates/\(certName).p12",
                                 resolution: .keepLocal
                             ))
                         }
@@ -300,6 +302,7 @@ class ConflictResolverViewModel: ObservableObject {
                                 incomingName: app["name"] ?? "Unknown",
                                 localDetails: "Version: \(localApp.version ?? "Unknown")",
                                 incomingDetails: "Version: \(app["version"] ?? "Unknown")",
+                                path: "signed_apps/\(bundleId)",
                                 resolution: .keepLocal
                             ))
                         }
@@ -326,6 +329,7 @@ class ConflictResolverViewModel: ObservableObject {
                                 incomingName: source["name"] ?? "Unknown",
                                 localDetails: localSource.identifier ?? "",
                                 incomingDetails: source["identifier"] ?? "",
+                                path: "sources/\(source["identifier"] ?? url)",
                                 resolution: .keepLocal
                             ))
                         }
@@ -337,7 +341,7 @@ class ConflictResolverViewModel: ObservableObject {
         self.conflicts = detectedConflicts
     }
     
-    private func getProvisionDetails(for cert: Certificate) -> (name: String, expiration: String) {
+    private func getProvisionDetails(for cert: CertificatePair) -> (name: String, expiration: String) {
         if let provisionData = Storage.shared.getProvisionFileDecoded(for: cert) {
             let name = provisionData.Name
             let expiration = provisionData.ExpirationDate.map {

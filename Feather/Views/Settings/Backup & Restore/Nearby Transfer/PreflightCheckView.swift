@@ -222,7 +222,8 @@ class PreflightCheckViewModel: ObservableObject {
         for cert in certificates {
             // Check for expired certificates
             if let provisionData = Storage.shared.getProvisionFileDecoded(for: cert) {
-                if let expirationDate = provisionData.ExpirationDate, expirationDate < Date() {
+                let expirationDate = provisionData.ExpirationDate
+                if expirationDate < Date() {
                     expiredCount += 1
                 }
             }
