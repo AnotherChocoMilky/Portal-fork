@@ -39,15 +39,15 @@ struct SettingsView: View {
             }
             .listStyle(.insetGrouped)
         }
-        .alert("Enable Developer Mode", isPresented: $showDeveloperConfirmation) {
-            Button("Cancel", role: .cancel) { developerTapCount = 0 }
-            Button("Enable") {
+        .alert(String.localized("Enable Developer Mode"), isPresented: $showDeveloperConfirmation) {
+            Button(String.localized("Cancel"), role: .cancel) { developerTapCount = 0 }
+            Button(String.localized("Enable")) {
                 isDeveloperModeEnabled = true
                 developerTapCount = 0
                 HapticsManager.shared.success()
             }
         } message: {
-            Text("Developer mode provides advanced debugging tools for app developers. This is NOT recommended for regular users as it may cause instability and crashes. Use at your own risk.")
+            Text(String.localized("Developer mode provides advanced debugging tools for app developers. This is NOT recommended for regular users as it may cause instability and crashes. Use at your own risk."))
         }
         .onChange(of: navigateToUpdates.wrappedValue) { shouldNavigate in
             if shouldNavigate {
@@ -72,20 +72,20 @@ struct SettingsView: View {
     
     private var preferencesSection: some View {
         Section {
-            SettingsRow(icon: "house.fill", title: "Customize Home", color: .blue, destination: HomeSettingsView())
-            SettingsRow(icon: "paintbrush.fill", title: "App Appearance", color: .blue, destination: AppearanceView())
-            SettingsRow(icon: "globe", title: "Translation", color: .blue, destination: LanguageSettingsView())
+            SettingsRow(icon: "house.fill", title: String.localized("Customize Home"), color: .blue, destination: HomeSettingsView())
+            SettingsRow(icon: "paintbrush.fill", title: String.localized("App Appearance"), color: .blue, destination: AppearanceView())
+            SettingsRow(icon: "globe", title: String.localized("Translation"), color: .blue, destination: LanguageSettingsView())
         } header: {
-            SettingsSectionHeader(title: "Preferences", icon: "slider.horizontal.3")
+            SettingsSectionHeader(title: String.localized("Preferences"), icon: "slider.horizontal.3")
         }
     }
     
     private var signingSection: some View {
         Section {
-            SettingsRow(icon: "checkmark.seal.fill", title: "Certificates", color: .blue, destination: CertificatesView())
-            SettingsRow(icon: "signature", title: "Signing Options", color: .blue, destination: ConfigurationView())
+            SettingsRow(icon: "checkmark.seal.fill", title: String.localized("Certificates"), color: .blue, destination: CertificatesView())
+            SettingsRow(icon: "signature", title: String.localized("Signing Options"), color: .blue, destination: ConfigurationView())
         } header: {
-            SettingsSectionHeader(title: "Signing", icon: "lock.shield.fill")
+            SettingsSectionHeader(title: String.localized("Signing"), icon: "lock.shield.fill")
         }
     }
     
@@ -96,13 +96,13 @@ struct SettingsView: View {
 
     private var dataSection: some View {
         Section {
-            SettingsRow(icon: "folder.fill", title: "Files", color: .blue, destination: FilesSettingsView())
+            SettingsRow(icon: "folder.fill", title: String.localized("Files"), color: .blue, destination: FilesSettingsView())
             if !isEnterprise {
-                SettingsRow(icon: "internaldrive.fill", title: "Storage", color: .blue, destination: ManageStorageView())
+                SettingsRow(icon: "internaldrive.fill", title: String.localized("Storage"), color: .blue, destination: ManageStorageView())
             }
-            SettingsRow(icon: "arrow.counterclockwise.circle.fill", title: "Backup & Restore", color: .blue, destination: BackupRestoreView())
+            SettingsRow(icon: "arrow.counterclockwise.circle.fill", title: String.localized("Backup & Restore"), color: .blue, destination: BackupRestoreView())
 
-            SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: _isFetchingFullData ? "Fetching Source Data..." : "Fetch Full Data", color: Color("AccentColor"), isLoading: _isFetchingFullData) {
+            SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: _isFetchingFullData ? String.localized("Fetching Source Data...") : String.localized("Fetch Full Data"), color: Color("AccentColor"), isLoading: _isFetchingFullData) {
                 Task {
                     _isFetchingFullData = true
                     await SourcesViewModel.shared.forceFetchAllSources(_sources)
@@ -111,40 +111,40 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            SettingsSectionHeader(title: "Data & Storage", icon: "externaldrive.fill")
+            SettingsSectionHeader(title: String.localized("Data & Storage"), icon: "externaldrive.fill")
         }
     }
     
     private var resourcesSection: some View {
         Section {
-            SettingsRow(icon: "apple.intelligence", title: "Guides With AI", color: .blue, destination: GuidesSettingsView())
-            SettingsRow(icon: "bubble.left.and.bubble.right.fill", title: "Feedback", color: .blue, destination: FeedbackView())
+            SettingsRow(icon: "apple.intelligence", title: String.localized("Guides With AI"), color: .blue, destination: GuidesSettingsView())
+            SettingsRow(icon: "bubble.left.and.bubble.right.fill", title: String.localized("Feedback"), color: .blue, destination: FeedbackView())
         } header: {
-            SettingsSectionHeader(title: "Resources", icon: "books.vertical.fill")
+            SettingsSectionHeader(title: String.localized("Resources"), icon: "books.vertical.fill")
         }
     }
     
     private var appSection: some View {
         Section {
-            SettingsRow(icon: "app.badge.fill", title: "App Icons", color: .blue, destination: AppIconView())
+            SettingsRow(icon: "app.badge.fill", title: String.localized("App Icons"), color: .blue, destination: AppIconView())
             Button {
                 navigateToCheckForUpdates = true
             } label: {
-                SettingsRowContent(icon: "arrow.triangle.2.circlepath", title: "Check For Updates", color: .blue)
+                SettingsRowContent(icon: "arrow.triangle.2.circlepath", title: String.localized("Check For Updates"), color: .blue)
             }
             .navigationDestination(isPresented: $navigateToCheckForUpdates) {
                 CheckForUpdatesView()
             }
         } header: {
-            SettingsSectionHeader(title: "App", icon: "app.fill")
+            SettingsSectionHeader(title: String.localized("App"), icon: "app.fill")
         }
     }
     
     private var developerSection: some View {
         Section {
-            SettingsRow(icon: "hammer.fill", title: "Debug", color: .red, destination: DeveloperView())
+            SettingsRow(icon: "hammer.fill", title: String.localized("Debug"), color: .red, destination: DeveloperView())
         } header: {
-            SettingsSectionHeader(title: "Developer", icon: "wrench.and.screwdriver.fill")
+            SettingsSectionHeader(title: String.localized("Developer"), icon: "wrench.and.screwdriver.fill")
         }
     }
     

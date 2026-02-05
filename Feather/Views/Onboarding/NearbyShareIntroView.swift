@@ -463,6 +463,12 @@ struct NearbyShareIntroViewLegacy: View {
                         
                         stepsSection
                         
+                        // Simple transfer visualization for iOS 16
+                        SimplifiedTransferView()
+                            .frame(height: 100)
+                            .padding(.horizontal, 24)
+                            .opacity(animateContent ? 1.0 : 0.0)
+                        
                         tipsSection
                         
                         gotItButton
@@ -642,10 +648,21 @@ struct InteractiveDemoSection: View {
         }
     }
     
+    // MARK: - Interactive Transfer Mockup
+    @ViewBuilder
+    private var transferMockup: some View {
+        if let demo = selectedDemo {
+            InteractiveTransferView(demoAction: demo, isAnimating: isAnimating)
+                .frame(height: 120)
+                .transition(.scale.combined(with: .opacity))
+        }
+    }
+    
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             headerView
             demoButtonsRow
+            transferMockup
             descriptionText
         }
         .padding(16)
@@ -664,11 +681,180 @@ struct InteractiveDemoSection: View {
         HapticsManager.shared.light()
         
         // Reset animation after delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
             isAnimating = false
             selectedDemo = nil
         }
     }
+}
+
+// MARK: - Interactive Transfer View
+@available(iOS 17.0, *)
+struct InteractiveTransferView: View {
+    let demoAction: DemoAction
+    let isAnimating: Bool
+    
+    @State private var dataPackets: [DataPacket] = []
+    @State private var connectionStrength: Double = 0
+    @State private var timer: Timer?
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                // Connection line
+                if connectionStrength > 0 {
+                    connectionLine(in: geometry)
+                }
+                
+                // Data packets animation
+                ForEach(dataPackets) { packet in
+                    dataPacketView(packet: packet, in: geometry)
+                }
+                
+                // Left device (sender)
+                deviceGlyph(position: .leading, in: geometry)
+                
+                // Right device (receiver)
+                deviceGlyph(position: .trailing, in: geometry)
+            }
+        }
+        .onAppear {
+            startAnimation()
+        }
+        .onChange(of: isAnimating) { newValue in
+            if newValue {
+                startAnimation()
+            } else {
+                stopAnimation()
+            }
+        }
+        .onDisappear {
+            stopAnimation()
+        }
+    }
+    
+    // MARK: - Connection Line
+    private func connectionLine(in geometry: GeometryProxy) -> some View {
+        Path { path in
+            let startX = geometry.size.width * 0.25
+            let endX = geometry.size.width * 0.75
+            let midY = geometry.size.height / 2
+            
+            path.move(to: CGPoint(x: startX, y: midY))
+            path.addLine(to: CGPoint(x: endX, y: midY))
+        }
+        .stroke(
+            LinearGradient(
+                colors: [Color.purple.opacity(connectionStrength), Color.blue.opacity(connectionStrength)],
+                startPoint: .leading,
+                endPoint: .trailing
+            ),
+            style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [5, 5])
+        )
+        .animation(.easeInOut(duration: 0.5), value: connectionStrength)
+    }
+    
+    // MARK: - Device Glyph
+    private func deviceGlyph(position: HorizontalAlignment, in geometry: GeometryProxy) -> some View {
+        let xPosition = position == .leading ? geometry.size.width * 0.15 : geometry.size.width * 0.85
+        let isActive = (position == .leading && demoAction == .send) ||
+                      (position == .trailing && demoAction == .receive) ||
+                      demoAction == .connect
+        
+        return VStack(spacing: 4) {
+            ZStack {
+                // Pulse effect when active
+                if isActive && isAnimating {
+                    Circle()
+                        .fill(Color.purple.opacity(0.3))
+                        .frame(width: 50, height: 50)
+                        .scaleEffect(connectionStrength * 1.5)
+                }
+                
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: isActive ? [Color.purple.opacity(0.8), Color.blue.opacity(0.8)] : [Color.gray.opacity(0.3), Color.gray.opacity(0.5)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 40, height: 40)
+                
+                Image(systemName: "iphone.gen3")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+            
+            Text(position == .leading ? "Device 1" : "Device 2")
+                .font(.system(size: 10, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+        }
+        .position(x: xPosition, y: geometry.size.height / 2)
+    }
+    
+    // MARK: - Data Packet View
+    private func dataPacketView(packet: DataPacket, in geometry: GeometryProxy) -> some View {
+        let startX = geometry.size.width * 0.25
+        let endX = geometry.size.width * 0.75
+        let xPosition = startX + (endX - startX) * packet.progress
+        
+        return Circle()
+            .fill(
+                LinearGradient(
+                    colors: [Color.purple, Color.blue],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+            .frame(width: 8, height: 8)
+            .position(x: xPosition, y: geometry.size.height / 2)
+            .opacity(1.0 - packet.progress)
+    }
+    
+    // MARK: - Animation Logic
+    private func startAnimation() {
+        dataPackets.removeAll()
+        
+        withAnimation(.easeInOut(duration: 0.5)) {
+            connectionStrength = 1.0
+        }
+        
+        // Create data packets at intervals
+        timer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { _ in
+            let newPacket = DataPacket()
+            dataPackets.append(newPacket)
+            
+            // Animate packet
+            withAnimation(.linear(duration: 1.5)) {
+                if let index = dataPackets.firstIndex(where: { $0.id == newPacket.id }) {
+                    dataPackets[index].progress = 1.0
+                }
+            }
+            
+            // Remove after animation
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                dataPackets.removeAll { $0.id == newPacket.id }
+            }
+        }
+    }
+    
+    private func stopAnimation() {
+        timer?.invalidate()
+        timer = nil
+        
+        withAnimation(.easeOut(duration: 0.3)) {
+            connectionStrength = 0
+            dataPackets.removeAll()
+        }
+    }
+}
+
+// MARK: - Data Packet Model
+@available(iOS 17.0, *)
+struct DataPacket: Identifiable {
+    let id = UUID()
+    var progress: Double = 0
 }
 
 // MARK: - Demo Button
@@ -699,6 +885,92 @@ struct DemoButton: View {
             }
         }
         .frame(maxWidth: .infinity)
+    }
+}
+
+// MARK: - Simplified Transfer View (iOS 16)
+struct SimplifiedTransferView: View {
+    @State private var isAnimating = false
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                // Connection line
+                Path { path in
+                    let startX = geometry.size.width * 0.25
+                    let endX = geometry.size.width * 0.75
+                    let midY = geometry.size.height / 2
+                    
+                    path.move(to: CGPoint(x: startX, y: midY))
+                    path.addLine(to: CGPoint(x: endX, y: midY))
+                }
+                .stroke(
+                    LinearGradient(
+                        colors: [Color.purple.opacity(0.6), Color.blue.opacity(0.6)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    ),
+                    style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [5, 5])
+                )
+                
+                // Left device
+                deviceView(position: .leading, in: geometry)
+                
+                // Right device
+                deviceView(position: .trailing, in: geometry)
+                
+                // Transfer arrow
+                Image(systemName: "arrow.right")
+                    .font(.system(size: 24, weight: .bold))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [Color.purple, Color.blue],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .scaleEffect(isAnimating ? 1.1 : 0.9)
+                    .opacity(isAnimating ? 1.0 : 0.7)
+                    .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+            }
+        }
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(uiColor: .secondarySystemBackground))
+                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+        )
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                isAnimating = true
+            }
+        }
+    }
+    
+    private func deviceView(position: HorizontalAlignment, in geometry: GeometryProxy) -> some View {
+        let xPosition = position == .leading ? geometry.size.width * 0.15 : geometry.size.width * 0.85
+        
+        return VStack(spacing: 4) {
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.purple.opacity(0.8), Color.blue.opacity(0.8)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 40, height: 40)
+                
+                Image(systemName: "iphone.gen3")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white)
+            }
+            
+            Text(position == .leading ? "Device 1" : "Device 2")
+                .font(.system(size: 10, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+        }
+        .position(x: xPosition, y: geometry.size.height / 2)
     }
 }
 
