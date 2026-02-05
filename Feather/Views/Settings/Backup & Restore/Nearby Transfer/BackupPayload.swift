@@ -13,7 +13,6 @@ struct BackupPayload: Codable {
         
         // Create an archive of the backup directory contents
         let fileManager = FileManager.default
-        var archiveData = Data()
         
         // Collect all files in the backup directory
         let enumerator = fileManager.enumerator(at: backupDirectory, includingPropertiesForKeys: [.isRegularFileKey])

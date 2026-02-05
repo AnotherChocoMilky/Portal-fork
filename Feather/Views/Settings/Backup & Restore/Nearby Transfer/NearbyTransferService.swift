@@ -150,8 +150,9 @@ class NearbyTransferService: NSObject, ObservableObject {
                     try session.send(chunk, toPeers: [peer], with: .reliable)
                     offset = end
                     
+                    let currentOffset = offset
                     await MainActor.run {
-                        updateProgress(bytesTransferred: Int64(offset), totalBytes: Int64(encryptedData.count))
+                        updateProgress(bytesTransferred: Int64(currentOffset), totalBytes: Int64(encryptedData.count))
                     }
                     
                     // Small delay to prevent overwhelming the connection

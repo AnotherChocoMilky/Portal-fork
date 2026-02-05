@@ -96,7 +96,7 @@ struct SenderAnimationView: View {
                     .frame(width: 120, height: 120)
                 
                 // Icon
-                if #available(iOS 17.0, *) {
+                if #available(iOS 18.0, *) {
                     Image(systemName: "arrow.up.circle.fill")
                         .font(.system(size: 60))
                         .foregroundStyle(.white)
@@ -387,8 +387,8 @@ struct SenderAnimationView: View {
         let angle = Double(index) * 45.0 * .pi / 180.0
         let distance: CGFloat = isAnimating ? 120 : 0
         return CGSize(
-            width: distance * cos(angle),
-            height: distance * sin(angle)
+            width: distance * Foundation.cos(angle),
+            height: distance * Foundation.sin(angle)
         )
     }
     
