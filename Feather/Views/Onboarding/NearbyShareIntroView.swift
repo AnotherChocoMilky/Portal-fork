@@ -8,6 +8,7 @@ struct NearbyShareIntroView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var animateContent = false
     @State private var animateButton = false
+    @State private var selectedDemo: DemoAction? = nil
     
     var body: some View {
         ZStack {
@@ -97,6 +98,11 @@ struct NearbyShareIntroView: View {
                         }
                         .padding(.horizontal, 24)
                         .opacity(animateContent ? 1.0 : 0.0)
+                        
+                        // Interactive Demo Section (iOS 17+)
+                        InteractiveDemoSection(selectedDemo: $selectedDemo)
+                            .padding(.horizontal, 24)
+                            .opacity(animateContent ? 1.0 : 0.0)
                         
                         // Tips Section
                         VStack(spacing: 12) {
@@ -524,8 +530,120 @@ struct TipRowLegacy: View {
     }
 }
 
+// MARK: - Demo Action Enum
+@available(iOS 17.0, *)
+enum DemoAction: String, CaseIterable {
+    case send = "Send"
+    case receive = "Receive"
+    case connect = "Connect"
+    
+    var icon: String {
+        switch self {
+        case .send: return "arrow.up.circle.fill"
+        case .receive: return "arrow.down.circle.fill"
+        case .connect: return "wifi.circle.fill"
+        }
+    }
+    
+    var description: String {
+        switch self {
+        case .send: return "Tap to see send animation"
+        case .receive: return "Tap to see receive animation"
+        case .connect: return "Tap to see connection animation"
+        }
+    }
+}
+
+// MARK: - Interactive Demo Section
+@available(iOS 17.0, *)
+struct InteractiveDemoSection: View {
+    @Binding var selectedDemo: DemoAction?
+    @State private var isAnimating = false
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "hand.tap.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.blue)
+                Text("Try It Out")
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+                Spacer()
+            }
+            
+            HStack(spacing: 12) {
+                ForEach(DemoAction.allCases, id: \.self) { action in
+                    DemoButton(
+                        action: action,
+                        isSelected: selectedDemo == action,
+                        isAnimating: isAnimating && selectedDemo == action
+                    ) {
+                        selectedDemo = action
+                        isAnimating = true
+                        HapticsManager.shared.lightImpact()
+                        
+                        // Reset animation after delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                            isAnimating = false
+                            selectedDemo = nil
+                        }
+                    }
+                }
+            }
+            
+            if let demo = selectedDemo {
+                Text(demo.description)
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .transition(.opacity)
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(uiColor: .secondarySystemBackground))
+                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+        )
+        .animation(.easeInOut, value: selectedDemo)
+    }
+}
+
+// MARK: - Demo Button
+@available(iOS 17.0, *)
+struct DemoButton: View {
+    let action: DemoAction
+    let isSelected: Bool
+    let isAnimating: Bool
+    let onTap: () -> Void
+    
+    var body: some View {
+        Button(action: onTap) {
+            VStack(spacing: 8) {
+                ZStack {
+                    Circle()
+                        .fill(isSelected ? Color.blue.opacity(0.2) : Color.blue.opacity(0.1))
+                        .frame(width: 60, height: 60)
+                    
+                    Image(systemName: action.icon)
+                        .font(.system(size: 28, weight: .semibold))
+                        .foregroundColor(.blue)
+                        .symbolEffect(.bounce, value: isAnimating)
+                }
+                
+                Text(action.rawValue)
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundColor(.primary)
+            }
+        }
+        .frame(maxWidth: .infinity)
+    }
+}
+
 // MARK: - Preview
 @available(iOS 17.0, *)
 #Preview {
     NearbyShareIntroView()
 }
+

@@ -15,12 +15,14 @@ struct FeatherApp: App {
 	let storage = Storage.shared
 
     @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
+    @AppStorage("hasSeenNearbyShareIntro") var hasSeenNearbyShareIntro: Bool = false
     @AppStorage("dev.updateBannerDismissed") private var updateBannerDismissed = false
     @State private var hasDylibsDetected: Bool = false
     @State private var showUpdateBanner = false
     @State private var latestVersion: String = ""
     @State private var latestReleaseURL: String = ""
     @State private var navigateToUpdates = false
+    @State private var showNearbyShareIntro = false
 
     // URL Scheme Handling
     @State private var _pendingSourceURL: String? = nil
@@ -99,6 +101,13 @@ struct FeatherApp: App {
                             .sheet(isPresented: $_showQuickActions) {
                                 QuickActionsSheetView()
                             }
+                            .sheet(isPresented: $showNearbyShareIntro) {
+                                if #available(iOS 17.0, *) {
+                                    NearbyShareIntroView()
+                                } else {
+                                    NearbyShareIntroViewLegacy()
+                                }
+                            }
 							.confirmationDialog(
 								.localized("Add Source"),
 								isPresented: $_showSourceConfirmation,
@@ -160,6 +169,7 @@ struct FeatherApp: App {
 						_setupTheme()
 						_checkForUpdates()
 						_handlePendingWidgetAction()
+						_checkAndShowNearbyShareIntro()
 					}
 					.overlay(StatusBarOverlay())
 				}
@@ -287,6 +297,15 @@ struct FeatherApp: App {
         }
         
         return .orderedSame
+    }
+    
+    private func _checkAndShowNearbyShareIntro() {
+        // Show intro once per user after a short delay to ensure app is fully loaded
+        if !hasSeenNearbyShareIntro {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                showNearbyShareIntro = true
+            }
+        }
     }
 	
 	private func _handleURL(_ url: URL) {
