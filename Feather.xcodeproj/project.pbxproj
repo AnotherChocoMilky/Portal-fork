@@ -27,6 +27,7 @@
 		E380430190EB4D949F515BED /* TransferProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CB87C34C96442DC9637BB71 /* TransferProgressView.swift */; };
 		1837FC36D23A46768EF729E9 /* NearbyTransferService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B342952384D46328C8238AA /* NearbyTransferService.swift */; };
 		E41D926BA67D430FAC49BD73 /* BackupPayload.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57E3690F91334E7EABE0971E /* BackupPayload.swift */; };
+		25E27D1A4DDFEDBEB5A1AFAF /* SelfBackupRestoreView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB2B5E5DF7BDA7BE6D0439B2 /* SelfBackupRestoreView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -50,12 +51,13 @@
 		336D43972DB7454A00206400 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS18.2.sdk/System/Library/Frameworks/MobileCoreServices.framework; sourceTree = DEVELOPER_DIR; };
 		3379C1B92DA869A1004372DA /* Feather.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Feather.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AABA5D192DB3C87800BFCD2C /* FeatherTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FeatherTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		33F000032DA869A1004372DA /* PortalWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PortalWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; }		327B44E40F244761970BE554 /* NearbyTransferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NearbyTransferView.swift"; sourceTree = "<group>"; };
+		33F000032DA869A1004372DA /* PortalWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = PortalWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		327B44E40F244761970BE554 /* NearbyTransferView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NearbyTransferView.swift"; sourceTree = "<group>"; };
 		D13424FE17FC4EF8918D1D82 /* PairingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PairingView.swift"; sourceTree = "<group>"; };
 		6CB87C34C96442DC9637BB71 /* TransferProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "TransferProgressView.swift"; sourceTree = "<group>"; };
 		3B342952384D46328C8238AA /* NearbyTransferService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NearbyTransferService.swift"; sourceTree = "<group>"; };
 		57E3690F91334E7EABE0971E /* BackupPayload.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "BackupPayload.swift"; sourceTree = "<group>"; };
-;
+		AB2B5E5DF7BDA7BE6D0439B2 /* SelfBackupRestoreView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SelfBackupRestoreView.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXCopyFilesBuildPhase section */
