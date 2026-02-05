@@ -166,7 +166,7 @@ struct PairingView: View {
                             Image(systemName: "antenna.radiowaves.left.and.right")
                                 .font(.system(size: 40))
                                 .foregroundStyle(.blue)
-                                .symbolEffect(.pulse, options: .repeating)
+                                .ifAvailableiOS18SymbolPulse()
                         }
                         
                         VStack(spacing: 8) {
@@ -579,6 +579,75 @@ struct PairingView: View {
             return nil
         }
     }
+
+    private func performRestoreWithConflicts(backupDir: URL, resolvedConflicts: [ConflictItem]) {
+        // Apply conflict resolutions to the restore process
+        Task {
+            do {
+                // Process each conflict resolution
+                for conflict in resolvedConflicts {
+                    let backupFilePath = backupDir.appendingPathComponent(conflict.path)
+                    let destPath = URL.documentsDirectory.appendingPathComponent(conflict.path)
+
+                    switch conflict.resolution {
+                    case .keepLocal:
+                        // Keep existing data, skip restore for this item
+                        continue
+                    case .replace:
+                        // Replace with backup data
+                        if FileManager.default.fileExists(atPath: backupFilePath.path) {
+                            try? FileManager.default.removeItem(at: destPath)
+                            try FileManager.default.copyItem(at: backupFilePath, to: destPath)
+                        }
+                    case .duplicate:
+                        // For duplicate, we'll prioritize backup data but preserve existing metadata
+                        if FileManager.default.fileExists(atPath: backupFilePath.path) {
+                            // Copy backup file with a temporary name, then rename
+                            let tempPath = destPath.appendingPathExtension("backup")
+                            try FileManager.default.copyItem(at: backupFilePath, to: tempPath)
+                            // Move temp file to final destination (will replace if exists)
+                            try? FileManager.default.removeItem(at: destPath)
+                            try FileManager.default.moveItem(at: tempPath, to: destPath)
+                        }
+                    }
+                }
+
+                // Small delay to show progress
+                try await Task.sleep(nanoseconds: 500_000_000)
+
+                await MainActor.run {
+                    showPostRestoreHealthCheck = true
+                }
+            } catch {
+                await MainActor.run {
+                    UIAlertController.showAlertWithOk(
+                        title: .localized("Restore Error"),
+                        message: .localized("Failed to apply conflict resolutions: \(error.localizedDescription)")
+                    )
+                }
+            }
+        }
+    }
+
+    private func showRestartCompletionScreen() {
+        // Show completion alert
+        let alert = UIAlertController(
+            title: .localized("Backup Applied"),
+            message: .localized("Backup applied. Feather must restart to finalize changes."),
+            preferredStyle: .alert
+        )
+
+        alert.addAction(UIAlertAction(title: .localized("Restart Now"), style: .default) { _ in
+            HapticsManager.shared.success()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                UIApplication.shared.suspendAndReopen()
+            }
+        })
+
+        alert.addAction(UIAlertAction(title: .localized("Later"), style: .cancel))
+
+        UIApplication.topViewController()?.present(alert, animated: true)
+    }
 }
 
 // MARK: - Restore Options View
@@ -928,72 +997,15 @@ struct RestoreOptionsView: View {
         }
     }
     
-    private func performRestoreWithConflicts(backupDir: URL, resolvedConflicts: [ConflictItem]) {
-        // Apply conflict resolutions to the restore process
-        Task {
-            do {
-                // Process each conflict resolution
-                for conflict in resolvedConflicts {
-                    let backupFilePath = backupDir.appendingPathComponent(conflict.path)
-                    let destPath = URL.documentsDirectory.appendingPathComponent(conflict.path)
-                    
-                    switch conflict.resolution {
-                    case .keepLocal:
-                        // Keep existing data, skip restore for this item
-                        continue
-                    case .replace:
-                        // Replace with backup data
-                        if FileManager.default.fileExists(atPath: backupFilePath.path) {
-                            try? FileManager.default.removeItem(at: destPath)
-                            try? FileManager.default.copyItem(at: backupFilePath, to: destPath)
-                        }
-                    case .duplicate:
-                        // For duplicate, we'll prioritize backup data but preserve existing metadata
-                        if FileManager.default.fileExists(atPath: backupFilePath.path) {
-                            // Copy backup file with a temporary name, then rename
-                            let tempPath = destPath.appendingPathExtension("backup")
-                            try? FileManager.default.copyItem(at: backupFilePath, to: tempPath)
-                            // Move temp file to final destination (will replace if exists)
-                            try? FileManager.default.removeItem(at: destPath)
-                            try? FileManager.default.moveItem(at: tempPath, to: destPath)
-                        }
-                    }
-                }
-                
-                // Small delay to show progress
-                try? await Task.sleep(nanoseconds: 500_000_000)
-                
-                await MainActor.run {
-                    showPostRestoreHealthCheck = true
-                }
-            } catch {
-                await MainActor.run {
-                    UIAlertController.showAlertWithOk(
-                        title: .localized("Restore Error"),
-                        message: .localized("Failed to apply conflict resolutions: \(error.localizedDescription)")
-                    )
-                }
-            }
+}
+
+extension View {
+    @ViewBuilder
+    func ifAvailableiOS18SymbolPulse() -> some View {
+        if #available(iOS 18.0, *) {
+            self.symbolEffect(.pulse, options: .repeating)
+        } else {
+            self
         }
-    }
-    
-    private func showRestartCompletionScreen() {
-        // Show completion alert
-        let alert = UIAlertController(
-            title: .localized("Backup Applied"),
-            message: .localized("Backup applied. Feather must restart to finalize changes."),
-            preferredStyle: .alert
-        )
-        
-        alert.addAction(UIAlertAction(title: .localized("Restart Now"), style: .default) { _ in
-            HapticsManager.shared.success()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                UIApplication.shared.suspendAndReopen()
-            }
-        })
-        
-        alert.addAction(UIAlertAction(title: .localized("Later"), style: .cancel))
-        
-        UIApplication.topViewController()?.present(alert, animated: true)
     }
 }

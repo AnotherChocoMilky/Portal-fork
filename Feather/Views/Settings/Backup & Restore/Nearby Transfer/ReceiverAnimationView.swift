@@ -104,7 +104,7 @@ struct ReceiverAnimationView: View {
                     .frame(width: 120, height: 120)
                 
                 // Receiving icon
-                if #available(iOS 17.0, *) {
+                if #available(iOS 18.0, *) {
                     Image(systemName: "arrow.down.circle.fill")
                         .font(.system(size: 60))
                         .foregroundStyle(.white)
@@ -407,8 +407,8 @@ struct ReceiverAnimationView: View {
         let angle = Double(index) * 30.0 * .pi / 180.0
         let distance: CGFloat = isAnimating ? 140 : 0
         return CGSize(
-            width: distance * cos(angle),
-            height: distance * sin(angle)
+            width: distance * Foundation.cos(angle),
+            height: distance * Foundation.sin(angle)
         )
     }
     
