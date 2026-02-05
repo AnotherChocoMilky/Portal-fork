@@ -66,7 +66,7 @@ class BackgroundTaskManager: ObservableObject {
             appName: appName,
             appSize: appSize,
             progress: 0.0,
-            status: .pending
+            status: .downloading
         )
         
         DispatchQueue.main.async { [weak self] in
@@ -230,8 +230,8 @@ class BackgroundTaskManager: ObservableObject {
     }
     
     private func processInstallations() async {
-        // Process each pending installation
-        for installation in activeInstallations where installation.status == .pending {
+        // Process each active installation in downloading phase
+        for installation in activeInstallations where installation.status == .downloading {
             logger.info("Processing installation: \(installation.appName)")
             // Implementation would integrate with InstallationProxy here
         }
@@ -247,15 +247,6 @@ struct InstallationTask: Identifiable, Equatable {
     let appSize: Int64
     var progress: Double
     var status: InstallationStatus
-}
-
-/// Installation status enum
-enum InstallationStatus {
-    case pending
-    case installing
-    case completed
-    case failed
-    case cancelled
 }
 
 /// Installation progress enum
