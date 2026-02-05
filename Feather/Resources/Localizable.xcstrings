@@ -16543,6 +16543,7 @@
       "localizations": {
         "es": {
           "stringUnit": {
+            "state": "translated",
             "value": "No puede actualizar '%@' consigo mismo, por favor use una herramienta alternativa para actualizarlo."
           }
         }
