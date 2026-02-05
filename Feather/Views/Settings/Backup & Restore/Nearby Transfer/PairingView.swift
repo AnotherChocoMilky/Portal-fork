@@ -47,20 +47,41 @@ struct PairingView: View {
             
             // Pairing Options
             Section {
-                // Nearby Pairing Button
-                Button {
-                    // Nearby pairing is the default mode - just continue
-                } label: {
-                    HStack {
-                        Image(systemName: "antenna.radiowaves.left.and.right")
-                            .font(.title3)
-                            .foregroundStyle(.blue)
-                            .frame(width: 40)
+                // Nearby Pairing Button - Enhanced Design
+                VStack(spacing: 0) {
+                    HStack(spacing: 16) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.blue.opacity(0.2), Color.blue.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 50, height: 50)
+                            
+                            Image(systemName: "antenna.radiowaves.left.and.right")
+                                .font(.title2)
+                                .foregroundStyle(.blue)
+                        }
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Nearby Pairing")
-                                .font(.headline)
-                            Text("Devices must be on the same network")
+                            HStack(spacing: 6) {
+                                Text("Nearby Pairing")
+                                    .font(.headline)
+                                
+                                // Active indicator
+                                Text("ACTIVE")
+                                    .font(.caption2.weight(.semibold))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.blue)
+                                    .clipShape(Capsule())
+                            }
+                            
+                            Text("Devices on the same WiFi network")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -68,27 +89,58 @@ struct PairingView: View {
                         Spacer()
                         
                         if selectedMode == .send && !service.discoveredPeers.isEmpty {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
+                            ZStack {
+                                Circle()
+                                    .fill(Color.green.opacity(0.15))
+                                    .frame(width: 32, height: 32)
+                                
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                                    .font(.system(size: 18))
+                            }
                         }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 12)
                 }
-                .disabled(true) // Already active by default
-                .opacity(0.7)
                 
-                // Remote Pairing (OTP) Button
+                Divider()
+                    .padding(.leading, 66)
+                
+                // Remote Pairing (OTP) Button - Enhanced Design
                 NavigationLink(destination: PairingThroughOTPView()) {
-                    HStack {
-                        Image(systemName: "key.fill")
-                            .font(.title3)
-                            .foregroundStyle(.purple)
-                            .frame(width: 40)
+                    HStack(spacing: 16) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [Color.purple.opacity(0.2), Color.purple.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 50, height: 50)
+                            
+                            Image(systemName: "key.fill")
+                                .font(.title2)
+                                .foregroundStyle(.purple)
+                        }
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Pair Remotely (OTP)")
-                                .font(.headline)
-                            Text("Use a code to connect from anywhere")
+                            HStack(spacing: 6) {
+                                Text("Pair Remotely")
+                                    .font(.headline)
+                                
+                                // Recommended badge
+                                Text("SECURE")
+                                    .font(.caption2.weight(.semibold))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.purple)
+                                    .clipShape(Capsule())
+                            }
+                            
+                            Text("Connect from anywhere with a code")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -96,16 +148,25 @@ struct PairingView: View {
                         Spacer()
                         
                         Image(systemName: "chevron.right")
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.tertiary)
+                            .font(.caption)
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 12)
                 }
             } header: {
                 AppearanceSectionHeader(title: String.localized("Pairing Method"), icon: "rectangle.connected.to.line.below")
             } footer: {
-                Text("Choose how to connect your devices. Nearby pairing requires both devices on the same WiFi network. Remote pairing works over the internet using a secure code.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Choose how to connect your devices:")
+                        .font(.caption.weight(.semibold))
+                    
+                    Text("• Nearby pairing works automatically when both devices are on the same WiFi network")
+                        .font(.caption)
+                    
+                    Text("• Remote pairing uses a secure 6-digit code and works over the internet")
+                        .font(.caption)
+                }
+                .foregroundStyle(.secondary)
             }
             
             // Send Mode - Peer List

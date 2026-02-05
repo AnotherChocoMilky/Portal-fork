@@ -7573,18 +7573,36 @@ struct APILogsView: View {
 
 
 // MARK: - Nearby Transfer Simulation View
+// This simulation uses the actual views from Nearby Transfer for complete UI testing
 struct NearbyTransferSimulationView: View {
-    @State private var selectedMode: SimulationMode = .sender
-    @State private var simulationStep: Int = 0
+    @State private var selectedView: NearbyTransferUIView = .main
+    @State private var simulationRole: SimulationRole = .sender
     @AppStorage("Feather.simulateNearbyTransfer") private var simulateNearbyTransfer = false
     
-    enum SimulationMode: String, CaseIterable {
+    // Mock service for simulation
+    @StateObject private var mockService = MockNearbyTransferService()
+    
+    enum SimulationRole: String, CaseIterable {
         case sender = "Sender"
-        case recipient = "Recipient"
+        case receiver = "Receiver"
+    }
+    
+    enum NearbyTransferUIView: String, CaseIterable, Identifiable {
+        case main = "Main View"
+        case pairingNearby = "Pairing (Nearby)"
+        case pairingOTP = "Pairing (OTP)"
+        case transferProgress = "Transfer Progress"
+        case preflightCheck = "Preflight Check"
+        case conflictResolver = "Conflict Resolver"
+        case postHealthCheck = "Post Restore Health Check"
+        case senderAnimation = "Sender Animation"
+        case receiverAnimation = "Receiver Animation"
+        
+        var id: String { rawValue }
     }
     
     var body: some View {
-        NBList(.localized("Nearby Transfer Simulation")) {
+        NBList("Nearby Transfer Simulation") {
             // Warning Banner
             Section {
                 HStack(spacing: 12) {
@@ -7593,9 +7611,9 @@ struct NearbyTransferSimulationView: View {
                         .font(.title2)
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Simulation Mode")
+                        Text("Simulation Mode Active")
                             .font(.headline)
-                        Text("This is a UI preview only. No actual transfer will occur.")
+                        Text("UI preview only - no actual data transfer will occur")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -7603,310 +7621,224 @@ struct NearbyTransferSimulationView: View {
                 .padding(.vertical, 8)
             }
             
-            // Mode Selection
+            // Role Selection
             Section {
-                Picker("Simulation Mode", selection: $selectedMode) {
-                    ForEach(SimulationMode.allCases, id: \.self) { mode in
-                        Text(mode.rawValue).tag(mode)
+                Picker("Device Role", selection: $simulationRole) {
+                    ForEach(SimulationRole.allCases, id: \.self) { role in
+                        Text(role.rawValue).tag(role)
                     }
                 }
                 .pickerStyle(.segmented)
-                .onChange(of: selectedMode) { _ in
-                    simulationStep = 0
+                .onChange(of: simulationRole) { newRole in
+                    // Update mock service based on role
+                    if newRole == .sender {
+                        mockService.setMode(.send)
+                    } else {
+                        mockService.setMode(.receive)
+                    }
                 }
             } header: {
-                AppearanceSectionHeader(title: String.localized("Select Mode"), icon: "person.2.fill")
-            }
-            
-            // Simulation Steps
-            if selectedMode == .sender {
-                senderSimulationSteps
-            } else {
-                recipientSimulationSteps
-            }
-            
-            // Controls
-            Section {
-                HStack {
-                    Button {
-                        if simulationStep > 0 {
-                            simulationStep -= 1
-                        }
-                    } label: {
-                        HStack {
-                            Image(systemName: "arrow.left")
-                            Text("Previous")
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                    .disabled(simulationStep == 0)
-                    
-                    Divider()
-                        .frame(height: 30)
-                    
-                    Button {
-                        if simulationStep < 4 {
-                            simulationStep += 1
-                        }
-                    } label: {
-                        HStack {
-                            Text("Next")
-                            Image(systemName: "arrow.right")
-                        }
-                        .frame(maxWidth: .infinity)
-                    }
-                    .disabled(simulationStep == 4)
-                }
-                .buttonStyle(.bordered)
+                AppearanceSectionHeader(title: "Simulation Role", icon: "person.2.fill")
             } footer: {
-                Text("Step \(simulationStep + 1) of 5")
+                Text("Switch between Sender and Receiver roles to test both UI flows")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             
-            // Reset Button
+            // View Selection
             Section {
-                Button(role: .destructive) {
-                    simulationStep = 0
-                } label: {
-                    HStack {
-                        Image(systemName: "arrow.counterclockwise")
-                        Text("Reset Simulation")
+                ForEach(NearbyTransferUIView.allCases) { view in
+                    NavigationLink(destination: simulatedViewDestination(for: view)) {
+                        HStack(spacing: 12) {
+                            Image(systemName: iconFor(view))
+                                .foregroundStyle(colorFor(view))
+                                .frame(width: 30)
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(view.rawValue)
+                                    .font(.subheadline.weight(.medium))
+                                Text(descriptionFor(view))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
                     }
-                    .frame(maxWidth: .infinity)
                 }
+            } header: {
+                AppearanceSectionHeader(title: "Available Views", icon: "square.grid.2x2")
+            } footer: {
+                Text("Select any view to see how it appears during a real transfer")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            
+            // Instructions
+            Section {
+                VStack(alignment: .leading, spacing: 12) {
+                    instructionRow(
+                        number: 1,
+                        text: "Select your device role (Sender or Receiver)"
+                    )
+                    instructionRow(
+                        number: 2,
+                        text: "Choose a view to preview its UI"
+                    )
+                    instructionRow(
+                        number: 3,
+                        text: "Test interactions and animations"
+                    )
+                    instructionRow(
+                        number: 4,
+                        text: "Switch roles to see both perspectives"
+                    )
+                }
+                .padding(.vertical, 8)
+            } header: {
+                AppearanceSectionHeader(title: "How to Use", icon: "info.circle.fill")
             }
         }
-        .navigationTitle("Transfer Simulation")
+        .navigationTitle("UI Simulation")
         .navigationBarTitleDisplayMode(.inline)
     }
     
-    // MARK: - Sender Simulation Steps
+    // MARK: - View Destinations
     @ViewBuilder
-    private var senderSimulationSteps: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 16) {
-                switch simulationStep {
-                case 0:
-                    stepView(
-                        icon: "person.wave.2.fill",
-                        title: "Starting as Sender",
-                        description: "You are initiating a backup transfer to another device.",
-                        color: .blue
-                    )
-                case 1:
-                    stepView(
-                        icon: "key.fill",
-                        title: "Generating OTP Code",
-                        description: "A 6-digit code is generated for secure pairing.",
-                        color: .green
-                    )
-                    otpCodeDisplay(code: "123456")
-                case 2:
-                    stepView(
-                        icon: "wifi.circle.fill",
-                        title: "Waiting for Recipient",
-                        description: "Share the code with the recipient device to establish connection.",
-                        color: .orange
-                    )
-                    ProgressView()
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding()
-                case 3:
-                    stepView(
-                        icon: "checkmark.circle.fill",
-                        title: "Device Connected",
-                        description: "Recipient device has connected successfully.",
-                        color: .green
-                    )
-                    connectedDeviceCard(deviceName: "iPhone 14 Pro")
-                case 4:
-                    stepView(
-                        icon: "arrow.up.doc.fill",
-                        title: "Transferring Data",
-                        description: "Backup data is being sent to the recipient device.",
-                        color: .purple
-                    )
-                    transferProgressCard(progress: 0.65)
-                default:
-                    EmptyView()
-                }
+    private func simulatedViewDestination(for view: NearbyTransferUIView) -> some View {
+        switch view {
+        case .main:
+            NearbyTransferView()
+        case .pairingNearby:
+            PairingView()
+                .environment(\.nearbyTransferSimulation, true)
+        case .pairingOTP:
+            PairingThroughOTPView()
+                .environment(\.nearbyTransferSimulation, true)
+        case .transferProgress:
+            TransferProgressView(
+                service: mockService,
+                onCancel: {},
+                onRetry: {}
+            )
+        case .preflightCheck:
+            PreflightCheckView(
+                onContinue: {}
+            )
+        case .conflictResolver:
+            if let mockURL = createMockBackupDirectory() {
+                ConflictResolverView(backupDirectory: mockURL) { _ in }
+            } else {
+                Text("Unable to create mock data")
+                    .foregroundStyle(.secondary)
             }
-            .padding(.vertical, 8)
-        } header: {
-            AppearanceSectionHeader(title: String.localized("Sender Flow"), icon: "arrow.up.circle.fill")
+        case .postHealthCheck:
+            PostRestoreHealthCheckView {}
+        case .senderAnimation:
+            SenderAnimationView(state: .transferring(progress: 0.65, bytesTransferred: 650_000_000, totalBytes: 1_000_000_000, speed: 5_000_000))
+        case .receiverAnimation:
+            ReceiverAnimationView(state: .transferring(progress: 0.45, bytesTransferred: 450_000_000, totalBytes: 1_000_000_000, speed: 4_500_000))
         }
     }
     
-    // MARK: - Recipient Simulation Steps
-    @ViewBuilder
-    private var recipientSimulationSteps: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 16) {
-                switch simulationStep {
-                case 0:
-                    stepView(
-                        icon: "person.crop.circle.fill",
-                        title: "Starting as Recipient",
-                        description: "You will receive a backup from another device.",
-                        color: .blue
-                    )
-                case 1:
-                    stepView(
-                        icon: "keyboard.fill",
-                        title: "Enter OTP Code",
-                        description: "Enter the 6-digit code shown on the sender device.",
-                        color: .orange
-                    )
-                    otpInputDisplay()
-                case 2:
-                    stepView(
-                        icon: "magnifyingglass.circle.fill",
-                        title: "Validating Code",
-                        description: "Verifying the code and searching for the sender device.",
-                        color: .yellow
-                    )
-                    ProgressView()
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding()
-                case 3:
-                    stepView(
-                        icon: "checkmark.shield.fill",
-                        title: "Sender Found",
-                        description: "Sender device verified. Confirm to begin transfer.",
-                        color: .green
-                    )
-                    connectedDeviceCard(deviceName: "iPad Air")
-                case 4:
-                    stepView(
-                        icon: "arrow.down.doc.fill",
-                        title: "Receiving Data",
-                        description: "Backup data is being received from the sender.",
-                        color: .purple
-                    )
-                    transferProgressCard(progress: 0.45)
-                default:
-                    EmptyView()
-                }
-            }
-            .padding(.vertical, 8)
-        } header: {
-            AppearanceSectionHeader(title: String.localized("Recipient Flow"), icon: "arrow.down.circle.fill")
+    // MARK: - Helper Methods
+    private func iconFor(_ view: NearbyTransferUIView) -> String {
+        switch view {
+        case .main: return "house.fill"
+        case .pairingNearby: return "wifi"
+        case .pairingOTP: return "key.fill"
+        case .transferProgress: return "arrow.left.arrow.right"
+        case .preflightCheck: return "checkmark.shield.fill"
+        case .conflictResolver: return "exclamationmark.triangle.fill"
+        case .postHealthCheck: return "stethoscope"
+        case .senderAnimation: return "arrow.up.circle.fill"
+        case .receiverAnimation: return "arrow.down.circle.fill"
         }
     }
     
-    // MARK: - Helper Views
+    private func colorFor(_ view: NearbyTransferUIView) -> Color {
+        switch view {
+        case .main: return .blue
+        case .pairingNearby: return .green
+        case .pairingOTP: return .purple
+        case .transferProgress: return .orange
+        case .preflightCheck: return .cyan
+        case .conflictResolver: return .red
+        case .postHealthCheck: return .indigo
+        case .senderAnimation: return .pink
+        case .receiverAnimation: return .mint
+        }
+    }
+    
+    private func descriptionFor(_ view: NearbyTransferUIView) -> String {
+        switch view {
+        case .main: return "Entry point and feature overview"
+        case .pairingNearby: return "Local network device pairing"
+        case .pairingOTP: return "Remote pairing with code"
+        case .transferProgress: return "Real-time transfer status"
+        case .preflightCheck: return "Pre-transfer validation"
+        case .conflictResolver: return "Handle data conflicts"
+        case .postHealthCheck: return "Post-restore validation"
+        case .senderAnimation: return "Sending animation view"
+        case .receiverAnimation: return "Receiving animation view"
+        }
+    }
+    
+    private func createMockBackupDirectory() -> URL? {
+        let tempDir = FileManager.default.temporaryDirectory
+            .appendingPathComponent("MockBackup_\(UUID().uuidString)")
+        
+        try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+        return tempDir
+    }
+    
     @ViewBuilder
-    private func stepView(icon: String, title: String, description: String, color: Color) -> some View {
-        HStack(spacing: 16) {
+    private func instructionRow(number: Int, text: String) -> some View {
+        HStack(alignment: .top, spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(color.opacity(0.15))
-                    .frame(width: 50, height: 50)
-                
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundStyle(color)
+                    .fill(Color.blue.opacity(0.15))
+                    .frame(width: 28, height: 28)
+                Text("\(number)")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.blue)
             }
             
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                Text(description)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
-    
-    @ViewBuilder
-    private func otpCodeDisplay(code: String) -> some View {
-        HStack(spacing: 8) {
-            ForEach(Array(code.enumerated()), id: \.offset) { index, char in
-                Text(String(char))
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .frame(width: 45, height: 55)
-                    .background(Color.blue.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
+}
+
+// MARK: - Mock Service for Simulation
+class MockNearbyTransferService: NearbyTransferService {
+    override init() {
+        super.init()
+        // Set to a simulated transferring state
+        self.state = .transferring(progress: 0.45, bytesTransferred: 450_000_000, totalBytes: 1_000_000_000, speed: 4_500_000)
+        self.currentItem = "Certificates.zip"
     }
     
-    @ViewBuilder
-    private func otpInputDisplay() -> some View {
-        HStack(spacing: 8) {
-            ForEach(0..<6, id: \.self) { index in
-                Text(index < 3 ? String(index + 1) : "")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .frame(width: 45, height: 55)
-                    .background(Color.secondary.opacity(0.1))
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .stroke(index == 3 ? Color.blue : Color.clear, lineWidth: 2)
-                    )
-            }
+    func setMode(_ mode: TransferMode) {
+        // Simulate mode changes
+        if mode == .send {
+            self.state = .transferring(progress: 0.65, bytesTransferred: 650_000_000, totalBytes: 1_000_000_000, speed: 5_000_000)
+        } else {
+            self.state = .transferring(progress: 0.45, bytesTransferred: 450_000_000, totalBytes: 1_000_000_000, speed: 4_500_000)
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
     }
-    
-    @ViewBuilder
-    private func connectedDeviceCard(deviceName: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "iphone")
-                .font(.largeTitle)
-                .foregroundStyle(.blue)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(deviceName)
-                    .font(.headline)
-                Text("Connected")
-                    .font(.caption)
-                    .foregroundStyle(.green)
-            }
-            
-            Spacer()
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.blue.opacity(0.1))
-        )
-    }
-    
-    @ViewBuilder
-    private func transferProgressCard(progress: Double) -> some View {
-        VStack(spacing: 12) {
-            HStack {
-                Text("Transferring...")
-                    .font(.headline)
-                Spacer()
-                Text("\(Int(progress * 100))%")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            
-            ProgressView(value: progress)
-                .progressViewStyle(.linear)
-            
-            HStack {
-                Text("\(Int(progress * 250)) MB / 250 MB")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text("~\(Int((1 - progress) * 120)) seconds remaining")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.purple.opacity(0.1))
-        )
+}
+
+// MARK: - Environment Key for Simulation Mode
+private struct NearbyTransferSimulationKey: EnvironmentKey {
+    static let defaultValue: Bool = false
+}
+
+extension EnvironmentValues {
+    var nearbyTransferSimulation: Bool {
+        get { self[NearbyTransferSimulationKey.self] }
+        set { self[NearbyTransferSimulationKey.self] = newValue }
     }
 }
 

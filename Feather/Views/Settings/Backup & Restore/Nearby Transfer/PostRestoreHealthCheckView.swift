@@ -39,6 +39,7 @@ enum IssueSeverity {
 struct PostRestoreHealthCheckView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var viewModel = PostRestoreHealthCheckViewModel()
+    @State private var showRestartDialog = false
     
     var onComplete: () -> Void
     
@@ -117,7 +118,7 @@ struct PostRestoreHealthCheckView: View {
             if !viewModel.isScanning {
                 Section {
                     Button {
-                        onComplete()
+                        showRestartDialog = true
                     } label: {
                         HStack {
                             Image(systemName: "checkmark.circle.fill")
@@ -146,7 +147,20 @@ struct PostRestoreHealthCheckView: View {
         }
         .navigationTitle("Health Check")
         .navigationBarTitleDisplayMode(.inline)
-        .interactiveDismissDisabled(viewModel.isScanning || viewModel.isFixing)
+        .interactiveDismissDisabled(viewModel.isScanning || viewModel.isFixing || showRestartDialog)
+        .alert("Backup Applied", isPresented: $showRestartDialog) {
+            Button("Restart Now", role: .destructive) {
+                HapticsManager.shared.success()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    UIApplication.shared.suspendAndReopen()
+                }
+            }
+            Button("Later", role: .cancel) {
+                onComplete()
+            }
+        } message: {
+            Text("Backup applied successfully. Feather must restart to finalize changes. You can choose to restart now or later.")
+        }
         .onAppear {
             viewModel.performHealthCheck()
         }
