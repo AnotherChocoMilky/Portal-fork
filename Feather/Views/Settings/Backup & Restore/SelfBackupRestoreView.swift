@@ -257,42 +257,35 @@ struct SelfBackupRestoreView: View {
         }
         .sheet(isPresented: $showingRestoreList) {
             NavigationStack {
-                if #available(iOS 17.0, *) {
-                    ModernRestoreSelectionView(
-                        backups: viewModel.localBackups,
-                        onRestore: { backup in
-                            showingRestoreList = false
-                            Task {
-                                await viewModel.restoreBackup(backup)
-                            }
-                        }
-                    )
-                    .navigationTitle("Select Backup")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button("Cancel") {
+                Group {
+                    if #available(iOS 17.0, *) {
+                        ModernRestoreSelectionView(
+                            backups: viewModel.localBackups,
+                            onRestore: { backup in
                                 showingRestoreList = false
+                                Task {
+                                    await viewModel.restoreBackup(backup)
+                                }
                             }
-                        }
+                        )
+                    } else {
+                        LegacyRestoreSelectionView(
+                            backups: viewModel.localBackups,
+                            onRestore: { backup in
+                                showingRestoreList = false
+                                Task {
+                                    await viewModel.restoreBackup(backup)
+                                }
+                            }
+                        )
                     }
-                } else {
-                    LegacyRestoreSelectionView(
-                        backups: viewModel.localBackups,
-                        onRestore: { backup in
+                }
+                .navigationTitle("Select Backup")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Cancel") {
                             showingRestoreList = false
-                            Task {
-                                await viewModel.restoreBackup(backup)
-                            }
-                        }
-                    )
-                    .navigationTitle("Select Backup")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .topBarTrailing) {
-                            Button("Cancel") {
-                                showingRestoreList = false
-                            }
                         }
                     }
                 }
