@@ -836,7 +836,8 @@ struct DeveloperControlPanelView: View {
                 DevMenuItem(icon: "paintbrush.fill", title: "UI & Layout", color: .pink, destination: AnyView(UILayoutDevView())),
                 DevMenuItem(icon: "house.fill", title: "Home UI Testing", color: .blue, destination: AnyView(HomeUITestingView())),
                 DevMenuItem(icon: "antenna.radiowaves.left.and.right", title: "Test Nearby Share", color: .purple, destination: AnyView(NearbyShareUITestingView())),
-                DevMenuItem(icon: "eye.fill", title: "UI View Testing", color: .orange, destination: AnyView(UIViewTestingView()))
+                DevMenuItem(icon: "eye.fill", title: "UI View Testing", color: .orange, destination: AnyView(UIViewTestingView())),
+                DevMenuItem(icon: "app.badge.fill", title: "Live Activity Settings", color: .indigo, destination: AnyView(LiveActivitySettingsView()))
             ]),
             ("System", "gearshape.2.fill", .gray, [
                 DevMenuItem(icon: "network", title: "Network & System", color: .green, destination: AnyView(NetworkSystemDevView())),
