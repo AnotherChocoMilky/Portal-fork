@@ -58,14 +58,28 @@ Both the main app and widget extension need to share data via App Groups.
    - **iOS Deployment Target**: 16.0
    - **Code Signing Entitlements**: `PortalWidgets/PortalWidgets.entitlements`
 
-### Step 5: Embed the Widget in the Main App
+### Step 5: Enable Live Activities (Optional - iOS 16.2+)
+
+Live Activities provide real-time installation progress in the Dynamic Island and Lock Screen.
+
+1. Ensure `NSSupportsLiveActivities` is set to `YES` in the main app's `Info.plist` (already configured)
+2. Add the `InstallationLiveActivityWidget.swift` file to the PortalWidgets target
+3. The widget will automatically be included in the widget bundle
+
+To enable/disable Live Activities at runtime:
+- Go to Settings > Live Activity Settings in the app
+- Toggle "Enable Live Activities"
+- Configure appearance, colors, fonts, and animations
+- Test using the "Force Show Live Activity" button
+
+### Step 6: Embed the Widget in the Main App
 
 1. Select the **Feather** target
 2. Go to **General > Frameworks, Libraries, and Embedded Content**
 3. Click **+** and add `PortalWidgets.appex`
 4. Set **Embed** to "Embed & Sign"
 
-### Step 6: Update URL Scheme Handling
+### Step 7: Update URL Scheme Handling
 
 Ensure your main app handles these URL schemes for widget deep links:
 - `portal://add-source` - Opens the add source view
@@ -111,7 +125,32 @@ This is already implemented in `Storage+Certificate.swift` via the `updateWidget
 - **Sizes**: Small, Lock Screen (Rectangular)
 - **Features**: Shows certificate name and days until expiration
 
-## Troubleshooting
+### Installation Live Activity Widget (iOS 16.2+)
+- **Type**: Live Activity (Dynamic Island & Lock Screen)
+- **Features**: 
+  - Real-time installation progress tracking
+  - Shows download, unzip, signing, and installation stages
+  - Dynamic Island support with compact and expanded views
+  - Customizable appearance (colors, fonts, animations)
+  - Automatic updates during app installation
+  - Speed and ETA calculations
+- **Activation**: Automatically starts when downloading an app
+- **Testing**: Use "Force Show Live Activity" button in Settings > Live Activity Settings
+
+## File Structure
+
+```
+PortalWidgets/
+├── PortalWidgets.swift                    # Main widget code with @main
+├── InstallationLiveActivityWidget.swift   # Live Activity widget for installations
+├── Info.plist                             # Extension Info.plist
+├── PortalWidgets.entitlements
+├── Assets.xcassets/
+│   ├── Contents.json
+│   ├── AccentColor.colorset/
+│   └── WidgetBackground.colorset/
+└── README.md                              # This file
+```
 
 ### Widgets not appearing in widget gallery
 - Ensure the widget extension is properly embedded in the main app

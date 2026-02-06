@@ -1,6 +1,7 @@
 import Foundation
 import Combine
 import UIKit
+import ActivityKit
 
 // oh no, UIKit
 // MARK: - Download Errors
@@ -44,6 +45,7 @@ class Download: Identifiable, @unchecked Sendable {
 	let fileName: String
 	let onlyArchiving: Bool
 	let fromSourcesView: Bool  // Track if download is from Sources view
+	var liveActivityStarted: Bool = false  // Track if Live Activity was started for this download
     
     init(
 		id: String,
@@ -102,6 +104,14 @@ class DownloadManager: NSObject, ObservableObject {
         
         downloads.append(download)
         _updateBackgroundAudioState()
+		
+		// Start Live Activity if enabled
+		if #available(iOS 16.2, *), UserDefaults.standard.bool(forKey: "Feather.liveActivityEnabled") {
+			let appName = url.deletingPathExtension().lastPathComponent
+			LiveActivityManager.shared.startActivity(appName: appName, bundleId: "unknown")
+			download.liveActivityStarted = true
+		}
+		
         return download
     }
 	
@@ -132,6 +142,11 @@ class DownloadManager: NSObject, ObservableObject {
     func cancelDownload(_ download: Download) {
         download.task?.cancel()
         
+		// End Live Activity if started
+		if #available(iOS 16.2, *), download.liveActivityStarted {
+			LiveActivityManager.shared.endActivityWithCancellation()
+		}
+		
         if let index = downloads.firstIndex(where: { $0.id == download.id }) {
             downloads.remove(at: index)
             _updateBackgroundAudioState()
@@ -168,10 +183,29 @@ extension DownloadManager: URLSessionDownloadDelegate {
 		// ALWAYS show Install/Modify popup after successful download
 		let appName = url.deletingPathExtension().lastPathComponent
 		
+		// Update Live Activity to installing state
+		if #available(iOS 16.2, *), dl.liveActivityStarted {
+			Task {
+				await LiveActivityManager.shared.updateActivity(
+					progress: dl.progress,
+					bytesDownloaded: dl.bytesDownloaded,
+					totalBytes: dl.totalBytes,
+					status: .installing,
+					timeRemaining: nil,
+					speed: nil
+				)
+			}
+		}
+		
 		FR.handlePackageFile(url, download: dl) { err in
 			if err != nil {
 				HapticsManager.shared.error()
 				AppLogManager.shared.error("Failed to handle package file: \(err?.localizedDescription ?? "Unknown error")", category: "Download")
+				
+				// End Live Activity with error
+				if #available(iOS 16.2, *), dl.liveActivityStarted {
+					LiveActivityManager.shared.endActivityWithError()
+				}
 				
 				DispatchQueue.main.async {
 					// Post failure notification
@@ -189,6 +223,11 @@ extension DownloadManager: URLSessionDownloadDelegate {
 			} else {
 				HapticsManager.shared.success()
 				AppLogManager.shared.success("Successfully handled package file: \(url.lastPathComponent)", category: "Download")
+				
+				// End Live Activity with success
+				if #available(iOS 16.2, *), dl.liveActivityStarted {
+					LiveActivityManager.shared.endActivityWithSuccess()
+				}
 				
 				// Success - send notification if enabled
 				if UserDefaults.standard.bool(forKey: "Feather.notificationsEnabled") {
@@ -317,6 +356,25 @@ extension DownloadManager: URLSessionDownloadDelegate {
             download.bytesDownloaded = totalBytesWritten
             download.totalBytes = totalBytesExpectedToWrite
 			
+			// Update Live Activity if started
+			if #available(iOS 16.2, *), download.liveActivityStarted {
+				let speed = bytesWritten > 0 ? Double(bytesWritten) : nil
+				let timeRemaining = speed != nil && speed! > 0
+					? TimeInterval(Double(totalBytesExpectedToWrite - totalBytesWritten) / speed!)
+					: nil
+				
+				Task {
+					await LiveActivityManager.shared.updateActivity(
+						progress: download.progress,
+						bytesDownloaded: totalBytesWritten,
+						totalBytes: totalBytesExpectedToWrite,
+						status: .downloading,
+						timeRemaining: timeRemaining,
+						speed: speed
+					)
+				}
+			}
+			
 			// Post progress notification for manual downloads
 			if self.isManualDownload(download.id) {
 				NotificationCenter.default.post(
@@ -344,6 +402,11 @@ extension DownloadManager: URLSessionDownloadDelegate {
 		if let error = error {
 			let appName = download.fileName.replacingOccurrences(of: ".ipa", with: "").replacingOccurrences(of: ".tipa", with: "")
 			AppLogManager.shared.error("Download Failed: \(error.localizedDescription)", category: "Download")
+			
+			// End Live Activity with error
+			if #available(iOS 16.2, *), download.liveActivityStarted {
+				LiveActivityManager.shared.endActivityWithError()
+			}
 			
 			// Post failure notification for manual downloads
 			if isManualDownload(download.id) {

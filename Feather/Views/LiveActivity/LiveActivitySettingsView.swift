@@ -1,25 +1,44 @@
 import SwiftUI
 import NimbleViews
+import ActivityKit
 
 /// Settings view for customizing Live Activity appearance and behavior
 struct LiveActivitySettingsView: View {
-    @AppStorage("liveActivityStyle") private var style: LiveActivityStyle = .modern
-    @AppStorage("liveActivityShowTimeRemaining") private var showTimeRemaining: Bool = true
-    @AppStorage("liveActivityShowIcon") private var showIcon: Bool = true
-    @AppStorage("liveActivityEnabled") private var liveActivityEnabled: Bool = true
+    @AppStorage("Feather.liveActivityEnabled") private var liveActivityEnabled: Bool = true
     
-    @State private var showPreview = false
+    // Live Activity settings managed by LiveActivityManager
+    @State private var settings: LiveActivitySettings = LiveActivitySettings.default
+    @State private var showColorPicker = false
+    @State private var isShowingMockActivity = false
     
     var body: some View {
         NBNavigationView("Live Activity Settings") {
             List {
                 enabledSection
-                styleSection
-                displayOptionsSection
-                previewSection
+                appearanceSection
+                progressSection
+                detailsSection
+                testingSection
                 infoSection
             }
             .listStyle(.insetGrouped)
+        }
+        .onAppear {
+            loadSettings()
+        }
+    }
+    
+    // MARK: - Load/Save Settings
+    
+    private func loadSettings() {
+        if #available(iOS 16.2, *) {
+            settings = LiveActivityManager.shared.loadSettings()
+        }
+    }
+    
+    private func saveSettings() {
+        if #available(iOS 16.2, *) {
+            LiveActivityManager.shared.saveSettings(settings)
         }
     }
     
@@ -48,15 +67,15 @@ struct LiveActivitySettingsView: View {
             Text("Status")
                 .font(.system(size: 11, weight: .semibold))
         } footer: {
-            if #available(iOS 16.1, *) {
-                Text("Live Activities require iOS 16.1 or later.")
+            if #available(iOS 16.2, *) {
+                Text("Live Activities require iOS 16.2 or later for Dynamic Island support.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             } else {
                 HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.orange)
-                    Text("Live Activities are not available on this iOS version. Requires iOS 16.1+")
+                    Text("Live Activities are not available on this iOS version. Requires iOS 16.2+")
                 }
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -64,90 +83,296 @@ struct LiveActivitySettingsView: View {
         }
     }
     
-    private var styleSection: some View {
+    private var appearanceSection: some View {
         Section {
-            ForEach(LiveActivityStyle.allCases, id: \.self) { activityStyle in
+            // Background Texture
+            Picker("Background", selection: $settings.backgroundTexture) {
+                ForEach(LiveActivitySettings.BackgroundTexture.allCases, id: \.self) { texture in
+                    Text(texture.rawValue).tag(texture)
+                }
+            }
+            .onChange(of: settings.backgroundTexture) { _ in saveSettings() }
+            
+            // Font Family
+            Picker("Font", selection: $settings.fontFamily) {
+                ForEach(LiveActivitySettings.FontFamily.allCases, id: \.self) { family in
+                    Text(family.rawValue).tag(family)
+                }
+            }
+            .onChange(of: settings.fontFamily) { _ in saveSettings() }
+            
+            // Font Weight
+            Picker("Font Weight", selection: $settings.fontWeight) {
+                ForEach(LiveActivitySettings.FontWeightOption.allCases, id: \.self) { weight in
+                    Text(weight.rawValue).tag(weight)
+                }
+            }
+            .onChange(of: settings.fontWeight) { _ in saveSettings() }
+            
+            // Accent Color Button
+            Button {
+                showColorPicker = true
+                HapticsManager.shared.light()
+            } label: {
+                HStack {
+                    Text("Accent Color")
+                        .foregroundColor(.primary)
+                    Spacer()
+                    Circle()
+                        .fill(settings.accentColor.color)
+                        .frame(width: 24, height: 24)
+                }
+            }
+        } header: {
+            Text("Appearance")
+                .font(.system(size: 11, weight: .semibold))
+        } footer: {
+            Text("Customize the visual style of Live Activities")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+        .sheet(isPresented: $showColorPicker) {
+            ColorPickerView(selectedColor: $settings.accentColor, onDismiss: saveSettings)
+        }
+    }
+    
+    private var progressSection: some View {
+        Section {
+            // Progress Bar Style
+            Picker("Progress Style", selection: $settings.progressBarStyle) {
+                ForEach(LiveActivitySettings.ProgressBarStyle.allCases, id: \.self) { style in
+                    Text(style.rawValue).tag(style)
+                }
+            }
+            .onChange(of: settings.progressBarStyle) { _ in saveSettings() }
+            
+            // Icon Size
+            Picker("Icon Size", selection: $settings.iconSize) {
+                ForEach(LiveActivitySettings.IconSize.allCases, id: \.self) { size in
+                    Text(size.rawValue).tag(size)
+                }
+            }
+            .onChange(of: settings.iconSize) { _ in saveSettings() }
+            
+            // Animation Style
+            Picker("Animation", selection: $settings.animationStyle) {
+                ForEach(LiveActivitySettings.AnimationStyle.allCases, id: \.self) { animation in
+                    Text(animation.rawValue).tag(animation)
+                }
+            }
+            .onChange(of: settings.animationStyle) { _ in saveSettings() }
+        } header: {
+            Text("Progress Display")
+                .font(.system(size: 11, weight: .semibold))
+        } footer: {
+            Text("Configure how progress is displayed")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    private var detailsSection: some View {
+        Section {
+            // Detail Density
+            Picker("Detail Level", selection: $settings.detailDensity) {
+                ForEach(LiveActivitySettings.DetailDensity.allCases, id: \.self) { density in
+                    Text(density.rawValue).tag(density)
+                }
+            }
+            .onChange(of: settings.detailDensity) { _ in saveSettings() }
+        } header: {
+            Text("Details")
+                .font(.system(size: 11, weight: .semibold))
+        } footer: {
+            Text("Control how much information is shown")
+                .font(.caption)
+                .foregroundColor(.secondary)
+        }
+    }
+    
+    private var testingSection: some View {
+        Section {
+            if #available(iOS 16.2, *) {
                 Button {
-                    withAnimation {
-                        style = activityStyle
-                        HapticsManager.shared.light()
-                    }
+                    HapticsManager.shared.light()
+                    isShowingMockActivity = true
+                    LiveActivityManager.shared.startMockActivity()
                 } label: {
                     HStack(spacing: 12) {
-                        Image(systemName: activityStyle.icon)
+                        Image(systemName: "play.circle.fill")
                             .font(.system(size: 17, weight: .medium))
-                            .foregroundStyle(style == activityStyle ? .blue : .gray)
+                            .foregroundStyle(.purple)
                             .frame(width: 28, height: 28)
                         
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(activityStyle.rawValue)
+                            Text("Force Show Live Activity")
                                 .font(.body)
                                 .foregroundColor(.primary)
                             
-                            Text(activityStyle.description)
+                            Text("Test with mock installation data")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
                         
                         Spacer()
                         
-                        if style == activityStyle {
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundColor(.blue)
-                                .font(.system(size: 20))
+                        if isShowingMockActivity {
+                            ProgressView()
                         }
                     }
                     .padding(.vertical, 4)
                 }
                 .buttonStyle(.plain)
+                .disabled(isShowingMockActivity)
+            } else {
+                Text("Testing requires iOS 16.2+")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
         } header: {
-            Text("Style")
+            Text("Testing")
                 .font(.system(size: 11, weight: .semibold))
         } footer: {
-            Text("Choose how installation progress appears in Live Activities")
+            Text("Test your Live Activity settings with a mock installation. The activity will automatically complete after a few seconds.")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-    }
-    
-    private var displayOptionsSection: some View {
-        Section {
-            Toggle(isOn: $showIcon) {
-                HStack(spacing: 12) {
-                    Image(systemName: "app.badge")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(.blue)
-                        .frame(width: 28, height: 28)
-                    
-                    Text("Show App Icon")
-                        .font(.body)
+        .onChange(of: isShowingMockActivity) { newValue in
+            if newValue {
+                // Reset after 12 seconds (mock takes ~11 seconds)
+                DispatchQueue.main.asyncAfter(deadline: .now() + 12) {
+                    isShowingMockActivity = false
                 }
             }
+        }
+    }
+    
+    private var infoSection: some View {
+        Section {
+            LiveActivityInfoRow(
+                icon: "iphone",
+                title: "Dynamic Island",
+                description: "On iPhone 14 Pro and later, Live Activities appear in the Dynamic Island"
+            )
             
-            Toggle(isOn: $showTimeRemaining) {
-                HStack(spacing: 12) {
-                    Image(systemName: "clock.fill")
-                        .font(.system(size: 17, weight: .medium))
-                        .foregroundStyle(.blue)
-                        .frame(width: 28, height: 28)
-                    
-                    Text("Show Time Remaining")
-                        .font(.body)
-                }
-            }
+            LiveActivityInfoRow(
+                icon: "lock.fill",
+                title: "Lock Screen",
+                description: "Live Activities also appear on the Lock Screen for all supported devices"
+            )
+            
+            LiveActivityInfoRow(
+                icon: "app.badge.fill",
+                title: "Background Updates",
+                description: "Live Activities can be updated even when Portal is in the background"
+            )
         } header: {
-            Text("Display Options")
+            Text("About Live Activities")
                 .font(.system(size: 11, weight: .semibold))
-        } footer: {
-            Text("Customize what information is displayed in Live Activities")
-                .font(.caption)
-                .foregroundColor(.secondary)
         }
     }
+}
+
+// MARK: - Color Picker View
+
+struct ColorPickerView: View {
+    @Binding var selectedColor: CodableColor
+    let onDismiss: () -> Void
+    @Environment(\.dismiss) private var dismiss
     
-    private var previewSection: some View {
-        Section {
+    @State private var color: Color
+    
+    init(selectedColor: Binding<CodableColor>, onDismiss: @escaping () -> Void) {
+        self._selectedColor = selectedColor
+        self.onDismiss = onDismiss
+        self._color = State(initialValue: selectedColor.wrappedValue.color)
+    }
+    
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                ColorPicker("Select Accent Color", selection: $color, supportsOpacity: false)
+                    .padding()
+                
+                Text("Preview")
+                    .font(.headline)
+                
+                HStack(spacing: 12) {
+                    Circle()
+                        .fill(color)
+                        .frame(width: 50, height: 50)
+                    
+                    VStack(alignment: .leading) {
+                        Text("Sample Text")
+                            .foregroundColor(color)
+                            .font(.headline)
+                        
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(color)
+                            .frame(height: 6)
+                    }
+                }
+                .padding()
+                .background(Color(uiColor: .secondarySystemBackground))
+                .cornerRadius(12)
+                .padding(.horizontal)
+                
+                Spacer()
+            }
+            .navigationTitle("Accent Color")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        // Convert Color to CodableColor (approximation)
+                        selectedColor = CodableColor(color: color)
+                        onDismiss()
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Supporting Views
+
+private struct LiveActivityInfoRow: View {
+    let icon: String
+    let title: String
+    let description: String
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(.blue)
+                .frame(width: 28, height: 28)
+            
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.body)
+                    .foregroundColor(.primary)
+                
+                Text(description)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
+// MARK: - Preview
+#Preview {
+    LiveActivitySettingsView()
+}
             Button {
                 showPreview.toggle()
                 HapticsManager.shared.light()
@@ -230,222 +455,6 @@ private struct LiveActivityInfoRow: View {
             }
         }
         .padding(.vertical, 4)
-    }
-}
-
-/// Preview view for Live Activity styles
-struct LiveActivityPreviewView: View {
-    @Environment(\.dismiss) private var dismiss
-    let style: LiveActivityStyle
-    let showTimeRemaining: Bool
-    let showIcon: Bool
-    
-    @State private var progress: Double = 0.0
-    @State private var isAnimating = false
-    
-    var body: some View {
-        NavigationStack {
-            VStack(spacing: 24) {
-                Text("Live Activity Preview")
-                    .font(.title2.bold())
-                    .padding(.top, 20)
-                
-                Text("This is how your Live Activity will appear during app installations")
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-                
-                Spacer()
-                
-                // Mock Live Activity preview
-                mockLiveActivityView
-                    .padding()
-                    .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(Color(uiColor: .secondarySystemBackground))
-                            .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
-                    )
-                    .padding(.horizontal, 20)
-                
-                Spacer()
-                
-                Button {
-                    withAnimation(.easeInOut(duration: 3.0)) {
-                        isAnimating.toggle()
-                        progress = isAnimating ? 1.0 : 0.0
-                    }
-                    HapticsManager.shared.light()
-                } label: {
-                    HStack {
-                        Image(systemName: isAnimating ? "pause.fill" : "play.fill")
-                        Text(isAnimating ? "Reset Animation" : "Start Animation")
-                    }
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
-                    .cornerRadius(12)
-                }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 20)
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-        }
-        .onAppear {
-            progress = 0.45
-        }
-    }
-    
-    private var mockLiveActivityView: some View {
-        Group {
-            switch style {
-            case .modern:
-                modernMockView
-            case .compact:
-                compactMockView
-            case .minimal:
-                minimalMockView
-            }
-        }
-    }
-    
-    private var modernMockView: some View {
-        HStack(spacing: 12) {
-            if showIcon {
-                appIconPlaceholder
-            }
-            
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Portal")
-                    .font(.system(size: 14, weight: .semibold))
-                
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 10))
-                        .foregroundColor(.blue)
-                    
-                    Text("Downloading")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
-                }
-                
-                progressBar
-                
-                HStack {
-                    Text("45 MB of 100 MB")
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    if showTimeRemaining {
-                        Text("2 min")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-            
-            Text(String(format: "%.0f%%", progress * 100))
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundColor(.blue)
-        }
-        .padding(12)
-    }
-    
-    private var compactMockView: some View {
-        HStack(spacing: 10) {
-            if showIcon {
-                appIconPlaceholder
-                    .frame(width: 32, height: 32)
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Portal")
-                    .font(.system(size: 13, weight: .semibold))
-                
-                progressBar
-                
-                HStack {
-                    Text("Downloading")
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    Text(String(format: "%.0f%%", progress * 100))
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(.blue)
-                }
-            }
-        }
-        .padding(10)
-    }
-    
-    private var minimalMockView: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Text("Portal")
-                    .font(.system(size: 12, weight: .semibold))
-                
-                Spacer()
-                
-                Text(String(format: "%.0f%%", progress * 100))
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.blue)
-            }
-            
-            progressBar
-        }
-        .padding(8)
-    }
-    
-    private var appIconPlaceholder: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 8)
-                .fill(
-                    LinearGradient(
-                        colors: [.blue.opacity(0.6), .purple.opacity(0.6)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-            
-            Image(systemName: "app.badge.fill")
-                .font(.system(size: 20))
-                .foregroundColor(.white)
-        }
-        .frame(width: 40, height: 40)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-    
-    private var progressBar: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.gray.opacity(0.2))
-                
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(
-                        LinearGradient(
-                            colors: [.blue.opacity(0.8), .blue],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(width: geometry.size.width * CGFloat(progress))
-            }
-        }
-        .frame(height: 6)
     }
 }
 
