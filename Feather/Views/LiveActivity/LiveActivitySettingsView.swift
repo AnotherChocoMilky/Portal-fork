@@ -151,28 +151,28 @@ struct LiveActivitySettingsView: View {
 
     @ViewBuilder
     private var glassSettingsSubSection: some View {
-        Group {
-            Toggle(isOn: $settings.glassSettings.isTinted) {
-                Label("Tinted Glass", systemImage: "drop.fill")
-            }
-            .onChange(of: settings.glassSettings.isTinted) { _ in saveSettings() }
+        Toggle(isOn: $settings.glassSettings.isTinted) {
+            Label("Tinted Glass", systemImage: "drop.fill")
+        }
+        .onChange(of: settings.glassSettings.isTinted) { _ in saveSettings() }
+        .padding(.leading, 12)
 
-            VStack(alignment: .leading, spacing: 8) {
-                Label("Intensity (\(Int(settings.glassSettings.intensity * 100))%)", systemImage: "slider.horizontal.3")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Slider(value: $settings.glassSettings.intensity, in: 0...1) { _ in
-                    saveSettings()
-                }
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Intensity (\(Int(settings.glassSettings.intensity * 100))%)", systemImage: "slider.horizontal.3")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Slider(value: $settings.glassSettings.intensity, in: 0...1) { _ in
+                saveSettings()
             }
+        }
+        .padding(.leading, 12)
 
-            VStack(alignment: .leading, spacing: 8) {
-                Label("Glass Effect Amount (\(Int(settings.glassSettings.glassEffectAmount * 100))%)", systemImage: "sparkles")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Slider(value: $settings.glassSettings.glassEffectAmount, in: 0...1) { _ in
-                    saveSettings()
-                }
+        VStack(alignment: .leading, spacing: 8) {
+            Label("Glass Effect Amount (\(Int(settings.glassSettings.glassEffectAmount * 100))%)", systemImage: "sparkles")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Slider(value: $settings.glassSettings.glassEffectAmount, in: 0...1) { _ in
+                saveSettings()
             }
         }
         .padding(.leading, 12)
@@ -180,30 +180,30 @@ struct LiveActivitySettingsView: View {
 
     @ViewBuilder
     private var gradientSettingsSubSection: some View {
-        Group {
-            Stepper(value: $settings.gradientSettings.colorCount, in: 2...5) {
-                Label("Colors: \(settings.gradientSettings.colorCount)", systemImage: "paintpalette")
-            }
-            .onChange(of: settings.gradientSettings.colorCount) { _ in saveSettings() }
-
-            Picker(selection: $settings.gradientSettings.direction) {
-                ForEach(LiveActivitySettings.GradientDirection.allCases, id: \.self) { dir in
-                    Text(dir.rawValue).tag(dir)
-                }
-            } label: {
-                Label("Direction", systemImage: "arrow.up.and.down.and.arrow.left.and.right")
-            }
-            .onChange(of: settings.gradientSettings.direction) { _ in saveSettings() }
-
-            Picker(selection: $settings.gradientSettings.pattern) {
-                ForEach(LiveActivitySettings.GradientPattern.allCases, id: \.self) { pattern in
-                    Text(pattern.rawValue).tag(pattern)
-                }
-            } label: {
-                Label("Pattern", systemImage: "circle.grid.2x2")
-            }
-            .onChange(of: settings.gradientSettings.pattern) { _ in saveSettings() }
+        Stepper(value: $settings.gradientSettings.colorCount, in: 2...5) {
+            Label("Colors: \(settings.gradientSettings.colorCount)", systemImage: "paintpalette")
         }
+        .onChange(of: settings.gradientSettings.colorCount) { _ in saveSettings() }
+        .padding(.leading, 12)
+
+        Picker(selection: $settings.gradientSettings.direction) {
+            ForEach(LiveActivitySettings.GradientDirection.allCases, id: \.self) { dir in
+                Text(dir.rawValue).tag(dir)
+            }
+        } label: {
+            Label("Direction", systemImage: "arrow.up.and.down.and.arrow.left.and.right")
+        }
+        .onChange(of: settings.gradientSettings.direction) { _ in saveSettings() }
+        .padding(.leading, 12)
+
+        Picker(selection: $settings.gradientSettings.pattern) {
+            ForEach(LiveActivitySettings.GradientPattern.allCases, id: \.self) { pattern in
+                Text(pattern.rawValue).tag(pattern)
+            }
+        } label: {
+            Label("Pattern", systemImage: "circle.grid.2x2")
+        }
+        .onChange(of: settings.gradientSettings.pattern) { _ in saveSettings() }
         .padding(.leading, 12)
     }
     
