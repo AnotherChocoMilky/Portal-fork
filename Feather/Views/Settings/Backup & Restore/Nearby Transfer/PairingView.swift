@@ -160,10 +160,10 @@ struct PairingView: View {
                     Text("Choose How To Connect Your Devices:")
                         .font(.caption.weight(.semibold))
                     
-                    Text("• Nearby pairing works automatically when both devices are on the same WiFi network")
+                    Text("• Nearby Pairing works automatically when both devices are on the same WiFi network for a seamless experience.")
                         .font(.caption)
                     
-                    Text("• Remote pairing uses a secure 6-digit code and works over the internet")
+                    Text("• Remote Pairing uses a secure 6 digit code generated with your WiFi and works over the internet to other devices.")
                         .font(.caption)
                 }
                 .foregroundStyle(.secondary)
@@ -386,7 +386,7 @@ struct PairingView: View {
                 HStack(alignment: .top, spacing: 12) {
                     Image(systemName: "info.circle.fill")
                         .foregroundStyle(.blue)
-                    Text("Choose Send on your old device and keep Portal open until finished.")
+                    Text("Choose Send on your other device and keep Portal open until finished.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -403,7 +403,7 @@ struct PairingView: View {
                 HStack(alignment: .top, spacing: 12) {
                     Image(systemName: "info.circle.fill")
                         .foregroundStyle(.blue)
-                    Text("Choose Receive on your new device and wait for the sender.")
+                    Text("Choose Receive on your other device and wait for the sender.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -694,7 +694,7 @@ struct PairingView: View {
         // Show completion alert
         let alert = UIAlertController(
             title: .localized("Backup Applied"),
-            message: .localized("Backup applied. Feather must restart to finalize changes."),
+            message: .localized("Backup applied. Portal must restart to finalize changes."),
             preferredStyle: .alert
         )
 
@@ -756,7 +756,7 @@ struct RestoreOptionsView: View {
                                     .font(.headline)
                                     .foregroundStyle(.primary)
                             }
-                            Text("Keep existing data and add backup contents. Conflicts will be resolved automatically.")
+                            Text("Keep existing data and add backup contents. Conflicts will be resolved automatically using the Auto Fix tool.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -774,7 +774,7 @@ struct RestoreOptionsView: View {
                                     .font(.headline)
                                     .foregroundStyle(.primary)
                             }
-                            Text("Remove existing data and restore from backup. This will overwrite all your current settings and apps.")
+                            Text("Remove existing data and restore from backup. This will overwrite all your current settings and apps. Be careful on what you choose.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -856,7 +856,7 @@ struct RestoreOptionsView: View {
                         isRestoring = false
                         UIAlertController.showAlertWithOk(
                             title: .localized("Invalid Backup"),
-                            message: .localized("The received backup is invalid or corrupted. Please run Nearby Transfer again or try manuallly.")
+                            message: .localized("The received backup is invalid or corrupted. Please run Nearby Share again or try manuallly.")
                         )
                     }
                     return

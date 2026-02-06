@@ -21,7 +21,8 @@ struct PortalCertHandler {
         case fileNotFound
         case zipCreationFailed
         case zipExtractionFailed
-        
+
+        // error strings that will display to user
         var errorDescription: String? {
             switch self {
             case .invalidFormat:

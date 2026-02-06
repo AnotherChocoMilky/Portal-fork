@@ -259,7 +259,7 @@ struct TransferProgressView: View {
                 Button(action: onRetry) {
                     HStack(spacing: 8) {
                         Image(systemName: "arrow.clockwise")
-                        Text("Retry Transfer")
+                        Text("Try Again")
                     }
                     .font(.headline)
                     .frame(maxWidth: .infinity)

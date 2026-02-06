@@ -225,7 +225,7 @@ struct SelfBackupRestoreView: View {
             // Info Section
             Section {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(.localized("Backups include:"))
+                    Text(.localized("Backups Include:"))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                     
@@ -562,7 +562,7 @@ class SelfBackupRestoreViewModel: ObservableObject {
             operationProgress = 1.0
             currentOperation = "Backup Completed"
             
-            successMessage = "Backup created successfully!"
+            successMessage = "Backup Created Successfully!"
             showSuccess = true
             
         } catch {
@@ -849,7 +849,7 @@ class SelfBackupRestoreViewModel: ObservableObject {
         // Verify marker file
         let markerFile = directory.appendingPathComponent(kBackupMarkerFilename)
         guard fileManager.fileExists(atPath: markerFile.path) else {
-            throw NSError(domain: "SelfBackup", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid backup file"])
+            throw NSError(domain: "SelfBackup", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid Backup File"])
         }
         
         // Restore certificates
@@ -1087,7 +1087,7 @@ struct LegacyRestoreSelectionView: View {
                         .font(.headline)
                         .foregroundStyle(.primary)
                     
-                    Text("Create a backup first before you can restore")
+                    Text("Create a backup first before you can restore.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)

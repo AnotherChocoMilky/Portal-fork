@@ -90,7 +90,7 @@ struct NearbyTransferView: View {
                     icon: "speedometer",
                     iconColor: .orange,
                     title: .localized("Fast & Reliable"),
-                    description: .localized("Direct device-to-device transfer with real-time progress monitoring and speed reporting.")
+                    description: .localized("Direct device to device transfer with real time progress monitoring and speed reporting.")
                 )
             } header: {
                 AppearanceSectionHeader(title: String.localized("Features"), icon: "star.fill")
@@ -105,12 +105,12 @@ struct NearbyTransferView: View {
                 
                 requirementRow(
                     icon: "iphone.gen2",
-                    text: "Both devices must have the latest version of Portal installed."
+                    text: "Both devices must have the latest version of Portal installed. If not, it can cause compatibility issues."
                 )
                 
                 requirementRow(
                     icon: "battery.100",
-                    text: "Recommended to have sufficient battery or connect to power."
+                    text: "Recommended to have sufficient battery or connect to power since both devices will be actively transferring data."
                 )
             } header: {
                 AppearanceSectionHeader(title: String.localized("Requirements"), icon: "checkmark.circle.fill")

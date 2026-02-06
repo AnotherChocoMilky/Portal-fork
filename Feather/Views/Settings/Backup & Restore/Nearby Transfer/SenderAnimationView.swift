@@ -312,7 +312,7 @@ struct SenderAnimationView: View {
     private var statusTitle: String {
         switch state {
         case .idle:
-            return "Ready To Send"
+            return "Ready To Send!"
         case .discovering:
             return "Finding Receiver..."
         case .connecting:
@@ -335,7 +335,7 @@ struct SenderAnimationView: View {
         case .connecting:
             return "Establishing Secure Connection"
         case .transferring:
-            return "Transferring your backup data"
+            return "Transferring Your Backup Data"
         case .completed:
             return "Your Backup Has Been Sent"
         case .failed(let error):

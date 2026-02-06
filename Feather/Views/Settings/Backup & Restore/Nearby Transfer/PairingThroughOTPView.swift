@@ -205,7 +205,7 @@ struct PairingThroughOTPView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
         } header: {
-            AppearanceSectionHeader(title: String.localized("Your Code"), icon: "key.fill")
+            AppearanceSectionHeader(title: String.localized("Secure Code"), icon: "key.fill")
         } footer: {
             Text("Share this code with the receiving device. The code will expire in \(viewModel.otpExpirationSeconds) seconds for security.")
                 .font(.caption)
@@ -471,7 +471,7 @@ struct PairingThroughOTPView: View {
                 .tint(viewModel.trustDevice ? .green : .gray)
             } footer: {
                 if !viewModel.trustDevice {
-                    Text("You must trust this device before beginning the transfer.")
+                    Text("You must trust this device before beginning the backup transfer, trust it then try again.")
                         .font(.caption)
                         .foregroundStyle(.orange)
                 }
@@ -674,7 +674,7 @@ class OTPPairingViewModel: ObservableObject {
                 self.errorMessage = nil
             } else {
                 // No matching OTP found
-                self.errorMessage = "Invalid or expired code. Please try again."
+                self.errorMessage = "Invalid or expired code. Please get your sender's device to generate it again."
                 self.isValidating = false
                 self.connectedPeerInfo = nil
                 

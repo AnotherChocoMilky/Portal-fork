@@ -44,7 +44,7 @@ struct NearbyShareIntroView: View {
                 .offset(y: animateContent ? 0 : 20)
             
             // Subtitle
-            Text("With Portal 2.3, use Nearby Share to quickly transfer your backups between devices on the same network.")
+            Text("New feature on Portal 2.3, use Nearby Share to quickly transfer your backups between devices on the same network.")
                 .font(.system(size: 16, weight: .medium, design: .rounded))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)

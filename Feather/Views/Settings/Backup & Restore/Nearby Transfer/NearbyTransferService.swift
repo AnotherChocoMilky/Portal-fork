@@ -38,7 +38,7 @@ enum TransferMode {
 // MARK: - Nearby Transfer Service
 class NearbyTransferService: NSObject, ObservableObject {
     static let serviceType = "portal-backup"
-    private let password = "PortalSecureTransfer2026" // Default password for encryption
+    private let password = "PortalNearbyShareSecureTransferService2026" 
     
     @Published var state: TransferState = .idle
     @Published var discoveredPeers: [MCPeerID] = []

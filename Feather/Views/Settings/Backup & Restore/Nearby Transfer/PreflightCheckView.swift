@@ -82,7 +82,7 @@ struct PreflightCheckView: View {
                     } header: {
                         AppearanceSectionHeader(title: String.localized("Detected Issues"), icon: "exclamationmark.triangle")
                     } footer: {
-                        Text("These issues will not prevent transfer, but may require attention after restoration.")
+                        Text("These issues will not prevent the transfer, but may require attention after restoration so fix them before you continue.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

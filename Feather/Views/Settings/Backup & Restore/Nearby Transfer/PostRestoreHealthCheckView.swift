@@ -107,7 +107,7 @@ struct PostRestoreHealthCheckView: View {
                         }
                         .disabled(viewModel.isFixing)
                     } footer: {
-                        Text("This will attempt to repair signing issues, expired certificates, and profile mismatches using existing logic.")
+                        Text("This will attempt to repair signing issues, expired certificates, and profile mismatches using the built in Auto Fix tool.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -148,7 +148,7 @@ struct PostRestoreHealthCheckView: View {
         .navigationTitle("Health Check")
         .navigationBarTitleDisplayMode(.inline)
         .interactiveDismissDisabled(viewModel.isScanning || viewModel.isFixing || showRestartDialog)
-        .alert("Backup Applied", isPresented: $showRestartDialog) {
+        .alert("Backup Applied!", isPresented: $showRestartDialog) {
             Button("Restart Now", role: .destructive) {
                 HapticsManager.shared.success()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
