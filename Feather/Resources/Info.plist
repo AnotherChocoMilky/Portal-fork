@@ -289,6 +289,8 @@
 		<string>_portal-backup._tcp</string>
 		<string>_portal-backup._udp</string>
 	</array>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
