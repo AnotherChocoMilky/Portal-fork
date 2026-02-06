@@ -128,6 +128,8 @@ struct NearbyShareIntroView: View {
         Button {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 hasSeenNearbyShareIntro = true
+                UserDefaults.standard.set(true, forKey: "hasSeenNearbyShareIntro")
+                UserDefaults.standard.synchronize()
             }
             HapticsManager.shared.success()
             dismiss()
@@ -416,6 +418,8 @@ struct NearbyShareIntroViewLegacy: View {
         Button {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
                 hasSeenNearbyShareIntro = true
+                UserDefaults.standard.set(true, forKey: "hasSeenNearbyShareIntro")
+                UserDefaults.standard.synchronize()
             }
             HapticsManager.shared.success()
             dismiss()

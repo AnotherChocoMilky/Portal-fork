@@ -507,6 +507,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		ResetView.clearWorkCache()
 		_addDefaultCertificates()
 		
+		// Initialize AutoSignManager
+		AutoSignManager.shared.setupObservers()
+
 		// Initialize source ordering (one-time migration)
 		Storage.shared.initializeSourceOrders()
 		

@@ -600,6 +600,20 @@ struct ModernSigningOptionsCard: View {
             
             Divider().padding(.leading, 60)
             
+            // Auto Sign After Download
+            optionToggleRow(
+                icon: "bolt.badge.a.fill",
+                iconColor: .orange,
+                title: "Auto Sign After Download",
+                subtitle: "Automatically sign and install apps after download",
+                isOn: Binding(
+                    get: { UserDefaults.standard.bool(forKey: "Feather.autoSignAfterDownload") },
+                    set: { UserDefaults.standard.set($0, forKey: "Feather.autoSignAfterDownload") }
+                )
+            )
+
+            Divider().padding(.leading, 60)
+
             // Install After Signing
             optionToggleRow(
                 icon: "arrow.down.circle.fill",

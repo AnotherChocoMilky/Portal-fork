@@ -323,15 +323,6 @@ struct LibraryView: View {
                                         _selectedSigningAppPresenting = AnyApp(base: app)
                                 }
                         }
-                        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.showInstallModifyPopup"))) { notification in
-                                // When app is downloaded from Sources view, show Install/Modify dialog
-                                if let _ = notification.object as? URL {
-                                        // Get the latest imported app (just downloaded)
-                                        if let latestApp = Storage.shared.getLatestImportedApp() {
-                                                _selectedInstallModifyAppPresenting = AnyApp(base: latestApp)
-                                        }
-                                }
-                        }
                         .overlay {
                                 if _showImportAnimation {
                                         ZStack {

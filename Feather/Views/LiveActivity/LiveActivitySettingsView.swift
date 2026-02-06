@@ -86,43 +86,82 @@ struct LiveActivitySettingsView: View {
     private var appearanceSection: some View {
         Section {
             // Background Texture
-            Picker("Background", selection: $settings.backgroundTexture) {
+            Picker(selection: $settings.backgroundTexture) {
                 ForEach(LiveActivitySettings.BackgroundTexture.allCases, id: \.self) { texture in
                     Text(texture.rawValue).tag(texture)
                 }
+            } label: {
+                Label("Background", systemImage: "square.3.layers.3d")
             }
             .onChange(of: settings.backgroundTexture) { _ in saveSettings() }
             
             // Font Family
-            Picker("Font", selection: $settings.fontFamily) {
+            Picker(selection: $settings.fontFamily) {
                 ForEach(LiveActivitySettings.FontFamily.allCases, id: \.self) { family in
                     Text(family.rawValue).tag(family)
                 }
+            } label: {
+                Label("Font", systemImage: "textformat")
             }
             .onChange(of: settings.fontFamily) { _ in saveSettings() }
             
             // Font Weight
-            Picker("Font Weight", selection: $settings.fontWeight) {
+            Picker(selection: $settings.fontWeight) {
                 ForEach(LiveActivitySettings.FontWeightOption.allCases, id: \.self) { weight in
                     Text(weight.rawValue).tag(weight)
                 }
+            } label: {
+                Label("Font Weight", systemImage: "bold")
             }
             .onChange(of: settings.fontWeight) { _ in saveSettings() }
             
-            // Accent Color Button
-            Button {
-                showColorPicker = true
-                HapticsManager.shared.light()
-            } label: {
-                HStack {
-                    Text("Accent Color")
-                        .foregroundColor(.primary)
-                    Spacer()
-                    Circle()
-                        .fill(settings.accentColor.color)
-                        .frame(width: 24, height: 24)
+            // Improved Accent Color UI
+            VStack(alignment: .leading, spacing: 12) {
+                Label("Accent Color", systemImage: "paintpalette.fill")
+                    .font(.body)
+
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 35))], spacing: 12) {
+                    let colors: [Color] = [.blue, .purple, .pink, .red, .orange, .yellow, .green, .mint, .cyan, .indigo, .gray]
+
+                    ForEach(colors, id: \.self) { color in
+                        ZStack {
+                            Circle()
+                                .fill(color)
+                                .frame(width: 30, height: 30)
+                                .onTapGesture {
+                                    settings.accentColor = CodableColor(color: color)
+                                    saveSettings()
+                                    HapticsManager.shared.light()
+                                }
+
+                            if isSameColor(settings.accentColor.color, color) {
+                                Circle()
+                                    .stroke(Color.primary, lineWidth: 2)
+                                    .frame(width: 36, height: 36)
+                            }
+                        }
+                        .frame(width: 40, height: 40)
+                    }
+
+                    // Custom Color Picker Button
+                    Button {
+                        showColorPicker = true
+                        HapticsManager.shared.light()
+                    } label: {
+                        ZStack {
+                            Circle()
+                                .fill(AngularGradient(colors: [.red, .yellow, .green, .blue, .purple, .red], center: .center))
+                                .frame(width: 30, height: 30)
+
+                            Image(systemName: "plus")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundColor(.white)
+                        }
+                    }
                 }
+                .padding(.vertical, 4)
             }
+            .padding(.vertical, 4)
         } header: {
             Text("Appearance")
                 .font(.system(size: 11, weight: .semibold))
@@ -136,36 +175,59 @@ struct LiveActivitySettingsView: View {
         }
     }
     
+    private func isSameColor(_ color1: Color, _ color2: Color) -> Bool {
+        // Simple comparison for predefined colors
+        color1 == color2
+    }
+
     private var progressSection: some View {
         Section {
             // Progress Bar Style
-            Picker("Progress Style", selection: $settings.progressBarStyle) {
+            Picker(selection: $settings.progressBarStyle) {
                 ForEach(LiveActivitySettings.ProgressBarStyle.allCases, id: \.self) { style in
                     Text(style.rawValue).tag(style)
                 }
+            } label: {
+                Label("Progress Style", systemImage: "progressbar.fill")
             }
             .onChange(of: settings.progressBarStyle) { _ in saveSettings() }
             
             // Icon Size
-            Picker("Icon Size", selection: $settings.iconSize) {
+            Picker(selection: $settings.iconSize) {
                 ForEach(LiveActivitySettings.IconSize.allCases, id: \.self) { size in
                     Text(size.rawValue).tag(size)
                 }
+            } label: {
+                Label("Icon Size", systemImage: "app.dashed")
             }
             .onChange(of: settings.iconSize) { _ in saveSettings() }
             
             // Animation Style
-            Picker("Animation", selection: $settings.animationStyle) {
+            Picker(selection: $settings.animationStyle) {
                 ForEach(LiveActivitySettings.AnimationStyle.allCases, id: \.self) { animation in
                     Text(animation.rawValue).tag(animation)
                 }
+            } label: {
+                Label("Animation", systemImage: "wand.and.stars")
             }
             .onChange(of: settings.animationStyle) { _ in saveSettings() }
+
+            // New Customization Toggles
+            Toggle(isOn: $settings.showEstimatedTime) {
+                Label("Show Estimated Time", systemImage: "clock.fill")
+            }
+            .onChange(of: settings.showEstimatedTime) { _ in saveSettings() }
+
+            Toggle(isOn: $settings.highFrequencyUpdates) {
+                Label("High Frequency Updates", systemImage: "bolt.horizontal.fill")
+            }
+            .onChange(of: settings.highFrequencyUpdates) { _ in saveSettings() }
+
         } header: {
             Text("Progress Display")
                 .font(.system(size: 11, weight: .semibold))
         } footer: {
-            Text("Configure how progress is displayed")
+            Text("Configure how progress is displayed and updated.")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -174,10 +236,12 @@ struct LiveActivitySettingsView: View {
     private var detailsSection: some View {
         Section {
             // Detail Density
-            Picker("Detail Level", selection: $settings.detailDensity) {
+            Picker(selection: $settings.detailDensity) {
                 ForEach(LiveActivitySettings.DetailDensity.allCases, id: \.self) { density in
                     Text(density.rawValue).tag(density)
                 }
+            } label: {
+                Label("Detail Level", systemImage: "list.bullet.indent")
             }
             .onChange(of: settings.detailDensity) { _ in saveSettings() }
         } header: {

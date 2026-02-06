@@ -12,6 +12,8 @@ struct LiveActivitySettings: Codable, Hashable {
     var iconSize: IconSize
     var detailDensity: DetailDensity
     var animationStyle: AnimationStyle
+    var showEstimatedTime: Bool
+    var highFrequencyUpdates: Bool
     
     static var `default`: LiveActivitySettings {
         LiveActivitySettings(
@@ -22,7 +24,9 @@ struct LiveActivitySettings: Codable, Hashable {
             progressBarStyle: .gradient,
             iconSize: .medium,
             detailDensity: .standard,
-            animationStyle: .smooth
+            animationStyle: .smooth,
+            showEstimatedTime: true,
+            highFrequencyUpdates: false
         )
     }
     
