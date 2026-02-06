@@ -18,7 +18,6 @@ struct LiveActivitySettingsView: View {
                 appearanceSection
                 progressSection
                 detailsSection
-                testingSection
                 infoSection
             }
             .listStyle(.insetGrouped)
@@ -85,6 +84,22 @@ struct LiveActivitySettingsView: View {
     
     private var appearanceSection: some View {
         Section {
+            // Accent Color
+            Button {
+                showColorPicker = true
+                HapticsManager.shared.light()
+            } label: {
+                HStack {
+                    Label("Accent Color", systemImage: "paintpalette.fill")
+                    Spacer()
+                    Circle()
+                        .fill(settings.accentColor.color)
+                        .frame(width: 20, height: 20)
+                        .overlay(Circle().stroke(Color.secondary, lineWidth: 1))
+                }
+            }
+            .foregroundStyle(.primary)
+
             // Background Texture
             Picker(selection: $settings.backgroundTexture) {
                 ForEach(LiveActivitySettings.BackgroundTexture.allCases, id: \.self) { texture in
@@ -95,6 +110,12 @@ struct LiveActivitySettingsView: View {
             }
             .onChange(of: settings.backgroundTexture) { _ in saveSettings() }
             
+            if settings.backgroundTexture == .glass {
+                glassSettingsSubSection
+            } else if settings.backgroundTexture == .gradient {
+                gradientSettingsSubSection
+            }
+
             // Font Family
             Picker(selection: $settings.fontFamily) {
                 ForEach(LiveActivitySettings.FontFamily.allCases, id: \.self) { family in
@@ -115,53 +136,6 @@ struct LiveActivitySettingsView: View {
             }
             .onChange(of: settings.fontWeight) { _ in saveSettings() }
             
-            // Improved Accent Color UI
-            VStack(alignment: .leading, spacing: 12) {
-                Label("Accent Color", systemImage: "paintpalette.fill")
-                    .font(.body)
-
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 35))], spacing: 12) {
-                    let colors: [Color] = [.blue, .purple, .pink, .red, .orange, .yellow, .green, .mint, .cyan, .indigo, .gray]
-
-                    ForEach(colors, id: \.self) { color in
-                        ZStack {
-                            Circle()
-                                .fill(color)
-                                .frame(width: 30, height: 30)
-                                .onTapGesture {
-                                    settings.accentColor = CodableColor(color: color)
-                                    saveSettings()
-                                    HapticsManager.shared.light()
-                                }
-
-                            if isSameColor(settings.accentColor.color, color) {
-                                Circle()
-                                    .stroke(Color.primary, lineWidth: 2)
-                                    .frame(width: 36, height: 36)
-                            }
-                        }
-                        .frame(width: 40, height: 40)
-                    }
-
-                    // Custom Color Picker Button
-                    Button {
-                        showColorPicker = true
-                        HapticsManager.shared.light()
-                    } label: {
-                        ZStack {
-                            Circle()
-                                .fill(AngularGradient(colors: [.red, .yellow, .green, .blue, .purple, .red], center: .center))
-                                .frame(width: 30, height: 30)
-
-                            Image(systemName: "plus")
-                                .font(.system(size: 12, weight: .bold))
-                                .foregroundColor(.white)
-                        }
-                    }
-                }
-                .padding(.vertical, 4)
-            }
-            .padding(.vertical, 4)
         } header: {
             Text("Appearance")
                 .font(.system(size: 11, weight: .semibold))
@@ -173,6 +147,64 @@ struct LiveActivitySettingsView: View {
         .sheet(isPresented: $showColorPicker) {
             ColorPickerView(selectedColor: $settings.accentColor, onDismiss: saveSettings)
         }
+    }
+
+    @ViewBuilder
+    private var glassSettingsSubSection: some View {
+        Group {
+            Toggle(isOn: $settings.glassSettings.isTinted) {
+                Label("Tinted Glass", systemImage: "drop.fill")
+            }
+            .onChange(of: settings.glassSettings.isTinted) { _ in saveSettings() }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Intensity (\(Int(settings.glassSettings.intensity * 100))%)", systemImage: "slider.horizontal.3")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Slider(value: $settings.glassSettings.intensity, in: 0...1) { _ in
+                    saveSettings()
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Label("Glass Effect Amount (\(Int(settings.glassSettings.glassEffectAmount * 100))%)", systemImage: "sparkles")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Slider(value: $settings.glassSettings.glassEffectAmount, in: 0...1) { _ in
+                    saveSettings()
+                }
+            }
+        }
+        .padding(.leading, 12)
+    }
+
+    @ViewBuilder
+    private var gradientSettingsSubSection: some View {
+        Group {
+            Stepper(value: $settings.gradientSettings.colorCount, in: 2...5) {
+                Label("Colors: \(settings.gradientSettings.colorCount)", systemImage: "paintpalette")
+            }
+            .onChange(of: settings.gradientSettings.colorCount) { _ in saveSettings() }
+
+            Picker(selection: $settings.gradientSettings.direction) {
+                ForEach(LiveActivitySettings.GradientDirection.allCases, id: \.self) { dir in
+                    Text(dir.rawValue).tag(dir)
+                }
+            } label: {
+                Label("Direction", systemImage: "arrow.up.and.down.and.arrow.left.and.right")
+            }
+            .onChange(of: settings.gradientSettings.direction) { _ in saveSettings() }
+
+            Picker(selection: $settings.gradientSettings.pattern) {
+                ForEach(LiveActivitySettings.GradientPattern.allCases, id: \.self) { pattern in
+                    Text(pattern.rawValue).tag(pattern)
+                }
+            } label: {
+                Label("Pattern", systemImage: "circle.grid.2x2")
+            }
+            .onChange(of: settings.gradientSettings.pattern) { _ in saveSettings() }
+        }
+        .padding(.leading, 12)
     }
     
     private func isSameColor(_ color1: Color, _ color2: Color) -> Bool {
@@ -254,62 +286,6 @@ struct LiveActivitySettingsView: View {
         }
     }
     
-    private var testingSection: some View {
-        Section {
-            if #available(iOS 16.2, *) {
-                Button {
-                    HapticsManager.shared.light()
-                    isShowingMockActivity = true
-                    LiveActivityManager.shared.startMockActivity()
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "play.circle.fill")
-                            .font(.system(size: 17, weight: .medium))
-                            .foregroundStyle(.purple)
-                            .frame(width: 28, height: 28)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Force Show Live Activity")
-                                .font(.body)
-                                .foregroundColor(.primary)
-                            
-                            Text("Test with mock installation data")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
-                        
-                        Spacer()
-                        
-                        if isShowingMockActivity {
-                            ProgressView()
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-                .buttonStyle(.plain)
-                .disabled(isShowingMockActivity)
-            } else {
-                Text("Testing requires iOS 16.2+")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-        } header: {
-            Text("Testing")
-                .font(.system(size: 11, weight: .semibold))
-        } footer: {
-            Text("Test your Live Activity settings with a mock installation. The activity will automatically complete after a few seconds.")
-                .font(.caption)
-                .foregroundColor(.secondary)
-        }
-        .onChange(of: isShowingMockActivity) { newValue in
-            if newValue {
-                // Reset after 12 seconds (mock takes ~11 seconds)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 12) {
-                    isShowingMockActivity = false
-                }
-            }
-        }
-    }
     
     private var infoSection: some View {
         Section {
@@ -346,6 +322,8 @@ struct ColorPickerView: View {
     
     @State private var color: Color
     
+    private let presetColors: [Color] = [.blue, .purple, .pink, .red, .orange, .yellow, .green, .mint, .cyan, .indigo, .gray]
+
     init(selectedColor: Binding<CodableColor>, onDismiss: @escaping () -> Void) {
         self._selectedColor = selectedColor
         self.onDismiss = onDismiss
@@ -354,47 +332,70 @@ struct ColorPickerView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                ColorPicker("Select Accent Color", selection: $color, supportsOpacity: false)
-                    .padding()
-                
-                Text("Preview")
-                    .font(.headline)
-                
-                HStack(spacing: 12) {
-                    Circle()
-                        .fill(color)
-                        .frame(width: 50, height: 50)
-                    
-                    VStack(alignment: .leading) {
-                        Text("Sample Text")
-                            .foregroundColor(color)
-                            .font(.headline)
-                        
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(color)
-                            .frame(height: 6)
-                    }
+            List {
+                Section {
+                    ColorPicker("Custom Color", selection: $color, supportsOpacity: false)
+                } header: {
+                    Text("Custom")
                 }
-                .padding()
-                .background(Color(uiColor: .secondarySystemBackground))
-                .cornerRadius(12)
-                .padding(.horizontal)
                 
-                Spacer()
+                Section {
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 44))], spacing: 12) {
+                        ForEach(presetColors, id: \.self) { presetColor in
+                            ZStack {
+                                Circle()
+                                    .fill(presetColor)
+                                    .frame(width: 38, height: 38)
+                                    .onTapGesture {
+                                        color = presetColor
+                                        HapticsManager.shared.light()
+                                    }
+
+                                if color == presetColor {
+                                    Circle()
+                                        .stroke(Color.primary, lineWidth: 2)
+                                        .frame(width: 44, height: 44)
+                                }
+                            }
+                        }
+                    }
+                    .padding(.vertical, 8)
+                } header: {
+                    Text("Presets")
+                }
+                
+                Section {
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(color)
+                            .frame(width: 50, height: 50)
+
+                        VStack(alignment: .leading) {
+                            Text("Preview")
+                                .foregroundColor(color)
+                                .font(.headline)
+
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(color)
+                                .frame(height: 6)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                } header: {
+                    Text("Preview")
+                }
             }
             .navigationTitle("Accent Color")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        // Convert Color to CodableColor (approximation)
                         selectedColor = CodableColor(color: color)
                         onDismiss()
                         dismiss()

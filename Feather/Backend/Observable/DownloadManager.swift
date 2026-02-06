@@ -108,7 +108,7 @@ class DownloadManager: NSObject, ObservableObject {
 		// Start Live Activity if enabled
 		if #available(iOS 16.2, *), UserDefaults.standard.bool(forKey: "Feather.liveActivityEnabled") {
 			let appName = url.deletingPathExtension().lastPathComponent
-			LiveActivityManager.shared.startActivity(appName: appName, bundleId: "unknown")
+			LiveActivityManager.shared.startActivity(appName: appName, bundleId: "unknown", appVersion: nil)
 			download.liveActivityStarted = true
 		}
 		
