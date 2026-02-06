@@ -47,7 +47,7 @@ struct SettingsView: View {
                 HapticsManager.shared.success()
             }
         } message: {
-            Text(String.localized("Developer mode provides advanced debugging tools for app developers. This is NOT recommended for regular users as it may cause instability and crashes. Use at your own risk."))
+            Text(String.localized("Developer Mode provides advanced debugging tools for app developers. This is NOT recommended for regular users as it may cause instability and crashes. Use at your own risk."))
         }
         .onChange(of: navigateToUpdates.wrappedValue) { shouldNavigate in
             if shouldNavigate {
@@ -81,19 +81,19 @@ struct SettingsView: View {
                     UIApplication.shared.open(url)
                 }
             } label: {
-                SettingsRowContent(icon: "globe", title: String.localized("Language"), color: .blue)
+                SettingsRowContent(icon: "translate", title: String.localized("Language"), color: .blue)
             }
         } header: {
-            SettingsSectionHeader(title: String.localized("Preferences"), icon: "slider.horizontal.3")
+            SettingsSectionHeader(title: String.localized("Customizations"), icon: "slider.horizontal.3")
         }
     }
     
     private var signingSection: some View {
         Section {
-            SettingsRow(icon: "checkmark.seal.fill", title: String.localized("Certificates"), color: .blue, destination: CertificatesView())
-            SettingsRow(icon: "signature", title: String.localized("Signing Options"), color: .blue, destination: ConfigurationView())
+            SettingsRow(icon: "person.badge.key.fill", title: String.localized("Certificates"), color: .blue, destination: CertificatesView())
+            SettingsRow(icon: "signature", title: String.localized("Signing"), color: .blue, destination: ConfigurationView())
         } header: {
-            SettingsSectionHeader(title: String.localized("Signing"), icon: "lock.shield.fill")
+            SettingsSectionHeader(title: String.localized("Signing"), icon: "shield.lefthalf.filled.badge.checkmark")
         }
     }
     
@@ -106,9 +106,9 @@ struct SettingsView: View {
         Section {
             SettingsRow(icon: "folder.fill", title: String.localized("Files"), color: .blue, destination: FilesSettingsView())
             if !isEnterprise {
-                SettingsRow(icon: "internaldrive.fill", title: String.localized("Storage"), color: .blue, destination: ManageStorageView())
+                SettingsRow(icon: "externaldrive.fill.badge.person.crop", title: String.localized("Storage"), color: .blue, destination: ManageStorageView())
             }
-            SettingsRow(icon: "arrow.counterclockwise.circle.fill", title: String.localized("Backup & Restore"), color: .blue, destination: BackupRestoreView())
+            SettingsRow(icon: "externaldrive.fill.badge.timemachine", title: String.localized("Backup & Restore"), color: .blue, destination: BackupRestoreView())
 
             SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: _isFetchingFullData ? String.localized("Fetching Source Data...") : String.localized("Fetch Full Data"), color: Color("AccentColor"), isLoading: _isFetchingFullData) {
                 Task {
@@ -119,7 +119,7 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            SettingsSectionHeader(title: String.localized("Data & Storage"), icon: "externaldrive.fill")
+            SettingsSectionHeader(title: String.localized("App Managment"), icon: "externaldrive.fill")
         }
     }
     
@@ -150,9 +150,9 @@ struct SettingsView: View {
     
     private var developerSection: some View {
         Section {
-            SettingsRow(icon: "hammer.fill", title: String.localized("Debug"), color: .red, destination: DeveloperView())
+            SettingsRow(icon: "person.2.badge.gearshape.fill", title: String.localized("Debug"), color: .red, destination: DeveloperView())
         } header: {
-            SettingsSectionHeader(title: String.localized("Developer"), icon: "wrench.and.screwdriver.fill")
+            SettingsSectionHeader(title: String.localized("Internal"), icon: "wrench.and.screwdriver.fill")
         }
     }
     
