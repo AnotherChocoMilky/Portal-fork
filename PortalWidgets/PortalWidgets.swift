@@ -189,9 +189,8 @@ struct PortalWidgetsBundleiOS17: WidgetBundle {
         QuickActionsWidget()
         CertificateStatusWidget()
         AllInOneWidget()
-        if #available(iOS 16.2, *) {
-            InstallationLiveActivityWidget()
-        }
+        // Live Activity is always available on iOS 17+ (requires 16.2+)
+        InstallationLiveActivityWidget()
     }
 }
 
@@ -201,6 +200,7 @@ struct PortalWidgetsBundleiOS16: WidgetBundle {
         QuickActionsWidgetLegacy()
         CertificateStatusWidgetLegacy()
         AllInOneWidgetLegacy()
+        // Live Activity available on iOS 16.2+
         if #available(iOS 16.2, *) {
             InstallationLiveActivityWidget()
         }
