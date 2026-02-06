@@ -80,7 +80,7 @@ class LiveActivityManager: ObservableObject {
             // Request activity
             let activity = try Activity.request(
                 attributes: attributes,
-                content: .init(state: initialState, staleDate: nil)
+                content: Activity<InstallationActivityAttributes>.Content(state: initialState, staleDate: nil)
             )
             
             // Store activity
@@ -126,7 +126,7 @@ class LiveActivityManager: ObservableObject {
         )
         
         do {
-            await activity.update(using: .init(state: newState, staleDate: nil))
+            await activity.update(using: Activity<InstallationActivityAttributes>.Content(state: newState, staleDate: nil))
             print("✅ Live Activity updated: \(status.rawValue) - \(Int(progress * 100))%")
         } catch {
             print("❌ Failed to update Live Activity: \(error.localizedDescription)")
@@ -146,7 +146,7 @@ class LiveActivityManager: ObservableObject {
         Task {
             // Update with final state if provided
             if let finalState = finalState {
-                await activity.update(using: .init(state: finalState, staleDate: nil))
+                await activity.update(using: Activity<InstallationActivityAttributes>.Content(state: finalState, staleDate: nil))
             }
             
             // End the activity
