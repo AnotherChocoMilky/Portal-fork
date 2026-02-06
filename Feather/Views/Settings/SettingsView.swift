@@ -72,16 +72,16 @@ struct SettingsView: View {
     
     private var preferencesSection: some View {
         Section {
-            SettingsRow(icon: "house.fill", title: String.localized("Customize Home"), color: .blue, destination: HomeSettingsView())
-            SettingsRow(icon: "paintbrush.fill", title: String.localized("App Appearance"), color: .blue, destination: AppearanceView())
-            SettingsRow(icon: "app.badge.fill", title: String.localized("Live Activities"), color: .blue, destination: LiveActivitySettingsView())
+            SettingsRow(icon: "house.fill", title: String.localized("Home"), color: .blue, destination: HomeSettingsView())
+            SettingsRow(icon: "paintbrush.fill", title: String.localized("Appearance"), color: .blue, destination: AppearanceView())
+            SettingsRow(icon: "widget.small.badge.plus", title: String.localized("Live Activities"), color: .blue, destination: LiveActivitySettingsView())
 
             Button {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(url)
                 }
             } label: {
-                SettingsRowContent(icon: "globe", title: String.localized("Change Language"), color: .blue)
+                SettingsRowContent(icon: "globe", title: String.localized("Language"), color: .blue)
             }
         } header: {
             SettingsSectionHeader(title: String.localized("Preferences"), icon: "slider.horizontal.3")

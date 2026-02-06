@@ -177,7 +177,7 @@ class BackgroundTaskManager: ObservableObject {
         
         installationCallbacks.removeValue(forKey: taskId)
         
-        logger.error("Failed installation: \(task.appName) - \(error.localizedDescription)")
+        logger.error("Failed Installation: \(task.appName) - \(error.localizedDescription)")
     }
     
     // MARK: - Private Methods
@@ -194,7 +194,7 @@ class BackgroundTaskManager: ObservableObject {
             DispatchQueue.main.async { [weak self] in
                 self?.isTaskScheduled = true
             }
-            logger.info("Background task scheduled successfully")
+            logger.info("Background Task Scheduled Successfully")
         } catch {
             logger.error("Failed to schedule background task: \(error.localizedDescription)")
             DispatchQueue.main.async { [weak self] in
@@ -205,13 +205,13 @@ class BackgroundTaskManager: ObservableObject {
     
     @available(iOS 13.0, *)
     private func handleBackgroundTask(task: BGProcessingTask) {
-        logger.info("Background task started")
+        logger.info("Background Task Started")
         
         // Schedule next background task
         scheduleBackgroundTask()
         
         task.expirationHandler = { [weak self] in
-            self?.logger.warning("Background task expired")
+            self?.logger.warning("Background Task Expired")
             task.setTaskCompleted(success: false)
         }
         

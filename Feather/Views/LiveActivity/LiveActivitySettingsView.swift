@@ -67,14 +67,14 @@ struct LiveActivitySettingsView: View {
                 .font(.system(size: 11, weight: .semibold))
         } footer: {
             if #available(iOS 16.2, *) {
-                Text("Live Activities require iOS 16.2 or later for Dynamic Island support.")
+                Text("Show Live Activities to track down your app download process, signing, and installation.")
                     .font(.caption)
                     .foregroundColor(.secondary)
             } else {
                 HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.orange)
-                    Text("Live Activities are not available on this iOS version. Requires iOS 16.2+")
+                    Text("Live Activities are not available on this iOS version. Requires iOS 16.2+ so please update your device.")
                 }
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -140,7 +140,7 @@ struct LiveActivitySettingsView: View {
             Text("Appearance")
                 .font(.system(size: 11, weight: .semibold))
         } footer: {
-            Text("Customize the visual style of Live Activities")
+            Text("Customize how the style of Live Activities render in your Lock Screen and Dynamic Island.")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -259,7 +259,7 @@ struct LiveActivitySettingsView: View {
             Text("Progress Display")
                 .font(.system(size: 11, weight: .semibold))
         } footer: {
-            Text("Configure how progress is displayed and updated.")
+            Text("Configure how progress is displayed and updated throught the process.")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -280,7 +280,7 @@ struct LiveActivitySettingsView: View {
             Text("Details")
                 .font(.system(size: 11, weight: .semibold))
         } footer: {
-            Text("Control how much information is shown")
+            Text("Control how much information is shown. Less details may improve performance on older devices.")
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
@@ -292,13 +292,13 @@ struct LiveActivitySettingsView: View {
             LiveActivityInfoRow(
                 icon: "iphone",
                 title: "Dynamic Island",
-                description: "On iPhone 14 Pro and later, Live Activities appear in the Dynamic Island"
+                description: "On iPhone 14 Pro and later, Live Activities also appear in the Dynamic Island."
             )
             
             LiveActivityInfoRow(
                 icon: "lock.fill",
                 title: "Lock Screen",
-                description: "Live Activities also appear on the Lock Screen for all supported devices"
+                description: "Live Activities also appear on the Lock Screen for all supported devices running iOS 16.2+."
             )
             
             LiveActivityInfoRow(

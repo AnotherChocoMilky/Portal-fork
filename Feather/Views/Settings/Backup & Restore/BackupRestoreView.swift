@@ -220,7 +220,7 @@ struct BackupRestoreView: View {
                             .fill(Color.purple.opacity(0.15))
                             .frame(width: 50, height: 50)
                         
-                        Image(systemName: "antenna.radiowaves.left.and.right")
+                        Image(systemName: "network.badge.shield.half.filled")
                             .font(.title2)
                             .foregroundStyle(.purple)
                     }

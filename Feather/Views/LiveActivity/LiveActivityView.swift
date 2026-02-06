@@ -53,7 +53,7 @@ struct InstallationLiveActivityView: View {
                 
                 // Details
                 HStack {
-                    Text("\(context.state.formattedBytesDownloaded) of \(context.state.formattedTotalBytes)")
+                    Text("\(context.state.formattedBytesDownloaded) Of \(context.state.formattedTotalBytes)")
                         .font(.system(size: 10))
                         .foregroundColor(.secondary)
                     
