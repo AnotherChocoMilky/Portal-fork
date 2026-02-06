@@ -348,8 +348,8 @@ extension View {
         switch settings.pattern {
         case .linear:
             LinearGradient(colors: colors,
-                           startPoint: settings.direction == .topToBottom ? .top : (settings.direction == .leadingToTrailing ? .leading : .topLeading),
-                           endPoint: settings.direction == .topToBottom ? .bottom : (settings.direction == .leadingToTrailing ? .trailing : .bottomTrailing))
+                           startPoint: settings.direction == .topToBottom ? .top : (settings.direction == .leftToRight ? .leading : .topLeading),
+                           endPoint: settings.direction == .topToBottom ? .bottom : (settings.direction == .leftToRight ? .trailing : .bottomTrailing))
         case .radial:
             RadialGradient(colors: colors, center: .center, startRadius: 0, endRadius: 200)
         case .angular:
