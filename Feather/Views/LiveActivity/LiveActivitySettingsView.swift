@@ -12,7 +12,7 @@ struct LiveActivitySettingsView: View {
     @State private var isShowingMockActivity = false
     
     var body: some View {
-        NBNavigationView("Live Activity Settings") {
+        NBNavigationView("Live Activities") {
             List {
                 enabledSection
                 appearanceSection
