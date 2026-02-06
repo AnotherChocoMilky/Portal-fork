@@ -9,6 +9,8 @@ struct LiveActivitySettingsView: View {
     // Live Activity settings managed by LiveActivityManager
     @State private var settings: LiveActivitySettings = LiveActivitySettings.default
     @State private var showColorPicker = false
+    @State private var showGradientColorPicker = false
+    @State private var selectedGradientColorIndex = 0
     @State private var isShowingMockActivity = false
     
     var body: some View {
@@ -25,6 +27,17 @@ struct LiveActivitySettingsView: View {
         .onAppear {
             loadSettings()
         }
+        .sheet(isPresented: $showGradientColorPicker) {
+            if var colors = settings.gradientSettings.colors, selectedGradientColorIndex < colors.count {
+                ColorPickerView(selectedColor: Binding(
+                    get: { colors[selectedGradientColorIndex] },
+                    set: {
+                        colors[selectedGradientColorIndex] = $0
+                        settings.gradientSettings.colors = colors
+                    }
+                ), onDismiss: saveSettings)
+            }
+        }
     }
     
     // MARK: - Load/Save Settings
@@ -32,6 +45,9 @@ struct LiveActivitySettingsView: View {
     private func loadSettings() {
         if #available(iOS 16.2, *) {
             settings = LiveActivityManager.shared.loadSettings()
+            if settings.backgroundTexture == .gradient && settings.gradientSettings.colors == nil {
+                 settings.gradientSettings.colors = [settings.accentColor, CodableColor(red: 0.639, green: 0.286, blue: 0.639)]
+            }
         }
     }
     
@@ -84,21 +100,38 @@ struct LiveActivitySettingsView: View {
     
     private var appearanceSection: some View {
         Section {
-            // Accent Color
-            Button {
-                showColorPicker = true
-                HapticsManager.shared.light()
-            } label: {
+            // Accent Color / Gradient Colors Summary
+            if settings.backgroundTexture == .gradient {
                 HStack {
-                    Label("Accent Color", systemImage: "paintpalette.fill")
+                    Label("Gradient Colors", systemImage: "paintpalette.fill")
                     Spacer()
-                    Circle()
-                        .fill(settings.accentColor.color)
-                        .frame(width: 20, height: 20)
-                        .overlay(Circle().stroke(Color.secondary, lineWidth: 1))
+                    HStack(spacing: -8) {
+                        ForEach(0..<min(settings.gradientSettings.colorCount, 5), id: \.self) { index in
+                            if let colors = settings.gradientSettings.colors, index < colors.count {
+                                Circle()
+                                    .fill(colors[index].color)
+                                    .frame(width: 20, height: 20)
+                                    .overlay(Circle().stroke(Color.white, lineWidth: 1))
+                            }
+                        }
+                    }
                 }
+            } else {
+                Button {
+                    showColorPicker = true
+                    HapticsManager.shared.light()
+                } label: {
+                    HStack {
+                        Label("Accent Color", systemImage: "paintpalette.fill")
+                        Spacer()
+                        Circle()
+                            .fill(settings.accentColor.color)
+                            .frame(width: 20, height: 20)
+                            .overlay(Circle().stroke(Color.secondary, lineWidth: 1))
+                    }
+                }
+                .foregroundStyle(.primary)
             }
-            .foregroundStyle(.primary)
 
             // Background Texture
             Picker(selection: $settings.backgroundTexture) {
@@ -180,11 +213,40 @@ struct LiveActivitySettingsView: View {
 
     @ViewBuilder
     private var gradientSettingsSubSection: some View {
-        Stepper(value: $settings.gradientSettings.colorCount, in: 2...5) {
+        Stepper(value: $settings.gradientSettings.colorCount, in: 2...10) {
             Label("Colors: \(settings.gradientSettings.colorCount)", systemImage: "paintpalette")
         }
-        .onChange(of: settings.gradientSettings.colorCount) { _ in saveSettings() }
+        .onChange(of: settings.gradientSettings.colorCount) { newValue in
+            if settings.gradientSettings.colors == nil {
+                settings.gradientSettings.colors = [settings.accentColor]
+            }
+            while settings.gradientSettings.colors!.count < newValue {
+                settings.gradientSettings.colors!.append(CodableColor(color: .blue))
+            }
+            saveSettings()
+        }
         .padding(.leading, 12)
+
+        ForEach(0..<settings.gradientSettings.colorCount, id: \.self) { index in
+            Button {
+                selectedGradientColorIndex = index
+                showGradientColorPicker = true
+                HapticsManager.shared.light()
+            } label: {
+                HStack {
+                    Label("Color \(index + 1)", systemImage: "paintpalette.fill")
+                    Spacer()
+                    if let colors = settings.gradientSettings.colors, index < colors.count {
+                        Circle()
+                            .fill(colors[index].color)
+                            .frame(width: 20, height: 20)
+                            .overlay(Circle().stroke(Color.secondary, lineWidth: 1))
+                    }
+                }
+            }
+            .foregroundStyle(.primary)
+            .padding(.leading, 24)
+        }
 
         Picker(selection: $settings.gradientSettings.direction) {
             ForEach(LiveActivitySettings.GradientDirection.allCases, id: \.self) { dir in

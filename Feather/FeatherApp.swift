@@ -30,6 +30,7 @@ struct FeatherApp: App {
     @State private var _showCertAdd = false
     @State private var _showCertificates = false
     @State private var _showQuickActions = false
+    @State private var _showNearbyRestore = false
     @State private var _shouldAutoSignNextImport = false
     
     // IPA Import Handling
@@ -113,6 +114,9 @@ struct FeatherApp: App {
                             .sheet(isPresented: $_showQuickActions) {
                                 QuickActionsSheetView()
                             }
+                            .sheet(isPresented: $_showNearbyRestore) {
+                                RestoreOptionsView()
+                            }
 							.confirmationDialog(
 								.localized("Add Source"),
 								isPresented: $_showSourceConfirmation,
@@ -174,6 +178,7 @@ struct FeatherApp: App {
 						_setupTheme()
 						_checkForUpdates()
 						_handlePendingWidgetAction()
+						_checkForPendingNearbyRestore()
 					}
 					.overlay(StatusBarOverlay())
 				}
@@ -197,6 +202,12 @@ struct FeatherApp: App {
 
 			// Process the action URL
 			_handleURL(url)
+		}
+	}
+
+	private func _checkForPendingNearbyRestore() {
+		if UserDefaults.standard.string(forKey: "pendingNearbyBackupRestore") != nil {
+			_showNearbyRestore = true
 		}
 	}
     

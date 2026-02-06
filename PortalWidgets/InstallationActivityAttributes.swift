@@ -126,9 +126,18 @@ struct GradientSettings: Codable, Hashable {
     var colorCount: Int
     var direction: LiveActivitySettings.GradientDirection
     var pattern: LiveActivitySettings.GradientPattern
+    var colors: [CodableColor]?
 
     static var `default`: GradientSettings {
-        GradientSettings(colorCount: 2, direction: .topToBottom, pattern: .linear)
+        GradientSettings(
+            colorCount: 2,
+            direction: .topToBottom,
+            pattern: .linear,
+            colors: [
+                CodableColor(red: 0.0, green: 0.478, blue: 1.0),
+                CodableColor(red: 0.639, green: 0.286, blue: 0.639)
+            ]
+        )
     }
 }
 
