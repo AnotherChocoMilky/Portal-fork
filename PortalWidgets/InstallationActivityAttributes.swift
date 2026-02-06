@@ -97,6 +97,19 @@ struct LiveActivitySettings: Codable, Hashable {
         case smooth = "Smooth"
         case spring = "Spring"
     }
+
+    enum GradientDirection: String, Codable, Hashable, CaseIterable {
+        case topToBottom = "Top to Bottom"
+        case leftToRight = "Left to Right"
+        case topLeftToBottomRight = "Top Left to Bottom Right"
+        case bottomLeftToTopRight = "Bottom Left to Top Right"
+    }
+
+    enum GradientPattern: String, Codable, Hashable, CaseIterable {
+        case linear = "Linear"
+        case radial = "Radial"
+        case angular = "Angular"
+    }
 }
 
 struct GlassSettings: Codable, Hashable {
@@ -111,24 +124,12 @@ struct GlassSettings: Codable, Hashable {
 
 struct GradientSettings: Codable, Hashable {
     var colorCount: Int
-    var direction: GradientDirection
-    var pattern: GradientPattern
+    var direction: LiveActivitySettings.GradientDirection
+    var pattern: LiveActivitySettings.GradientPattern
 
     static var `default`: GradientSettings {
         GradientSettings(colorCount: 2, direction: .topToBottom, pattern: .linear)
     }
-}
-
-enum GradientDirection: String, Codable, Hashable, CaseIterable {
-    case topToBottom = "Top to Bottom"
-    case leadingToTrailing = "Leading to Trailing"
-    case diagonal = "Diagonal"
-}
-
-enum GradientPattern: String, Codable, Hashable, CaseIterable {
-    case linear = "Linear"
-    case radial = "Radial"
-    case angular = "Angular"
 }
 
 /// Codable wrapper for Color
