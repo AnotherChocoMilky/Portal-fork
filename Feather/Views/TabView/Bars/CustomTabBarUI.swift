@@ -92,30 +92,6 @@ struct CustomTabBarUI: View {
                 selectedTab = getInitialTab()
             }
         }
-        .sheet(isPresented: $showInstallModifySheet) {
-            if let app = appToInstall {
-                InstallModifyDialogView(app: app)
-            }
-        }
-        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.showInstallModifyPopup"))) { notification in
-            if let url = notification.object as? URL {
-                let fileName = url.deletingPathExtension().lastPathComponent
-                let signedRequest = Signed.fetchRequest()
-                let importedRequest = Imported.fetchRequest()
-                
-                if let signed = try? Storage.shared.context.fetch(signedRequest).first(where: { 
-                    $0.name?.contains(fileName) == true || $0.identifier?.contains(fileName) == true
-                }) {
-                    appToInstall = signed
-                    showInstallModifySheet = true
-                } else if let imported = try? Storage.shared.context.fetch(importedRequest).first(where: { 
-                    $0.name?.contains(fileName) == true || $0.identifier?.contains(fileName) == true
-                }) {
-                    appToInstall = imported
-                    showInstallModifySheet = true
-                }
-            }
-        }
     }
     
     // MARK: - Liquid Glass Tab Bar
