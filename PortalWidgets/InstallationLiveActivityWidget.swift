@@ -93,6 +93,7 @@ struct InstallationLiveActivityLockScreenView: View {
             }
         }
         .padding(16)
+        .liveActivityBackground(settings: context.attributes.settings)
     }
     
     private var placeholderIcon: some View {
@@ -115,32 +116,61 @@ struct InstallationLiveActivityLockScreenView: View {
     }
     
     private func detailsView(context: ActivityViewContext<InstallationActivityAttributes>) -> some View {
-        HStack {
-            if context.attributes.settings.detailDensity == .detailed {
-                VStack(alignment: .leading, spacing: 2) {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                if context.attributes.settings.detailDensity == .detailed {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("\(context.state.formattedBytesDownloaded) / \(context.state.formattedTotalBytes)")
+                            .font(fontFor(.caption2, settings: context.attributes.settings))
+                            .foregroundColor(.secondary)
+
+                        if let speed = context.state.formattedSpeed {
+                            Text(speed)
+                                .font(fontFor(.caption2, settings: context.attributes.settings))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                } else {
                     Text("\(context.state.formattedBytesDownloaded) / \(context.state.formattedTotalBytes)")
                         .font(fontFor(.caption2, settings: context.attributes.settings))
                         .foregroundColor(.secondary)
-                    
-                    if let speed = context.state.formattedSpeed {
-                        Text(speed)
-                            .font(fontFor(.caption2, settings: context.attributes.settings))
-                            .foregroundColor(.secondary)
-                    }
                 }
-            } else {
-                Text("\(context.state.formattedBytesDownloaded) / \(context.state.formattedTotalBytes)")
-                    .font(fontFor(.caption2, settings: context.attributes.settings))
-                    .foregroundColor(.secondary)
+
+                Spacer()
+
+                if let eta = context.state.eta {
+                    Text("ETA: \(eta)")
+                        .font(fontFor(.caption2, settings: context.attributes.settings))
+                        .foregroundColor(.secondary)
+                }
             }
             
-            Spacer()
-            
-            if let eta = context.state.eta {
-                Text("ETA: \(eta)")
-                    .font(fontFor(.caption2, settings: context.attributes.settings))
-                    .foregroundColor(.secondary)
+            if context.attributes.settings.detailDensity == .detailed {
+                Divider()
+                    .opacity(0.3)
+
+                HStack(spacing: 12) {
+                    detailItem(label: "Bundle", value: context.attributes.appBundleId, settings: context.attributes.settings)
+
+                    if let version = context.attributes.appVersion {
+                        detailItem(label: "Version", value: version, settings: context.attributes.settings)
+                    }
+
+                    detailItem(label: "Started", value: context.attributes.startTime.formatted(date: .omitted, time: .shortened), settings: context.attributes.settings)
+                }
             }
+        }
+    }
+
+    private func detailItem(label: String, value: String, settings: LiveActivitySettings) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(label.uppercased())
+                .font(.system(size: 8, weight: .bold))
+                .foregroundColor(.secondary.opacity(0.7))
+            Text(value)
+                .font(fontFor(.caption2, settings: settings))
+                .foregroundColor(.primary.opacity(0.8))
+                .lineLimit(1)
         }
     }
 }
@@ -282,6 +312,65 @@ struct InstallationLiveActivityMinimal: View {
     var body: some View {
         Image(systemName: context.state.status.icon)
             .foregroundColor(context.state.status.color)
+    }
+}
+
+// MARK: - Extensions & Helper Views
+
+@available(iOS 16.2, *)
+extension View {
+    @ViewBuilder
+    func liveActivityBackground(settings: LiveActivitySettings) -> some View {
+        switch settings.backgroundTexture {
+        case .blur:
+            self.background(.ultraThinMaterial)
+        case .material:
+            self.background(.thinMaterial)
+        case .solid:
+            self.background(Color(uiColor: .systemBackground))
+        case .gradient:
+            self.background(
+                gradientView(settings: settings.gradientSettings, accentColor: settings.accentColor.color)
+            )
+        case .glass:
+            self.background(
+                glassView(settings: settings.glassSettings, accentColor: settings.accentColor.color)
+            )
+        }
+    }
+
+    @ViewBuilder
+    private func gradientView(settings: GradientSettings, accentColor: Color) -> some View {
+        let colors: [Color] = (0..<settings.colorCount).map { i in
+            accentColor.opacity(1.0 - Double(i) * 0.15)
+        }
+
+        switch settings.pattern {
+        case .linear:
+            LinearGradient(colors: colors,
+                           startPoint: settings.direction == .topToBottom ? .top : (settings.direction == .leadingToTrailing ? .leading : .topLeading),
+                           endPoint: settings.direction == .topToBottom ? .bottom : (settings.direction == .leadingToTrailing ? .trailing : .bottomTrailing))
+        case .radial:
+            RadialGradient(colors: colors, center: .center, startRadius: 0, endRadius: 200)
+        case .angular:
+            AngularGradient(colors: colors, center: .center)
+        }
+    }
+
+    @ViewBuilder
+    private func glassView(settings: GlassSettings, accentColor: Color) -> some View {
+        ZStack {
+            if settings.isTinted {
+                accentColor.opacity(settings.intensity * 0.2)
+            }
+
+            Color.white.opacity(0.05)
+                .blur(radius: settings.glassEffectAmount * 15)
+
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .opacity(0.8 + (settings.glassEffectAmount * 0.2))
+        }
     }
 }
 

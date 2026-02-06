@@ -47,10 +47,11 @@ class LiveActivityManager: ObservableObject {
     /// - Parameters:
     ///   - appName: Name of the app being installed
     ///   - bundleId: Bundle identifier of the app
+    ///   - appVersion: Version of the app
     ///   - iconData: Optional icon data
     /// - Returns: The created activity, or nil if creation failed
     @discardableResult
-    func startActivity(appName: String, bundleId: String, iconData: Data? = nil) -> Activity<InstallationActivityAttributes>? {
+    func startActivity(appName: String, bundleId: String, appVersion: String? = nil, iconData: Data? = nil) -> Activity<InstallationActivityAttributes>? {
         // End any existing activity first
         endActivity(dismissalPolicy: .immediate)
         
@@ -61,6 +62,7 @@ class LiveActivityManager: ObservableObject {
         let attributes = InstallationActivityAttributes(
             appName: appName,
             appBundleId: bundleId,
+            appVersion: appVersion,
             appIcon: iconData,
             startTime: Date(),
             settings: settings

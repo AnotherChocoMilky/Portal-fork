@@ -63,6 +63,18 @@ struct FeatherApp: App {
 								_setupTheme()
 							}
 					}
+				} else if !hasSeenNearbyShareIntro {
+					if #available(iOS 17.0, *) {
+						NearbyShareIntroView()
+							.onAppear {
+								_setupTheme()
+							}
+					} else {
+						NearbyShareIntroViewLegacy()
+							.onAppear {
+								_setupTheme()
+							}
+					}
 				} else {
 					VStack(spacing: 0) {
 						// Modern Update Available banner at the top
@@ -100,13 +112,6 @@ struct FeatherApp: App {
                             }
                             .sheet(isPresented: $_showQuickActions) {
                                 QuickActionsSheetView()
-                            }
-                            .sheet(isPresented: $showNearbyShareIntro) {
-                                if #available(iOS 17.0, *) {
-                                    NearbyShareIntroView()
-                                } else {
-                                    NearbyShareIntroViewLegacy()
-                                }
                             }
 							.confirmationDialog(
 								.localized("Add Source"),
@@ -169,7 +174,6 @@ struct FeatherApp: App {
 						_setupTheme()
 						_checkForUpdates()
 						_handlePendingWidgetAction()
-						_checkAndShowNearbyShareIntro()
 					}
 					.overlay(StatusBarOverlay())
 				}
@@ -299,14 +303,6 @@ struct FeatherApp: App {
         return .orderedSame
     }
     
-    private func _checkAndShowNearbyShareIntro() {
-        // Show intro once per user after a short delay to ensure app is fully loaded
-        if !hasSeenNearbyShareIntro {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                showNearbyShareIntro = true
-            }
-        }
-    }
 	
 	private func _handleURL(_ url: URL) {
 		// Handle new-portal:// scheme actions

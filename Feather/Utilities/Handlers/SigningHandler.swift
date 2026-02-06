@@ -130,6 +130,27 @@ final class SigningHandler: NSObject {
 	func modify() async throws {
 		AppLogManager.shared.info("Starting modification phase", category: "Signing")
 		
+		// Start Live Activity if enabled
+		if #available(iOS 16.2, *), UserDefaults.standard.bool(forKey: "Feather.liveActivityEnabled") {
+			let iconData = appIcon?.pngData()
+			LiveActivityManager.shared.startActivity(
+				appName: _options.appName ?? _app.name ?? "App",
+				bundleId: _options.appIdentifier ?? _app.identifier ?? "unknown",
+				appVersion: _options.appVersion ?? _app.version,
+				iconData: iconData
+			)
+
+			// Update status to preparing
+			Task {
+				await LiveActivityManager.shared.updateActivity(
+					progress: 0.1,
+					bytesDownloaded: 0,
+					totalBytes: 0,
+					status: .preparing
+				)
+			}
+		}
+
 		guard let movedAppPath = _movedAppPath else {
 			AppLogManager.shared.error("App path not found during modification", category: "Signing")
 			throw SigningFileHandlerError.appNotFound
@@ -259,6 +280,16 @@ final class SigningHandler: NSObject {
 		
 		if _options.experiment_supportLiquidGlass {
 			AppLogManager.shared.info("Applying LiquidGlass support", category: "Signing")
+
+			if #available(iOS 16.2, *) {
+				await LiveActivityManager.shared.updateActivity(
+					progress: 0.4,
+					bytesDownloaded: 0,
+					totalBytes: 0,
+					status: .verifying
+				)
+			}
+
 			try await _locateMachosAndChangeToSDK26(for: movedAppPath)
 		}
 		
@@ -286,6 +317,16 @@ final class SigningHandler: NSObject {
 			appCertificate != nil
 		{
 			AppLogManager.shared.info("Starting code signing with certificate", category: "Signing")
+
+			if #available(iOS 16.2, *) {
+				await LiveActivityManager.shared.updateActivity(
+					progress: 0.6,
+					bytesDownloaded: 0,
+					totalBytes: 0,
+					status: .signing
+				)
+			}
+
 			try await handler.sign()
 			AppLogManager.shared.success("Code signing completed successfully", category: "Signing")
 //		} else if _options.signingOption == .adhoc {
@@ -297,9 +338,23 @@ final class SigningHandler: NSObject {
 			throw SigningFileHandlerError.missingCertifcate
 		}
 		
+		if #available(iOS 16.2, *) {
+			await LiveActivityManager.shared.updateActivity(
+				progress: 0.9,
+				bytesDownloaded: 0,
+				totalBytes: 0,
+				status: .rezipping
+			)
+		}
+
 		try await self.move()
 		try await self.addToDatabase()
 		
+		// End Live Activity with success
+		if #available(iOS 16.2, *) {
+			LiveActivityManager.shared.endActivityWithSuccess()
+		}
+
 		if let error = handler.hadError {
 			AppLogManager.shared.error("Signing failed: \(error.localizedDescription)", category: "Signing")
 			throw error

@@ -12,17 +12,27 @@ struct LiveActivitySettings: Codable, Hashable {
     var iconSize: IconSize
     var detailDensity: DetailDensity
     var animationStyle: AnimationStyle
+    var showEstimatedTime: Bool
+    var highFrequencyUpdates: Bool
+
+    // New settings
+    var glassSettings: GlassSettings
+    var gradientSettings: GradientSettings
     
     static var `default`: LiveActivitySettings {
         LiveActivitySettings(
-            accentColor: CodableColor(color: .blue),
+            accentColor: CodableColor(red: 0.0, green: 0.478, blue: 1.0),
             backgroundTexture: .blur,
             fontFamily: .system,
             fontWeight: .semibold,
             progressBarStyle: .gradient,
             iconSize: .medium,
             detailDensity: .standard,
-            animationStyle: .smooth
+            animationStyle: .smooth,
+            showEstimatedTime: true,
+            highFrequencyUpdates: false,
+            glassSettings: .default,
+            gradientSettings: .default
         )
     }
     
@@ -31,6 +41,7 @@ struct LiveActivitySettings: Codable, Hashable {
         case material = "Material"
         case solid = "Solid"
         case gradient = "Gradient"
+        case glass = "Glass"
     }
     
     enum FontFamily: String, Codable, Hashable, CaseIterable {
@@ -88,6 +99,38 @@ struct LiveActivitySettings: Codable, Hashable {
     }
 }
 
+struct GlassSettings: Codable, Hashable {
+    var isTinted: Bool
+    var intensity: Double
+    var glassEffectAmount: Double
+
+    static var `default`: GlassSettings {
+        GlassSettings(isTinted: true, intensity: 0.5, glassEffectAmount: 0.5)
+    }
+}
+
+struct GradientSettings: Codable, Hashable {
+    var colorCount: Int
+    var direction: GradientDirection
+    var pattern: GradientPattern
+
+    static var `default`: GradientSettings {
+        GradientSettings(colorCount: 2, direction: .topToBottom, pattern: .linear)
+    }
+}
+
+enum GradientDirection: String, Codable, Hashable, CaseIterable {
+    case topToBottom = "Top to Bottom"
+    case leadingToTrailing = "Leading to Trailing"
+    case diagonal = "Diagonal"
+}
+
+enum GradientPattern: String, Codable, Hashable, CaseIterable {
+    case linear = "Linear"
+    case radial = "Radial"
+    case angular = "Angular"
+}
+
 /// Codable wrapper for Color
 struct CodableColor: Codable, Hashable {
     var red: Double
@@ -96,11 +139,16 @@ struct CodableColor: Codable, Hashable {
     var opacity: Double
     
     init(color: Color) {
-        // Default to blue for system colors
-        self.red = 0.0
-        self.green = 0.478
-        self.blue = 1.0
-        self.opacity = 1.0
+        let uiColor = UIColor(color)
+        var r: CGFloat = 0
+        var g: CGFloat = 0
+        var b: CGFloat = 0
+        var a: CGFloat = 0
+        uiColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+        self.red = Double(r)
+        self.green = Double(g)
+        self.blue = Double(b)
+        self.opacity = Double(a)
     }
     
     init(red: Double, green: Double, blue: Double, opacity: Double = 1.0) {
@@ -165,6 +213,7 @@ struct InstallationActivityAttributes: ActivityAttributes {
     // Static properties that don't change
     var appName: String
     var appBundleId: String
+    var appVersion: String?
     var appIcon: Data?
     var startTime: Date
     var settings: LiveActivitySettings

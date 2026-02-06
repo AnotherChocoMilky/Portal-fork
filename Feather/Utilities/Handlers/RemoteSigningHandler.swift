@@ -39,6 +39,22 @@ final class RemoteSigningHandler: NSObject {
     }
     
     func sign() async throws -> String {
+		// Start Live Activity if enabled
+		if #available(iOS 16.2, *), UserDefaults.standard.bool(forKey: "Feather.liveActivityEnabled") {
+			LiveActivityManager.shared.startActivity(
+				appName: _options.appName ?? _app.name ?? "App",
+				bundleId: _options.appIdentifier ?? _app.identifier ?? "unknown",
+				appVersion: _options.appVersion ?? _app.version
+			)
+
+			await LiveActivityManager.shared.updateActivity(
+				progress: 0.1,
+				bytesDownloaded: 0,
+				totalBytes: 0,
+				status: .signing
+			)
+		}
+
         guard let appURL = Storage.shared.getAppDirectory(for: _app) else {
             throw RemoteSigningError.appNotFound
         }
@@ -128,6 +144,12 @@ final class RemoteSigningHandler: NSObject {
         }
         
         let decodedResponse = try JSONDecoder().decode(RemoteSigningResponse.self, from: responseData)
+
+		// End Live Activity with success
+		if #available(iOS 16.2, *) {
+			LiveActivityManager.shared.endActivityWithSuccess()
+		}
+
         // Use directInstallLink as it contains the itms:// link for installation
         return decodedResponse.directInstallLink
     }

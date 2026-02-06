@@ -24,6 +24,9 @@ enum FR {
 					completion(nil)
 				}
 			} catch {
+				if #available(iOS 16.2, *) {
+					LiveActivityManager.shared.endActivityWithError()
+				}
 				try? await handler.clean()
 				await MainActor.run {
 					completion(error)
@@ -84,6 +87,9 @@ enum FR {
                     completion(.success(installLink))
                 }
             } catch {
+				if #available(iOS 16.2, *) {
+					LiveActivityManager.shared.endActivityWithError()
+				}
                 await MainActor.run {
                     completion(.failure(error))
                 }
