@@ -72,16 +72,16 @@ struct SettingsView: View {
     
     private var preferencesSection: some View {
         Section {
-            SettingsRow(icon: "house.fill", title: String.localized("Home"), color: .blue, destination: HomeSettingsView())
-            SettingsRow(icon: "paintbrush.fill", title: String.localized("Appearance"), color: .blue, destination: AppearanceView())
-            SettingsRow(icon: "widget.small.badge.plus", title: String.localized("Live Activities"), color: .blue, destination: LiveActivitySettingsView())
+            SettingsRow(icon: "house.fill", title: String.localized("Home"), color: .accentColor, destination: HomeSettingsView())
+            SettingsRow(icon: "paintbrush.fill", title: String.localized("Appearance"), color: .accentColor, destination: AppearanceView())
+            SettingsRow(icon: "widget.small.badge.plus", title: String.localized("Live Activities"), color: .accentColor, destination: LiveActivitySettingsView())
 
             Button {
                 if let url = URL(string: UIApplication.openSettingsURLString) {
                     UIApplication.shared.open(url)
                 }
             } label: {
-                SettingsRowContent(icon: "translate", title: String.localized("Language"), color: .blue)
+                SettingsRowContent(icon: "translate", title: String.localized("Language"), color: .accentColor)
             }
         } header: {
             SettingsSectionHeader(title: String.localized("Customizations"), icon: "slider.horizontal.3")
@@ -90,8 +90,8 @@ struct SettingsView: View {
     
     private var signingSection: some View {
         Section {
-            SettingsRow(icon: "person.badge.key.fill", title: String.localized("Certificates"), color: .blue, destination: CertificatesView())
-            SettingsRow(icon: "signature", title: String.localized("Signing"), color: .blue, destination: ConfigurationView())
+            SettingsRow(icon: "person.badge.key.fill", title: String.localized("Certificates"), color: .accentColor, destination: CertificatesView())
+            SettingsRow(icon: "signature", title: String.localized("Signing"), color: .accentColor, destination: ConfigurationView())
         } header: {
             SettingsSectionHeader(title: String.localized("Signing"), icon: "shield.lefthalf.filled.badge.checkmark")
         }
@@ -104,11 +104,11 @@ struct SettingsView: View {
 
     private var dataSection: some View {
         Section {
-            SettingsRow(icon: "folder.fill", title: String.localized("Files"), color: .blue, destination: FilesSettingsView())
+            SettingsRow(icon: "folder.fill", title: String.localized("Files"), color: .accentColor, destination: FilesSettingsView())
             if !isEnterprise {
-                SettingsRow(icon: "externaldrive.fill.badge.person.crop", title: String.localized("Storage"), color: .blue, destination: ManageStorageView())
+                SettingsRow(icon: "externaldrive.fill.badge.person.crop", title: String.localized("Storage"), color: .accentColor, destination: ManageStorageView())
             }
-            SettingsRow(icon: "externaldrive.fill.badge.timemachine", title: String.localized("Backup & Restore"), color: .blue, destination: BackupRestoreView())
+            SettingsRow(icon: "externaldrive.fill.badge.timemachine", title: String.localized("Backup & Restore"), color: .accentColor, destination: BackupRestoreView())
 
             SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: _isFetchingFullData ? String.localized("Fetching Source Data...") : String.localized("Fetch Full Data"), color: Color("AccentColor"), isLoading: _isFetchingFullData) {
                 Task {
@@ -125,8 +125,8 @@ struct SettingsView: View {
     
     private var resourcesSection: some View {
         Section {
-            SettingsRow(icon: "apple.intelligence", title: String.localized("Guides With AI"), color: .blue, destination: GuidesSettingsView())
-            SettingsRow(icon: "bubble.left.and.bubble.right.fill", title: String.localized("Feedback"), color: .blue, destination: FeedbackView())
+            SettingsRow(icon: "apple.intelligence", title: String.localized("Guides With AI"), color: .accentColor, destination: GuidesSettingsView())
+            SettingsRow(icon: "bubble.left.and.bubble.right.fill", title: String.localized("Feedback"), color: .accentColor, destination: FeedbackView())
         } header: {
             SettingsSectionHeader(title: String.localized("Resources"), icon: "books.vertical.fill")
         }
@@ -134,11 +134,11 @@ struct SettingsView: View {
     
     private var appSection: some View {
         Section {
-            SettingsRow(icon: "app.badge.fill", title: String.localized("App Icons"), color: .blue, destination: AppIconView())
+            SettingsRow(icon: "app.badge.fill", title: String.localized("App Icons"), color: .accentColor, destination: AppIconView())
             Button {
                 navigateToCheckForUpdates = true
             } label: {
-                SettingsRowContent(icon: "arrow.triangle.2.circlepath", title: String.localized("Check For Updates"), color: .blue)
+                SettingsRowContent(icon: "arrow.triangle.2.circlepath", title: String.localized("Check For Updates"), color: .accentColor)
             }
             .navigationDestination(isPresented: $navigateToCheckForUpdates) {
                 CheckForUpdatesView()
