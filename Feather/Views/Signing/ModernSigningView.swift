@@ -276,27 +276,31 @@ struct ModernSigningView: View {
     @ViewBuilder
     private var modernBackground: some View {
         ZStack {
-            // Base gradient with smoother transitions
+            // Subtle system-appropriate background
+            Color(UIColor.systemGroupedBackground)
+                .ignoresSafeArea()
+
+            // Very subtle base gradient
             LinearGradient(
                 colors: [
-                    Color.accentColor,
-                    Color.accentColor.opacity(0.8)
+                    Color.accentColor.opacity(colorScheme == .dark ? 0.05 : 0.08),
+                    Color(UIColor.systemGroupedBackground)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
             
-            // Animated floating orbs with enhanced effects
+            // Animated floating orbs with refined effects
             GeometryReader { geo in
                 // Primary accent orb
                 Circle()
                     .fill(
                         RadialGradient(
                             colors: [
-                                Color.accentColor.opacity(0.25),
-                                Color.accentColor.opacity(0.1),
-                                Color.accentColor.opacity(0)
+                                Color.accentColor.opacity(colorScheme == .dark ? 0.12 : 0.15),
+                                Color.accentColor.opacity(0.05),
+                                Color.clear
                             ],
                             center: .center,
                             startRadius: 0,
@@ -313,9 +317,9 @@ struct ModernSigningView: View {
                     .fill(
                         RadialGradient(
                             colors: [
-                                Color.purple.opacity(0.18),
-                                Color.purple.opacity(0.08),
-                                Color.purple.opacity(0)
+                                Color.purple.opacity(colorScheme == .dark ? 0.08 : 0.1),
+                                Color.purple.opacity(0.03),
+                                Color.clear
                             ],
                             center: .center,
                             startRadius: 0,
@@ -332,8 +336,8 @@ struct ModernSigningView: View {
                     .fill(
                         RadialGradient(
                             colors: [
-                                Color.cyan.opacity(0.1),
-                                Color.cyan.opacity(0)
+                                Color.cyan.opacity(colorScheme == .dark ? 0.05 : 0.08),
+                                Color.clear
                             ],
                             center: .center,
                             startRadius: 0,
@@ -348,7 +352,7 @@ struct ModernSigningView: View {
             .ignoresSafeArea()
         }
         .onAppear {
-            withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true)) {
+            withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true)) {
                 _floatingAnimation = true
             }
         }
@@ -463,8 +467,23 @@ struct ModernSigningView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color(.secondarySystemGroupedBackground))
+                        .fill(.ultraThinMaterial)
                 )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    .white.opacity(colorScheme == .dark ? 0.15 : 0.3),
+                                    .white.opacity(colorScheme == .dark ? 0.05 : 0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: .black.opacity(colorScheme == .dark ? 0.2 : 0.1), radius: 15, x: 0, y: 8)
             }
             
             // Certificate Section
@@ -518,8 +537,23 @@ struct ModernSigningView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color(.secondarySystemGroupedBackground))
+                        .fill(.ultraThinMaterial)
                 )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    .white.opacity(colorScheme == .dark ? 0.15 : 0.3),
+                                    .white.opacity(colorScheme == .dark ? 0.05 : 0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: .black.opacity(colorScheme == .dark ? 0.2 : 0.1), radius: 15, x: 0, y: 8)
             }
             
             // Advanced (Debug) Section
@@ -637,8 +671,23 @@ struct ModernSigningView: View {
                 .padding(14)
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color(.secondarySystemGroupedBackground))
+                        .fill(.ultraThinMaterial)
                 )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    .white.opacity(colorScheme == .dark ? 0.15 : 0.3),
+                                    .white.opacity(colorScheme == .dark ? 0.05 : 0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: .black.opacity(colorScheme == .dark ? 0.2 : 0.1), radius: 15, x: 0, y: 8)
             }
         } else {
             Button {
@@ -668,8 +717,23 @@ struct ModernSigningView: View {
                 .padding(14)
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color(.secondarySystemGroupedBackground))
+                        .fill(.ultraThinMaterial)
                 )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    .white.opacity(colorScheme == .dark ? 0.15 : 0.3),
+                                    .white.opacity(colorScheme == .dark ? 0.05 : 0.1)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(color: .black.opacity(colorScheme == .dark ? 0.2 : 0.1), radius: 15, x: 0, y: 8)
             }
             .buttonStyle(.plain)
         }
@@ -1021,27 +1085,67 @@ struct ModernSigningView: View {
         Button {
             _start()
         } label: {
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
                 Image(systemName: "signature")
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 18, weight: .bold))
                 Text("Sign App")
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 17, weight: .bold))
             }
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(Color.accentColor)
+            .padding(.vertical, 18)
+            .background(
+                ZStack {
+                    // Base accent color with gradient
+                    LinearGradient(
+                        colors: [
+                            Color.accentColor,
+                            Color.accentColor.opacity(0.85)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+
+                    // Glass highlight for Liquid Glass effect
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [.white.opacity(0.5), .clear, .black.opacity(0.1)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 1
+                        )
+
+                    // Inner glow
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .fill(
+                            RadialGradient(
+                                colors: [.white.opacity(0.2), .clear],
+                                center: .topLeading,
+                                startRadius: 0,
+                                endRadius: 100
+                            )
+                        )
+                }
+            )
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .shadow(color: Color.accentColor.opacity(0.4), radius: _glowAnimation ? 16 : 10, x: 0, y: _glowAnimation ? 8 : 4)
+            .overlay(
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .stroke(Color.white.opacity(_glowAnimation ? 0.3 : 0), lineWidth: 2)
+                    .blur(radius: 4)
+            )
         }
         .buttonStyle(SignButtonStyle())
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 24)
         .padding(.bottom, 20)
         .padding(.top, 12)
-        .background(
-            Rectangle()
-                .fill(.ultraThinMaterial)
-                .ignoresSafeArea()
-        )
+        .onAppear {
+            withAnimation(.easeInOut(duration: 2.5).repeatForever(autoreverses: true)) {
+                _glowAnimation = true
+            }
+        }
     }
     
     // MARK: - Start Signing
@@ -1486,9 +1590,9 @@ struct ModernSigningOptionsView: View {
 struct SignButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
-            .opacity(configuration.isPressed ? 0.9 : 1.0)
-            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .brightness(configuration.isPressed ? 0.08 : 0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
 
@@ -1620,7 +1724,7 @@ struct ModernEditSheet: View {
                             .background(
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                        .fill(Color(.secondarySystemGroupedBackground))
+                                        .fill(.ultraThinMaterial)
                                     
                                     RoundedRectangle(cornerRadius: 28, style: .continuous)
                                         .fill(
@@ -1659,7 +1763,11 @@ struct ModernEditSheet: View {
                                 .padding(.vertical, 12)
                                 .background(
                                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                        .fill(Color(.secondarySystemGroupedBackground))
+                                        .fill(.ultraThinMaterial)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                                        .stroke(.white.opacity(0.1), lineWidth: 1)
                                 )
                         }
                         .buttonStyle(.plain)
