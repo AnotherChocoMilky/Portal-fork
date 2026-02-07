@@ -603,8 +603,6 @@ struct ModernSigningView: View {
         .padding(.vertical, 10)
     }
     
-    // MARK: - Advanced Debug Section
-    @ViewBuilder
     // MARK: - Certificate Card
     @ViewBuilder
     private var certificateCard: some View {
