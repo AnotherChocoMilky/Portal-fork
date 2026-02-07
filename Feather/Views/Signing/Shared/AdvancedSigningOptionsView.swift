@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 
 // MARK: - Advanced Signing Options Section
 struct AdvancedSigningOptionsSection: View {
+    @Environment(\.colorScheme) var colorScheme
     let app: AppInfoPresentable
     @Binding var options: Options
     @Binding var appIcon: UIImage?
@@ -73,11 +74,22 @@ struct AdvancedSigningOptionsSection: View {
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .fill(.ultraThinMaterial)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .stroke(Color.red.opacity(0.3), lineWidth: 1)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.red.opacity(colorScheme == .dark ? 0.2 : 0.4),
+                                Color.red.opacity(colorScheme == .dark ? 0.05 : 0.1)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
                     )
             )
+            .shadow(color: .black.opacity(colorScheme == .dark ? 0.2 : 0.1), radius: 10, x: 0, y: 5)
         }
     }
 
