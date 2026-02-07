@@ -6,168 +6,63 @@ import Zip
 struct InstallationOptionsSplashView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("Feather.serverMethod") private var serverMethod: Int = 0
-    @State private var appearAnimation = false
-    @State private var floatingAnimation = false
     
     var body: some View {
         NavigationStack {
-            ZStack {
-                // Modern gradient background
-                modernBackground
-                
-                ScrollView {
-                    VStack(spacing: 20) {
-                        // Header
-                        headerSection
-                            .opacity(appearAnimation ? 1 : 0)
-                            .offset(y: appearAnimation ? 0 : 20)
+            Form {
+                Section {
+                    VStack(spacing: 16) {
+                        Image(systemName: "arrow.down.app.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(.cyan)
                         
-                        // Server Settings Card
-                        serverSettingsCard
-                            .opacity(appearAnimation ? 1 : 0)
-                            .offset(y: appearAnimation ? 0 : 20)
-                            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.1), value: appearAnimation)
-                        
-                        // Info Card
-                        infoCard
-                            .opacity(appearAnimation ? 1 : 0)
-                            .offset(y: appearAnimation ? 0 : 20)
-                            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.2), value: appearAnimation)
+                        VStack(spacing: 6) {
+                            Text("Installation Settings")
+                                .font(.title2.bold())
+
+                            Text("Configure how apps are installed.")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
                     }
-                    .padding(20)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                }
+                .listRowBackground(Color.clear)
+
+                Section("Server Settings") {
+                    ServerView()
+                }
+
+                Section {
+                    Label {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("About Installation")
+                                .font(.subheadline.weight(.semibold))
+                            Text("Apps are installed using a local server that communicates with iOS. Choose the method that works best for you.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "info.circle.fill")
+                            .foregroundStyle(.blue)
+                    }
                 }
             }
             .navigationTitle("Installation")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(content: {
+            .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
-                    .fontWeight(.semibold)
                 }
-            })
-        }
-        .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                appearAnimation = true
-            }
-            withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) {
-                floatingAnimation = true
             }
         }
-    }
-    
-    private var modernBackground: some View {
-        ZStack {
-            Color(UIColor.systemGroupedBackground)
-                .ignoresSafeArea()
-            
-            GeometryReader { geo in
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [Color.cyan.opacity(0.15), Color.cyan.opacity(0)],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 150
-                        )
-                    )
-                    .frame(width: 300, height: 300)
-                    .blur(radius: 60)
-                    .offset(x: floatingAnimation ? -20 : 20, y: floatingAnimation ? -15 : 15)
-                    .position(x: geo.size.width * 0.8, y: geo.size.height * 0.15)
-            }
-            .ignoresSafeArea()
-        }
-    }
-    
-    private var headerSection: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [Color.cyan.opacity(0.3), Color.cyan.opacity(0.1), Color.clear],
-                            center: .center,
-                            startRadius: 20,
-                            endRadius: 60
-                        )
-                    )
-                    .frame(width: 100, height: 100)
-                
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [.cyan, .cyan.opacity(0.8)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 70, height: 70)
-                    .shadow(color: .cyan.opacity(0.4), radius: 16, x: 0, y: 8)
-                
-                Image(systemName: "arrow.down.app.fill")
-                    .font(.system(size: 28, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-            
-            VStack(spacing: 6) {
-                Text("Installation Settings")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
-                
-                Text("Configure how apps are installed.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(.vertical, 8)
-    }
-    
-    private var serverSettingsCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(spacing: 8) {
-                Image(systemName: "server.rack")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(.cyan)
-                Text("Server Settings")
-                    .font(.caption.weight(.bold))
-                    .foregroundStyle(.secondary)
-            }
-            
-            ServerView()
-        }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
-        )
-    }
-    
-    private var infoCard: some View {
-        HStack(spacing: 12) {
-            Image(systemName: "info.circle.fill")
-                .font(.system(size: 20))
-                .foregroundStyle(.blue)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text("About Installation")
-                    .font(.subheadline.weight(.semibold))
-                Text("Apps are installed using a local server that communicates with iOS. Choose the method that works best for you.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.blue.opacity(0.1))
-        )
     }
 }
 
-// MARK: - Modern Configuration View
+// MARK: - Configuration View
 struct ConfigurationView: View {
     @StateObject private var optionsManager = OptionsManager.shared
     @State private var isRandomAlertPresenting = false
@@ -177,23 +72,49 @@ struct ConfigurationView: View {
     @AppStorage("Feather.useShareSheetForArchiving") private var _useShareSheet: Bool = false
     
     var body: some View {
-        ScrollView {
-            LazyVStack(spacing: 16) {
-                // Quick Actions Card
-                quickActionsCard
+        List {
+            Section("Quick Actions") {
+                Button {
+                    showInstallationOptions = true
+                } label: {
+                    Label("Installation Options", systemImage: "arrow.down.app.fill")
+                }
+                .foregroundStyle(.primary)
                 
-                // Signing Options Card
-                signingOptionsCard
-                
-                // Archive Options Card
-                archiveOptionsCard
+                NavigationLink {
+                    DefaultFrameworksView()
+                } label: {
+                    Label("Default Frameworks", systemImage: "puzzlepiece.extension.fill")
+                }
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+
+            Section("Signing Options") {
+                ModernSigningOptionsCard(options: $optionsManager.options)
+            }
+
+            Section("Archive & Compression") {
+                Picker(selection: $_compressionLevel) {
+                    ForEach(ZipCompression.allCases, id: \.rawValue) { level in
+                        Text(level.label).tag(level.rawValue)
+                    }
+                } label: {
+                    Label("Compression", systemImage: "archivebox.fill")
+                }
+                
+                Toggle(isOn: $_useShareSheet) {
+                    Label {
+                        VStack(alignment: .leading) {
+                            Text("Share Sheet")
+                            Text("Show after exporting").font(.caption).foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "square.and.arrow.up")
+                    }
+                }
+            }
         }
-        .background(Color(UIColor.systemGroupedBackground))
         .navigationTitle("Signing Options")
-        .toolbar(content: {
+        .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Menu {
                     Section(optionsManager.options.ppqString) {
@@ -212,10 +133,9 @@ struct ConfigurationView: View {
                     }
                 } label: {
                     Image(systemName: "ellipsis.circle")
-                        .font(.system(size: 17))
                 }
             }
-        })
+        }
         .sheet(isPresented: $showInstallationOptions) {
             InstallationOptionsSplashView()
         }
@@ -231,182 +151,6 @@ struct ConfigurationView: View {
         .onChange(of: optionsManager.options) { _ in
             optionsManager.saveOptions()
         }
-    }
-    
-    // MARK: - Quick Actions Card
-    private var quickActionsCard: some View {
-        VStack(spacing: 0) {
-            configSectionHeader("Quick Actions", icon: "bolt.fill", color: .yellow)
-            
-            VStack(spacing: 0) {
-                // Installation Options
-                Button {
-                    showInstallationOptions = true
-                } label: {
-                    configRow(
-                        icon: "arrow.down.app.fill",
-                        iconColor: .cyan,
-                        title: "Installation Options",
-                        subtitle: "Server & connection settings",
-                        showChevron: true
-                    )
-                }
-                .buttonStyle(.plain)
-                
-                Divider().padding(.leading, 60)
-                
-                // Default Frameworks
-                NavigationLink {
-                    DefaultFrameworksView()
-                } label: {
-                    configRow(
-                        icon: "puzzlepiece.extension.fill",
-                        iconColor: .purple,
-                        title: "Default Frameworks",
-                        subtitle: "Auto inject into all apps",
-                        showChevron: true
-                    )
-                }
-            }
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
-        )
-    }
-    
-    // MARK: - Signing Options Card
-    private var signingOptionsCard: some View {
-        VStack(spacing: 0) {
-            configSectionHeader("Signing Options", icon: "signature", color: .blue)
-            
-            // Embed SigningOptionsView content in modern style
-            ModernSigningOptionsCard(options: $optionsManager.options)
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
-        )
-    }
-    
-    // MARK: - Archive Options Card
-    private var archiveOptionsCard: some View {
-        VStack(spacing: 0) {
-            configSectionHeader("Archive & Compression", icon: "archivebox.fill", color: .indigo)
-            
-            VStack(spacing: 0) {
-                // Compression Level
-                HStack(spacing: 12) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(Color.indigo.opacity(0.15))
-                            .frame(width: 36, height: 36)
-                        Image(systemName: "archivebox.fill")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(.indigo)
-                    }
-                    
-                    Text("Compression")
-                        .font(.subheadline.weight(.medium))
-                    
-                    Spacer()
-                    
-                    Picker("", selection: $_compressionLevel) {
-                        ForEach(ZipCompression.allCases, id: \.rawValue) { level in
-                            Text(level.label).tag(level.rawValue)
-                        }
-                    }
-                    .labelsHidden()
-                    .tint(.secondary)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-                
-                Divider().padding(.leading, 60)
-                
-                // Share Sheet Toggle
-                HStack(spacing: 12) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 8, style: .continuous)
-                            .fill(Color.blue.opacity(0.15))
-                            .frame(width: 36, height: 36)
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(.blue)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Share Sheet")
-                            .font(.subheadline.weight(.medium))
-                        Text("Show after exporting")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    Toggle("", isOn: $_useShareSheet)
-                        .labelsHidden()
-                        .tint(.accentColor)
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-            }
-        }
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
-        )
-    }
-    
-    // MARK: - Helper Views
-    private func configSectionHeader(_ title: String, icon: String, color: Color) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(color)
-            Text(title.uppercased())
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.secondary)
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 14)
-        .padding(.bottom, 10)
-    }
-    
-    private func configRow(icon: String, iconColor: Color, title: String, subtitle: String?, showChevron: Bool) -> some View {
-        HStack(spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(iconColor.opacity(0.15))
-                    .frame(width: 36, height: 36)
-                Image(systemName: icon)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(iconColor)
-            }
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.primary)
-                if let subtitle = subtitle {
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            
-            Spacer()
-            
-            if showChevron {
-                Image(systemName: "chevron.right")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.tertiary)
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
     }
 }
 
@@ -430,274 +174,193 @@ struct ModernSigningOptionsCard: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Protection Toggle
-            optionToggleRow(
-                icon: "shield.checkered",
-                iconColor: .blue,
-                title: "PPQ Protection",
-                subtitle: isPPQProtectionForced ? "Required for your certificate" : "Protect against revocation",
-                isOn: Binding(
-                    get: { isPPQProtectionForced ? true : options.ppqProtection },
-                    set: { if !isPPQProtectionForced || $0 { options.ppqProtection = $0 } }
-                ),
-                disabled: isPPQProtectionForced
-            )
+        Group {
+            Toggle(isOn: Binding(
+                get: { isPPQProtectionForced ? true : options.ppqProtection },
+                set: { if !isPPQProtectionForced || $0 { options.ppqProtection = $0 } }
+            )) {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("PPQ Protection")
+                        Text(isPPQProtectionForced ? "Required for your certificate" : "Protect against revocation").font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "shield.checkered").foregroundStyle(.blue)
+                }
+            }
+            .disabled(isPPQProtectionForced)
             
-            Divider().padding(.leading, 60)
+            Toggle(isOn: $options.dynamicProtection) {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("Dynamic PPQ Protection")
+                        Text("Only applies a string to the bundle IDs for apps that are on the App Store.").font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "shield.lefthalf.filled").foregroundStyle(.purple)
+                }
+            }
             
-            // Dynamic Protection Toggle
-            optionToggleRow(
-                icon: "shield.lefthalf.filled",
-                iconColor: .purple,
-                title: "Dynamic PPQ Protection",
-                subtitle: "This protection is diffrent because it only applies a string to the bundle IDs for apps that are on the App Store. Other apps will keep the original Bundle ID.",
-                isOn: $options.dynamicProtection
-            )
+            Toggle(isOn: $options.experiment_supportLiquidGlass) {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("Liquid Glass")
+                        Text("iOS 26 redesign support").font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "sparkles.rectangle.stack.fill").foregroundStyle(.cyan)
+                }
+            }
             
-            Divider().padding(.leading, 60)
+            Picker(selection: $options.signingOption) {
+                ForEach(Options.SigningOption.allCases, id: \.self) { option in
+                    Text(option.localizedDescription).tag(option)
+                }
+            } label: {
+                Label("Signing Type", systemImage: "signature").foregroundStyle(.purple)
+            }
             
-            // Liquid Glass Toggle
-            optionToggleRow(
-                icon: "sparkles.rectangle.stack.fill",
-                iconColor: .cyan,
-                title: "Liquid Glass",
-                subtitle: "iOS 26 redesign support",
-                isOn: $options.experiment_supportLiquidGlass
-            )
+            Picker(selection: $options.appAppearance) {
+                ForEach(Options.AppAppearance.allCases, id: \.self) { appearance in
+                    Text(appearance.localizedDescription).tag(appearance)
+                }
+            } label: {
+                Label("Appearance", systemImage: "paintpalette.fill").foregroundStyle(.pink)
+            }
             
-            Divider().padding(.leading, 60)
+            Picker(selection: $options.minimumAppRequirement) {
+                ForEach(Options.MinimumAppRequirement.allCases, id: \.self) { req in
+                    Text(req.localizedDescription).tag(req)
+                }
+            } label: {
+                Label("Minimum Requirement", systemImage: "ruler.fill").foregroundStyle(.indigo)
+            }
             
-            // Signing Type Picker
-            optionPickerRow(
-                icon: "signature",
-                iconColor: .purple,
-                title: "Signing Type",
-                selection: $options.signingOption,
-                values: Options.SigningOption.allCases
-            )
+            Toggle(isOn: $options.fileSharing) {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("File Sharing")
+                        Text("Enable document sharing").font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "folder.fill.badge.person.crop").foregroundStyle(.orange)
+                }
+            }
             
-            Divider().padding(.leading, 60)
+            Toggle(isOn: $options.itunesFileSharing) {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("iTunes File Sharing")
+                        Text("Access via iTunes/Finder").font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "music.note.list").foregroundStyle(.pink)
+                }
+            }
             
-            // App Appearance
-            optionPickerRow(
-                icon: "paintpalette.fill",
-                iconColor: .pink,
-                title: "Appearance",
-                selection: $options.appAppearance,
-                values: Options.AppAppearance.allCases
-            )
+            Toggle(isOn: $options.proMotion) {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("Pro Motion")
+                        Text("120Hz display support").font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "gauge.with.dots.needle.67percent").foregroundStyle(.green)
+                }
+            }
             
-            Divider().padding(.leading, 60)
+            Toggle(isOn: $options.gameMode) {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("Game Mode")
+                        Text("Gaming Mode (iOS 18+)").font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "gamecontroller.fill").foregroundStyle(.indigo)
+                }
+            }
             
-            // Minimum Requirement
-            optionPickerRow(
-                icon: "ruler.fill",
-                iconColor: .indigo,
-                title: "Minimum Requirement",
-                selection: $options.minimumAppRequirement,
-                values: Options.MinimumAppRequirement.allCases
-            )
+            Toggle(isOn: $options.ipadFullscreen) {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("iPad Fullscreen")
+                        Text("Full screen on iPad").font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "ipad.landscape").foregroundStyle(.teal)
+                }
+            }
             
-            Divider().padding(.leading, 60)
+            Toggle(isOn: $options.removeURLScheme) {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("Remove URL Scheme")
+                        Text("Strip URL handlers").font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "link.badge.minus").foregroundStyle(.red)
+                }
+            }
             
-            // File Sharing
-            optionToggleRow(
-                icon: "folder.fill.badge.person.crop",
-                iconColor: .orange,
-                title: "File Sharing",
-                subtitle: "Enable document sharing",
-                isOn: $options.fileSharing
-            )
+            Toggle(isOn: $options.removeProvisioning) {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("Remove Provisioning")
+                        Text("Exclude .mobileprovision").font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "doc.badge.minus").foregroundStyle(.orange)
+                }
+            }
             
-            Divider().padding(.leading, 60)
+            Toggle(isOn: $options.changeLanguageFilesForCustomDisplayName) {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("Force Localize")
+                        Text("Override localized titles").font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "character.bubble.fill").foregroundStyle(.green)
+                }
+            }
             
-            // iTunes File Sharing
-            optionToggleRow(
-                icon: "music.note.list",
-                iconColor: .pink,
-                title: "iTunes File Sharing",
-                subtitle: "Access via iTunes/Finder",
-                isOn: $options.itunesFileSharing
-            )
+            Toggle(isOn: $options.experiment_replaceSubstrateWithEllekit) {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("Replace Substrate")
+                        Text("Use ElleKit instead").font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "arrow.triangle.2.circlepath.circle.fill").foregroundStyle(.cyan)
+                }
+            }
             
-            Divider().padding(.leading, 60)
-            
-            // Pro Motion
-            optionToggleRow(
-                icon: "gauge.with.dots.needle.67percent",
-                iconColor: .green,
-                title: "Pro Motion",
-                subtitle: "120Hz display support",
-                isOn: $options.proMotion
-            )
-            
-            Divider().padding(.leading, 60)
-            
-            // Game Mode
-            optionToggleRow(
-                icon: "gamecontroller.fill",
-                iconColor: .indigo,
-                title: "Game Mode",
-                subtitle: "Gaming Mode (iOS 18+)",
-                isOn: $options.gameMode
-            )
-            
-            Divider().padding(.leading, 60)
-            
-            // iPad Fullscreen
-            optionToggleRow(
-                icon: "ipad.landscape",
-                iconColor: .teal,
-                title: "iPad Fullscreen",
-                subtitle: "Full screen on iPad",
-                isOn: $options.ipadFullscreen
-            )
-            
-            Divider().padding(.leading, 60)
-            
-            // Remove URL Scheme
-            optionToggleRow(
-                icon: "link.badge.minus",
-                iconColor: .red,
-                title: "Remove URL Scheme",
-                subtitle: "Strip URL handlers",
-                isOn: $options.removeURLScheme
-            )
-            
-            Divider().padding(.leading, 60)
-            
-            // Remove Provisioning
-            optionToggleRow(
-                icon: "doc.badge.minus",
-                iconColor: .orange,
-                title: "Remove Provisioning",
-                subtitle: "Exclude .mobileprovision",
-                isOn: $options.removeProvisioning
-            )
-            
-            Divider().padding(.leading, 60)
-            
-            // Force Localize
-            optionToggleRow(
-                icon: "character.bubble.fill",
-                iconColor: .green,
-                title: "Force Localize",
-                subtitle: "Override localized titles",
-                isOn: $options.changeLanguageFilesForCustomDisplayName
-            )
-            
-            Divider().padding(.leading, 60)
-            
-            // Replace Substrate with ElleKit
-            optionToggleRow(
-                icon: "arrow.triangle.2.circlepath.circle.fill",
-                iconColor: .cyan,
-                title: "Replace Substrate",
-                subtitle: "Use ElleKit instead",
-                isOn: $options.experiment_replaceSubstrateWithEllekit
-            )
-            
-            Divider().padding(.leading, 60)
-            
-            // Auto Sign After Download
-            optionToggleRow(
-                icon: "bolt.badge.a.fill",
-                iconColor: .orange,
-                title: "Auto Sign After Download",
-                subtitle: "Automatically sign and install apps after download",
-                isOn: Binding(
-                    get: { UserDefaults.standard.bool(forKey: "Feather.autoSignAfterDownload") },
-                    set: { UserDefaults.standard.set($0, forKey: "Feather.autoSignAfterDownload") }
-                )
-            )
+            Toggle(isOn: Binding(
+                get: { UserDefaults.standard.bool(forKey: "Feather.autoSignAfterDownload") },
+                set: { UserDefaults.standard.set($0, forKey: "Feather.autoSignAfterDownload") }
+            )) {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("Auto Sign After Download")
+                        Text("Automatically sign and install apps after download").font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "bolt.badge.a.fill").foregroundStyle(.orange)
+                }
+            }
 
-            Divider().padding(.leading, 60)
-
-            // Install After Signing
-            optionToggleRow(
-                icon: "arrow.down.circle.fill",
-                iconColor: .cyan,
-                title: "Install After Signing",
-                subtitle: nil,
-                isOn: $options.post_installAppAfterSigned
-            )
+            Toggle(isOn: $options.post_installAppAfterSigned) {
+                Label("Install After Signing", systemImage: "arrow.down.circle.fill").foregroundStyle(.cyan)
+            }
             
-            Divider().padding(.leading, 60)
-            
-            // Delete After Signing
-            optionToggleRow(
-                icon: "trash.fill",
-                iconColor: .red,
-                title: "Delete After Signing",
-                subtitle: nil,
-                isOn: $options.post_deleteAppAfterSigned
-            )
+            Toggle(isOn: $options.post_deleteAppAfterSigned) {
+                Label("Delete After Signing", systemImage: "trash.fill").foregroundStyle(.red)
+            }
         }
         .onAppear {
             if isPPQProtectionForced && !options.ppqProtection {
                 options.ppqProtection = true
             }
         }
-    }
-    
-    private func optionToggleRow(icon: String, iconColor: Color, title: String, subtitle: String?, isOn: Binding<Bool>, disabled: Bool = false) -> some View {
-        HStack(spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(iconColor.opacity(0.15))
-                    .frame(width: 36, height: 36)
-                Image(systemName: icon)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(iconColor)
-            }
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(title)
-                    .font(.subheadline.weight(.medium))
-                if let subtitle = subtitle {
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            
-            Spacer()
-            
-            Toggle("", isOn: isOn)
-                .labelsHidden()
-                .tint(.accentColor)
-                .disabled(disabled)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-    }
-    
-    private func optionPickerRow<T: Hashable & LocalizedDescribable>(icon: String, iconColor: Color, title: String, selection: Binding<T>, values: [T]) -> some View {
-        HStack(spacing: 12) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(iconColor.opacity(0.15))
-                    .frame(width: 36, height: 36)
-                Image(systemName: icon)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(iconColor)
-            }
-            
-            Text(title)
-                .font(.subheadline.weight(.medium))
-            
-            Spacer()
-            
-            Picker("", selection: selection) {
-                ForEach(values, id: \.self) { value in
-                    Text(value.localizedDescription).tag(value)
-                }
-            }
-            .labelsHidden()
-            .tint(.secondary)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
     }
 }
