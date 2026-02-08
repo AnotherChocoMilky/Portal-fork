@@ -47,7 +47,7 @@ struct ColorCustomizationView: View {
             guard let themes = try? JSONDecoder().decode([ColorTheme].self, from: userThemesData) else { return [] }
             return themes
         }
-        set {
+        nonmutating set {
             if let encoded = try? JSONEncoder().encode(newValue) {
                 userThemesData = encoded
             }
