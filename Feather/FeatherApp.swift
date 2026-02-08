@@ -192,6 +192,9 @@ struct FeatherApp: App {
 			.onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
 				_handlePendingWidgetAction()
 			}
+			.onReceive(NotificationCenter.default.publisher(for: .bypassDylibCheckUpdated)) { _ in
+				hasDylibsDetected = false
+			}
 		})
 	}
 
@@ -213,6 +216,12 @@ struct FeatherApp: App {
 	}
     
     private func _checkForDylibs() {
+        // Check if user has bypassed dylib check
+        if UserDefaults.standard.bool(forKey: "Feather.bypassDylibCheck") {
+            Logger.misc.info("✅ Dylib check bypassed by developer token")
+            return
+        }
+
         // Perform dylib scan on background thread to avoid blocking UI
         DispatchQueue.global(qos: .userInitiated).async {
             let detector = DylibDetector.shared
