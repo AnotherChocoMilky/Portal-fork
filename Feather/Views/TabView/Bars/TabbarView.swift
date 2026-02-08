@@ -97,8 +97,9 @@ struct TabbarView: View {
 			}
 		}
 		.onAppear {
-			if selectedTab == nil {
+			if !AppStateManager.shared.hasSelectedInitialTab {
 				selectedTab = getInitialTab()
+				AppStateManager.shared.hasSelectedInitialTab = true
 			}
 		}
 		.sheet(isPresented: $showInstallModifySheet) {

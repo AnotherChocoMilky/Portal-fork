@@ -79,8 +79,9 @@ struct ExperimentalTabbarView: View {
         }
         .experimentalGradientBackground()
         .onAppear {
-            if selectedTab == nil {
+            if !AppStateManager.shared.hasSelectedInitialTab {
                 selectedTab = getInitialTab()
+                AppStateManager.shared.hasSelectedInitialTab = true
             }
         }
     }

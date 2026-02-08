@@ -5,6 +5,7 @@ import UIKit
 // MARK: - Appearance View
 struct AppearanceView: View {
     @AppStorage("Feather.userInterfaceStyle") private var userInterfaceStyle: Int = UIUserInterfaceStyle.unspecified.rawValue
+    @AppStorage(UserDefaults.Keys.installTrigger) private var installTrigger: Int = 0 // 0: Manual, 1: Automatic
     @AppStorage("Feather.shouldTintIcons") private var _shouldTintIcons: Bool = false
     @AppStorage("Feather.storeCellAppearance") private var storeCellAppearance: Int = 0
     @AppStorage("com.apple.SwiftUI.IgnoreSolariumLinkedOnCheck") private var ignoreSolariumLinkedOnCheck: Bool = false
@@ -19,6 +20,7 @@ struct AppearanceView: View {
             themeSection
             accentColorSection
             tintIconsSection
+            installationSection
             displaySection
             hapticsSection
             personalizationSection
@@ -56,6 +58,8 @@ struct AppearanceView: View {
     
     private var accentColorSection: some View {
         Section {
+            AppearanceNavRow(icon: "paintpalette.fill", title: "Custom Colors", color: .pink, destination: ColorCustomizationView())
+
             AppearanceTintColorView()
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
@@ -64,6 +68,22 @@ struct AppearanceView: View {
         }
     }
     
+    // MARK: - Installation Section
+
+    private var installationSection: some View {
+        Section {
+            Picker("Installation Trigger", selection: $installTrigger) {
+                Text("Manual").tag(0)
+                Text("Automatic").tag(1)
+            }
+            .pickerStyle(.menu)
+        } header: {
+            AppearanceSectionHeader(title: "Installation", icon: "arrow.down.circle.fill")
+        } footer: {
+            Text("Choose how you would like to trigger app installation after signing.")
+        }
+    }
+
     // MARK: - Tint Icons Section
     
     @ViewBuilder

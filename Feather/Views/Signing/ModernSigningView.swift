@@ -8,6 +8,7 @@ struct ModernSigningView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
     @AppStorage("Feather.serverMethod") private var _serverMethod: Int = 0
+    @AppStorage(UserDefaults.Keys.installTrigger) private var installTrigger: Int = 0
     @AppStorage("feature_advancedSigning") private var _advancedSigningEnabled = false
     @StateObject private var _optionsManager = OptionsManager.shared
     
@@ -68,9 +69,17 @@ struct ModernSigningView: View {
                 VStack(spacing: 0) {
                     _scrollableContent
                     
-                    modernSignButton
-                        .offset(y: _buttonOffset)
-                        .opacity(_contentOpacity)
+                    VStack(spacing: 12) {
+                        modernSignButton
+
+                        SwipeToSign(onComplete: {
+                            _start()
+                        })
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 10)
+                    }
+                    .offset(y: _buttonOffset)
+                    .opacity(_contentOpacity)
                 }
             }
             .sheet(isPresented: $_isAltPickerPresenting) {
@@ -234,6 +243,11 @@ struct ModernSigningView: View {
 
 
     private func _onAppearAction() {
+                // Apply global installation trigger setting if not already set
+                if installTrigger == 1 {
+                    _temporaryOptions.post_installAppAfterSigned = true
+                }
+
                 if _optionsManager.options.ppqProtection,
                    let identifier = app.identifier,
                    let cert = _selectedCert(),
@@ -1583,6 +1597,92 @@ struct ModernSigningOptionsView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
+    }
+}
+
+// MARK: - Swipe To Sign Component
+struct SwipeToSign: View {
+    var onComplete: () -> Void
+
+    @State private var offset: CGFloat = 0
+    @State private var isCompleted = false
+    private let thumbWidth: CGFloat = 60
+
+    var body: some View {
+        GeometryReader { geo in
+            let maxWidth = geo.size.width
+            ZStack(alignment: .leading) {
+                // Track
+                Capsule()
+                    .fill(.ultraThinMaterial)
+                    .frame(height: 60)
+                    .overlay(
+                        Text("Swipe to Sign")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(.secondary)
+                            .opacity(Double(1 - (offset / (maxWidth - thumbWidth))))
+                    )
+
+                // Thumb
+                ZStack {
+                    Capsule()
+                        .fill(Color.accentColor)
+                        .frame(width: thumbWidth + offset, height: 60)
+
+                    HStack {
+                        Spacer()
+                        ZStack {
+                            Circle()
+                                .fill(.white)
+                                .frame(width: 52, height: 52)
+
+                            Image(systemName: "chevron.right.2")
+                                .font(.system(size: 20, weight: .bold))
+                                .foregroundStyle(Color.accentColor)
+                        }
+                        .padding(.trailing, 4)
+                    }
+                    .frame(width: thumbWidth + offset)
+                }
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            if !isCompleted {
+                                let dragAmount = value.translation.width
+                                if dragAmount > 0 && dragAmount < maxWidth - thumbWidth {
+                                    offset = dragAmount
+                                }
+                            }
+                        }
+                        .onEnded { value in
+                            if !isCompleted {
+                                if offset > (maxWidth - thumbWidth) * 0.8 {
+                                    withAnimation(.spring()) {
+                                        offset = maxWidth - thumbWidth
+                                        isCompleted = true
+                                    }
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                        onComplete()
+                                        // Reset after a delay
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                            withAnimation {
+                                                offset = 0
+                                                isCompleted = false
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    withAnimation(.spring()) {
+                                        offset = 0
+                                    }
+                                }
+                            }
+                        }
+                )
+            }
+        }
+        .frame(height: 60)
+        .clipShape(Capsule())
     }
 }
 
