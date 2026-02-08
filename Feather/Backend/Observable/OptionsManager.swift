@@ -35,6 +35,35 @@ class OptionsManager: ObservableObject {
 	}
 }
 
+// MARK: - Signing Button Type
+enum SigningButtonType: Int, CaseIterable {
+    case button = 0
+    case swipe = 1
+    case hold = 2
+    case slide = 3
+    case doubleTap = 4
+
+    var label: String {
+        switch self {
+        case .button: return .localized("Button")
+        case .swipe: return .localized("Swipe")
+        case .hold: return .localized("Hold (5s)")
+        case .slide: return .localized("Slide")
+        case .doubleTap: return .localized("Double Tap")
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .button: return "hand.tap.fill"
+        case .swipe: return "arrow.right.to.line"
+        case .hold: return "hand.tap"
+        case .slide: return "arrow.right.square.fill"
+        case .doubleTap: return "hand.tap.fill"
+        }
+    }
+}
+
 // MARK: - Options
 struct Options: Codable, Equatable {
 	
