@@ -93,10 +93,10 @@ struct ColorCustomizationView: View {
             }
 
             Section {
-                ColorPicker("Background Color", selection: $bgColor, supportsOpacity: false)
-                ColorPicker("UI Elements Color", selection: $uiElementColor, supportsOpacity: false)
-                ColorPicker("Text Color", selection: $textColor, supportsOpacity: false)
-                ColorPicker("Accent Color", selection: $tintColor, supportsOpacity: false)
+                ColorPicker("Background", selection: $bgColor, supportsOpacity: false)
+                ColorPicker("UI Elements", selection: $uiElementColor, supportsOpacity: false)
+                ColorPicker("Text", selection: $textColor, supportsOpacity: false)
+                ColorPicker("Accent", selection: $tintColor, supportsOpacity: false)
             } header: {
                 Text("Custom Colors")
             }
@@ -271,7 +271,7 @@ struct ThemeLibraryView: View {
                 }
                 .padding(20)
             }
-            .navigationTitle("Theme Library")
+            .navigationTitle("View Themes")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

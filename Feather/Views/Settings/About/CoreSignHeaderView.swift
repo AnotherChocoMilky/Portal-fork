@@ -101,7 +101,7 @@ struct CoreSignHeaderView: View {
                 .font(.system(size: 8))
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(Color.accentColor)
-            Text("2.3")
+            Text("3.0")
                 .font(.system(size: 10, weight: .semibold, design: .rounded))
             Text("Release")
                 .font(.system(size: 9, weight: .bold))

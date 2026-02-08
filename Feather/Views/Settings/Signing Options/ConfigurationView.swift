@@ -12,15 +12,15 @@ struct InstallationOptionsSplashView: View {
             Form {
                 Section {
                     VStack(spacing: 16) {
-                        Image(systemName: "arrow.down.app.fill")
+                        Image(systemName: "gearshape.arrow.trianglehead.2.clockwise.rotate.90")
                             .font(.system(size: 60))
                             .foregroundStyle(.cyan)
                         
                         VStack(spacing: 6) {
-                            Text("Installation Settings")
+                            Text("Installation Flow")
                                 .font(.title2.bold())
 
-                            Text("Configure how apps are installed.")
+                            Text("Configure which action you want to do to when signing apps.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }

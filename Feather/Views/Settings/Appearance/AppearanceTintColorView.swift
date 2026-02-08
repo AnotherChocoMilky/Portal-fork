@@ -171,7 +171,7 @@ struct ThemeColorPickerSheet: View {
 		NavigationView {
 			ScrollView {
 				VStack(alignment: .leading, spacing: 24) {
-					Text("Personalize your experience with a custom theme color.")
+					Text("Personalize Portal with a custom theme color.")
 						.font(.system(size: 14))
 						.foregroundStyle(.secondary)
 						.padding(.horizontal)

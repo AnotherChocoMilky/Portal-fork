@@ -1629,7 +1629,7 @@ struct SwipeToSign: View {
                                     )
                             }
 
-                            Text(isCompleted ? "Signing..." : "Swipe to Sign")
+                            Text(isCompleted ? "Signing..." : "Swipe To Sign")
                                 .font(.system(size: 15, weight: .bold))
                                 .foregroundStyle(isCompleted ? .primary : .secondary)
                                 .opacity(isCompleted ? 1.0 : Double(1 - (offset / (maxWidth - thumbWidth))))
