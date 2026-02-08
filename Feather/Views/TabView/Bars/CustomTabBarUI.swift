@@ -88,8 +88,9 @@ struct CustomTabBarUI: View {
         }
         .ignoresSafeArea(.keyboard)
         .onAppear {
-            if selectedTab == nil {
+            if !AppStateManager.shared.hasSelectedInitialTab {
                 selectedTab = getInitialTab()
+                AppStateManager.shared.hasSelectedInitialTab = true
             }
         }
     }
