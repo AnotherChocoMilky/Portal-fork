@@ -110,35 +110,30 @@ struct ExtendedTabbarView: View {
 				}
 			}
 			
-			TabSection("Sources") {
-				Tab(.localized("All Repositories"), systemImage: "globe.desk") {
-					NavigationStack {
-						SourceAppsView(object: Array(_sources), viewModel: viewModel)
-					}
-				}
-				
-				ForEach(_sources, id: \.identifier) { source in
-					Tab {
+			if horizontalSizeClass != .compact {
+				TabSection("Sources") {
+					Tab(.localized("All Repositories"), systemImage: "globe.desk") {
 						NavigationStack {
-							SourceAppsView(object: [source], viewModel: viewModel)
+							SourceAppsView(object: Array(_sources), viewModel: viewModel)
 						}
-					} label: {
-						_icon(source.name ?? .localized("Unknown"), iconUrl: source.iconURL)
 					}
-					.swipeActions {
-						Button(.localized("Delete"), systemImage: "trash", role: .destructive) {
-							Storage.shared.deleteSource(for: source)
+
+					ForEach(_sources, id: \.identifier) { source in
+						Tab {
+							NavigationStack {
+								SourceAppsView(object: [source], viewModel: viewModel)
+							}
+						} label: {
+							_icon(source.name ?? .localized("Unknown"), iconUrl: source.iconURL)
 						}
 					}
 				}
-			}
-			.sectionActions {
-				Button(.localized("Add Source"), systemImage: "plus") {
-					_isAddingPresenting = true
+				.sectionActions {
+					Button(.localized("Add Source"), systemImage: "plus") {
+						_isAddingPresenting = true
+					}
 				}
 			}
-			.defaultVisibility(.hidden, for: .tabBar)
-			.hidden(horizontalSizeClass == .compact)
 		}
 		.tabViewStyle(.sidebarAdaptable)
 		.tabViewCustomization($customization)
