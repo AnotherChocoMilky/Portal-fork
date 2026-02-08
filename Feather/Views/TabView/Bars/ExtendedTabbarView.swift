@@ -105,32 +105,13 @@ struct ExtendedTabbarView: View {
 			set: { selectedTab = $0 }
 		)) {
 			ForEach(visibleTabs, id: \.hashValue) { tab in
-				Tab(hideTabLabels ? "" : tab.title, systemImage: tab.icon, value: tab) {
-					TabEnum.view(for: tab)
-				}
-			}
-			
-			if horizontalSizeClass != .compact {
-				TabSection("Sources") {
-					Tab(.localized("All Repositories"), systemImage: "globe.desk") {
-						NavigationStack {
-							SourceAppsView(object: Array(_sources), viewModel: viewModel)
-						}
+				if tab == .sources && horizontalSizeClass != .compact {
+					Tab(hideTabLabels ? "" : tab.title, systemImage: "list.bullet.rectangle", value: tab) {
+						customiPadSourcesView
 					}
-
-					ForEach(_sources, id: \.identifier) { source in
-						Tab {
-							NavigationStack {
-								SourceAppsView(object: [source], viewModel: viewModel)
-							}
-						} label: {
-							_icon(source.name ?? .localized("Unknown"), iconUrl: source.iconURL)
-						}
-					}
-				}
-				.sectionActions {
-					Button(.localized("Add Source"), systemImage: "plus") {
-						_isAddingPresenting = true
+				} else {
+					Tab(hideTabLabels ? "" : tab.title, systemImage: tab.icon, value: tab) {
+						TabEnum.view(for: tab)
 					}
 				}
 			}
@@ -173,6 +154,37 @@ struct ExtendedTabbarView: View {
 	
 	var standardIcon: some View {
 		Image(systemName: "app.dashed")
+	}
+
+	@ViewBuilder
+	private var customiPadSourcesView: some View {
+		NavigationStack {
+			List {
+				NavigationLink {
+					SourceAppsView(object: Array(_sources), viewModel: viewModel)
+				} label: {
+					Label(.localized("All Repositories"), systemImage: "globe.desk")
+				}
+
+				ForEach(_sources, id: \.identifier) { source in
+					NavigationLink {
+						SourceAppsView(object: [source], viewModel: viewModel)
+					} label: {
+						_icon(source.name ?? .localized("Unknown"), iconUrl: source.iconURL)
+					}
+				}
+			}
+			.navigationTitle(.localized("Sources"))
+			.toolbar {
+				ToolbarItem(placement: .primaryAction) {
+					Button {
+						_isAddingPresenting = true
+					} label: {
+						Label(.localized("Add Source"), systemImage: "plus")
+					}
+				}
+			}
+		}
 	}
 }
 
