@@ -52,13 +52,13 @@ struct FRIconCellView: View {
 		let context = CIContext(options: [.workingColorSpace: kCFNull as Any])
 		context.render(outputImage, toBitmap: &bitmap, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: nil)
 		
-		let color = Color(red: Double(bitmap[0]) / 255, green: Double(bitmap[1]) / 255, blue: Double(bitmap[2]) / 255)
+		let color = Color(red: Double(bitmap[0]) / 255.0, green: Double(bitmap[1]) / 255.0, blue: Double(bitmap[2]) / 255.0)
 		onColorExtracted?(color)
 	}
 	
 	var standardIcon: some View {
 		ZStack {
-			RoundedRectangle(cornerRadius: isCircle ? size / 2 : size * 0.2237, style: .continuous)
+			RoundedRectangle(cornerRadius: isCircle ? size / 2.0 : size * 0.2237, style: .continuous)
 				.fill(Color.accentColor.opacity(0.15))
 				.frame(width: size, height: size)
 			
