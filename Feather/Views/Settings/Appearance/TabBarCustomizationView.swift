@@ -33,7 +33,7 @@ struct TabBarCustomizationView: View {
             VStack(spacing: 24) {
                 // Tab Labels Section
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(.localized("Appearance").uppercased())
+                    Text(verbatim: .localized("Appearance").uppercased())
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.secondary)
                         .padding(.leading, 16)
@@ -46,7 +46,7 @@ struct TabBarCustomizationView: View {
                                     .frame(width: 32, height: 32)
                                     .background(Color.blue.opacity(0.1))
                                     .clipShape(Circle())
-                                Text(.localized("Hide Tab Labels"))
+                                Text(verbatim: .localized("Hide Tab Labels"))
                                     .font(.system(size: 16, weight: .medium))
                             }
                         }
@@ -57,7 +57,7 @@ struct TabBarCustomizationView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .padding(.horizontal, 16)
 
-                    Text(.localized("Hide the labels under tab bar icons for a cleaner and nicer look."))
+                    Text(verbatim: .localized("Hide the labels under tab bar icons for a cleaner and nicer look."))
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 24)
@@ -65,7 +65,7 @@ struct TabBarCustomizationView: View {
 
                 // Reorder Section
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(.localized("Tab Order").uppercased())
+                    Text(verbatim: .localized("Tab Order").uppercased())
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.secondary)
                         .padding(.leading, 16)
@@ -82,7 +82,7 @@ struct TabBarCustomizationView: View {
                                     .frame(width: 32, height: 32)
                                     .background(Color.orange.opacity(0.1))
                                     .clipShape(Circle())
-                                Text(.localized("Reorder Tabs"))
+                                Text(verbatim: .localized("Reorder Tabs"))
                                     .font(.system(size: 16, weight: .medium))
                                 Spacer()
                                 Image(systemName: isReordering ? "checkmark.circle.fill" : "chevron.right")
@@ -119,7 +119,7 @@ struct TabBarCustomizationView: View {
                                         .frame(width: 32, height: 32)
                                         .background(Color.red.opacity(0.1))
                                         .clipShape(Circle())
-                                    Text(.localized("Reset To Default Order"))
+                                Text(verbatim: .localized("Reset To Default Order"))
                                         .font(.system(size: 16, weight: .medium))
                                 }
                             }
@@ -132,7 +132,7 @@ struct TabBarCustomizationView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .padding(.horizontal, 16)
 
-                    Text(isReordering ? .localized("Drag tabs to reorder them. Settings will always appear last.") : .localized("Tap to customize the order of tabs in the Tab Bar."))
+                    Text(verbatim: isReordering ? .localized("Drag tabs to reorder them. Settings will always appear last.") : .localized("Tap to customize the order of tabs in the Tab Bar."))
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 24)
@@ -140,7 +140,7 @@ struct TabBarCustomizationView: View {
                 
                 // Visible Tabs Section
                 VStack(alignment: .leading, spacing: 8) {
-                    Text(.localized("Visible Tabs").uppercased())
+                    Text(verbatim: .localized("Visible Tabs").uppercased())
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.secondary)
                         .padding(.leading, 16)
@@ -161,7 +161,7 @@ struct TabBarCustomizationView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .padding(.horizontal, 16)
 
-                    Text(.localized("Choose which tabs appear in the bottom tab bar. Settings cannot be hidden."))
+                    Text(verbatim: .localized("Choose which tabs appear in the bottom tab bar. Settings cannot be hidden."))
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 24)
@@ -180,7 +180,7 @@ struct TabBarCustomizationView: View {
                 showMinimumWarning = false
             }
         } message: {
-            Text(.localized("At least 2 tabs must be visible (including Settings)."))
+            Text(verbatim: .localized("At least 2 tabs must be visible (including Settings)."))
         }
     }
     
@@ -249,7 +249,7 @@ struct TabBarCustomizationView: View {
                     Image(systemName: "house.fill")
                         .foregroundStyle(.blue)
                         .frame(width: 24)
-                    Text(.localized("Home"))
+                    Text(verbatim: .localized("Home"))
                 }
             }
             .disabled(!canDisable(.dashboard))
@@ -261,7 +261,7 @@ struct TabBarCustomizationView: View {
                     Image(systemName: "globe.desk.fill")
                         .foregroundStyle(.cyan)
                         .frame(width: 24)
-                    Text(.localized("Sources"))
+                    Text(verbatim: .localized("Sources"))
                 }
             }
             .disabled(!canDisable(.sources))
@@ -273,7 +273,7 @@ struct TabBarCustomizationView: View {
                     Image(systemName: "square.grid.2x2")
                         .foregroundStyle(.purple)
                         .frame(width: 24)
-                    Text(.localized("Library"))
+                    Text(verbatim: .localized("Library"))
                 }
             }
             .disabled(!canDisable(.library))
@@ -285,7 +285,7 @@ struct TabBarCustomizationView: View {
                     Image(systemName: "folder.fill")
                         .foregroundStyle(.blue)
                         .frame(width: 24)
-                    Text(.localized("Files"))
+                    Text(verbatim: .localized("Files"))
                 }
             }
             .disabled(!canDisable(.files))
@@ -297,7 +297,7 @@ struct TabBarCustomizationView: View {
                     Image(systemName: "book.fill")
                         .foregroundStyle(.orange)
                         .frame(width: 24)
-                    Text(.localized("Guides"))
+                    Text(verbatim: .localized("Guides"))
                 }
             }
             .disabled(!canDisable(.guides))
@@ -308,7 +308,7 @@ struct TabBarCustomizationView: View {
                 Image(systemName: "gearshape.2")
                     .foregroundStyle(.gray)
                     .frame(width: 24)
-                Text(.localized("Settings"))
+                Text(verbatim: .localized("Settings"))
                 Spacer()
                 Image(systemName: "lock.fill")
                     .foregroundStyle(.secondary)
