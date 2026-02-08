@@ -445,7 +445,7 @@ struct StatusBarOverlay: View {
         }
         
         if result == KERN_SUCCESS {
-            return Double(info.resident_size) / 1024 / 1024
+            return Double(info.resident_size) / 1024.0 / 1024.0
         }
         return 0
     }

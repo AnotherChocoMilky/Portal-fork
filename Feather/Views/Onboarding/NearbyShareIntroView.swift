@@ -742,7 +742,7 @@ struct InteractiveTransferView: View {
         Path { path in
             let startX = geometry.size.width * 0.25
             let endX = geometry.size.width * 0.75
-            let midY = geometry.size.height / 2
+            let midY = geometry.size.height / 2.0
             
             path.move(to: CGPoint(x: startX, y: midY))
             path.addLine(to: CGPoint(x: endX, y: midY))
@@ -794,7 +794,7 @@ struct InteractiveTransferView: View {
                 .font(.system(size: 10, weight: .medium, design: .rounded))
                 .foregroundColor(.secondary)
         }
-        .position(x: xPosition, y: geometry.size.height / 2)
+        .position(x: xPosition, y: geometry.size.height / 2.0)
     }
     
     // MARK: - Data Packet View
@@ -812,7 +812,7 @@ struct InteractiveTransferView: View {
                 )
             )
             .frame(width: 8, height: 8)
-            .position(x: xPosition, y: geometry.size.height / 2)
+            .position(x: xPosition, y: geometry.size.height / 2.0)
             .opacity(1.0 - packet.progress)
     }
     
@@ -903,7 +903,7 @@ struct SimplifiedTransferView: View {
                 Path { path in
                     let startX = geometry.size.width * 0.25
                     let endX = geometry.size.width * 0.75
-                    let midY = geometry.size.height / 2
+                    let midY = geometry.size.height / 2.0
                     
                     path.move(to: CGPoint(x: startX, y: midY))
                     path.addLine(to: CGPoint(x: endX, y: midY))
@@ -935,7 +935,7 @@ struct SimplifiedTransferView: View {
                     )
                     .scaleEffect(isAnimating ? 1.1 : 0.9)
                     .opacity(isAnimating ? 1.0 : 0.7)
-                    .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
+                    .position(x: geometry.size.width / 2.0, y: geometry.size.height / 2.0)
             }
         }
         .background(
@@ -974,7 +974,7 @@ struct SimplifiedTransferView: View {
                 .font(.system(size: 10, weight: .medium, design: .rounded))
                 .foregroundColor(.secondary)
         }
-        .position(x: xPosition, y: geometry.size.height / 2)
+        .position(x: xPosition, y: geometry.size.height / 2.0)
     }
 }
 
