@@ -3,6 +3,10 @@
 import Foundation
 import SwiftUI
 
+extension Notification.Name {
+    static let bypassDylibCheckUpdated = Notification.Name("Feather.bypassDylibCheckUpdated")
+}
+
 /// Utility to detect .dylib files in the app bundle
 class DylibDetector {
     static let shared = DylibDetector()
@@ -58,6 +62,10 @@ class DylibDetector {
 
 /// Full-screen unavailable view shown when .dylib files are detected
 struct DylibBlockerView: View {
+    @State private var okButtonTapCount = 0
+    @State private var showTokenAlert = false
+    @State private var developerToken = ""
+
     var body: some View {
         ZStack {
             // Background
@@ -111,6 +119,11 @@ struct DylibBlockerView: View {
                     // This button intentionally does nothing
                     // User must relaunch without dylibs
                     HapticsManager.shared.error()
+
+                    okButtonTapCount += 1
+                    if okButtonTapCount >= 10 {
+                        showTokenAlert = true
+                    }
                 } label: {
                     HStack {
                         Image(systemName: "xmark.circle.fill")
@@ -136,6 +149,24 @@ struct DylibBlockerView: View {
             }
         }
         .interactiveDismissDisabled(true)
+        .alert("Developer Token", isPresented: $showTokenAlert) {
+            TextField("Token", text: $developerToken)
+            Button("Cancel", role: .cancel) {
+                okButtonTapCount = 0
+                developerToken = ""
+            }
+            Button("Validate") {
+                if developerToken == "USE-FRAMEWORKS:True" {
+                    UserDefaults.standard.set(true, forKey: "Feather.bypassDylibCheck")
+                    NotificationCenter.default.post(name: .bypassDylibCheckUpdated, object: nil)
+                } else {
+                    okButtonTapCount = 0
+                    developerToken = ""
+                }
+            }
+        } message: {
+            Text("In order to test Portal with additional frameworks, enter your Developer Token")
+        }
     }
 }
 
