@@ -415,4 +415,3 @@ struct CustomColorPickerView: View {
 		}
 	}
 }
-}
