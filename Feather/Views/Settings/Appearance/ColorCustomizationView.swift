@@ -25,6 +25,7 @@ struct ColorCustomizationView: View {
     @State private var showAllThemes = false
     @State private var themeName: String = ""
     @State private var showSaveAlert = false
+    @ObservedObject private var appState = AppStateManager.shared
 
     private let presetThemes: [ColorTheme] = [
         ColorTheme(name: "Classic", bg: "#F2F2F7", ui: "#007AFF", text: "#000000", tint: "#007AFF"),
@@ -80,8 +81,12 @@ struct ColorCustomizationView: View {
                     LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                         ForEach(allThemes.prefix(allThemes.count >= 10 ? 4 : allThemes.count)) { theme in
                             ThemeCard(theme: theme) {
-                                applyTheme(theme)
+                                if !appState.isSigning {
+                                    applyTheme(theme)
+                                }
                             }
+                            .disabled(appState.isSigning)
+                            .opacity(appState.isSigning ? 0.6 : 1.0)
                         }
                     }
                 }
@@ -116,6 +121,7 @@ struct ColorCustomizationView: View {
                 .tint(Color.accentColor)
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets())
+                .disabled(appState.isSigning)
             }
 
             Section {

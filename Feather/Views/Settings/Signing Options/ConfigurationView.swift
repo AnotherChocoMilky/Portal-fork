@@ -336,8 +336,9 @@ struct ModernSigningOptionsCard: View {
             }
 
             Picker(selection: AppStorage(wrappedValue: 0, "Feather.signingButtonType").projectedValue) {
-                Text("Button").tag(0)
-                Text("Swipe").tag(1)
+                ForEach(SigningButtonType.allCases, id: \.self) { type in
+                    Text(type.label).tag(type.rawValue)
+                }
             } label: {
                 Label("Signing Control", systemImage: "hand.tap.fill").foregroundStyle(.pink)
             }

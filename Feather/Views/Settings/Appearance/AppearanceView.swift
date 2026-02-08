@@ -30,7 +30,10 @@ struct AppearanceView: View {
         .navigationTitle("Appearance")
         .onChange(of: userInterfaceStyle) { value in
             if let style = UIUserInterfaceStyle(rawValue: value) {
-                UIApplication.topViewController()?.view.window?.overrideUserInterfaceStyle = style
+                UIApplication.shared.connectedScenes
+                    .compactMap { $0 as? UIWindowScene }
+                    .flatMap { $0.windows }
+                    .forEach { $0.overrideUserInterfaceStyle = style }
             }
         }
         .onChange(of: ignoreSolariumLinkedOnCheck) { _ in

@@ -71,14 +71,35 @@ struct ModernSigningView: View {
                     _scrollableContent
                     
                     VStack(spacing: 12) {
-                        if _signingButtonType == 0 {
+                        switch _signingButtonType {
+                        case 0:
                             modernSignButton
-                        } else {
+                        case 1:
                             SwipeToSign(onComplete: {
                                 _start()
                             })
                             .padding(.horizontal, 24)
                             .padding(.bottom, 10)
+                        case 2:
+                            HoldToSign(onComplete: {
+                                _start()
+                            })
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 10)
+                        case 3:
+                            SlideToConfirm(onComplete: {
+                                _start()
+                            })
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 10)
+                        case 4:
+                            DoubleTapToSign(onComplete: {
+                                _start()
+                            })
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 10)
+                        default:
+                            modernSignButton
                         }
                     }
                     .offset(y: _buttonOffset)
@@ -1177,6 +1198,7 @@ struct ModernSigningView: View {
         }
         
         HapticsManager.shared.impact()
+        AppStateManager.shared.isSigning = true
         
         // Animate out before showing signing process
         withAnimation(.easeOut(duration: 0.2)) {
@@ -1199,6 +1221,7 @@ struct ModernSigningView: View {
                 DispatchQueue.main.async {
                     _isSigning = false
                     _isSigningProcessPresented = false
+                    AppStateManager.shared.isSigning = false
                     
                     switch result {
                     case .success(let installLink):
@@ -1240,6 +1263,9 @@ struct ModernSigningView: View {
                 icon: appIcon,
                 certificate: cert
             ) { error in
+                DispatchQueue.main.async {
+                    AppStateManager.shared.isSigning = false
+                }
                 if let error {
                     _isSigningProcessPresented = false
                     let ok = UIAlertAction(title: .localized("Dismiss"), style: .cancel) { _ in
@@ -1724,6 +1750,221 @@ struct SignButtonStyle: ButtonStyle {
             .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
             .brightness(configuration.isPressed ? 0.08 : 0)
             .animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Hold To Sign
+struct HoldToSign: View {
+    var onComplete: () -> Void
+    @State private var progress: CGFloat = 0
+    @State private var isHolding = false
+    @State private var timer: Timer?
+    @State private var isCompleted = false
+
+    var body: some View {
+        ZStack {
+            Capsule()
+                .fill(.ultraThinMaterial)
+                .frame(height: 60)
+
+            // Progress Fill
+            GeometryReader { geo in
+                Capsule()
+                    .fill(isCompleted ? Color.green : Color.accentColor.opacity(0.3))
+                    .frame(width: geo.size.width * progress, height: 60)
+            }
+            .clipShape(Capsule())
+
+            HStack(spacing: 12) {
+                if isCompleted {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.title3.bold())
+                        .foregroundStyle(.green)
+                    Text("Signed!")
+                        .font(.headline.bold())
+                } else {
+                    Image(systemName: "hand.tap.fill")
+                        .font(.title3.bold())
+                        .foregroundStyle(Color.accentColor)
+                        .scaleEffect(isHolding ? 1.2 : 1.0)
+                    Text(isHolding ? "Keep Holding..." : "Hold 5s to Sign")
+                        .font(.headline.bold())
+                        .foregroundStyle(.primary)
+                }
+            }
+        }
+        .frame(height: 60)
+        .onLongPressGesture(minimumDuration: 5, maximumDistance: 50) {
+            // Triggered when successfully held for 5s
+            HapticsManager.shared.success()
+            withAnimation(.spring()) {
+                progress = 1.0
+                isCompleted = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                onComplete()
+                // Reset
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    progress = 0
+                    isCompleted = false
+                }
+            }
+        } onPressingChanged: { pressing in
+            isHolding = pressing
+            if pressing {
+                withAnimation(.linear(duration: 5)) {
+                    progress = 1.0
+                }
+            } else {
+                if !isCompleted {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        progress = 0
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Slide To Confirm
+struct SlideToConfirm: View {
+    var onComplete: () -> Void
+    @State private var offset: CGFloat = 0
+    @State private var isCompleted = false
+
+    var body: some View {
+        GeometryReader { geo in
+            let width = geo.size.width
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .frame(height: 60)
+                    .shadow(color: .black.opacity(0.05), radius: 5)
+
+                Text("Slide to Confirm")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+
+                // Track fill
+                Capsule()
+                    .fill(LinearGradient(colors: [Color.accentColor, Color.accentColor.opacity(0.7)], startPoint: .leading, endPoint: .trailing))
+                    .frame(width: offset + 60, height: 60)
+
+                // Handle
+                ZStack {
+                    Circle()
+                        .fill(.white)
+                        .frame(width: 52, height: 52)
+                        .shadow(radius: 2)
+
+                    Image(systemName: isCompleted ? "checkmark" : "arrow.right")
+                        .font(.title3.bold())
+                        .foregroundStyle(Color.accentColor)
+                }
+                .padding(.leading, 4)
+                .offset(x: offset)
+                .gesture(
+                    DragGesture()
+                        .onChanged { value in
+                            if !isCompleted {
+                                let drag = value.translation.width
+                                if drag >= 0 && drag <= width - 60 {
+                                    offset = drag
+                                }
+                            }
+                        }
+                        .onEnded { value in
+                            if !isCompleted {
+                                if offset > width * 0.7 {
+                                    withAnimation(.spring()) {
+                                        offset = width - 60
+                                        isCompleted = true
+                                    }
+                                    HapticsManager.shared.success()
+                                    onComplete()
+
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                        withAnimation {
+                                            offset = 0
+                                            isCompleted = false
+                                        }
+                                    }
+                                } else {
+                                    withAnimation(.spring()) {
+                                        offset = 0
+                                    }
+                                }
+                            }
+                        }
+                )
+            }
+        }
+        .frame(height: 60)
+    }
+}
+
+// MARK: - Double Tap To Sign
+struct DoubleTapToSign: View {
+    var onComplete: () -> Void
+    @State private var isAnimate = false
+    @State private var isCompleted = false
+
+    var body: some View {
+        Button {
+            // This button handles the taps via gesture below
+        } label: {
+            HStack {
+                ZStack {
+                    Circle()
+                        .fill(isCompleted ? Color.green.opacity(0.2) : Color.accentColor.opacity(0.2))
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: isCompleted ? "checkmark" : "hand.tap.fill")
+                        .font(.title3.bold())
+                        .foregroundStyle(isCompleted ? .green : .accentColor)
+                        .scaleEffect(isAnimate ? 1.2 : 1.0)
+                }
+
+                Text(isCompleted ? "Signing..." : "Double Tap to Sign")
+                    .font(.headline.bold())
+                    .foregroundStyle(.primary)
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.bold())
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity)
+            .frame(height: 64)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(isCompleted ? Color.green.opacity(0.3) : Color.accentColor.opacity(0.3), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .gesture(
+            TapGesture(count: 2)
+                .onEnded {
+                    if !isCompleted {
+                        HapticsManager.shared.success()
+                        withAnimation(.spring()) {
+                            isCompleted = true
+                            isAnimate = true
+                        }
+                        onComplete()
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            isCompleted = false
+                            isAnimate = false
+                        }
+                    }
+                }
+        )
     }
 }
 
