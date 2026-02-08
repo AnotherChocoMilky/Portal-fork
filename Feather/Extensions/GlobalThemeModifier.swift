@@ -6,19 +6,27 @@ struct GlobalThemeModifier: ViewModifier {
     @AppStorage(UserDefaults.Keys.uiElement) private var uiElementColorHex: String = Color.defaultUIElement
     @AppStorage(UserDefaults.Keys.text) private var textColorHex: String = Color.defaultText
 
-    func body(content: Content) -> some View {
-        let bgColor = Color(hex: bgColorHex)
-        let uiColor = Color(hex: uiElementColorHex)
-        let textColor = Color(hex: textColorHex)
+    @Environment(\.colorScheme) var colorScheme
 
-        content
-            // Apply text color to primary text
+    func body(content: Content) -> some View {
+        var bgColor = Color(hex: bgColorHex)
+        var uiColor = Color(hex: uiElementColorHex)
+        var textColor = Color(hex: textColorHex)
+
+        if colorScheme == .light {
+            // User requested everything black in Light Mode
+            bgColor = .black
+            uiColor = .black
+            textColor = .black
+        }
+
+        return content
             .foregroundStyle(textColor)
-            // Apply accent/UI color
             .tint(uiColor)
             .accentColor(uiColor)
-            // Apply background to the whole view
             .background(bgColor.ignoresSafeArea())
+            .preferredColorScheme(colorScheme == .light ? .dark : nil) // Force dark appearance if light mode is "black"
+            .toolbarColorScheme(colorScheme == .light ? .dark : nil, for: .navigationBar)
     }
 }
 
