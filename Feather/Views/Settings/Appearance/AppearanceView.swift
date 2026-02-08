@@ -20,7 +20,6 @@ struct AppearanceView: View {
             themeSection
             accentColorSection
             tintIconsSection
-            installationSection
             displaySection
             hapticsSection
             personalizationSection
@@ -67,22 +66,6 @@ struct AppearanceView: View {
         }
     }
     
-    // MARK: - Installation Section
-
-    private var installationSection: some View {
-        Section {
-            Picker("Installation Trigger", selection: $installTrigger) {
-                Text("Manual").tag(0)
-                Text("Automatic").tag(1)
-            }
-            .pickerStyle(.menu)
-        } header: {
-            AppearanceSectionHeader(title: "Installation", icon: "arrow.down.circle.fill")
-        } footer: {
-            Text("Choose how you would like to trigger app installation after signing.")
-        }
-    }
-
     // MARK: - Tint Icons Section
     
     @ViewBuilder
