@@ -1393,41 +1393,6 @@ struct ModernSigningOptionsView: View {
                         modernOptionToggle(title: "Force Localize", subtitle: "Override Localized Titles.", icon: "character.bubble.fill", color: .green, isOn: $options.changeLanguageFilesForCustomDisplayName)
                     }
                     
-                    // Interface Section
-                    modernOptionSection(title: "Interface", icon: "paintbrush.fill", color: .pink) {
-                        HStack(spacing: 14) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color.pink.opacity(0.25), Color.pink.opacity(0.1)],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 36, height: 36)
-                                Image(systemName: "hand.tap.fill")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundStyle(Color.pink)
-                            }
-
-                            Text("Signing Control")
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(.primary)
-
-                            Spacer()
-
-                            Picker("", selection: AppStorage(wrappedValue: 0, "Feather.signingButtonType").projectedValue) {
-                                Text("Button").tag(0)
-                                Text("Swipe").tag(1)
-                            }
-                            .labelsHidden()
-                            .tint(.secondary)
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                    }
-
                     // Post Signing Section
                     modernOptionSection(title: "Post Signing", icon: "clock.arrow.circlepath", color: .orange) {
                         modernOptionToggle(title: "Install After Signing", subtitle: "Auto Install When Done.", icon: "arrow.down.circle.fill", color: .green, isOn: $options.post_installAppAfterSigned)
@@ -1635,28 +1600,48 @@ struct SwipeToSign: View {
 
     @State private var offset: CGFloat = 0
     @State private var isCompleted = false
+    @State private var isWaiting = true
+    @State private var rotation: Double = 0
+    @State private var lastHapticOffset: CGFloat = 0
+
     private let thumbWidth: CGFloat = 60
+    private let hapticGenerator = UIImpactFeedbackGenerator(style: .medium)
 
     var body: some View {
         GeometryReader { geo in
             let maxWidth = geo.size.width
             ZStack(alignment: .leading) {
-                // Track
+                // Track with waiting animation
                 Capsule()
                     .fill(.ultraThinMaterial)
                     .frame(height: 60)
                     .overlay(
-                        Text("Swipe to Sign")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(.secondary)
-                            .opacity(Double(1 - (offset / (maxWidth - thumbWidth))))
+                        ZStack {
+                            if isWaiting && !isCompleted && offset == 0 {
+                                Capsule()
+                                    .stroke(
+                                        AngularGradient(
+                                            colors: [.clear, Color.accentColor.opacity(0.5), .clear],
+                                            center: .center,
+                                            angle: .degrees(rotation)
+                                        ),
+                                        lineWidth: 3
+                                    )
+                            }
+
+                            Text(isCompleted ? "Signing..." : "Swipe to Sign")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(isCompleted ? .primary : .secondary)
+                                .opacity(isCompleted ? 1.0 : Double(1 - (offset / (maxWidth - thumbWidth))))
+                        }
                     )
 
                 // Thumb
                 ZStack {
                     Capsule()
-                        .fill(Color.accentColor)
+                        .fill(isCompleted ? Color.green : Color.accentColor)
                         .frame(width: thumbWidth + offset, height: 60)
+                        .shadow(color: (isCompleted ? Color.green : Color.accentColor).opacity(0.3), radius: 10, x: 0, y: 0)
 
                     HStack {
                         Spacer()
@@ -1664,10 +1649,11 @@ struct SwipeToSign: View {
                             Circle()
                                 .fill(.white)
                                 .frame(width: 52, height: 52)
+                                .shadow(radius: 2)
 
-                            Image(systemName: "chevron.right.2")
+                            Image(systemName: isCompleted ? "checkmark" : "chevron.right.2")
                                 .font(.system(size: 20, weight: .bold))
-                                .foregroundStyle(Color.accentColor)
+                                .foregroundStyle(isCompleted ? Color.green : Color.accentColor)
                         }
                         .padding(.trailing, 4)
                     }
@@ -1677,32 +1663,42 @@ struct SwipeToSign: View {
                     DragGesture()
                         .onChanged { value in
                             if !isCompleted {
+                                isWaiting = false
                                 let dragAmount = value.translation.width
                                 if dragAmount > 0 && dragAmount < maxWidth - thumbWidth {
                                     offset = dragAmount
+
+                                    // Increasing haptic feedback
+                                    if abs(offset - lastHapticOffset) > (maxWidth / 10) {
+                                        hapticGenerator.impactOccurred(intensity: CGFloat(offset / (maxWidth - thumbWidth)))
+                                        lastHapticOffset = offset
+                                    }
                                 }
                             }
                         }
                         .onEnded { value in
                             if !isCompleted {
                                 if offset > (maxWidth - thumbWidth) * 0.8 {
-                                    withAnimation(.spring()) {
+                                    hapticGenerator.impactOccurred(intensity: 1.0)
+                                    withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
                                         offset = maxWidth - thumbWidth
                                         isCompleted = true
                                     }
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                                         onComplete()
                                         // Reset after a delay
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                                             withAnimation {
                                                 offset = 0
                                                 isCompleted = false
+                                                isWaiting = true
                                             }
                                         }
                                     }
                                 } else {
                                     withAnimation(.spring()) {
                                         offset = 0
+                                        isWaiting = true
                                     }
                                 }
                             }
@@ -1712,6 +1708,12 @@ struct SwipeToSign: View {
         }
         .frame(height: 60)
         .clipShape(Capsule())
+        .onAppear {
+            hapticGenerator.prepare()
+            withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
+                rotation = 360
+            }
+        }
     }
 }
 

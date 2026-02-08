@@ -29,110 +29,149 @@ struct TabBarCustomizationView: View {
     }
     
     var body: some View {
-        NBList(.localized("Tab Bar")) {
-            // Default Tab Section
-            Section {
-                Picker(selection: $defaultTab) {
-                    ForEach(availableDefaultTabs, id: \.self) { tabId in
-                        HStack {
-                            tabIcon(for: tabId)
-                            Text(tabName(for: tabId))
+        ScrollView {
+            VStack(spacing: 24) {
+                // Tab Labels Section
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(.localized("Appearance").uppercased())
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.leading, 16)
+
+                    VStack(spacing: 0) {
+                        Toggle(isOn: $hideTabLabels) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "textformat")
+                                    .foregroundStyle(.blue)
+                                    .frame(width: 32, height: 32)
+                                    .background(Color.blue.opacity(0.1))
+                                    .clipShape(Circle())
+                                Text(.localized("Hide Tab Labels"))
+                                    .font(.system(size: 16, weight: .medium))
+                            }
                         }
-                        .tag(tabId)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
                     }
-                } label: {
-                    HStack {
-                        Image(systemName: "house.circle.fill")
-                            .foregroundStyle(.green)
-                            .frame(width: 24)
-                        Text(.localized("Default Tab"))
-                    }
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .padding(.horizontal, 16)
+
+                    Text(.localized("Hide the labels under tab bar icons for a cleaner and nicer look."))
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 24)
                 }
-            } header: {
-                Text(.localized("Launch"))
-            } footer: {
-                Text(.localized("Choose which tab opens by default when you launch the app (Beta)."))
-            }
-            .onChange(of: showDashboard) { _ in validateDefaultTab() }
-            .onChange(of: showSources) { _ in validateDefaultTab() }
-            .onChange(of: showLibrary) { _ in validateDefaultTab() }
-            .onChange(of: showFiles) { _ in validateDefaultTab() }
-            .onChange(of: showGuides) { _ in validateDefaultTab() }
-            
-            // Tab Labels Section
-            Section {
-                Toggle(isOn: $hideTabLabels) {
-                    HStack {
-                        Image(systemName: "textformat")
-                            .foregroundStyle(.blue)
-                            .frame(width: 24)
-                        Text(.localized("Hide Tab Labels"))
+
+                // Reorder Section
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(.localized("Tab Order").uppercased())
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.leading, 16)
+
+                    VStack(spacing: 0) {
+                        Button {
+                            withAnimation(.spring()) {
+                                isReordering.toggle()
+                            }
+                        } label: {
+                            HStack {
+                                Image(systemName: "arrow.up.arrow.down")
+                                    .foregroundStyle(.orange)
+                                    .frame(width: 32, height: 32)
+                                    .background(Color.orange.opacity(0.1))
+                                    .clipShape(Circle())
+                                Text(.localized("Reorder Tabs"))
+                                    .font(.system(size: 16, weight: .medium))
+                                Spacer()
+                                Image(systemName: isReordering ? "checkmark.circle.fill" : "chevron.right")
+                                    .foregroundStyle(isReordering ? .green : .secondary)
+                            }
+                        }
+                        .foregroundStyle(.primary)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 12)
+
+                        if isReordering {
+                            Divider().padding(.leading, 60)
+
+                            List {
+                                ForEach(orderedTabs, id: \.self) { tabId in
+                                    reorderableTabRow(for: tabId)
+                                }
+                                .onMove(perform: moveTab)
+                                .listRowBackground(Color.clear)
+                                .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                            }
+                            .listStyle(.plain)
+                            .frame(height: CGFloat(orderedTabs.count * 44))
+                            .environment(\.editMode, .constant(.active))
+
+                            Divider().padding(.leading, 60)
+
+                            Button {
+                                resetTabOrder()
+                            } label: {
+                                HStack {
+                                    Image(systemName: "arrow.counterclockwise")
+                                        .foregroundStyle(.red)
+                                        .frame(width: 32, height: 32)
+                                        .background(Color.red.opacity(0.1))
+                                        .clipShape(Circle())
+                                    Text(.localized("Reset To Default Order"))
+                                        .font(.system(size: 16, weight: .medium))
+                                }
+                            }
+                            .foregroundStyle(.red)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                        }
                     }
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .padding(.horizontal, 16)
+
+                    Text(isReordering ? .localized("Drag tabs to reorder them. Settings will always appear last.") : .localized("Tap to customize the order of tabs in the Tab Bar."))
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 24)
                 }
-            } header: {
-                Text(.localized("Appearance"))
-            } footer: {
-                Text(.localized("Hide the labels under tab bar icons for a cleaner and nicer look."))
-            }
-            
-            // Reorder Section
-            Section {
-                Button {
-                    isReordering.toggle()
-                } label: {
-                    HStack {
-                        Image(systemName: "arrow.up.arrow.down")
-                            .foregroundStyle(.orange)
-                            .frame(width: 24)
-                        Text(.localized("Reorder Tabs"))
-                        Spacer()
-                        Image(systemName: isReordering ? "checkmark.circle.fill" : "chevron.right")
-                            .foregroundStyle(isReordering ? .green : .secondary)
-                            .font(.system(size: 14))
-                    }
-                }
-                .foregroundStyle(.primary)
                 
-                if isReordering {
-                    ForEach(orderedTabs, id: \.self) { tabId in
-                        reorderableTabRow(for: tabId)
-                    }
-                    .onMove(perform: moveTab)
+                // Visible Tabs Section
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(.localized("Visible Tabs").uppercased())
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .padding(.leading, 16)
                     
-                    Button {
-                        resetTabOrder()
-                    } label: {
-                        HStack {
-                            Image(systemName: "arrow.counterclockwise")
-                                .foregroundStyle(.red)
-                                .frame(width: 24)
-                            Text(.localized("Reset To Default Order"))
+                    VStack(spacing: 0) {
+                        ForEach(orderedTabs.indices, id: \.self) { index in
+                            let tabId = orderedTabs[index]
+                            tabRow(for: tabId)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+
+                            if index < orderedTabs.count - 1 {
+                                Divider().padding(.leading, 60)
+                            }
                         }
                     }
-                    .foregroundStyle(.red)
-                }
-            } header: {
-                Text(.localized("Tab Order"))
-            } footer: {
-                if isReordering {
-                    Text(.localized("Drag tabs to reorder them. Settings will always appear last."))
-                } else {
-                    Text(.localized("Tap to customize the order of tabs in the Tab Bar."))
+                    .background(.ultraThinMaterial)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .padding(.horizontal, 16)
+
+                    Text(.localized("Choose which tabs appear in the bottom tab bar. Settings cannot be hidden."))
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 24)
                 }
             }
-            .environment(\.editMode, .constant(isReordering ? .active : .inactive))
-            
-            // Visible Tabs Section
-            Section {
-                ForEach(orderedTabs, id: \.self) { tabId in
-                    tabRow(for: tabId)
-                }
-            } header: {
-                Text(.localized("Visible Tabs"))
-            } footer: {
-                Text(.localized("Choose which tabs appear in the bottom tab bar. Settings cannot be hidden."))
-            }
+            .padding(.vertical, 20)
         }
+        .background(Color(UIColor.systemGroupedBackground))
+        .navigationTitle(.localized("Tab Bar"))
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             loadTabOrder()
         }

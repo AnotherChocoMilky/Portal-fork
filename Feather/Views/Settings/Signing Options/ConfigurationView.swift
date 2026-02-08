@@ -334,6 +334,13 @@ struct ModernSigningOptionsCard: View {
                     Image(systemName: "arrow.triangle.2.circlepath.circle.fill").foregroundStyle(.cyan)
                 }
             }
+
+            Picker(selection: AppStorage(wrappedValue: 0, "Feather.signingButtonType").projectedValue) {
+                Text("Button").tag(0)
+                Text("Swipe").tag(1)
+            } label: {
+                Label("Signing Control", systemImage: "hand.tap.fill").foregroundStyle(.pink)
+            }
             
             Toggle(isOn: Binding(
                 get: { UserDefaults.standard.bool(forKey: "Feather.autoSignAfterDownload") },

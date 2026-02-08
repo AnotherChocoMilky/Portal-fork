@@ -23,7 +23,6 @@ struct AppearanceTintColorView: View {
 		("Pink",			"#e18aab"),
 		("Mint Fresh",		"#00E5C3"),
 		("Sunset Orange",	"#FF6B35"),
-		("Ocean Blue",		"#0077BE"),
 		("Royal Purple",	"#7B2CBF"),
 		("Forest Green",	"#2D6A4F"),
 		("Ruby Red",		"#D62828"),
@@ -55,7 +54,6 @@ struct AppearanceTintColorView: View {
 		("Cherry",			"#DE3163"),
 		("Mint",			"#98FF98"),
 		("Plum",			"#DDA0DD"),
-		// New color presets
 		("Tangerine",		"#FFA500"),
 		("Seafoam",			"#93E9BE"),
 		("Periwinkle",		"#CCCCFF"),
@@ -81,32 +79,17 @@ struct AppearanceTintColorView: View {
 		("Spring Green",	"#00FF7F"),
 		("Blush",			"#DE5D83"),
 		("Ochre",			"#CC7722"),
-		("Periwinkle",		"#CCCCFF"),
 		("Rust",			"#B7410E"),
 		("Sage",			"#BCB88A"),
 		("Brick Red",		"#CB4154"),
 		("Mint Green",		"#98FF98")
 	]
 
-	@AppStorage("com.apple.SwiftUI.IgnoreSolariumLinkedOnCheck")
-	private var _ignoreSolariumLinkedOnCheck: Bool = false
-
-	// MARK: Helper Methods
-	private func updateTintColor() {
-		if colorType == "gradient" {
-			let startColor: SwiftUI.Color = SwiftUI.Color(hex: gradientStartHex)
-			UIApplication.topViewController()?.view.window?.tintColor = UIColor(startColor)
-		} else {
-			UIApplication.topViewController()?.view.window?.tintColor = UIColor(SwiftUI.Color(hex: selectedColorHex))
-		}
-	}
-
-	// MARK: Body
 	var body: some View {
 		Button {
 			isCustomSheetPresented = true
 		} label: {
-			HStack(spacing: 12) {
+			HStack(spacing: 16) {
 				ZStack {
 					if colorType == "gradient" {
 						LinearGradient(
@@ -114,37 +97,45 @@ struct AppearanceTintColorView: View {
 							startPoint: .topLeading,
 							endPoint: .bottomTrailing
 						)
-						.frame(width: 24, height: 24)
+						.frame(width: 32, height: 32)
 						.clipShape(Circle())
 					} else {
 						Circle()
 							.fill(SwiftUI.Color(hex: selectedColorHex))
-							.frame(width: 24, height: 24)
+							.frame(width: 32, height: 32)
 					}
 					Circle()
-						.strokeBorder(Color.black.opacity(0.2), lineWidth: 1)
-						.frame(width: 24, height: 24)
+						.strokeBorder(Color.white.opacity(0.2), lineWidth: 1)
+						.frame(width: 32, height: 32)
 				}
+				.shadow(color: .black.opacity(0.1), radius: 4)
 				
-				Text("Theme Color")
-					.foregroundStyle(.primary)
+				VStack(alignment: .leading, spacing: 2) {
+					Text("Theme Color")
+						.font(.system(size: 16, weight: .semibold))
+						.foregroundStyle(.primary)
+					Text(colorName)
+						.font(.system(size: 13))
+						.foregroundStyle(.secondary)
+				}
 
 				Spacer()
 
-				Text(colorName)
-					.font(.subheadline)
-					.foregroundStyle(.secondary)
-
 				Image(systemName: "chevron.right")
-					.font(.caption.weight(.semibold))
-					.foregroundStyle(.quaternary)
+					.font(.system(size: 14, weight: .bold))
+					.foregroundStyle(.tertiary)
 			}
 			.padding(.horizontal, 16)
-			.padding(.vertical, 12)
-			.background(Color(uiColor: .secondarySystemGroupedBackground))
-			.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+			.padding(.vertical, 14)
+			.background(.ultraThinMaterial)
+			.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+			.overlay(
+				RoundedRectangle(cornerRadius: 16, style: .continuous)
+					.stroke(Color.white.opacity(0.1), lineWidth: 1)
+			)
 		}
 		.buttonStyle(.plain)
+		.padding(.horizontal, 16)
 		.sheet(isPresented: $isCustomSheetPresented) {
 			ThemeColorPickerSheet(
 				selectedColorHex: $selectedColorHex,
@@ -179,32 +170,28 @@ struct ThemeColorPickerSheet: View {
 	var body: some View {
 		NavigationView {
 			ScrollView {
-				VStack(alignment: .leading, spacing: 20) {
-					Text("Select a color to personalize your experience.")
-						.font(.subheadline)
+				VStack(alignment: .leading, spacing: 24) {
+					Text("Personalize your experience with a custom theme color.")
+						.font(.system(size: 14))
 						.foregroundStyle(.secondary)
 						.padding(.horizontal)
 
-					LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 16) {
-						// Custom / Advanced button
+					LazyVGrid(columns: [GridItem(.adaptive(minimum: 60))], spacing: 20) {
+						// Advanced button
 						VStack(spacing: 8) {
 							ZStack {
 								Circle()
 									.fill(LinearGradient(colors: [.blue, .purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
-									.frame(width: 44, height: 44)
+									.frame(width: 50, height: 50)
 
-								Image(systemName: "plus")
-									.font(.title3.weight(.bold))
+								Image(systemName: "slider.horizontal.3")
+									.font(.system(size: 18, weight: .bold))
 									.foregroundStyle(.white)
 							}
 
-							Text("Advanced")
-								.font(.caption.weight(.medium))
+							Text("Custom")
+								.font(.system(size: 11, weight: .medium))
 						}
-						.frame(height: 90)
-						.frame(maxWidth: .infinity)
-						.background(Color(uiColor: .tertiarySystemGroupedBackground))
-						.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 						.onTapGesture {
 							showCustomPicker = true
 						}
@@ -212,37 +199,32 @@ struct ThemeColorPickerSheet: View {
 						ForEach(tintOptions, id: \.hex) { option in
 							let color = SwiftUI.Color(hex: option.hex)
 							VStack(spacing: 8) {
-								Circle()
-									.fill(color)
-									.frame(width: 44, height: 44)
-									.overlay(
+								ZStack {
+									Circle()
+										.fill(color)
+										.frame(width: 50, height: 50)
+										.shadow(color: color.opacity(0.3), radius: 5, y: 3)
+
+									if selectedColorHex == option.hex && colorType == "solid" {
 										Circle()
-											.strokeBorder(Color.black.opacity(0.1), lineWidth: 1)
-									)
-									.overlay {
-										if selectedColorHex == option.hex && colorType == "solid" {
-											Image(systemName: "checkmark")
-												.font(.caption.weight(.bold))
-												.foregroundStyle(.white)
-												.shadow(radius: 2)
-										}
+											.strokeBorder(.white, lineWidth: 3)
+											.frame(width: 50, height: 50)
+
+										Image(systemName: "checkmark")
+											.font(.system(size: 14, weight: .bold))
+											.foregroundStyle(.white)
 									}
+								}
 
 								Text(option.name)
-									.font(.caption.weight(.medium))
+									.font(.system(size: 11, weight: .medium))
 									.lineLimit(1)
 							}
-							.frame(height: 90)
-							.frame(maxWidth: .infinity)
-							.background(Color(uiColor: .tertiarySystemGroupedBackground))
-							.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-							.overlay(
-								RoundedRectangle(cornerRadius: 16, style: .continuous)
-									.strokeBorder(selectedColorHex == option.hex && colorType == "solid" ? color : .clear, lineWidth: 2)
-							)
 							.onTapGesture {
-								colorType = "solid"
-								selectedColorHex = option.hex
+								withAnimation(.spring()) {
+									colorType = "solid"
+									selectedColorHex = option.hex
+								}
 								HapticsManager.shared.softImpact()
 							}
 						}
@@ -256,9 +238,10 @@ struct ThemeColorPickerSheet: View {
 			.toolbar {
 				ToolbarItem(placement: .topBarTrailing) {
 					Button("Done") { dismiss() }
-						.fontWeight(.semibold)
+						.fontWeight(.bold)
 				}
 			}
+			.background(Color(UIColor.systemGroupedBackground))
 			.sheet(isPresented: $showCustomPicker) {
 				CustomColorPickerView(
 					colorType: $colorType,
@@ -283,20 +266,15 @@ struct CustomColorPickerView: View {
 	@State private var gradientStart: Color = .purple
 	@State private var gradientEnd: Color = .blue
 
-	// Gradient Presets
 	private let gradientPresets: [(name: String, start: String, end: String)] = [
 		("Sunset", "#FF6B35", "#F7931E"),
 		("Ocean", "#00B4DB", "#0083B0"),
 		("Purple Dream", "#B490CA", "#5E4FA2"),
 		("Forest", "#2D6A4F", "#52B788"),
 		("Fire", "#FF0844", "#FFB199"),
-		("Cotton Candy", "#FFC0CB", "#FFE5B4"),
 		("Northern Lights", "#00FFA3", "#03E1FF"),
 		("Twilight", "#4E54C8", "#8F94FB"),
-		("Peachy", "#ED4264", "#FFEDBC"),
-		("Cool Breeze", "#2BC0E4", "#EAECC6"),
-		("Royal", "#141E30", "#243B55"),
-		("Emerald", "#348F50", "#56B4D3")
+		("Royal", "#141E30", "#243B55")
 	]
 
 	var body: some View {
@@ -304,23 +282,23 @@ struct CustomColorPickerView: View {
 			Form {
 				Section {
 					Picker("Type", selection: $colorType) {
-						Text("Solid Color").tag("solid")
+						Text("Solid").tag("solid")
 						Text("Gradient").tag("gradient")
 					}
 					.pickerStyle(.segmented)
 				}
 
 				if colorType == "solid" {
-					Section(header: Text("Solid Color")) {
-						ColorPicker("Color", selection: $solidColor, supportsOpacity: false)
+					Section {
+						ColorPicker("Pick a color", selection: $solidColor, supportsOpacity: false)
 					}
 				} else {
 					Section(header: Text("Custom Gradient")) {
-						ColorPicker("Start Color", selection: $gradientStart, supportsOpacity: false)
-						ColorPicker("End Color", selection: $gradientEnd, supportsOpacity: false)
+						ColorPicker("Start", selection: $gradientStart, supportsOpacity: false)
+						ColorPicker("End", selection: $gradientEnd, supportsOpacity: false)
 					}
 
-					Section(header: Text("Gradient Presets")) {
+					Section(header: Text("Presets")) {
 						ScrollView(.horizontal, showsIndicators: false) {
 							HStack(spacing: 16) {
 								ForEach(gradientPresets, id: \.name) { preset in
@@ -333,13 +311,13 @@ struct CustomColorPickerView: View {
 													endPoint: .bottomTrailing
 												)
 											)
-											.frame(width: 60, height: 60)
+											.frame(width: 54, height: 54)
 											.overlay(
 												Circle()
 													.stroke(
 														gradientStartHex == preset.start && gradientEndHex == preset.end
 															? Color.accentColor
-															: Color.clear,
+															: Color.white.opacity(0.2),
 														lineWidth: 3
 													)
 											)
@@ -349,47 +327,36 @@ struct CustomColorPickerView: View {
 											}
 
 										Text(preset.name)
-											.font(.caption2)
+											.font(.caption2.weight(.medium))
 											.foregroundStyle(.secondary)
-											.lineLimit(1)
 									}
-									.frame(width: 80)
 								}
 							}
 							.padding(.vertical, 8)
 						}
-						.listRowInsets(EdgeInsets())
 					}
 				}
 
-				Section(header: Text("Preview")) {
+				Section {
 					HStack {
 						Spacer()
-						if colorType == "solid" {
-							Circle()
-								.fill(solidColor)
-								.frame(width: 100, height: 100)
-								.shadow(color: solidColor.opacity(0.4), radius: 10, x: 0, y: 5)
-						} else {
-							Circle()
-								.fill(
-									LinearGradient(
-										colors: [gradientStart, gradientEnd],
-										startPoint: .topLeading,
-										endPoint: .bottomTrailing
-									)
-								)
-								.frame(width: 100, height: 100)
-								.shadow(color: .black.opacity(0.2), radius: 10, x: 0, y: 5)
-						}
+						Circle()
+							.fill(
+								colorType == "solid"
+								? AnyShapeStyle(solidColor)
+								: AnyShapeStyle(LinearGradient(colors: [gradientStart, gradientEnd], startPoint: .topLeading, endPoint: .bottomTrailing))
+							)
+							.frame(width: 80, height: 80)
+							.shadow(radius: 10)
 						Spacer()
 					}
 					.padding()
 				}
+				.listRowBackground(Color.clear)
 			}
-			.navigationTitle("Custom Color")
+			.navigationTitle("Advanced Color")
 			.navigationBarTitleDisplayMode(.inline)
-			.toolbar(content: {
+			.toolbar {
 				ToolbarItem(placement: .cancellationAction) {
 					Button("Cancel") { dismiss() }
 				}
@@ -397,17 +364,16 @@ struct CustomColorPickerView: View {
 					Button("Save") {
 						if colorType == "solid" {
 							selectedColorHex = solidColor.toHex() ?? "#0077BE"
-							UIApplication.topViewController()?.view.window?.tintColor = UIColor(solidColor)
 						} else {
 							gradientStartHex = gradientStart.toHex() ?? "#0077BE"
 							gradientEndHex = gradientEnd.toHex() ?? "#848ef9"
 						}
 						dismiss()
 					}
+					.fontWeight(.bold)
 				}
-			})
+			}
 		}
-		.presentationDetents([.large])
 		.onAppear {
 			solidColor = SwiftUI.Color(hex: selectedColorHex)
 			gradientStart = SwiftUI.Color(hex: gradientStartHex)
