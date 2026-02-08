@@ -103,96 +103,170 @@ struct AppearanceTintColorView: View {
 
 	// MARK: Body
 	var body: some View {
-		VStack(spacing: 20) {
-			// Tint Color Selection
-			ScrollView(.horizontal, showsIndicators: false) {
-			LazyHGrid(rows: [GridItem(.fixed(100))], spacing: 12) {
-				// Custom option
-				let cornerRadius = _ignoreSolariumLinkedOnCheck ? 28.0 : 10.5
-				VStack(spacing: 8) {
-					ZStack {
-						if colorType == "gradient" {
-							LinearGradient(
-								colors: [SwiftUI.Color(hex: gradientStartHex), SwiftUI.Color(hex: gradientEndHex)],
-								startPoint: .topLeading,
-								endPoint: .bottomTrailing
-							)
-							.frame(width: 30, height: 30)
-							.clipShape(Circle())
-						} else {
-							Circle()
-								.fill(SwiftUI.Color(hex: selectedColorHex))
-								.frame(width: 30, height: 30)
-						}
+		Button {
+			isCustomSheetPresented = true
+		} label: {
+			HStack(spacing: 12) {
+				ZStack {
+					if colorType == "gradient" {
+						LinearGradient(
+							colors: [SwiftUI.Color(hex: gradientStartHex), SwiftUI.Color(hex: gradientEndHex)],
+							startPoint: .topLeading,
+							endPoint: .bottomTrailing
+						)
+						.frame(width: 24, height: 24)
+						.clipShape(Circle())
+					} else {
 						Circle()
-							.strokeBorder(Color.black.opacity(0.3), lineWidth: 2)
-							.frame(width: 30, height: 30)
+							.fill(SwiftUI.Color(hex: selectedColorHex))
+							.frame(width: 24, height: 24)
 					}
-					
-					Text("Custom")
-						.font(.subheadline)
-						.foregroundColor(.secondary)
-				}
-				.frame(width: 120, height: 100)
-				.background(Color(uiColor: .secondarySystemGroupedBackground))
-				.clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-				.overlay(
-					RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-						.strokeBorder(selectedColorHex == "custom" ? Color.accentColor : .clear, lineWidth: 2)
-				)
-				.onTapGesture {
-					isCustomSheetPresented = true
+					Circle()
+						.strokeBorder(Color.black.opacity(0.2), lineWidth: 1)
+						.frame(width: 24, height: 24)
 				}
 				
-				ForEach(tintOptions, id: \.hex) { option in
-					let color: SwiftUI.Color = SwiftUI.Color(hex: option.hex)
-					VStack(spacing: 8) {
-						Circle()
-							.fill(color)
-							.frame(width: 30, height: 30)
-							.overlay(
-								Circle()
-									.strokeBorder(Color.black.opacity(0.3), lineWidth: 2)
-							)
+				Text("Theme Color")
+					.foregroundStyle(.primary)
 
-						Text(option.name)
-							.font(.subheadline)
-							.foregroundColor(.secondary)
+				Spacer()
+
+				Text(colorName)
+					.font(.subheadline)
+					.foregroundStyle(.secondary)
+
+				Image(systemName: "chevron.right")
+					.font(.caption.weight(.semibold))
+					.foregroundStyle(.quaternary)
+			}
+			.padding(.horizontal, 16)
+			.padding(.vertical, 12)
+			.background(Color(uiColor: .secondarySystemGroupedBackground))
+			.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+		}
+		.buttonStyle(.plain)
+		.sheet(isPresented: $isCustomSheetPresented) {
+			ThemeColorPickerSheet(
+				selectedColorHex: $selectedColorHex,
+				colorType: $colorType,
+				gradientStartHex: $gradientStartHex,
+				gradientEndHex: $gradientEndHex,
+				tintOptions: tintOptions
+			)
+			.presentationDetents([.medium, .large])
+			.presentationDragIndicator(.visible)
+		}
+	}
+
+	private var colorName: String {
+		if colorType == "gradient" {
+			return "Gradient"
+		}
+		return tintOptions.first(where: { $0.hex == selectedColorHex })?.name ?? "Custom"
+	}
+}
+
+struct ThemeColorPickerSheet: View {
+	@Environment(\.dismiss) var dismiss
+	@Binding var selectedColorHex: String
+	@Binding var colorType: String
+	@Binding var gradientStartHex: String
+	@Binding var gradientEndHex: String
+	let tintOptions: [(name: String, hex: String)]
+
+	@State private var showCustomPicker = false
+
+	var body: some View {
+		NavigationView {
+			ScrollView {
+				VStack(alignment: .leading, spacing: 20) {
+					Text("Select a color to personalize your experience.")
+						.font(.subheadline)
+						.foregroundStyle(.secondary)
+						.padding(.horizontal)
+
+					LazyVGrid(columns: [GridItem(.adaptive(minimum: 100))], spacing: 16) {
+						// Custom / Advanced button
+						VStack(spacing: 8) {
+							ZStack {
+								Circle()
+									.fill(LinearGradient(colors: [.blue, .purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
+									.frame(width: 44, height: 44)
+
+								Image(systemName: "plus")
+									.font(.title3.weight(.bold))
+									.foregroundStyle(.white)
+							}
+
+							Text("Advanced")
+								.font(.caption.weight(.medium))
+						}
+						.frame(height: 90)
+						.frame(maxWidth: .infinity)
+						.background(Color(uiColor: .tertiarySystemGroupedBackground))
+						.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+						.onTapGesture {
+							showCustomPicker = true
+						}
+
+						ForEach(tintOptions, id: \.hex) { option in
+							let color = SwiftUI.Color(hex: option.hex)
+							VStack(spacing: 8) {
+								Circle()
+									.fill(color)
+									.frame(width: 44, height: 44)
+									.overlay(
+										Circle()
+											.strokeBorder(Color.black.opacity(0.1), lineWidth: 1)
+									)
+									.overlay {
+										if selectedColorHex == option.hex && colorType == "solid" {
+											Image(systemName: "checkmark")
+												.font(.caption.weight(.bold))
+												.foregroundStyle(.white)
+												.shadow(radius: 2)
+										}
+									}
+
+								Text(option.name)
+									.font(.caption.weight(.medium))
+									.lineLimit(1)
+							}
+							.frame(height: 90)
+							.frame(maxWidth: .infinity)
+							.background(Color(uiColor: .tertiarySystemGroupedBackground))
+							.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+							.overlay(
+								RoundedRectangle(cornerRadius: 16, style: .continuous)
+									.strokeBorder(selectedColorHex == option.hex && colorType == "solid" ? color : .clear, lineWidth: 2)
+							)
+							.onTapGesture {
+								colorType = "solid"
+								selectedColorHex = option.hex
+								HapticsManager.shared.softImpact()
+							}
+						}
 					}
-					.frame(width: 120, height: 100)
-					.background(Color(uiColor: .secondarySystemGroupedBackground))
-					.clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-					.overlay(
-						RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-							.strokeBorder(selectedColorHex == option.hex && colorType == "solid" ? color : .clear, lineWidth: 2)
-					)
-					.onTapGesture {
-						colorType = "solid"
-						selectedColorHex = option.hex
-					}
-					.accessibilityLabel(Text(option.name))
+					.padding(.horizontal)
+				}
+				.padding(.vertical)
+			}
+			.navigationTitle("Theme Colors")
+			.navigationBarTitleDisplayMode(.inline)
+			.toolbar {
+				ToolbarItem(placement: .topBarTrailing) {
+					Button("Done") { dismiss() }
+						.fontWeight(.semibold)
 				}
 			}
-		}
-		.onChange(of: selectedColorHex) { _ in
-			updateTintColor()
-		}
-		.onChange(of: colorType) { _ in
-			updateTintColor()
-		}
-		.onChange(of: gradientStartHex) { _ in
-			updateTintColor()
-		}
-		.onChange(of: gradientEndHex) { _ in
-			updateTintColor()
-		}
-		.sheet(isPresented: $isCustomSheetPresented) {
-			CustomColorPickerView(
-				colorType: $colorType,
-				selectedColorHex: $selectedColorHex,
-				gradientStartHex: $gradientStartHex,
-				gradientEndHex: $gradientEndHex
-			)
+			.sheet(isPresented: $showCustomPicker) {
+				CustomColorPickerView(
+					colorType: $colorType,
+					selectedColorHex: $selectedColorHex,
+					gradientStartHex: $gradientStartHex,
+					gradientEndHex: $gradientEndHex
+				)
+			}
 		}
 	}
 }

@@ -8,6 +8,7 @@ struct ModernSigningView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
     @AppStorage("Feather.serverMethod") private var _serverMethod: Int = 0
+    @AppStorage("Feather.signingButtonType") private var _signingButtonType: Int = 0
     @AppStorage(UserDefaults.Keys.installTrigger) private var installTrigger: Int = 0
     @AppStorage("feature_advancedSigning") private var _advancedSigningEnabled = false
     @StateObject private var _optionsManager = OptionsManager.shared
@@ -70,13 +71,15 @@ struct ModernSigningView: View {
                     _scrollableContent
                     
                     VStack(spacing: 12) {
-                        modernSignButton
-
-                        SwipeToSign(onComplete: {
-                            _start()
-                        })
-                        .padding(.horizontal, 24)
-                        .padding(.bottom, 10)
+                        if _signingButtonType == 0 {
+                            modernSignButton
+                        } else {
+                            SwipeToSign(onComplete: {
+                                _start()
+                            })
+                            .padding(.horizontal, 24)
+                            .padding(.bottom, 10)
+                        }
                     }
                     .offset(y: _buttonOffset)
                     .opacity(_contentOpacity)
@@ -1164,15 +1167,6 @@ struct ModernSigningView: View {
     
     // MARK: - Start Signing
     private func _start() {
-        // Check for .dylib files before signing
-        if DylibDetector.shared.hasDylibs() {
-            UIAlertController.showAlertWithOk(
-                title: .localized("Dynamic Libraries Detected"),
-                message: .localized("Sorry but you may not add any .dylib or .deb files to this app. Please resign the app without any additional frameworks to proceed.")
-            )
-            return
-        }
-        
         guard let cert = _selectedCert() else {
             UIAlertController.showAlertWithOk(
                 title: .localized("No Certificate"),
@@ -1399,6 +1393,41 @@ struct ModernSigningOptionsView: View {
                         modernOptionToggle(title: "Force Localize", subtitle: "Override Localized Titles.", icon: "character.bubble.fill", color: .green, isOn: $options.changeLanguageFilesForCustomDisplayName)
                     }
                     
+                    // Interface Section
+                    modernOptionSection(title: "Interface", icon: "paintbrush.fill", color: .pink) {
+                        HStack(spacing: 14) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color.pink.opacity(0.25), Color.pink.opacity(0.1)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 36, height: 36)
+                                Image(systemName: "hand.tap.fill")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Color.pink)
+                            }
+
+                            Text("Signing Control")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.primary)
+
+                            Spacer()
+
+                            Picker("", selection: AppStorage(wrappedValue: 0, "Feather.signingButtonType").projectedValue) {
+                                Text("Button").tag(0)
+                                Text("Swipe").tag(1)
+                            }
+                            .labelsHidden()
+                            .tint(.secondary)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                    }
+
                     // Post Signing Section
                     modernOptionSection(title: "Post Signing", icon: "clock.arrow.circlepath", color: .orange) {
                         modernOptionToggle(title: "Install After Signing", subtitle: "Auto Install When Done.", icon: "arrow.down.circle.fill", color: .green, isOn: $options.post_installAppAfterSigned)

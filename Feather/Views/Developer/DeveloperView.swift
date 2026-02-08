@@ -8645,7 +8645,6 @@ struct UIViewTestingView: View {
     
     enum UIViewType: String, CaseIterable {
         case offlineView = "Offline View"
-        case dylibBlockerView = "Dynamic Libraries Detected"
     }
     
     var body: some View {
@@ -8656,11 +8655,6 @@ struct UIViewTestingView: View {
                 case .offlineView:
                     // Create a custom dismissible version of OfflineView
                     OfflineViewWithDismiss(showDismissButton: $showDismissButton, onDismiss: {
-                        dismiss()
-                    })
-                case .dylibBlockerView:
-                    // Create a custom dismissible version of DylibBlockerView
-                    DylibBlockerViewWithDismiss(showDismissButton: $showDismissButton, onDismiss: {
                         dismiss()
                     })
                 }
@@ -8741,18 +8735,3 @@ struct OfflineViewWithDismiss: View {
     }
 }
 
-struct DylibBlockerViewWithDismiss: View {
-    @Binding var showDismissButton: Bool
-    let onDismiss: () -> Void
-    
-    var body: some View {
-        ZStack {
-            DylibBlockerView()
-            
-            // Intercept button taps if opened from debug mode
-            Color.clear
-                .contentShape(Rectangle())
-                .allowsHitTesting(false)
-        }
-    }
-}

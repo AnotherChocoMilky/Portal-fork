@@ -17,7 +17,6 @@ struct FeatherApp: App {
     @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
     @AppStorage("hasSeenNearbyShareIntro") var hasSeenNearbyShareIntro: Bool = false
     @AppStorage("dev.updateBannerDismissed") private var updateBannerDismissed = false
-    @State private var hasDylibsDetected: Bool = false
     @State private var showUpdateBanner = false
     @State private var latestVersion: String = ""
     @State private var latestReleaseURL: String = ""
@@ -41,14 +40,7 @@ struct FeatherApp: App {
 	var body: some Scene {
 		WindowGroup(content: {
 			Group {
-				// CRITICAL: Check for .dylib files first - blocks all navigation if found
-				if hasDylibsDetected {
-					DylibBlockerView()
-						.onAppear {
-							// Prevent any navigation or state changes
-							UIApplication.shared.isIdleTimerDisabled = false
-						}
-				} else if !networkMonitor.isConnected && !UserDefaults.standard.bool(forKey: "dev.simulateOffline") {
+				if !networkMonitor.isConnected && !UserDefaults.standard.bool(forKey: "dev.simulateOffline") {
 					// Show offline view when no connectivity (unless simulating)
 					OfflineView()
 				} else if !hasCompletedOnboarding {
@@ -185,15 +177,8 @@ struct FeatherApp: App {
 				}
 			}
 			.handleStatusBarHiding()
-			.onAppear {
-				// Scan for dylibs at launch
-				_checkForDylibs()
-			}
 			.onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
 				_handlePendingWidgetAction()
-			}
-			.onReceive(NotificationCenter.default.publisher(for: .bypassDylibCheckUpdated)) { _ in
-				hasDylibsDetected = false
 			}
 		})
 	}
@@ -215,29 +200,6 @@ struct FeatherApp: App {
 		}
 	}
     
-    private func _checkForDylibs() {
-        // Check if user has bypassed dylib check
-        if UserDefaults.standard.bool(forKey: "Feather.bypassDylibCheck") {
-            Logger.misc.info("✅ Dylib check bypassed by developer token")
-            return
-        }
-
-        // Perform dylib scan on background thread to avoid blocking UI
-        DispatchQueue.global(qos: .userInitiated).async {
-            let detector = DylibDetector.shared
-            let dylibsFound = detector.hasDylibs()
-
-            DispatchQueue.main.async {
-                if dylibsFound {
-                    Logger.misc.error("🚫 .dylib files detected in app bundle - blocking navigation")
-                    hasDylibsDetected = true
-                } else {
-                    Logger.misc.info("✅ No .dylib files detected")
-                }
-            }
-        }
-    }
-
     private func _setupTheme() {
         if let style = UIUserInterfaceStyle(rawValue: UserDefaults.standard.integer(forKey: "Feather.userInterfaceStyle")) {
             UIApplication.topViewController()?.view.window?.overrideUserInterfaceStyle = style
