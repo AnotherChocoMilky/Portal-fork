@@ -19,6 +19,15 @@ struct LiveActivitySettings: Codable, Hashable {
     var glassSettings: GlassSettings
     var gradientSettings: GradientSettings
     
+    // Additional Customization
+    var cornerRadius: Double
+    var borderWidth: Double
+    var borderColor: CodableColor?
+    var shadowRadius: Double
+    var shadowColor: CodableColor?
+    var backgroundOpacity: Double
+    var textColor: CodableColor?
+
     static var `default`: LiveActivitySettings {
         LiveActivitySettings(
             accentColor: CodableColor(red: 0.0, green: 0.478, blue: 1.0),
@@ -32,7 +41,14 @@ struct LiveActivitySettings: Codable, Hashable {
             showEstimatedTime: true,
             highFrequencyUpdates: false,
             glassSettings: .default,
-            gradientSettings: .default
+            gradientSettings: .default,
+            cornerRadius: 22,
+            borderWidth: 0,
+            borderColor: nil,
+            shadowRadius: 10,
+            shadowColor: CodableColor(red: 0, green: 0, blue: 0, opacity: 0.2),
+            backgroundOpacity: 1.0,
+            textColor: nil
         )
     }
     

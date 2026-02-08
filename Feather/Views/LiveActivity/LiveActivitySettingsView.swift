@@ -9,6 +9,9 @@ struct LiveActivitySettingsView: View {
     // Live Activity settings managed by LiveActivityManager
     @State private var settings: LiveActivitySettings = LiveActivitySettings.default
     @State private var showColorPicker = false
+    @State private var showBorderColorPicker = false
+    @State private var showShadowColorPicker = false
+    @State private var showTextColorPicker = false
     @State private var showGradientColorPicker = false
     @State private var selectedGradientColorIndex = 0
     @State private var isShowingMockActivity = false
@@ -18,6 +21,7 @@ struct LiveActivitySettingsView: View {
             List {
                 enabledSection
                 appearanceSection
+                advancedStylingSection
                 progressSection
                 detailsSection
                 infoSection
@@ -35,8 +39,26 @@ struct LiveActivitySettingsView: View {
                         colors[selectedGradientColorIndex] = $0
                         settings.gradientSettings.colors = colors
                     }
-                ), onDismiss: saveSettings)
+                ), title: "Gradient Color \(selectedGradientColorIndex + 1)", onDismiss: saveSettings)
             }
+        }
+        .sheet(isPresented: $showBorderColorPicker) {
+            ColorPickerView(selectedColor: Binding(
+                get: { settings.borderColor ?? settings.accentColor },
+                set: { settings.borderColor = $0 }
+            ), title: "Border Color", onDismiss: saveSettings)
+        }
+        .sheet(isPresented: $showShadowColorPicker) {
+            ColorPickerView(selectedColor: Binding(
+                get: { settings.shadowColor ?? CodableColor(red: 0, green: 0, blue: 0, opacity: 0.2) },
+                set: { settings.shadowColor = $0 }
+            ), title: "Shadow Color", onDismiss: saveSettings)
+        }
+        .sheet(isPresented: $showTextColorPicker) {
+            ColorPickerView(selectedColor: Binding(
+                get: { settings.textColor ?? CodableColor(red: 1, green: 1, blue: 1) },
+                set: { settings.textColor = $0 }
+            ), title: "Text Color", onDismiss: saveSettings)
         }
     }
     
@@ -104,6 +126,7 @@ struct LiveActivitySettingsView: View {
             if settings.backgroundTexture == .gradient {
                 HStack {
                     Label("Gradient Colors", systemImage: "paintpalette.fill")
+                        .foregroundStyle(.primary)
                     Spacer()
                     HStack(spacing: -8) {
                         ForEach(0..<min(settings.gradientSettings.colorCount, 5), id: \.self) { index in
@@ -155,7 +178,7 @@ struct LiveActivitySettingsView: View {
                     Text(family.rawValue).tag(family)
                 }
             } label: {
-                Label("Font", systemImage: "textformat")
+                Label("Font Family", systemImage: "textformat")
             }
             .onChange(of: settings.fontFamily) { _ in saveSettings() }
             
@@ -169,6 +192,21 @@ struct LiveActivitySettingsView: View {
             }
             .onChange(of: settings.fontWeight) { _ in saveSettings() }
             
+            // Text Color
+            Button {
+                showTextColorPicker = true
+            } label: {
+                HStack {
+                    Label("Text Color", systemImage: "pencil.tip.crop.circle.fill")
+                    Spacer()
+                    Circle()
+                        .fill(settings.textColor?.color ?? .primary)
+                        .frame(width: 20, height: 20)
+                        .overlay(Circle().stroke(Color.secondary, lineWidth: 1))
+                }
+            }
+            .foregroundStyle(.primary)
+
         } header: {
             Text("Appearance")
                 .font(.system(size: 11, weight: .semibold))
@@ -178,7 +216,97 @@ struct LiveActivitySettingsView: View {
                 .foregroundColor(.secondary)
         }
         .sheet(isPresented: $showColorPicker) {
-            ColorPickerView(selectedColor: $settings.accentColor, onDismiss: saveSettings)
+            ColorPickerView(selectedColor: $settings.accentColor, title: "Accent Color", onDismiss: saveSettings)
+        }
+    }
+
+    private var advancedStylingSection: some View {
+        Section {
+            // Corner Radius
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Label("Corner Radius", systemImage: "square.and.line.vertical.and.square")
+                    Spacer()
+                    Text("\(Int(settings.cornerRadius))")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+                Slider(value: $settings.cornerRadius, in: 0...40, step: 1) { _ in saveSettings() }
+            }
+
+            // Background Opacity
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Label("Opacity", systemImage: "square.stack.3d.up.fill")
+                    Spacer()
+                    Text("\(Int(settings.backgroundOpacity * 100))%")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+                Slider(value: $settings.backgroundOpacity, in: 0...1, step: 0.05) { _ in saveSettings() }
+            }
+
+            // Border Width
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Label("Border Width", systemImage: "square.dashed")
+                    Spacer()
+                    Text("\(String(format: "%.1f", settings.borderWidth))")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+                Slider(value: $settings.borderWidth, in: 0...5, step: 0.5) { _ in saveSettings() }
+            }
+
+            if settings.borderWidth > 0 {
+                Button {
+                    showBorderColorPicker = true
+                } label: {
+                    HStack {
+                        Label("Border Color", systemImage: "paintpalette")
+                        Spacer()
+                        Circle()
+                            .fill(settings.borderColor?.color ?? settings.accentColor.color)
+                            .frame(width: 20, height: 20)
+                            .overlay(Circle().stroke(Color.secondary, lineWidth: 1))
+                    }
+                }
+                .foregroundStyle(.primary)
+                .padding(.leading, 12)
+            }
+
+            // Shadow Radius
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Label("Shadow Radius", systemImage: "shadow")
+                    Spacer()
+                    Text("\(Int(settings.shadowRadius))")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
+                Slider(value: $settings.shadowRadius, in: 0...30, step: 1) { _ in saveSettings() }
+            }
+
+            if settings.shadowRadius > 0 {
+                Button {
+                    showShadowColorPicker = true
+                } label: {
+                    HStack {
+                        Label("Shadow Color", systemImage: "paintpalette")
+                        Spacer()
+                        Circle()
+                            .fill(settings.shadowColor?.color ?? Color.black.opacity(0.2))
+                            .frame(width: 20, height: 20)
+                            .overlay(Circle().stroke(Color.secondary, lineWidth: 1))
+                    }
+                }
+                .foregroundStyle(.primary)
+                .padding(.leading, 12)
+            }
+
+        } header: {
+            Text("Advanced Styling")
+                .font(.system(size: 11, weight: .semibold))
         }
     }
 
@@ -386,8 +514,11 @@ struct ColorPickerView: View {
     
     private let presetColors: [Color] = [.blue, .purple, .pink, .red, .orange, .yellow, .green, .mint, .cyan, .indigo, .gray]
 
-    init(selectedColor: Binding<CodableColor>, onDismiss: @escaping () -> Void) {
+    let title: String
+
+    init(selectedColor: Binding<CodableColor>, title: String = "Accent Color", onDismiss: @escaping () -> Void) {
         self._selectedColor = selectedColor
+        self.title = title
         self.onDismiss = onDismiss
         self._color = State(initialValue: selectedColor.wrappedValue.color)
     }
@@ -447,7 +578,7 @@ struct ColorPickerView: View {
                     Text("Preview")
                 }
             }
-            .navigationTitle("Accent Color")
+            .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

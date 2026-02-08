@@ -45,9 +45,9 @@ struct SourceDetailsView: View {
             // Gradient background based on source icon color - increased intensity
             LinearGradient(
                 colors: [
-                    dominantColor.opacity(0.25),
-                    dominantColor.opacity(0.12),
-                    Color(.systemBackground)
+                    dominantColor.opacity(0.2),
+                    dominantColor.opacity(0.1),
+                    Color(.systemGroupedBackground)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -55,30 +55,27 @@ struct SourceDetailsView: View {
             .ignoresSafeArea()
             
             ScrollView {
-                VStack(spacing: 0) {
-                    // Custom navigation area
-                    customNavigationBar
+                VStack(spacing: 24) {
+                    // Prominent source header card
+                    sourceHeaderCard
                     
-                    VStack(spacing: 24) {
-                        // Prominent source header card
-                        sourceHeaderCard
-                        
-                        // Featured horizontal card section
-                        if _showNews, let news = repository?.news, !news.isEmpty {
-                            featuredNewsSection(news: filteredNews.isEmpty && !_searchText.isEmpty ? [] : (filteredNews.isEmpty ? news : filteredNews))
-                        }
-                        
-                        // Vertical feed of app cards
-                        if let apps = repository?.apps, !apps.isEmpty {
-                            appsVerticalFeed(apps: filteredApps.isEmpty && !_searchText.isEmpty ? [] : filteredApps)
-                        }
+                    // Featured horizontal card section
+                    if _showNews, let news = repository?.news, !news.isEmpty {
+                        featuredNewsSection(news: filteredNews.isEmpty && !_searchText.isEmpty ? [] : (filteredNews.isEmpty ? news : filteredNews))
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 100)
+
+                    // Vertical feed of app cards
+                    if let apps = repository?.apps, !apps.isEmpty {
+                        appsVerticalFeed(apps: filteredApps.isEmpty && !_searchText.isEmpty ? [] : filteredApps)
+                    }
                 }
+                .padding(.horizontal, 20)
+                .padding(.vertical, 20)
+                .padding(.bottom, 100)
             }
         }
-        .navigationBarHidden(true)
+        .navigationTitle(source.name ?? "Source")
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if let repo = viewModel.sources[source] {
                 repository = repo
@@ -93,36 +90,6 @@ struct SourceDetailsView: View {
         .navigationDestinationIfAvailable(item: $_selectedRoute) { route in
             SourceAppsDetailView(source: route.source, app: route.app)
         }
-    }
-    
-    // MARK: - Custom Navigation Bar
-    private var customNavigationBar: some View {
-        HStack(spacing: 16) {
-            // Circular back button
-            Button {
-                dismiss()
-            } label: {
-                ZStack {
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .frame(width: 40, height: 40)
-                    
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.primary)
-                }
-            }
-            
-            Spacer()
-            
-            // Placeholder for symmetry
-            Circle()
-                .fill(Color.clear)
-                .frame(width: 40, height: 40)
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 16)
-        .padding(.bottom, 8)
     }
     
     // MARK: - Source Header Card (Modern - Icon at top, info below)

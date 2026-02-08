@@ -15,6 +15,7 @@ struct SourceAppsDetailView: View {
     @State private var selectedScreenshotIndex: Int = 0
     @State private var dominantColor: Color = .accentColor
     @State private var scrollOffset: CGFloat = 0
+    @State private var appStoreURL: URL?
     
     var source: ASRepository
     var app: ASRepository.App
@@ -39,21 +40,34 @@ struct SourceAppsDetailView: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .top) {
-                Color(UIColor.systemBackground)
-                    .ignoresSafeArea()
-                
-                if hasMinimalInfo {
-                    minimalInfoView(geometry: geometry)
-                } else {
-                    fullInfoView(geometry: geometry)
+        ZStack(alignment: .top) {
+            Color(UIColor.systemBackground)
+                .ignoresSafeArea()
+
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 0) {
+                    // Stretchy Header
+                    headerView
+
+                    if hasMinimalInfo {
+                        minimalInfoContent
+                    } else {
+                        fullInfoContent
+                    }
                 }
-                
-                navigationOverlay(geometry: geometry)
+                .background(
+                    GeometryReader { geo in
+                        Color.clear
+                            .onChange(of: geo.frame(in: .global).minY) { newValue in
+                                scrollOffset = newValue
+                            }
+                    }
+                )
             }
+            .ignoresSafeArea(edges: .top)
         }
-        .navigationBarHidden(true)
+        .navigationTitle(app.currentName)
+        .navigationBarTitleDisplayMode(.inline)
         .fullScreenCover(isPresented: $isScreenshotPreviewPresented) {
             if let screenshotURLs = app.screenshotURLs {
                 ScreenshotPreviewView(screenshotURLs: screenshotURLs, initialIndex: selectedScreenshotIndex)
@@ -63,94 +77,91 @@ struct SourceAppsDetailView: View {
             if let iconURL = app.iconURL {
                 extractDominantColor(from: iconURL)
             }
+            fetchAppStoreLink()
         }
     }
-    
-    // MARK: - Navigation Overlay (No Share Button)
-    
-    private func navigationOverlay(geometry: GeometryProxy) -> some View {
-        HStack {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: navButtonSize, height: navButtonSize)
-                    .background(.ultraThinMaterial, in: Circle())
-                    .shadow(color: .black.opacity(0.15), radius: 8, x: 0, y: 4)
+
+    private func fetchAppStoreLink() {
+        if let bundleId = app.id {
+            Task {
+                let url = await AppStoreLinkManager.shared.fetchAppStoreURL(bundleId: bundleId)
+                await MainActor.run {
+                    self.appStoreURL = url
+                }
             }
-            
-            Spacer()
         }
-        .padding(.horizontal, horizontalPadding)
-        .padding(.top, geometry.safeAreaInsets.top + 8)
     }
     
-    // MARK: - Minimal Info View (Modern, Clean Design)
+    // MARK: - Header View (Stretchy & Modern)
     
-    private func minimalInfoView(geometry: GeometryProxy) -> some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 0) {
-                // Top spacing for nav bar
-                Color.clear.frame(height: geometry.safeAreaInsets.top + 60)
+    private var headerView: some View {
+        GeometryReader { geometry in
+            let minY = geometry.frame(in: .global).minY
+            let height = geometry.size.height + (minY > 0 ? minY : 0)
+
+            ZStack(alignment: .bottom) {
+                // Background
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                dominantColor.opacity(colorScheme == .dark ? 0.4 : 0.3),
+                                dominantColor.opacity(colorScheme == .dark ? 0.2 : 0.15),
+                                dominantColor.opacity(colorScheme == .dark ? 0.1 : 0.05)
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    )
+                    .overlay(
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                            .opacity(0.3)
+                    )
                 
-                // App Card with Icon and Name inside
-                VStack(spacing: 20) {
-                    // Icon
-                    minimalAppIcon
+                // Content
+                VStack(spacing: 16) {
+                    appIcon
+                        .scaleEffect(minY > 0 ? 1 + (minY / 400) : 1)
                     
-                    // App Name and Developer
-                    VStack(spacing: 6) {
+                    VStack(spacing: 8) {
                         Text(app.currentName)
-                            .font(.system(size: 24, weight: .bold))
+                            .font(.system(size: 26, weight: .bold, design: .rounded))
                             .foregroundStyle(.primary)
                             .multilineTextAlignment(.center)
                         
                         if let developer = app.developer {
                             Text(developer)
-                                .font(.system(size: 15, weight: .medium))
+                                .font(.system(size: 16, weight: .semibold))
                                 .foregroundStyle(dominantColor)
                         }
-                        
-                        if let category = app.category {
-                            Text(category.capitalized)
-                                .font(.system(size: 13))
-                                .foregroundStyle(.secondary)
-                        }
                     }
+                    .opacity(minY < -60 ? max(0, 1 + (minY + 60) / 40) : 1)
                     
-                    // Download Button
                     DownloadButtonView(app: app)
-                        .padding(.top, 8)
+                        .padding(.top, 4)
+                        .opacity(minY < -100 ? max(0, 1 + (minY + 100) / 40) : 1)
                 }
-                .padding(.vertical, 32)
-                .padding(.horizontal, 24)
-                .frame(maxWidth: .infinity)
-                .background(
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [
-                                    dominantColor.opacity(colorScheme == .dark ? 0.15 : 0.1),
-                                    dominantColor.opacity(colorScheme == .dark ? 0.08 : 0.05)
-                                ],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                )
-                .padding(.horizontal, horizontalPadding)
-                
-                // Information Section (Left-aligned)
-                minimalInformationSection
-                    .padding(.top, 24)
-                    .padding(.horizontal, horizontalPadding)
-                
-                Spacer(minLength: 100)
+                .padding(.bottom, 32)
+                .padding(.horizontal, 20)
             }
+            .frame(width: geometry.size.width, height: height)
+            .offset(y: minY > 0 ? -minY : 0)
         }
-        .ignoresSafeArea(edges: .top)
+        .frame(height: 380)
+    }
+
+    // MARK: - Minimal Info Content
+
+    private var minimalInfoContent: some View {
+        VStack(spacing: 0) {
+            // Information Section
+            minimalInformationSection
+                .padding(.top, 24)
+                .padding(.horizontal, horizontalPadding)
+
+            Spacer(minLength: 100)
+        }
     }
     
     private var minimalAppIcon: some View {
@@ -271,93 +282,6 @@ struct SourceAppsDetailView: View {
         .padding(.vertical, 14)
     }
     
-    // MARK: - Full Info View (Modern - Icon and info inside hero card)
-    
-    private func fullInfoView(geometry: GeometryProxy) -> some View {
-        ScrollView(.vertical, showsIndicators: false) {
-            VStack(spacing: 0) {
-                // Hero card with icon, name, developer, and Get button inside
-                heroCardWithAppInfo(geometry: geometry)
-                
-                // Rest of content
-                fullInfoContent
-            }
-        }
-        .ignoresSafeArea(edges: .top)
-    }
-    
-    // MARK: - Hero Card with App Info Inside
-    
-    private func heroCardWithAppInfo(geometry: GeometryProxy) -> some View {
-        ZStack(alignment: .bottom) {
-            // Background gradient
-            Rectangle()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            dominantColor.opacity(colorScheme == .dark ? 0.5 : 0.35),
-                            dominantColor.opacity(colorScheme == .dark ? 0.3 : 0.2),
-                            dominantColor.opacity(colorScheme == .dark ? 0.15 : 0.1)
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
-                .overlay(
-                    Rectangle()
-                        .fill(.ultraThinMaterial)
-                        .opacity(0.2)
-                )
-                .clipShape(
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: 0,
-                        bottomLeadingRadius: 32,
-                        bottomTrailingRadius: 32,
-                        topTrailingRadius: 0
-                    )
-                )
-            
-            // App info content inside the hero card
-            VStack(spacing: 16) {
-                Spacer()
-                
-                // App Icon
-                appIcon
-                
-                // App Name
-                Text(app.currentName)
-                    .font(.system(size: 24, weight: .bold))
-                    .foregroundStyle(.primary)
-                    .multilineTextAlignment(.center)
-                    .lineLimit(2)
-                
-                // Developer
-                if let developer = app.developer {
-                    Text(developer)
-                        .font(.system(size: 15, weight: .medium))
-                        .foregroundStyle(dominantColor)
-                }
-                
-                // Category
-                if let category = app.category {
-                    Text(category.capitalized)
-                        .font(.system(size: 13))
-                        .foregroundStyle(.secondary)
-                }
-                
-                // Download Button
-                DownloadButtonView(app: app)
-                    .padding(.top, 8)
-                
-                Spacer()
-                    .frame(height: 24)
-            }
-            .padding(.horizontal, horizontalPadding)
-            .padding(.top, geometry.safeAreaInsets.top + 60)
-        }
-        .frame(height: UIScreen.main.bounds.height * 0.48)
-        .frame(maxWidth: .infinity)
-    }
     
     // MARK: - Full Info Content (Below hero card)
     
@@ -398,6 +322,13 @@ struct SourceAppsDetailView: View {
                 .padding(.top, 24)
                 .padding(.horizontal, horizontalPadding)
             
+            // App Store Link Section
+            if let url = appStoreURL {
+                appStoreLinkSection(url: url)
+                    .padding(.top, 24)
+                    .padding(.horizontal, horizontalPadding)
+            }
+
             // Permissions Section
             if let appPermissions = app.appPermissions {
                 permissionsSection(appPermissions)
@@ -784,6 +715,49 @@ struct SourceAppsDetailView: View {
         }
     }
     
+    // MARK: - App Store Link Section
+
+    private func appStoreLinkSection(url: URL) -> some View {
+        Button {
+            UIApplication.shared.open(url)
+        } label: {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .fill(Color.blue.opacity(0.1))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "apple.logo")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.primary)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Available on App Store")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.primary)
+                    Text("View original app details")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Text("VIEW")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
+                    .background(Color.blue.opacity(0.1), in: Capsule())
+            }
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Permissions Section
     
     private func permissionsSection(_ permissions: ASRepository.AppPermissions) -> some View {
