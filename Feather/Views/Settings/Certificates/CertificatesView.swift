@@ -30,7 +30,7 @@ struct CertificatesView: View {
 	// MARK: Body
 	var body: some View {
 		ScrollView {
-			LazyVStack(spacing: 14) {
+			LazyVStack(spacing: 18) {
 				// Certificate Type Picker Card
 				certificateTypeCard
 					.opacity(appearAnimation ? 1 : 0)
@@ -47,7 +47,7 @@ struct CertificatesView: View {
 						)
 				}
 			}
-			.padding(16)
+			.padding(20)
 		}
 		.background(Color(UIColor.systemGroupedBackground))
 		.navigationTitle(.localized("Certificates"))
@@ -92,13 +92,18 @@ struct CertificatesView: View {
 	
 	// MARK: - Certificate Type Card
 	private var certificateTypeCard: some View {
-		VStack(alignment: .leading, spacing: 12) {
-			HStack(spacing: 8) {
-				Image(systemName: "person.badge.shield.checkmark.fill")
-					.font(.system(size: 14, weight: .semibold))
-					.foregroundStyle(.blue)
-				Text("Certificate Type")
-					.font(.system(size: 12, weight: .semibold, design: .rounded))
+		VStack(alignment: .leading, spacing: 14) {
+			HStack(spacing: 10) {
+				ZStack {
+					Circle()
+						.fill(Color.blue.opacity(0.12))
+						.frame(width: 28, height: 28)
+					Image(systemName: "person.badge.shield.checkmark.fill")
+						.font(.system(size: 12, weight: .semibold))
+						.foregroundStyle(.blue)
+				}
+				Text("CERTIFICATE TYPE")
+					.font(.system(size: 11, weight: .bold, design: .rounded))
 					.foregroundStyle(.secondary)
 			}
 			
@@ -113,35 +118,43 @@ struct CertificatesView: View {
 						}
 						HapticsManager.shared.softImpact()
 					} label: {
-						HStack(spacing: 8) {
+						HStack(spacing: 10) {
 							Image(systemName: exp == .developer ? "person.fill" : "building.2.fill")
 								.font(.system(size: 14, weight: .medium))
 							Text(exp.displayName)
-								.font(.system(size: 14, weight: .medium))
+								.font(.system(size: 14, weight: .semibold))
 						}
 						.foregroundStyle(certificateExperience == exp.rawValue ? .white : .primary)
-						.padding(.horizontal, 16)
-						.padding(.vertical, 10)
+						.padding(.vertical, 12)
 						.frame(maxWidth: .infinity)
-						.background(
-							RoundedRectangle(cornerRadius: 10, style: .continuous)
-								.fill(certificateExperience == exp.rawValue ? Color.blue : Color(.tertiarySystemGroupedBackground))
-						)
+						.background {
+							if certificateExperience == exp.rawValue {
+								RoundedRectangle(cornerRadius: 14, style: .continuous)
+									.fill(
+										LinearGradient(
+											colors: [.blue, .blue.opacity(0.8)],
+											startPoint: .topLeading,
+											endPoint: .bottomTrailing
+										)
+									)
+									.shadow(color: .blue.opacity(0.3), radius: 8, x: 0, y: 4)
+							} else {
+								RoundedRectangle(cornerRadius: 14, style: .continuous)
+									.fill(.ultraThinMaterial)
+							}
+						}
 					}
 					.buttonStyle(.plain)
 				}
 			}
 		}
-		.padding(16)
-		.background(
-			RoundedRectangle(cornerRadius: 18, style: .continuous)
-				.fill(Color(UIColor.secondarySystemGroupedBackground))
-				.overlay(
-					RoundedRectangle(cornerRadius: 18, style: .continuous)
-						.stroke(Color(UIColor.separator).opacity(0.2), lineWidth: 0.5)
-				)
+		.padding(18)
+		.background(.ultraThinMaterial)
+		.clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+		.overlay(
+			RoundedRectangle(cornerRadius: 24, style: .continuous)
+				.stroke(Color.primary.opacity(0.08), lineWidth: 1)
 		)
-		.shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: 4)
 	}
 	
 	// MARK: - Empty State
@@ -230,61 +243,46 @@ struct CertificatesView: View {
 								endPoint: .bottom
 							)
 						)
-						.frame(width: 4)
+						.frame(width: 6)
 				}
 				
 				// Content
 				CertificatesCellView(cert: cert)
-					.padding(.horizontal, 16)
-					.padding(.vertical, 14)
+					.padding(.horizontal, 20)
+					.padding(.vertical, 18)
 			}
-			.background(
-				ZStack {
-					// Base background
-					RoundedRectangle(cornerRadius: 18, style: .continuous)
-						.fill(
-							isSelected
-								? AnyShapeStyle(
-									LinearGradient(
-										colors: [
-											Color.accentColor.opacity(0.12),
-											Color.accentColor.opacity(0.06),
-											Color.accentColor.opacity(0.03)
-										],
-										startPoint: .topLeading,
-										endPoint: .bottomTrailing
-									)
-								)
-								: AnyShapeStyle(Color(UIColor.secondarySystemGroupedBackground))
-						)
-					
-					// Subtle inner glow for selected
-					if isSelected {
-						RoundedRectangle(cornerRadius: 18, style: .continuous)
+			.background {
+				if isSelected {
+					ZStack {
+						Color.accentColor.opacity(0.08)
+						.background(.ultraThinMaterial)
+
+						RoundedRectangle(cornerRadius: 24, style: .continuous)
 							.stroke(
 								LinearGradient(
 									colors: [
-										Color.accentColor.opacity(0.4),
+										Color.accentColor.opacity(0.5),
 										Color.accentColor.opacity(0.2),
-										Color.accentColor.opacity(0.1)
+										Color.accentColor.opacity(0.05)
 									],
 									startPoint: .topLeading,
 									endPoint: .bottomTrailing
 								),
-								lineWidth: 1.5
+								lineWidth: 2
 							)
-					} else {
-						RoundedRectangle(cornerRadius: 18, style: .continuous)
-							.stroke(Color(UIColor.separator).opacity(0.2), lineWidth: 0.5)
 					}
+				} else {
+					Color(UIColor.secondarySystemGroupedBackground)
+						.opacity(0.6)
+						.background(.ultraThinMaterial)
 				}
-			)
-			.clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+			}
+			.clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
 			.shadow(
-				color: isSelected ? Color.accentColor.opacity(0.2) : Color.black.opacity(0.06),
-				radius: isSelected ? 15 : 10,
+				color: isSelected ? Color.accentColor.opacity(0.25) : Color.black.opacity(0.08),
+				radius: isSelected ? 20 : 12,
 				x: 0,
-				y: isSelected ? 8 : 4
+				y: isSelected ? 10 : 4
 			)
 			.overlay(alignment: .topTrailing) {
 				if isSelected {
@@ -297,17 +295,17 @@ struct CertificatesView: View {
 									endPoint: .bottomTrailing
 								)
 							)
-							.frame(width: 26, height: 26)
+							.frame(width: 28, height: 28)
 						
 						Image(systemName: "checkmark")
-							.font(.system(size: 11, weight: .bold))
+							.font(.system(size: 12, weight: .bold))
 							.foregroundStyle(.white)
 					}
-					.offset(x: 6, y: -6)
-					.shadow(color: .accentColor.opacity(0.4), radius: 6, x: 0, y: 3)
+					.offset(x: 8, y: -8)
+					.shadow(color: .accentColor.opacity(0.4), radius: 8, x: 0, y: 4)
 				}
 			}
-			.scaleEffect(isSelected ? 1.0 : 0.98)
+			.scaleEffect(isSelected ? 1.02 : 1.0)
 			.animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
 			.contextMenu {
 				_contextActions(for: cert)
