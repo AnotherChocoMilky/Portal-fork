@@ -6,6 +6,7 @@ enum PasswordChangerError: LocalizedError {
     case exportFailed(OSStatus)
     case noItemsFound
     case invalidData
+    case notSupported
 
     var errorDescription: String? {
         switch self {
@@ -17,6 +18,8 @@ enum PasswordChangerError: LocalizedError {
             return "No items found in P12"
         case .invalidData:
             return "Invalid P12 data"
+        case .notSupported:
+            return "This operation is not supported on this platform"
         }
     }
 }
@@ -55,6 +58,7 @@ class PasswordChanger {
             throw PasswordChangerError.noItemsFound
         }
 
+        #if os(macOS)
         var keyParams = SecItemImportExportKeyParameters()
         keyParams.version = UInt32(kSecKeyImportExportParamsVersion)
 
@@ -64,7 +68,13 @@ class PasswordChanger {
 
         var exportedData: CFData?
         // Note: SecItemExport with kSecFormatPKCS12 requires SecIdentity or CFArray of items
-        let exportStatus = SecItemExport(exportItems as CFArray, .formatPKCS12, [], &keyParams, &exportedData)
+        let exportStatus = SecItemExport(
+            exportItems as CFArray,
+            SecExternalFormat.formatPKCS12,
+            [],
+            &keyParams,
+            &exportedData
+        )
 
         // Release the retained CFString
         keyParams.passphrase?.release()
@@ -74,5 +84,9 @@ class PasswordChanger {
         }
 
         return resultData
+        #else
+        // On non-macOS platforms, SecItemExport for PKCS12 is not available in the public Security framework.
+        throw PasswordChangerError.notSupported
+        #endif
     }
 }
