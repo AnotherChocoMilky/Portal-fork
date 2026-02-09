@@ -8,6 +8,7 @@ struct CertificatesView: View {
 	@AppStorage("forceShowGuides") private var forceShowGuides = false
 	
 	@State private var _isAddingPresenting = false
+	@State private var _isPasswordChangePresenting = false
 	@State private var _isSelectedInfoPresenting: CertificatePair?
 	@State private var appearAnimation = false
 
@@ -58,12 +59,22 @@ struct CertificatesView: View {
 		}
 		.toolbar(content: {
 			ToolbarItem(placement: .topBarTrailing) {
-				Button {
-					_isAddingPresenting = true
-				} label: {
-					Image(systemName: "plus.circle.fill")
-						.font(.system(size: 22, weight: .medium))
-						.foregroundStyle(Color.accentColor)
+				HStack(spacing: 12) {
+					Button {
+						_isPasswordChangePresenting = true
+					} label: {
+						Image(systemName: "lock.rotation")
+							.font(.system(size: 20, weight: .medium))
+							.foregroundStyle(Color.accentColor)
+					}
+
+					Button {
+						_isAddingPresenting = true
+					} label: {
+						Image(systemName: "plus.circle.fill")
+							.font(.system(size: 22, weight: .medium))
+							.foregroundStyle(Color.accentColor)
+					}
 				}
 			}
 		})
@@ -73,6 +84,9 @@ struct CertificatesView: View {
 		.sheet(isPresented: $_isAddingPresenting) {
 			CertificatesAddView()
 				.presentationDetents([.medium])
+		}
+		.sheet(isPresented: $_isPasswordChangePresenting) {
+			CertificatePasswordChangeView()
 		}
 		.onAppear {
 			withAnimation {
