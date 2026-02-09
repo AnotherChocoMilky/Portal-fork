@@ -340,7 +340,7 @@ struct AllAppsView: View {
                 Text("No Results Found")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(.primary)
-                Text("Try a different search term")
+                Text("Try a different search term.")
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
             }
@@ -363,7 +363,7 @@ struct AllAppsView: View {
             Text("No Sources")
                 .font(.system(size: 20, weight: .bold))
                 .foregroundStyle(.primary)
-            Text("Add sources to view all your apps here")
+            Text("Add sources to view all your apps here.")
                 .font(.system(size: 15))
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

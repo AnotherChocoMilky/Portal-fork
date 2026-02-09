@@ -532,7 +532,7 @@ struct ModernSigningView: View {
             
             // Configuration Section
             VStack(alignment: .leading, spacing: 12) {
-                cleanSectionHeader(title: "Configuration", icon: "slider.horizontal.3")
+                cleanSectionHeader(title: "Modify", icon: "slider.horizontal.3")
                 
                 VStack(spacing: 0) {
                     NavigationLink {
@@ -974,7 +974,7 @@ struct ModernSigningView: View {
             VStack(spacing: 12) {
                 // Section Header
                 HStack {
-                    Text("Configuration")
+                    Text("Modify")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                         .textCase(.uppercase)
@@ -1086,7 +1086,7 @@ struct ModernSigningView: View {
                         .foregroundStyle(.primary)
                     
                     if isBeta {
-                        Text("BETA")
+                        Text("Beta")
                             .font(.system(size: 9, weight: .bold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 6)
@@ -1787,7 +1787,7 @@ struct HoldToSign: View {
                         .font(.title3.bold())
                         .foregroundStyle(Color.accentColor)
                         .scaleEffect(isHolding ? 1.2 : 1.0)
-                    Text(isHolding ? "Keep Holding..." : "Hold 5s to Sign")
+                    Text(isHolding ? "Keep Holding..." : "Hold 5s To Sign")
                         .font(.headline.bold())
                         .foregroundStyle(.primary)
                 }
@@ -1841,7 +1841,7 @@ struct SlideToConfirm: View {
                     .frame(height: 60)
                     .shadow(color: .black.opacity(0.05), radius: 5)
 
-                Text("Slide to Confirm")
+                Text("Slide To Confirm")
                     .font(.subheadline.bold())
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
@@ -1926,7 +1926,7 @@ struct DoubleTapToSign: View {
                         .scaleEffect(isAnimate ? 1.2 : 1.0)
                 }
 
-                Text(isCompleted ? "Signing..." : "Double Tap to Sign")
+                Text(isCompleted ? "Signing..." : "Double Tap To Sign")
                     .font(.headline.bold())
                     .foregroundStyle(.primary)
 
@@ -2074,7 +2074,7 @@ struct ModernEditSheet: View {
                                 .font(.system(size: 18, weight: .bold, design: .rounded))
                                 .foregroundStyle(.primary)
 
-                            Text("Enter new \(title.lowercased())")
+                            Text("Enter New \(title.lowercased())")
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundStyle(.secondary)
                         }

@@ -621,7 +621,7 @@ struct SourcesAddView: View {
 				HStack(spacing: 10) {
 					Image(systemName: "arrow.up.doc.fill")
 						.font(.system(size: 18, weight: .bold))
-					Text(.localized("Export Through Portal"))
+					Text(.localized("Portal Transfer"))
 						.font(.system(.subheadline, design: .rounded).bold())
 				}
 				.foregroundStyle(.white)
@@ -940,7 +940,7 @@ struct PortalExportView: View {
 					.font(.system(size: 22, weight: .bold, design: .rounded))
 					.foregroundStyle(.primary)
 				
-				Text(isImportMode ? .localized("Paste your Portal code from another device to import sources.") : .localized("Share your sources with a Portal transfer code."))
+				Text(isImportMode ? .localized("Paste your Portal Transfer code from another device to import sources.") : .localized("Share your sources with a Portal Transfer code."))
 					.font(.subheadline)
 					.foregroundStyle(.secondary)
 					.multilineTextAlignment(.center)

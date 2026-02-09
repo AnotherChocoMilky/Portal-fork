@@ -740,9 +740,9 @@ struct BatchAppEditSheet: View {
                     
                     TextField("Version", text: $editedVersion)
                 } header: {
-                    Text("Modify App Metadata")
+                    Text("Modify App Data")
                 } footer: {
-                    Text("Leave fields empty to keep original values")
+                    Text("Leave fields empty to keep the original app values.")
                 }
                 
                 Section {
@@ -764,11 +764,11 @@ struct BatchAppEditSheet: View {
                 } header: {
                     Text("Tweaks & Modifications")
                 } footer: {
-                    Text("Inject custom tweaks, dylibs, or frameworks into this app")
+                    Text("Inject custom tweaks, dylibs, or frameworks into this app.")
                 }
                 
                 Section {
-                    Button("Reset to Default") {
+                    Button("Reset To Default") {
                         editedName = app.name ?? ""
                         editedBundleId = app.identifier ?? ""
                         editedVersion = app.version ?? ""

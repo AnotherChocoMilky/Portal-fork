@@ -25,7 +25,6 @@ struct SourceAppsDetailView: View {
     private let iconCornerRadius: CGFloat = 26
     private let navButtonSize: CGFloat = 36
     
-    // Check if app has minimal info (no screenshots, no description, no version history)
     private var hasMinimalInfo: Bool {
         let hasScreenshots = app.screenshotURLs?.isEmpty == false
         let hasDescription = app.localizedDescription?.isEmpty == false
@@ -435,7 +434,7 @@ struct SourceAppsDetailView: View {
             
             if let size = app.size {
                 statisticColumn(
-                    topLabel: "SIZE",
+                    topLabel: "Size",
                     mainValue: size.formattedByteCount,
                     bottomContent: AnyView(
                         Text("Download")
@@ -449,7 +448,7 @@ struct SourceAppsDetailView: View {
             
             if let category = app.category {
                 statisticColumn(
-                    topLabel: "CATEGORY",
+                    topLabel: "Category",
                     mainValue: "#\(Int.random(in: 1...50))",
                     bottomContent: AnyView(
                         Text(category.capitalized)
@@ -463,7 +462,7 @@ struct SourceAppsDetailView: View {
             }
             
             statisticColumn(
-                topLabel: "DEVELOPER",
+                topLabel: "Developer",
                 mainValue: "",
                 bottomContent: AnyView(
                     VStack(spacing: 4) {
@@ -715,7 +714,7 @@ struct SourceAppsDetailView: View {
         }
     }
     
-    // MARK: - App Store Link Section
+    // MARK: - App Store Link Section (new)
 
     private func appStoreLinkSection(url: URL) -> some View {
         Button {
@@ -732,17 +731,17 @@ struct SourceAppsDetailView: View {
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Available on App Store")
+                    Text("App Store")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(.primary)
-                    Text("View original app details")
+                    Text("View original app details on the App Store")
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)
                 }
 
                 Spacer()
 
-                Text("VIEW")
+                Text("View")
                     .font(.system(size: 13, weight: .bold))
                     .foregroundStyle(.blue)
                     .padding(.horizontal, 16)

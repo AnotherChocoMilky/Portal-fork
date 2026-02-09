@@ -37,7 +37,7 @@ struct EditSourcesView: View {
                     emptyStateView
                 }
             }
-            .alert("Delete Source?", isPresented: $showDeleteAlert) {
+            .alert("Delete Source", isPresented: $showDeleteAlert) {
                 Button("Cancel", role: .cancel) {}
                 Button("Delete", role: .destructive) {
                     if let source = sourceToDelete {
@@ -45,7 +45,7 @@ struct EditSourcesView: View {
                     }
                 }
             } message: {
-                Text("This action cannot be undone.")
+                Text("Do you want to delete this source?")
             }
         }
     }
@@ -100,7 +100,7 @@ struct EditSourcesView: View {
             Image(systemName: "globe.desk.fill")
                 .font(.system(size: 40))
                 .foregroundStyle(.secondary)
-            Text("No Sources")
+            Text("No Sources Added")
                 .font(.headline)
             Text("Add sources to get started.")
                 .font(.subheadline)

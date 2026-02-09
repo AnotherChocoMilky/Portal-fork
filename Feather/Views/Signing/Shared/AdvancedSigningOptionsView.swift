@@ -310,7 +310,7 @@ struct AdvancedDebugToolsView: View {
                 HStack {
                     Label("Custom Bundle ID", systemImage: "app.badge")
                     Spacer()
-                    TextField(app.identifier ?? "com.example.app", text: Binding(
+                    TextField(app.identifier ?? "New Bundle ID", text: Binding(
                         get: { options.appIdentifier ?? "" },
                         set: { options.appIdentifier = $0.isEmpty ? nil : $0 }
                     ))
@@ -447,7 +447,7 @@ struct AdvancedDebugToolsView: View {
                         .foregroundStyle(.secondary)
                 }
             } header: {
-                debugSectionHeader("Files to Remove", icon: "trash.fill", color: .red)
+                debugSectionHeader("Files To Remove", icon: "trash.fill", color: .red)
             } footer: {
                 Text("Select files/folders to remove from the app bundle.")
             }
@@ -486,9 +486,9 @@ struct AdvancedDebugToolsView: View {
                     .font(.system(.caption, design: .monospaced))
                 }
             } header: {
-                debugSectionHeader("Load Paths to Remove", icon: "link.badge.plus", color: .orange)
+                debugSectionHeader("Load Paths To Remove", icon: "link.badge.plus", color: .orange)
             } footer: {
-                Text("Remove Mach-O load commands (e.g., @executable_path/demo.dylib)")
+                Text("Remove Mach-O load commands (e.g., @executable_path/test.dylib)")
             }
 
             // MARK: - App Modifications Section
@@ -546,7 +546,7 @@ struct AdvancedDebugToolsView: View {
                 }
 
                 Toggle(isOn: $options.experiment_replaceSubstrateWithEllekit) {
-                    Label("Replace Substrate with ElleKit", systemImage: "arrow.triangle.2.circlepath")
+                    Label("Replace Substrate With ElleKit", systemImage: "arrow.triangle.2.circlepath")
                 }
             } header: {
                 debugSectionHeader("Experiments", icon: "flask.fill", color: .yellow)
@@ -693,7 +693,7 @@ struct AdvancedDebugToolsView: View {
                 Button(role: .destructive) {
                     resetToDefaults()
                 } label: {
-                    Label("Reset to Defaults", systemImage: "arrow.counterclockwise")
+                    Label("Reset To Defaults", systemImage: "arrow.counterclockwise")
                 }
             } header: {
                 debugSectionHeader("Quick Actions", icon: "bolt.fill", color: .yellow)
@@ -775,7 +775,7 @@ struct AdvancedDebugToolsView: View {
         validateAfterSigning = false
         showTimings = false
         exportUnsignedIPA = false
-        statusMessage = "Settings reset to defaults"
+        statusMessage = "Settings Reset To Defaults"
         showStatusAlert = true
     }
 
@@ -786,7 +786,7 @@ struct AdvancedDebugToolsView: View {
             removePlugins = true
             removeWatchApp = true
             removeExtensions = true
-            statusMessage = "Minimal preset loaded"
+            statusMessage = "Minimal Preset Loaded"
         case "aggressive":
             resetToDefaults()
             removePlugins = true
@@ -797,16 +797,16 @@ struct AdvancedDebugToolsView: View {
             removeLocalizations = true
             forceSign = true
             deepSign = true
-            statusMessage = "Aggressive preset loaded"
+            statusMessage = "Aggressive Preset Loaded"
         default:
-            statusMessage = "Unknown preset"
+            statusMessage = "Unknown Preset"
         }
         showStatusAlert = true
     }
 
     private func exportConfiguration() {
         // Export current configuration as a shareable format
-        statusMessage = "Configuration exported to clipboard"
+        statusMessage = "Configuration Exported To Clipboard!"
         showStatusAlert = true
     }
 
@@ -956,7 +956,7 @@ struct BinaryInspectorView: View {
                                 .font(.system(.caption, design: .monospaced))
                         }
                         if loadCommands.count > 20 {
-                            Text("... and \(loadCommands.count - 20) More")
+                            Text("... And \(loadCommands.count - 20) More")
                                 .foregroundStyle(.secondary)
                         }
                     } header: {
@@ -1062,7 +1062,7 @@ struct MachOAnalyzerView: View {
                                 .lineLimit(1)
                         }
                         if symbols.count > 100 {
-                            Text("... and \(symbols.count - 100) more symbols")
+                            Text("... And \(symbols.count - 100) More Symbols")
                                 .foregroundStyle(.secondary)
                         }
                     } header: {
@@ -1107,7 +1107,7 @@ struct DylibDependenciesView: View {
                 Section {
                     HStack {
                         Spacer()
-                        ProgressView("Loading dependencies...")
+                        ProgressView("Loading Dependencies...")
                         Spacer()
                     }
                     .padding()
@@ -1120,7 +1120,7 @@ struct DylibDependenciesView: View {
                                 Text(dep.name)
                                     .font(.headline)
                                 if dep.isWeak {
-                                    Text("WEAK")
+                                    Text("Weak")
                                         .font(.caption2)
                                         .padding(.horizontal, 6)
                                         .padding(.vertical, 2)
@@ -1256,7 +1256,7 @@ struct EntitlementAnalyzerView: View {
                         Image(systemName: "checkmark.shield")
                             .font(.largeTitle)
                             .foregroundStyle(.green)
-                        Text("No entitlements found")
+                        Text("No Entitlements Found")
                             .foregroundStyle(.secondary)
                     }
                     .frame(maxWidth: .infinity)
@@ -1470,7 +1470,7 @@ struct InfoPlistEditorDebugView: View {
                 editorListView
             }
         }
-        .searchable(text: $searchText, prompt: "Search keys or values...")
+        .searchable(text: $searchText, prompt: "Search Keys Or Values")
         .navigationTitle("Info.plist Editor")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(content: {
@@ -1627,7 +1627,7 @@ struct InfoPlistEditorDebugView: View {
                 }
 
                 // Entry Count
-                Text("\(filteredEntries.count) entries")
+                Text("\(filteredEntries.count) Entries")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 
@@ -1652,7 +1652,7 @@ struct InfoPlistEditorDebugView: View {
             if isMultiSelectMode && !selectedEntries.isEmpty {
                 Section {
                     HStack {
-                        Text("\(selectedEntries.count) selected")
+                        Text("\(selectedEntries.count) Selected")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
@@ -1849,10 +1849,10 @@ struct InfoPlistEditorDebugView: View {
                         TextField("Value", text: $newValue)
                             .keyboardType(.decimalPad)
                     case "Array":
-                        TextField("Value (comma-separated)", text: $newValue)
+                        TextField("Value (Comma Separated)", text: $newValue)
                             .autocorrectionDisabled()
                     case "Dictionary":
-                        TextField("Value (JSON format)", text: $newValue)
+                        TextField("Value (JSON Format)", text: $newValue)
                             .autocorrectionDisabled()
                     case "Date":
                         TextField("Value (ISO 8601)", text: $newValue)
@@ -2426,7 +2426,7 @@ struct EntitlementsDebugView: View {
         .sheet(isPresented: $showAddEntitlement) {
             NavigationStack {
                 Form {
-                    TextField("Key (e.g., com.apple.developer...)", text: $newKey)
+                    TextField("Key", text: $newKey)
                         .autocapitalization(.none)
                     TextField("Value", text: $newValue)
                 }
@@ -2741,7 +2741,7 @@ struct ResourceModifierView: View {
 
                 Spacer()
 
-                Text("\(filteredResources.count) items")
+                Text("\(filteredResources.count) Items")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -2770,7 +2770,7 @@ struct ResourceModifierView: View {
             if isMultiSelectMode && !selectedResources.isEmpty {
                 Section {
                     HStack {
-                        Text("\(selectedResources.count) selected")
+                        Text("\(selectedResources.count) Selected")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                         Spacer()
@@ -3110,7 +3110,7 @@ struct ResourceRow: View {
                         .foregroundStyle(.secondary)
 
                     if let ratio = resource.compressionRatio {
-                        Text("\(Int(ratio * 100))% compressed")
+                        Text("\(Int(ratio * 100))% Compressed")
                             .font(.caption2)
                             .foregroundStyle(.green)
                     }
@@ -3564,13 +3564,13 @@ struct SigningLogsDebugView: View {
 
     private func loadSampleLogs() {
         logs = [
-            ("10:23:45", "Info", "Starting signing process..."),
-            ("10:23:45", "Debug", "Loading certificate from keychain"),
-            ("10:23:46", "Info", "Certificate loaded: Developer Certificate"),
-            ("10:23:46", "Debug", "Extracting IPA contents"),
+            ("10:23:45", "Info", "Starting Signing Process..."),
+            ("10:23:45", "Debug", "Loading Certificate From Keychain"),
+            ("10:23:46", "Info", "Certificate Loaded: Developer Certificate"),
+            ("10:23:46", "Debug", "Extracting IPA Contents"),
             ("10:23:47", "Info", "Found executable: MyApp"),
-            ("10:23:47", "Debug", "Analyzing Mach-O binary"),
-            ("10:23:48", "Info", "Removing existing signature"),
+            ("10:23:47", "Debug", "Analyzing Mach-O Binary"),
+            ("10:23:48", "Info", "Removing Existing Signature"),
             ("10:23:48", "Warning", "Bitcode Section Found, Stripping..."),
             ("10:23:49", "Info", "Injecting Provisioning Profile"),
             ("10:23:49", "Debug", "Updating Info.plist"),
