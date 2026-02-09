@@ -112,7 +112,7 @@ struct LiveActivitySettingsView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundColor(.orange)
-                    Text("Live Activities are not available on this iOS version. Requires iOS 16.2+ so please update your device.")
+                    Text("Live Activities are not available on this iOS version. Requires iOS 16.2+ so please update your device then come back here.")
                 }
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -178,7 +178,7 @@ struct LiveActivitySettingsView: View {
                     Text(family.rawValue).tag(family)
                 }
             } label: {
-                Label("Font Family", systemImage: "textformat")
+                Label("Font", systemImage: "textformat")
             }
             .onChange(of: settings.fontFamily) { _ in saveSettings() }
             
@@ -305,7 +305,7 @@ struct LiveActivitySettingsView: View {
             }
 
         } header: {
-            Text("Advanced Styling")
+            Text("Styling")
                 .font(.system(size: 11, weight: .semibold))
         }
     }
@@ -494,7 +494,7 @@ struct LiveActivitySettingsView: View {
             LiveActivityInfoRow(
                 icon: "app.badge.fill",
                 title: "Background Updates",
-                description: "Live Activities can be updated even when Portal is in the background"
+                description: "Live Activities can be updated even when Portal is in the background."
             )
         } header: {
             Text("About Live Activities")

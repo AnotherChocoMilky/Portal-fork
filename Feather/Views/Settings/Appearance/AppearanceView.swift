@@ -60,7 +60,7 @@ struct AppearanceView: View {
     
     private var accentColorSection: some View {
         Section {
-            AppearanceNavRow(icon: "paintpalette.fill", title: "Advanced Customization", color: .pink, destination: ColorCustomizationView())
+            AppearanceNavRow(icon: "paintpalette.fill", title: "Customization", color: .pink, destination: ColorCustomizationView())
         } header: {
             AppearanceSectionHeader(title: "Color", icon: "paintpalette.fill")
         }

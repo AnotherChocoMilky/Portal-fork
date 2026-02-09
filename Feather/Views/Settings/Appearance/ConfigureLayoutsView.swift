@@ -42,7 +42,7 @@ struct ConfigureLayoutsView: View {
         var description: String {
             switch self {
             case .text: return "Custom Text Display"
-            case .sfSymbol: return "SF Symbol icons"
+            case .sfSymbol: return "SF Symbol Icons"
             case .time: return "Current Time"
             case .battery: return "Battery Status"
             case .network: return "Network Connectivity"

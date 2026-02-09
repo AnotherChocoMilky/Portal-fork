@@ -64,7 +64,7 @@ struct CertificatePasswordChangeView: View {
             Text("Update Certificate Password")
                 .font(.headline)
 
-            Text("Re-encrypt your .p12 certificate with a new password. The processing happens entirely in memory.")
+            Text("Change your certificates password using this tool. The processing happens entirely in device and OpenSSL.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -92,7 +92,7 @@ struct CertificatePasswordChangeView: View {
                     Text("P12 Certificate")
                         .font(.system(size: 16, weight: .semibold))
 
-                    Text(_p12URL?.lastPathComponent ?? "Select .p12 file")
+                    Text(_p12URL?.lastPathComponent ?? "Select .p12 File")
                         .font(.system(size: 14))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -120,7 +120,7 @@ struct CertificatePasswordChangeView: View {
     private var passwordFieldsSection: some View {
         VStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("CURRENT PASSWORD")
+                Text("Cuurent Password")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(.secondary)
                     .padding(.leading, 4)
@@ -128,7 +128,7 @@ struct CertificatePasswordChangeView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "lock.fill")
                         .foregroundStyle(.secondary)
-                    SecureField("Current Password (if any)", text: $_currentPassword)
+                    SecureField("Enter Current Password", text: $_currentPassword)
                         .font(.system(size: 15))
                 }
                 .padding(.horizontal, 14)
@@ -140,7 +140,7 @@ struct CertificatePasswordChangeView: View {
             }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("NEW PASSWORD")
+                Text("New Password")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(.secondary)
                     .padding(.leading, 4)
@@ -172,7 +172,7 @@ struct CertificatePasswordChangeView: View {
                 } else {
                     Image(systemName: "arrow.triangle.2.circlepath")
                         .font(.system(size: 18, weight: .semibold))
-                    Text("Change Password & Export")
+                    Text("Change Password")
                         .font(.system(size: 16, weight: .bold))
                 }
             }
