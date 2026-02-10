@@ -4,13 +4,27 @@ import Combine
 class KeyboardCustomizeManager: ObservableObject {
     static let shared = KeyboardCustomizeManager()
 
-    @AppStorage("Feather.keyboard.isEnabled") var isEnabled: Bool = false
-    @AppStorage("Feather.keyboard.opacity") var opacity: Double = 0.5
-    @AppStorage("Feather.keyboard.blurRadius") var blurRadius: Double = 10.0
-    @AppStorage("Feather.keyboard.gradientStart") var gradientStart: String = "#0077BE"
-    @AppStorage("Feather.keyboard.gradientEnd") var gradientEnd: String = "#00AEEF"
-    @AppStorage("Feather.keyboard.useGradient") var useGradient: Bool = true
-    @AppStorage("Feather.keyboard.showAnimatedOrbs") var showAnimatedOrbs: Bool = true
+    @Published var isEnabled: Bool {
+        didSet { UserDefaults.standard.set(isEnabled, forKey: "Feather.keyboard.isEnabled") }
+    }
+    @Published var opacity: Double {
+        didSet { UserDefaults.standard.set(opacity, forKey: "Feather.keyboard.opacity") }
+    }
+    @Published var blurRadius: Double {
+        didSet { UserDefaults.standard.set(blurRadius, forKey: "Feather.keyboard.blurRadius") }
+    }
+    @Published var gradientStart: String {
+        didSet { UserDefaults.standard.set(gradientStart, forKey: "Feather.keyboard.gradientStart") }
+    }
+    @Published var gradientEnd: String {
+        didSet { UserDefaults.standard.set(gradientEnd, forKey: "Feather.keyboard.gradientEnd") }
+    }
+    @Published var useGradient: Bool {
+        didSet { UserDefaults.standard.set(useGradient, forKey: "Feather.keyboard.useGradient") }
+    }
+    @Published var showAnimatedOrbs: Bool {
+        didSet { UserDefaults.standard.set(showAnimatedOrbs, forKey: "Feather.keyboard.showAnimatedOrbs") }
+    }
 
     @Published var keyboardHeight: CGFloat = 0
     @Published var isKeyboardVisible: Bool = false
@@ -19,6 +33,14 @@ class KeyboardCustomizeManager: ObservableObject {
     private var backdropWindow: UIWindow?
 
     private init() {
+        self.isEnabled = UserDefaults.standard.object(forKey: "Feather.keyboard.isEnabled") as? Bool ?? false
+        self.opacity = UserDefaults.standard.object(forKey: "Feather.keyboard.opacity") as? Double ?? 0.5
+        self.blurRadius = UserDefaults.standard.object(forKey: "Feather.keyboard.blurRadius") as? Double ?? 10.0
+        self.gradientStart = UserDefaults.standard.string(forKey: "Feather.keyboard.gradientStart") ?? "#0077BE"
+        self.gradientEnd = UserDefaults.standard.string(forKey: "Feather.keyboard.gradientEnd") ?? "#00AEEF"
+        self.useGradient = UserDefaults.standard.object(forKey: "Feather.keyboard.useGradient") as? Bool ?? true
+        self.showAnimatedOrbs = UserDefaults.standard.object(forKey: "Feather.keyboard.showAnimatedOrbs") as? Bool ?? true
+
         setupObservers()
     }
 
