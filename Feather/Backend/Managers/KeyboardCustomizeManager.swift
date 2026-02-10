@@ -153,7 +153,6 @@ class KeyboardCustomizeManager: ObservableObject {
             }
             .store(in: &cancellables)
 
-        // Watch for isEnabled changes to hide window immediately if toggled off
         $isEnabled
             .receive(on: RunLoop.main)
             .sink { [weak self] enabled in
@@ -176,7 +175,7 @@ class KeyboardCustomizeManager: ObservableObject {
         }
 
         let screenSize = UIScreen.main.bounds.size
-        // In some cases, keyboardFrame.origin.y is equal to screenSize.height when hidden
+
         let isActuallyVisible = keyboardFrame.origin.y < screenSize.height
         let height = isActuallyVisible ? (screenSize.height - keyboardFrame.origin.y) : 0
 
@@ -202,9 +201,7 @@ class KeyboardCustomizeManager: ObservableObject {
         guard let window = backdropWindow else { return }
 
         let screenSize = UIScreen.main.bounds.size
-        // Ensure the window is always at the bottom of the screen and slightly larger to prevent edges from showing
-        // Adding 100pt extra height at the bottom just in case
-        // Overscan by 40pt upward as requested
+
         let overscan: CGFloat = 40
         let frame = CGRect(x: 0, y: screenSize.height - height - overscan, width: screenSize.width, height: height + overscan + 100)
 
@@ -345,7 +342,6 @@ struct DynamicGradientView: View {
             }
         }
 
-        // Limit color count
         let count = max(2, min(colors.count, manager.dynamicGradientColorCount))
         return Array(colors.prefix(count))
     }
@@ -401,9 +397,9 @@ struct KeyboardBackdropView: View {
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 38, style: .continuous))
-        .offset(y: 40) // Align with keyboard top (compensating for 40pt overscan)
+        .offset(y: 40) 
         .compositingGroup()
-        .scaleEffect(1.1) // Scale up slightly to cover blur edges
+        .scaleEffect(1.1) 
         .blur(radius: manager.blurRadius)
         .opacity(manager.opacity)
         .allowsHitTesting(false)
@@ -464,8 +460,7 @@ struct KeyboardBackdropModifier: ViewModifier {
     @ObservedObject var manager = KeyboardCustomizeManager.shared
 
     func body(content: Content) -> some View {
-        // The backdrop is now managed globally via a UIWindow in KeyboardCustomizeManager.
-        // This modifier remains for compatibility but no longer adds its own backdrop view.
+
         content
     }
 }

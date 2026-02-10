@@ -22,7 +22,7 @@ struct KeyboardCustomizationView: View {
             } header: {
                 AppearanceSectionHeader(title: "Status", icon: "power")
             } footer: {
-                Text("When enabled, a custom dynamic background will appear behind the system keyboard. This works best with the system keyboard's natural translucency.")
+                Text("When enabled, a custom dynamic background will appear behind the keyboard. This works best to the transparent keyboard on iOS 26.")
             }
 
             if manager.isEnabled {
@@ -30,7 +30,7 @@ struct KeyboardCustomizationView: View {
                     PhotosPicker(selection: $selectedItem, matching: .images) {
                         VStack(alignment: .leading, spacing: 4) {
                             AppearanceRowLabel(icon: "photo.fill", title: "Custom Image", color: .green)
-                            Text("Set a personal image as the backdrop for your keyboard.")
+                            Text("Set a image as the backdrop for your keyboard.")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -93,7 +93,7 @@ struct KeyboardCustomizationView: View {
                     Toggle(isOn: $manager.useGradient) {
                         VStack(alignment: .leading, spacing: 4) {
                             AppearanceRowLabel(icon: "paintpalette", title: "Custom Gradient", color: .orange)
-                            Text("Switch between a solid color and a two-color linear gradient.")
+                            Text("Switch between a solid color and a two color linear gradient.")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -138,7 +138,7 @@ struct KeyboardCustomizationView: View {
                     Toggle(isOn: $manager.isDynamicGradientEnabled) {
                         VStack(alignment: .leading, spacing: 4) {
                             AppearanceRowLabel(icon: "sparkles.rectangle.stack", title: "Dynamic Gradient", color: .purple)
-                            Text("A high-performance mesh gradient that moves and shifts over time.")
+                            Text("A high performance mesh gradient that moves and shifts over time.")
                                 .font(.caption2)
                                 .foregroundStyle(.secondary)
                         }
@@ -238,7 +238,7 @@ struct KeyboardCustomizationView: View {
                         } label: {
                             VStack(alignment: .leading, spacing: 4) {
                                 AppearanceRowLabel(icon: "wand.and.stars", title: "Preset", color: .pink)
-                                Text("Select from pre-designed high-quality color combinations.")
+                                Text("Select from pre designed high quality color combinations.")
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
                             }
@@ -278,7 +278,7 @@ struct KeyboardCustomizationView: View {
                         AppearanceRowLabel(icon: "keyboard", title: "Open Keyboard", color: .blue)
                     }
 
-                    TextField("Type here to test your backdrop...", text: $dummyText)
+                    TextField("Tap here to see the Keyboard Backdrop.", text: $dummyText)
                         .focused($isKeyboardFocused)
                 } header: {
                     AppearanceSectionHeader(title: "Test Backdrop", icon: "pencil")
