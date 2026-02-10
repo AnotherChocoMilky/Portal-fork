@@ -5,23 +5,20 @@ class KeyboardCustomizeManager: ObservableObject {
     static let shared = KeyboardCustomizeManager()
 
     @AppStorage("Feather.keyboard.isEnabled") var isEnabled: Bool = false
-    @AppStorage("Feather.keyboard.imagePath") var imagePath: String = ""
     @AppStorage("Feather.keyboard.opacity") var opacity: Double = 0.5
     @AppStorage("Feather.keyboard.blurRadius") var blurRadius: Double = 10.0
     @AppStorage("Feather.keyboard.gradientStart") var gradientStart: String = "#0077BE"
     @AppStorage("Feather.keyboard.gradientEnd") var gradientEnd: String = "#00AEEF"
-    @AppStorage("Feather.keyboard.useGradient") var useGradient: Bool = false
-    @AppStorage("Feather.keyboard.useImage") var useImage: Bool = false
+    @AppStorage("Feather.keyboard.useGradient") var useGradient: Bool = true
+    @AppStorage("Feather.keyboard.showAnimatedOrbs") var showAnimatedOrbs: Bool = true
 
     @Published var keyboardHeight: CGFloat = 0
     @Published var isKeyboardVisible: Bool = false
-    @Published var cachedImage: UIImage?
 
     private var cancellables = Set<AnyCancellable>()
 
     private init() {
         setupObservers()
-        loadCachedImage()
     }
 
     private func setupObservers() {
@@ -40,14 +37,6 @@ class KeyboardCustomizeManager: ObservableObject {
             .store(in: &cancellables)
     }
 
-    private func loadCachedImage() {
-        guard !imagePath.isEmpty else { return }
-        let url = URL.documentsDirectory.appendingPathComponent(imagePath)
-        if let data = try? Data(contentsOf: url) {
-            cachedImage = UIImage(data: data)
-        }
-    }
-
     private func handleKeyboard(notification: Notification, visible: Bool) {
         guard let userInfo = notification.userInfo,
               let keyboardFrame = userInfo[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect else {
@@ -59,23 +48,6 @@ class KeyboardCustomizeManager: ObservableObject {
         withAnimation(.easeOut(duration: duration)) {
             self.keyboardHeight = visible ? keyboardFrame.height : 0
             self.isKeyboardVisible = visible
-        }
-    }
-
-    func saveImage(_ image: UIImage) {
-        guard let data = image.jpegData(compressionQuality: 0.8) else { return }
-        let filename = "keyboard_backdrop.jpg"
-        let url = URL.documentsDirectory.appendingPathComponent(filename)
-
-        do {
-            try data.write(to: url)
-            self.imagePath = filename
-            self.cachedImage = image
-            self.useImage = true
-            self.useGradient = false
-            self.objectWillChange.send()
-        } catch {
-            print("Failed to save keyboard image: \(error)")
         }
     }
 }

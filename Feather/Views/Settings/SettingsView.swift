@@ -151,6 +151,7 @@ struct SettingsView: View {
     private var developerSection: some View {
         Section {
             SettingsRow(icon: "person.2.badge.gearshape.fill", title: String.localized("Debug"), color: .red, destination: DeveloperView())
+            SettingsRow(icon: "terminal.fill", title: String.localized("Logs"), color: .red, destination: AppLogsView())
         } header: {
             SettingsSectionHeader(title: String.localized("Internal"), icon: "wrench.and.screwdriver.fill")
         }
