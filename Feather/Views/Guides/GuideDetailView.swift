@@ -462,7 +462,7 @@ struct GuideDetailView: View {
                             )
                     )
                     .padding(.horizontal, 24)
-                    .transition(.asymmetric(
+                    .transition(AnyTransition.asymmetric(
                         insertion: .move(edge: .bottom).combined(with: .opacity),
                         removal: .opacity
                     ))
@@ -491,7 +491,7 @@ struct GuideDetailView: View {
                 .padding(.bottom, 50)
             }
         }
-        .transition(.opacity)
+        .transition(AnyTransition.opacity)
     }
     
     private func getProcessingTitle() -> String {
@@ -1860,7 +1860,7 @@ struct GlassmorphicTranslateSheet: View {
                             }
                         }
                         .padding(.horizontal, 20)
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .transition(AnyTransition.move(edge: .top).combined(with: .opacity))
                 }
             }
             

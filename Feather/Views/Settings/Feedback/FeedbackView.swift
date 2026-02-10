@@ -1468,21 +1468,21 @@ struct FeedbackView: View {
             // Link Dialog Overlay
             if showLinkDialog {
                 LinkInsertDialog(isPresented: $showLinkDialog, text: $feedbackMessage)
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                    .transition(AnyTransition.opacity.combined(with: .scale(scale: 0.95)))
                     .zIndex(100)
             }
             
             // Screenshot Error Dialog Overlay
             if showScreenshotError {
                 ScreenshotErrorDialog(isPresented: $showScreenshotError)
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                    .transition(AnyTransition.opacity.combined(with: .scale(scale: 0.95)))
                     .zIndex(100)
             }
             
             // Category Info Dialog Overlay
             if showCategoryInfo {
                 CategoryInfoDialog(isPresented: $showCategoryInfo)
-                    .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                    .transition(AnyTransition.opacity.combined(with: .scale(scale: 0.95)))
                     .zIndex(100)
             }
             
@@ -1500,7 +1500,7 @@ struct FeedbackView: View {
                     onSubmit: { submitFeedback() },
                     onEdit: { /* Just close the preview */ }
                 )
-                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                .transition(AnyTransition.opacity.combined(with: .scale(scale: 0.95)))
                 .zIndex(100)
             }
         }
@@ -2872,7 +2872,7 @@ struct CodeEditorSheet: View {
                     )
                     .padding(.bottom, 100)
                 }
-                .transition(.move(edge: .bottom).combined(with: .opacity))
+                .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity))
             }
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showCopiedToast)

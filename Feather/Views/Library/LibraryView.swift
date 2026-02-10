@@ -328,7 +328,7 @@ struct LibraryView: View {
                                         ZStack {
                                                 Color.black.opacity(0.5)
                                                         .ignoresSafeArea()
-                                                        .transition(.opacity)
+                                                        .transition(AnyTransition.opacity)
                                                 
                                                 VStack(spacing: 20) {
                                                         ZStack {
@@ -537,7 +537,7 @@ extension LibraryView {
                 .buttonStyle(.plain)
             }
             .padding(.vertical, 12)
-            .transition(.move(edge: .bottom).combined(with: .opacity))
+            .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity))
         }
     }
     

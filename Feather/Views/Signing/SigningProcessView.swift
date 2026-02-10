@@ -59,7 +59,7 @@ struct SigningProcessView: View {
                 // Action button
                 if isFinished {
                     completionButton
-                        .transition(.asymmetric(
+                        .transition(AnyTransition.asymmetric(
                             insertion: .scale.combined(with: .opacity).animation(.spring(response: 0.5, dampingFraction: 0.7)),
                             removal: .opacity
                         ))

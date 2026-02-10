@@ -85,17 +85,17 @@ struct FeatherApp: App {
 									AppLogManager.shared.info("Navigating to Check for Updates", category: "Updates")
 								}
 							)
-							.transition(.move(edge: .top).combined(with: .opacity))
+							.transition(AnyTransition.move(edge: .top).combined(with: .opacity))
 						}
 						
 						DownloadHeaderView(downloadManager: downloadManager)
-							.transition(.move(edge: .top).combined(with: .opacity))
+							.transition(AnyTransition.move(edge: .top).combined(with: .opacity))
 						VariedTabbarView()
 							.applyGlobalTheme()
 							.environment(\.managedObjectContext, storage.context)
 							.environment(\.navigateToUpdates, $navigateToUpdates)
 							.onOpenURL(perform: _handleURL)
-							.transition(.move(edge: .top).combined(with: .opacity))
+								.transition(AnyTransition.move(edge: .top).combined(with: .opacity))
                             .sheet(isPresented: $_showCertAdd) {
                                 CertificatesAddView()
                             }

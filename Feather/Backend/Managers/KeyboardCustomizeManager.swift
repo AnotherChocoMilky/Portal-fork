@@ -389,26 +389,28 @@ struct KeyboardBackdropView: View {
                 }
 
                 // Dynamic Animated Orbs
-                if manager.showAnimatedOrbs {
-                    GeometryReader { geo in
-                        ZStack {
-                            ForEach(0..<manager.orbCount, id: \.self) { index in
-                                orbView(for: index, in: geo.size)
+                Group {
+                    if manager.showAnimatedOrbs {
+                        GeometryReader { geo in
+                            ZStack {
+                                ForEach(0..<manager.orbCount, id: \.self) { index in
+                                    orbView(for: index, in: geo.size)
+                                }
+                            }
+                        }
+                        .onAppear {
+                            withAnimation(.easeInOut(duration: 11.0 - manager.orbSpeed).repeatForever(autoreverses: true)) {
+                                floatingAnimation = true
+                            }
+                        }
+                        .onChange(of: manager.orbSpeed) { _ in
+                            withAnimation(.easeInOut(duration: 11.0 - manager.orbSpeed).repeatForever(autoreverses: true)) {
+                                floatingAnimation.toggle()
                             }
                         }
                     }
-                    .onAppear {
-                        withAnimation(.easeInOut(duration: 11.0 - manager.orbSpeed).repeatForever(autoreverses: true)) {
-                            floatingAnimation = true
-                        }
-                    }
-                    .onChange(of: manager.orbSpeed) { _ in
-                        withAnimation(.easeInOut(duration: 11.0 - manager.orbSpeed).repeatForever(autoreverses: true)) {
-                            floatingAnimation.toggle()
-                        }
-                    }
                 }
-                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                .transition(AnyTransition.opacity.combined(with: .scale(scale: 0.95)))
             }
         }
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: manager.isKeyboardVisible)

@@ -143,7 +143,7 @@ struct ToastViewModifier: ViewModifier {
                     }
                 )
                 .padding(.top, 60)
-                .transition(.asymmetric(
+                .transition(AnyTransition.asymmetric(
                     insertion: .move(edge: .top).combined(with: .opacity),
                     removal: .move(edge: .top).combined(with: .opacity)
                 ))

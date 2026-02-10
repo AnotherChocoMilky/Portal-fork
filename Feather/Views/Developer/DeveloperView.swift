@@ -480,7 +480,7 @@ struct DeveloperAuthView: View {
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
                     .fill(Color.red.opacity(0.1))
             )
-            .transition(.asymmetric(
+            .transition(AnyTransition.asymmetric(
                 insertion: .scale.combined(with: .opacity),
                 removal: .opacity
             ))
@@ -6225,7 +6225,7 @@ struct DeveloperBatchSigningView: View {
                 ZStack {
                     Color.black.opacity(0.3)
                         .ignoresSafeArea()
-                        .transition(.opacity)
+                        .transition(AnyTransition.opacity)
 
                     VStack(spacing: 20) {
                         ProgressView(value: batchProgress)
@@ -6252,7 +6252,7 @@ struct DeveloperBatchSigningView: View {
                     .background(.ultraThinMaterial)
                     .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                     .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
-                    .transition(.scale.combined(with: .opacity))
+                    .transition(AnyTransition.scale.combined(with: .opacity))
                 }
             }
         }

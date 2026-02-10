@@ -66,7 +66,7 @@ struct TextViewerView: View {
                         )
                         .padding(.horizontal)
                         .padding(.top, 8)
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .transition(AnyTransition.move(edge: .top).combined(with: .opacity))
                     }
                     
                     // Loading state

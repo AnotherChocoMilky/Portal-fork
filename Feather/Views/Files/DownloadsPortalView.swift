@@ -506,7 +506,7 @@ struct DownloadItemCard: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                .transition(.opacity)
+                .transition(AnyTransition.opacity)
             }
         }
         .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
