@@ -55,6 +55,19 @@ struct DownloadsPortalItem: Codable, Identifiable {
     }
 }
 
+extension DownloadsPortalItem: Encodable {
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encodeIfPresent(description, forKey: .description)
+        try container.encode(url, forKey: .url)
+        try container.encodeIfPresent(icon, forKey: .icon)
+        try container.encodeIfPresent(category, forKey: .category)
+        try container.encodeIfPresent(version, forKey: .version)
+        try container.encodeIfPresent(size, forKey: .size)
+    }
+}
+
 // Intermediate models for complex JSON
 struct DownloadsPortalApp: Codable {
     let name: String
@@ -118,6 +131,13 @@ struct DownloadsPortalResponse: Codable {
         }
 
         self.downloads = allItems
+    }
+}
+
+extension DownloadsPortalResponse: Encodable {
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(downloads, forKey: .downloads)
     }
 }
 
