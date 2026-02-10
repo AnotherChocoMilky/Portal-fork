@@ -45,7 +45,7 @@ struct UpdateBannerView: View {
             .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .padding(.horizontal, 16)
             .padding(.top, 8)
-            .transition(.move(edge: .top).combined(with: .opacity))
+            .transition(AnyTransition.move(edge: .top).combined(with: .opacity))
         }
     }
 }
@@ -145,7 +145,7 @@ struct AppUpdateBannerView: View {
             )
             .padding(.horizontal, 16)
             .padding(.top, 8)
-            .transition(.asymmetric(
+            .transition(AnyTransition.asymmetric(
                 insertion: .move(edge: .top).combined(with: .opacity),
                 removal: .move(edge: .top).combined(with: .opacity)
             ))
@@ -223,7 +223,7 @@ struct MultipleAppUpdatesBannerView: View {
             )
             .padding(.horizontal, 16)
             .padding(.top, 8)
-            .transition(.asymmetric(
+            .transition(AnyTransition.asymmetric(
                 insertion: .move(edge: .top).combined(with: .opacity),
                 removal: .move(edge: .top).combined(with: .opacity)
             ))
@@ -288,7 +288,7 @@ struct UpdateAvailableView: View {
             .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .padding(.horizontal, 16)
             .padding(.top, 8)
-            .transition(.move(edge: .top).combined(with: .opacity))
+            .transition(AnyTransition.move(edge: .top).combined(with: .opacity))
         }
     }
 }

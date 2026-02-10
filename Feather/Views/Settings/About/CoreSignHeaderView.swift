@@ -39,7 +39,7 @@ struct CoreSignHeaderView: View {
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
-                    .transition(.asymmetric(
+                    .transition(AnyTransition.asymmetric(
                         insertion: .move(edge: .bottom).combined(with: .opacity),
                         removal: .move(edge: .top).combined(with: .opacity)
                     ))

@@ -1225,7 +1225,7 @@ struct PortalExportView: View {
 			// Import result
 			if let result = importResult {
 				resultCard(result: result)
-					.transition(.asymmetric(
+					.transition(AnyTransition.asymmetric(
 						insertion: .scale(scale: 0.9).combined(with: .opacity),
 						removal: .opacity
 					))

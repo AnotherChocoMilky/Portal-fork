@@ -147,7 +147,7 @@ struct InstallPreviewView: View {
                     .clipShape(Capsule())
                     .shadow(color: .green.opacity(0.4), radius: 10, x: 0, y: 5)
                 }
-                .transition(.scale.combined(with: .opacity))
+                .transition(AnyTransition.scale.combined(with: .opacity))
             } else {
                 HStack(spacing: 12) {
                     Button {
@@ -206,7 +206,7 @@ struct InstallPreviewView: View {
                         .shadow(color: .green.opacity(0.35), radius: 8, x: 0, y: 4)
                     }
                 }
-                .transition(.scale.combined(with: .opacity))
+                .transition(AnyTransition.scale.combined(with: .opacity))
             }
         }
     }

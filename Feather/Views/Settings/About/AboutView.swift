@@ -52,14 +52,14 @@ struct AboutView: View {
 					ForEach(_credits, id: \.github) { credit in
 						_credit(name: credit.name, desc: credit.desc, github: credit.github)
 					}
-					.transition(.slide)
+					.transition(AnyTransition.slide)
 				}
 				
 				NBSection(.localized("Sponsors")) {
 					Text(try! AttributedString(markdown: _donators.map {
 						"[\($0.name ?? $0.github)](https://github.com/\($0.github))"
 					}.joined(separator: ", ")))
-					.transition(.slide)
+					.transition(AnyTransition.slide)
 					
 					Text(.localized("💜 This couldn't of been done without my sponsors!"))
 						.foregroundStyle(.secondary)

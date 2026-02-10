@@ -517,7 +517,7 @@ struct FilesView: View {
         .padding(.horizontal, 12)
         .padding(.top, 8)
         .padding(.bottom, 4)
-        .transition(.move(edge: .top).combined(with: .opacity))
+        .transition(AnyTransition.move(edge: .top).combined(with: .opacity))
     }
     
     private var selectedFilesArray: [FileItem] {

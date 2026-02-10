@@ -56,7 +56,7 @@ struct PlistEditorView: View {
                                 endPoint: .trailing
                             )
                         )
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .transition(AnyTransition.move(edge: .top).combined(with: .opacity))
                     }
                     
                     if isEditing {

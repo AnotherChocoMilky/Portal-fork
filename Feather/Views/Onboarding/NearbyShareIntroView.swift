@@ -648,7 +648,7 @@ struct InteractiveDemoSection: View {
                 .font(.system(size: 12, weight: .medium, design: .rounded))
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-                .transition(.opacity)
+                .transition(AnyTransition.opacity)
         }
     }
     
@@ -658,7 +658,7 @@ struct InteractiveDemoSection: View {
         if let demo = selectedDemo {
             InteractiveTransferView(demoAction: demo, isAnimating: isAnimating)
                 .frame(height: 120)
-                .transition(.scale.combined(with: .opacity))
+                .transition(AnyTransition.scale.combined(with: .opacity))
         }
     }
     

@@ -225,7 +225,7 @@ struct BatchSigningView: View {
                     ZStack {
                         Color.black.opacity(0.4)
                             .ignoresSafeArea()
-                            .transition(.opacity)
+                            .transition(AnyTransition.opacity)
 
                         VStack(spacing: 24) {
                             // Animated Icon
@@ -295,7 +295,7 @@ struct BatchSigningView: View {
                         .background(.ultraThinMaterial)
                         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                         .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 15)
-                        .transition(.scale.combined(with: .opacity))
+                        .transition(AnyTransition.scale.combined(with: .opacity))
                     }
                 }
             }

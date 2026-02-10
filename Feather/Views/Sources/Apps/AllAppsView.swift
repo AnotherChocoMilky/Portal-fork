@@ -156,7 +156,7 @@ struct AllAppsView: View {
                 if _searchBarFloating {
                     searchBar
                         .padding(.bottom, 20)
-                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                        .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity))
                 }
             } else {
                 emptySourcesView
@@ -428,7 +428,7 @@ struct AllAppsView: View {
 						.multilineTextAlignment(.center)
 						.lineLimit(3)
 						.padding(.horizontal, 40)
-						.transition(.opacity.combined(with: .scale))
+						.transition(AnyTransition.opacity.combined(with: .scale))
 				}
 				.padding(.bottom, 40)
 			}
@@ -740,7 +740,7 @@ struct AllAppsRowView: View {
 									.foregroundStyle(.secondary)
 							}
 						}
-						.transition(.opacity.combined(with: .scale(scale: 0.9)))
+						.transition(AnyTransition.opacity.combined(with: .scale(scale: 0.9)))
 					}
 				}
 				.padding(.vertical, rowStyle == .minimal ? 10 : 14)
@@ -941,7 +941,7 @@ struct AllAppsRowView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .transition(.opacity.combined(with: .scale(scale: 0.9)))
+        .transition(AnyTransition.opacity.combined(with: .scale(scale: 0.9)))
     }
 	
 	@ViewBuilder

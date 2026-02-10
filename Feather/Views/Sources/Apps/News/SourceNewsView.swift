@@ -42,7 +42,7 @@ struct SourceNewsView: View {
 					.padding(.horizontal, 16)
 				}
 				.frame(height: 170)
-				.transition(.opacity)
+				.transition(AnyTransition.opacity)
 			}
 		}
 		.frame(height: (news?.isEmpty == false) ? 180 : 0)

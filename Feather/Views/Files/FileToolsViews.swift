@@ -1660,7 +1660,7 @@ struct Base64ToolView: View {
                 .fill(Color(UIColor.secondarySystemGroupedBackground))
                 .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.08), radius: 15, x: 0, y: 8)
         )
-        .transition(.asymmetric(
+        .transition(AnyTransition.asymmetric(
             insertion: .scale(scale: 0.95).combined(with: .opacity),
             removal: .opacity
         ))

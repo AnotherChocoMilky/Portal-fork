@@ -182,7 +182,7 @@ struct ExperimentalTabBarItem: View {
                         .font(ExperimentalUITheme.Typography.caption)
                         .foregroundStyle(ExperimentalUITheme.Colors.accentPrimary)
                         .fontWeight(.semibold)
-                        .transition(.scale.combined(with: .opacity))
+                        .transition(AnyTransition.scale.combined(with: .opacity))
                 }
             }
             .frame(maxWidth: .infinity)

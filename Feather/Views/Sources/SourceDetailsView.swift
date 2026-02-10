@@ -676,7 +676,7 @@ struct SourceAppsListView: View {
                             }
                             .font(.system(size: 16, weight: .medium))
                             .foregroundStyle(Color.accentColor)
-                            .transition(.move(edge: .trailing).combined(with: .opacity))
+                            .transition(AnyTransition.move(edge: .trailing).combined(with: .opacity))
                         }
                     }
                     .padding(.horizontal, 16)

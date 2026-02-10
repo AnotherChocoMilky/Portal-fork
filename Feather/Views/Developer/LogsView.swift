@@ -116,7 +116,7 @@ struct AppLogsView: View {
                         }
                         Spacer()
                     }
-                    .transition(.opacity)
+                    .transition(AnyTransition.opacity)
                 } else {
                     ScrollViewReader { proxy in
                         ScrollView {
@@ -325,7 +325,7 @@ struct LogEntryRow: View {
                     .padding(.bottom, 12)
                     .padding(.top, 4)
                 }
-                .transition(.opacity.combined(with: .move(edge: .top)))
+                .transition(AnyTransition.opacity.combined(with: .move(edge: .top)))
             }
         }
         .background(

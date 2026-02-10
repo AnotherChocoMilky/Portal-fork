@@ -1017,7 +1017,7 @@ struct SFSymbolsPickerView: View {
             .padding(.bottom, 16)
         }
         .background(Color(UIColor.secondarySystemGroupedBackground))
-        .transition(.move(edge: .bottom).combined(with: .opacity))
+        .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity))
     }
     
     // MARK: - Symbol Grid

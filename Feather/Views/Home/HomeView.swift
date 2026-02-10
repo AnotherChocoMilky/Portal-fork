@@ -2139,7 +2139,7 @@ struct SignAndInstallPickerView: View {
                                             .font(.caption)
                                     }
                                     .foregroundStyle(.red)
-                                    .transition(.asymmetric(
+                                    .transition(AnyTransition.asymmetric(
                                         insertion: .scale.combined(with: .opacity),
                                         removal: .opacity
                                     ))

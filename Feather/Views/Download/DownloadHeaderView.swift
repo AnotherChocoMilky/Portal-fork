@@ -56,7 +56,7 @@ struct DownloadHeaderView: View {
 					)
 					.padding(.horizontal, 16)
 				}
-				.transition(.asymmetric(
+				.transition(AnyTransition.asymmetric(
 					insertion: .move(edge: .top).combined(with: .opacity),
 					removal: .move(edge: .top).combined(with: .opacity)
 				))
