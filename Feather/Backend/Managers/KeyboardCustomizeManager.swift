@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import simd
 
 class KeyboardCustomizeManager: ObservableObject {
     static let shared = KeyboardCustomizeManager()
