@@ -96,7 +96,6 @@ struct FeatherApp: App {
 							.environment(\.navigateToUpdates, $navigateToUpdates)
 							.onOpenURL(perform: _handleURL)
 							.transition(.move(edge: .top).combined(with: .opacity))
-							.withKeyboardBackdrop()
                             .sheet(isPresented: $_showCertAdd) {
                                 CertificatesAddView()
                             }

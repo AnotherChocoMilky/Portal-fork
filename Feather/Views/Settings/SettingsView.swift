@@ -109,6 +109,7 @@ struct SettingsView: View {
                 SettingsRow(icon: "externaldrive.fill.badge.person.crop", title: String.localized("Storage"), color: .accentColor, destination: ManageStorageView())
             }
             SettingsRow(icon: "externaldrive.fill.badge.timemachine", title: String.localized("Backup & Restore"), color: .accentColor, destination: BackupRestoreView())
+            SettingsRow(icon: "terminal.fill", title: String.localized("Logs"), color: .accentColor, destination: AppLogsView())
 
             SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: _isFetchingFullData ? String.localized("Fetching Source Data...") : String.localized("Fetch Full Data"), color: Color("AccentColor"), isLoading: _isFetchingFullData) {
                 Task {
@@ -119,7 +120,7 @@ struct SettingsView: View {
                 }
             }
         } header: {
-            SettingsSectionHeader(title: String.localized("App Managment"), icon: "externaldrive.fill")
+            SettingsSectionHeader(title: String.localized("App Management"), icon: "externaldrive.fill")
         }
     }
     
@@ -151,7 +152,6 @@ struct SettingsView: View {
     private var developerSection: some View {
         Section {
             SettingsRow(icon: "person.2.badge.gearshape.fill", title: String.localized("Debug"), color: .red, destination: DeveloperView())
-            SettingsRow(icon: "terminal.fill", title: String.localized("Logs"), color: .red, destination: AppLogsView())
         } header: {
             SettingsSectionHeader(title: String.localized("Internal"), icon: "wrench.and.screwdriver.fill")
         }
