@@ -15,22 +15,20 @@ struct DownloadsPortalItem: Codable, Identifiable {
     
     enum CodingKeys: String, CodingKey {
         case name, description, url, icon, category, version, size
-        case downloadURL // Map from JSON
-        case note // Map to description
+        case downloadURL 
+        case note 
     }
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         name = try container.decode(String.self, forKey: .name)
 
-        // Handle url or downloadURL
         if let dURL = try? container.decode(String.self, forKey: .downloadURL) {
             url = dURL
         } else {
             url = try container.decode(String.self, forKey: .url)
         }
 
-        // Handle description or note
         if let note = try? container.decodeIfPresent(String.self, forKey: .note) {
             description = note
         } else {
@@ -43,7 +41,6 @@ struct DownloadsPortalItem: Codable, Identifiable {
         size = try? container.decodeIfPresent(String.self, forKey: .size)
     }
 
-    // Custom initializer for flattened apps
     init(name: String, url: String, description: String?, icon: String?, category: String?) {
         self.name = name
         self.url = url
@@ -66,7 +63,6 @@ struct DownloadsPortalItem: Codable, Identifiable {
     }
 }
 
-// Intermediate models for complex JSON
 struct DownloadsPortalApp: Codable {
     let name: String
     let image: String?
@@ -89,12 +85,10 @@ struct DownloadsPortalResponse: Codable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         var allItems: [DownloadsPortalItem] = []
 
-        // Try "files" key (WSF structure)
         if let files = try? container.decode([DownloadsPortalItem].self, forKey: .files) {
             allItems.append(contentsOf: files)
         }
 
-        // Try "apps" key (WSF structure)
         if let apps = try? container.decode([DownloadsPortalApp].self, forKey: .apps) {
             for app in apps {
                 if let certs = app.certs {
@@ -102,7 +96,7 @@ struct DownloadsPortalResponse: Codable {
                         allItems.append(DownloadsPortalItem(
                             name: "\(app.name) - \(cert.certName)",
                             url: cert.downloadURL,
-                            description: "App from Downloads Portal",
+                            description: "App From Downloads",
                             icon: "app.badge.fill",
                             category: "App"
                         ))
@@ -148,7 +142,7 @@ struct DownloadQueueItem: Identifiable {
     }
 }
 
-// MARK: - Downloads Portal Service
+
 class DownloadsPortalService: ObservableObject {
     @Published var items: [DownloadsPortalItem] = []
     @Published var isLoading = false
@@ -156,6 +150,7 @@ class DownloadsPortalService: ObservableObject {
     @Published var rawJSONResponse: String?
     @Published var downloadQueue: [DownloadQueueItem] = []
     
+    // placeholer link, will be updated later once this data is on the WSF repo
     private let githubURL = "https://raw.githubusercontent.com/WhySooooFurious/Ultimate-Sideloading-Guide/refs/heads/main/raw-files/downloads.json"
     
     func fetchDownloads() async {
@@ -164,7 +159,7 @@ class DownloadsPortalService: ObservableObject {
             errorMessage = nil
         }
         
-        AppLogManager.shared.info("Starting Downloads Portal fetch from: \(githubURL)", category: "Downloads")
+        AppLogManager.shared.info("Starting Downloads fetch from: \(githubURL)", category: "Downloads")
         
         do {
             guard let url = URL(string: githubURL) else {
@@ -173,8 +168,7 @@ class DownloadsPortalService: ObservableObject {
             
             let (data, _) = try await URLSession.shared.data(from: url)
             
-            // Log raw JSON for debugging
-            let jsonString = String(data: data, encoding: .utf8) ?? "Unable to decode"
+            let jsonString = String(data: data, encoding: .utf8) ?? "Unable To Decode"
             await MainActor.run {
                 self.rawJSONResponse = jsonString
             }
@@ -187,7 +181,7 @@ class DownloadsPortalService: ObservableObject {
                 self.isLoading = false
             }
             
-            AppLogManager.shared.success("Successfully loaded \(decodedResponse.downloads.count) items", category: "Downloads")
+            AppLogManager.shared.success("Successfully Loaded \(decodedResponse.downloads.count) Items", category: "Downloads")
             
         } catch {
             AppLogManager.shared.error("Fetch Error: \(error.localizedDescription)", category: "Downloads")
@@ -205,7 +199,7 @@ struct DownloadsPortalView: View {
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
-        NBNavigationView(.localized("Downloads Portal"), displayMode: .inline) {
+        NBNavigationView(.localized("Downloads"), displayMode: .inline) {
             ZStack {
                 // Gradient background
                 LinearGradient(
@@ -247,7 +241,7 @@ struct DownloadsPortalView: View {
             ProgressView()
                 .scaleEffect(1.5)
             
-            Text(.localized("Loading Downloads..."))
+            Text(.localized("Loading Downloads"))
                 .font(.headline)
                 .foregroundStyle(.secondary)
         }
@@ -298,7 +292,7 @@ struct DownloadsPortalView: View {
                 .font(.title2)
                 .fontWeight(.bold)
             
-            Text(.localized("Check back later for available downloads"))
+            Text(.localized("Check back here later for available downloads."))
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -330,7 +324,7 @@ struct DownloadsPortalView: View {
                         }
                     } header: {
                         HStack {
-                            Text("DOWNLOAD QUEUE")
+                            Text("Downloads Queue")
                                 .font(.caption2.bold())
                                 .foregroundStyle(.secondary)
                             Spacer()
@@ -366,11 +360,11 @@ struct DownloadsPortalView: View {
                             )
                     }
                     
-                    Text(.localized("Downloads Portal"))
+                    Text(.localized("Downloads"))
                         .font(.title)
                         .fontWeight(.bold)
                     
-                    Text(.localized("Browse and download files from the WSF portal"))
+                    Text(.localized("Download useful resources like public certificates, other signers, or .dylibs"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -513,9 +507,9 @@ struct DownloadItemCard: View {
         .fileExporter(isPresented: $showFileExporter, document: DataDocument(url: tempFileURL), contentType: .data) { result in
             switch result {
             case .success(let url):
-                AppLogManager.shared.success("File saved to: \(url.path)", category: "Downloads")
+                AppLogManager.shared.success("File Saved To: \(url.path)", category: "Downloads")
             case .failure(let error):
-                AppLogManager.shared.error("Failed to save file: \(error.localizedDescription)", category: "Downloads")
+                AppLogManager.shared.error("Failed To Save File: \(error.localizedDescription)", category: "Downloads")
             }
             // Cleanup temp file
             if let tempURL = tempFileURL {
@@ -546,9 +540,7 @@ struct DownloadItemCard: View {
 
         Task {
             do {
-                // Using URLSession with delegate for progress tracking is better,
-                // but for simplicity we'll simulate progress or just do a standard download
-                // To keep it simple but functional:
+
                 let (data, _) = try await URLSession.shared.data(from: url)
                 
                 for i in 1...10 {
@@ -570,7 +562,7 @@ struct DownloadItemCard: View {
                     self.isDownloading = false
                     if let index = service.downloadQueue.firstIndex(where: { $0.id == queueItemID }) {
                         service.downloadQueue[index].status = .completed
-                        // Remove from queue after a delay
+                        
                         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                             service.downloadQueue.removeAll(where: { $0.id == queueItemID })
                         }
@@ -592,7 +584,6 @@ struct DownloadItemCard: View {
     }
 }
 
-// Helper for fileExporter
 import UniformTypeIdentifiers
 struct DataDocument: FileDocument {
     static var readableContentTypes: [UTType] { [.data] }
@@ -603,7 +594,7 @@ struct DataDocument: FileDocument {
     }
 
     init(configuration: ReadConfiguration) throws {
-        // Not used for exporting
+
     }
 
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {

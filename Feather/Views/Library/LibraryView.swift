@@ -44,7 +44,7 @@ struct LibraryView: View {
     
     enum FilterMode: String, CaseIterable {
         case all = "All"
-        case unsigned = "Unsigned"
+        case unsigned = "Imported"
         case signed = "Signed"
         
         var icon: String {
@@ -100,16 +100,14 @@ struct LibraryView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Modern background
+    
                 Color(.systemBackground)
                     .ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        // Filter chips
                         filterChips
                         
-                        // Apps content
                         appsContent
                     }
                     .padding(.horizontal, 20)
@@ -158,7 +156,7 @@ struct LibraryView: View {
                                                         let id = "FeatherManualDownload_\(UUID().uuidString)"
                                                         let dl = downloadManager.startArchive(from: url, id: id)
                                                         
-                                                        // Show loading animation
+                                                    
                                                         _importedAppName = url.deletingPathExtension().lastPathComponent
                                                         _currentDownloadId = id
                                                         _importStatus = .processing

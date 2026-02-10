@@ -228,7 +228,7 @@ struct BackupRestoreView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(.localized("Nearby Transfer"))
                             .font(.headline)
-                        Text(.localized("Transfer backups wirelessly to nearby devices on the same Wi-Fi network."))
+                        Text(.localized("Use Nearby Transfer to transfer backups wirelessly to nearby devices on the same Wi-Fi network."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -251,7 +251,7 @@ struct BackupRestoreView: View {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(.localized("Self Backup"))
                             .font(.headline)
-                        Text(.localized("Backup and restore locally using the Backup file type for easy sharing."))
+                        Text(.localized("Use Self Backup to backup and restore locally using the Backup file type for easy sharing across your devices."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

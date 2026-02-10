@@ -82,8 +82,6 @@ class AutoSignManager {
                     Storage.shared.deleteApp(for: app)
                 }
 
-                // Installation is triggered via Feather.installApp notification which FR.signPackageFile handles if post_installAppAfterSigned is true
-                // But let's check if we need to do it manually here too
 
                 if #available(iOS 16.2, *) {
                     LiveActivityManager.shared.endActivityWithSuccess()

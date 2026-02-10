@@ -88,7 +88,7 @@ struct BatchRenameView: View {
                 } header: {
                     Label(.localized("Preview"), systemImage: "eye")
                 } footer: {
-                    Text(.localized("\(files.count) file(s) will be renamed"))
+                    Text(.localized("\(files.count) file(s) will be renamed."))
                 }
                 
                 if let error = errorMessage {

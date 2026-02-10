@@ -107,7 +107,7 @@ struct AppLogsView: View {
                                 .font(.headline)
 
                             if !logManager.logs.isEmpty {
-                                Text("Try adjusting your search or filters.")
+                                Text("There is currently no logs, try adjusting your search or filters.")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                                     .multilineTextAlignment(.center)
@@ -197,7 +197,7 @@ struct AppLogsView: View {
     private func copyToClipboard() {
         UIPasteboard.general.string = logManager.exportLogs()
         HapticsManager.shared.success()
-        logManager.success("Logs copied to clipboard", category: "Developer")
+        logManager.success("Logs Copied To Clipboard", category: "Developer")
     }
 }
 

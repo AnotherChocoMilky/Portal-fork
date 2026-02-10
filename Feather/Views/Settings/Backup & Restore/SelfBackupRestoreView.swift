@@ -140,7 +140,7 @@ struct SelfBackupRestoreView: View {
                             Text(.localized("Import Backup"))
                                 .font(.headline)
                                 .foregroundStyle(.primary)
-                            Text(.localized("Import .backup file."))
+                            Text(.localized("Import .backup File."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -376,7 +376,7 @@ struct SelfBackupRestoreView: View {
             Button {
                 viewModel.exportBackup(backup)
             } label: {
-                Label("Export as .backup.", systemImage: "square.and.arrow.up")
+                Label("Export As Backup", systemImage: "square.and.arrow.up")
             }
             
             Button(role: .destructive) {
@@ -566,7 +566,7 @@ class SelfBackupRestoreViewModel: ObservableObject {
             showSuccess = true
             
         } catch {
-            errorMessage = "Failed to create backup: \(error.localizedDescription)"
+            errorMessage = "Failed To Create Backup: \(error.localizedDescription)"
             showError = true
             AppLogManager.shared.error("Backup creation failed: \(error.localizedDescription)", category: "Self Backup")
         }
@@ -622,7 +622,7 @@ class SelfBackupRestoreViewModel: ObservableObject {
             operationProgress = 1.0
             currentOperation = "Restore Completed"
             
-            successMessage = "Backup restored successfully. Please restart Portal to apply changes."
+            successMessage = "Backup restored successfully! Please restart Portal to apply changes."
             showSuccess = true
             
         } catch {
@@ -655,7 +655,7 @@ class SelfBackupRestoreViewModel: ObservableObject {
     
     func exportBackup(_ backup: LocalBackup) {
         guard fileManager.fileExists(atPath: backup.path) else {
-            errorMessage = "Backup file not found"
+            errorMessage = "Backup File Not Found"
             showError = true
             return
         }
@@ -726,7 +726,7 @@ class SelfBackupRestoreViewModel: ObservableObject {
             localBackups.sort { $0.date > $1.date }
             saveMetadata()
             
-            successMessage = "Backup Imported Successfully"
+            successMessage = "Backup Imported Successfully!"
             showSuccess = true
         } catch {
             errorMessage = "Failed to import backup: \(error.localizedDescription)"
