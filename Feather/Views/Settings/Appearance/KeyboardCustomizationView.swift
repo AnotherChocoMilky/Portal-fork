@@ -90,6 +90,61 @@ struct KeyboardCustomizationView: View {
                 }
 
                 Section {
+                    Toggle(isOn: $manager.isDynamicGradientEnabled) {
+                        AppearanceRowLabel(icon: "sparkles.rectangle.stack", title: "Dynamic Gradient", color: .purple)
+                    }
+
+                    if manager.isDynamicGradientEnabled {
+                        VStack(alignment: .leading, spacing: 8) {
+                            AppearanceRowLabel(icon: "timer", title: "Frequency: \(String(format: "%.1f", manager.dynamicGradientFrequency))", color: .blue)
+                            Slider(value: $manager.dynamicGradientFrequency, in: 0.1...5.0, step: 0.1)
+                        }
+                        .padding(.vertical, 4)
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            AppearanceRowLabel(icon: "slider.horizontal.3", title: "Amount: \(String(format: "%.1f", manager.dynamicGradientAmount))", color: .green)
+                            Slider(value: $manager.dynamicGradientAmount, in: 0.1...10.0, step: 0.1)
+                        }
+                        .padding(.vertical, 4)
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            AppearanceRowLabel(icon: "number", title: "Color Count: \(manager.dynamicGradientColorCount)", color: .orange)
+                            Slider(value: Binding(get: { Double(manager.dynamicGradientColorCount) }, set: { manager.dynamicGradientColorCount = Int($0) }), in: 2...10, step: 1)
+                        }
+                        .padding(.vertical, 4)
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            AppearanceRowLabel(icon: "waveform.path.ecg", title: "Pulse Intensity: \(String(format: "%.1f", manager.dynamicGradientPulseIntensity))", color: .red)
+                            Slider(value: $manager.dynamicGradientPulseIntensity, in: 0.0...2.0, step: 0.1)
+                        }
+                        .padding(.vertical, 4)
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            AppearanceRowLabel(icon: "arrow.up.right.circle", title: "Direction: \(Int(manager.dynamicGradientDirection))°", color: .cyan)
+                            Slider(value: $manager.dynamicGradientDirection, in: 0...360, step: 1)
+                        }
+                        .padding(.vertical, 4)
+
+                        Toggle(isOn: $manager.dynamicGradientShuffle) {
+                            AppearanceRowLabel(icon: "shuffle", title: "Shuffle Colors", color: .indigo)
+                        }
+
+                        Picker(selection: $manager.dynamicGradientPreset) {
+                            Text("Custom").tag(0)
+                            Text("Aurora").tag(1)
+                            Text("Sunset").tag(2)
+                            Text("Ocean").tag(3)
+                            Text("Nebula").tag(4)
+                        } label: {
+                            AppearanceRowLabel(icon: "wand.and.stars", title: "Preset", color: .pink)
+                        }
+                        .pickerStyle(.menu)
+                    }
+                } header: {
+                    AppearanceSectionHeader(title: "Dynamic Gradient", icon: "sparkles")
+                }
+
+                Section {
                     VStack(alignment: .leading, spacing: 8) {
                         AppearanceRowLabel(icon: "drop", title: "Opacity: \(Int(manager.opacity * 100))%", color: .blue)
                         Slider(value: $manager.opacity, in: 0...1)

@@ -38,6 +38,32 @@ class KeyboardCustomizeManager: ObservableObject {
         didSet { UserDefaults.standard.set(backgroundImageData, forKey: "Feather.keyboard.backgroundImageData") }
     }
 
+    // MARK: - Dynamic Gradient Properties
+    @Published var isDynamicGradientEnabled: Bool {
+        didSet { UserDefaults.standard.set(isDynamicGradientEnabled, forKey: "Feather.keyboard.isDynamicGradientEnabled") }
+    }
+    @Published var dynamicGradientAmount: Double {
+        didSet { UserDefaults.standard.set(dynamicGradientAmount, forKey: "Feather.keyboard.dynamicGradientAmount") }
+    }
+    @Published var dynamicGradientFrequency: Double {
+        didSet { UserDefaults.standard.set(dynamicGradientFrequency, forKey: "Feather.keyboard.dynamicGradientFrequency") }
+    }
+    @Published var dynamicGradientColorCount: Int {
+        didSet { UserDefaults.standard.set(dynamicGradientColorCount, forKey: "Feather.keyboard.dynamicGradientColorCount") }
+    }
+    @Published var dynamicGradientShuffle: Bool {
+        didSet { UserDefaults.standard.set(dynamicGradientShuffle, forKey: "Feather.keyboard.dynamicGradientShuffle") }
+    }
+    @Published var dynamicGradientDirection: Double {
+        didSet { UserDefaults.standard.set(dynamicGradientDirection, forKey: "Feather.keyboard.dynamicGradientDirection") }
+    }
+    @Published var dynamicGradientPulseIntensity: Double {
+        didSet { UserDefaults.standard.set(dynamicGradientPulseIntensity, forKey: "Feather.keyboard.dynamicGradientPulseIntensity") }
+    }
+    @Published var dynamicGradientPreset: Int {
+        didSet { UserDefaults.standard.set(dynamicGradientPreset, forKey: "Feather.keyboard.dynamicGradientPreset") }
+    }
+
     @Published var keyboardHeight: CGFloat = 0
     @Published var isKeyboardVisible: Bool = false
 
@@ -56,6 +82,15 @@ class KeyboardCustomizeManager: ObservableObject {
         self.orbSpeed = UserDefaults.standard.object(forKey: "Feather.keyboard.orbSpeed") as? Double ?? 5.0
         self.backgroundColor = UserDefaults.standard.string(forKey: "Feather.keyboard.backgroundColor") ?? "#1A1A1A"
         self.backgroundImageData = UserDefaults.standard.data(forKey: "Feather.keyboard.backgroundImageData")
+
+        self.isDynamicGradientEnabled = UserDefaults.standard.bool(forKey: "Feather.keyboard.isDynamicGradientEnabled")
+        self.dynamicGradientAmount = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientAmount") as? Double ?? 1.0
+        self.dynamicGradientFrequency = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientFrequency") as? Double ?? 1.0
+        self.dynamicGradientColorCount = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientColorCount") as? Int ?? 3
+        self.dynamicGradientShuffle = UserDefaults.standard.bool(forKey: "Feather.keyboard.dynamicGradientShuffle")
+        self.dynamicGradientDirection = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientDirection") as? Double ?? 0.0
+        self.dynamicGradientPulseIntensity = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientPulseIntensity") as? Double ?? 1.0
+        self.dynamicGradientPreset = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientPreset") as? Int ?? 0
 
         setupObservers()
     }
@@ -133,7 +168,9 @@ class KeyboardCustomizeManager: ObservableObject {
         let screenSize = UIScreen.main.bounds.size
         // Ensure the window is always at the bottom of the screen and slightly larger to prevent edges from showing
         // Adding 100pt extra height at the bottom just in case
-        let frame = CGRect(x: 0, y: screenSize.height - height, width: screenSize.width, height: height + 100)
+        // Overscan by 12pt upward as requested
+        let overscan: CGFloat = 12
+        let frame = CGRect(x: 0, y: screenSize.height - height - overscan, width: screenSize.width, height: height + overscan + 100)
 
         window.isHidden = false
 
@@ -179,6 +216,59 @@ class KeyboardCustomizeManager: ObservableObject {
 
 // MARK: - Views and Modifiers
 
+struct DynamicGradientView: View {
+    @ObservedObject var manager: KeyboardCustomizeManager
+
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            let date = timeline.date.timeIntervalSinceReferenceDate
+            let frequency = manager.dynamicGradientFrequency
+
+            let colors = getColors(for: date)
+            let angle = Angle(degrees: manager.dynamicGradientDirection + (date * 20 * frequency))
+
+            LinearGradient(
+                colors: colors,
+                startPoint: UnitPoint(x: 0.5 + 0.5 * cos(angle.radians), y: 0.5 + 0.5 * sin(angle.radians)),
+                endPoint: UnitPoint(x: 0.5 - 0.5 * cos(angle.radians), y: 0.5 - 0.5 * sin(angle.radians))
+            )
+            .hueRotation(.degrees(manager.dynamicGradientAmount * date * 10))
+            .scaleEffect(1.0 + sin(date * frequency) * 0.1 * manager.dynamicGradientPulseIntensity)
+        }
+    }
+
+    private func getColors(for date: TimeInterval) -> [Color] {
+        let baseColors: [Color]
+
+        switch manager.dynamicGradientPreset {
+        case 1: // Aurora
+            baseColors = [.green, .teal, .blue, .purple]
+        case 2: // Sunset
+            baseColors = [.orange, .pink, .red, .purple]
+        case 3: // Ocean
+            baseColors = [.blue, .cyan, .indigo, .blue]
+        case 4: // Nebula
+            baseColors = [.purple, .blue, .pink, .indigo]
+        default: // Custom / Default
+            baseColors = [Color(hex: manager.gradientStart), Color(hex: manager.gradientEnd)]
+        }
+
+        var colors = baseColors
+        if manager.dynamicGradientShuffle && baseColors.count > 1 {
+            // Pseudo-shuffle based on date
+            let offset = Int(date) % colors.count
+            for _ in 0..<offset {
+                let first = colors.removeFirst()
+                colors.append(first)
+            }
+        }
+
+        // Limit color count
+        let count = max(2, min(colors.count, manager.dynamicGradientColorCount))
+        return Array(colors.prefix(count))
+    }
+}
+
 struct KeyboardBackdropView: View {
     @ObservedObject var manager = KeyboardCustomizeManager.shared
     @State private var floatingAnimation = false
@@ -186,42 +276,50 @@ struct KeyboardBackdropView: View {
 
     var body: some View {
         ZStack {
-            // Base Background
-            if let imageData = manager.backgroundImageData, let uiImage = UIImage(data: imageData) {
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } else if manager.useGradient {
-                LinearGradient(
-                    colors: [Color(hex: manager.gradientStart), Color(hex: manager.gradientEnd)],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            } else {
-                Color(hex: manager.backgroundColor)
-            }
+            if ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 26 {
+                // Base Background
+                Group {
+                    if manager.isDynamicGradientEnabled {
+                        DynamicGradientView(manager: manager)
+                    } else if let imageData = manager.backgroundImageData, let uiImage = UIImage(data: imageData) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } else if manager.useGradient {
+                        LinearGradient(
+                            colors: [Color(hex: manager.gradientStart), Color(hex: manager.gradientEnd)],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                    } else {
+                        Color(hex: manager.backgroundColor)
+                    }
+                }
 
-            // Dynamic Animated Orbs
-            if manager.showAnimatedOrbs {
-                GeometryReader { geo in
-                    ZStack {
-                        ForEach(0..<manager.orbCount, id: \.self) { index in
-                            orbView(for: index, in: geo.size)
+                // Dynamic Animated Orbs
+                if manager.showAnimatedOrbs {
+                    GeometryReader { geo in
+                        ZStack {
+                            ForEach(0..<manager.orbCount, id: \.self) { index in
+                                orbView(for: index, in: geo.size)
+                            }
                         }
                     }
-                }
-                .onAppear {
-                    withAnimation(.easeInOut(duration: 11.0 - manager.orbSpeed).repeatForever(autoreverses: true)) {
-                        floatingAnimation = true
+                    .onAppear {
+                        withAnimation(.easeInOut(duration: 11.0 - manager.orbSpeed).repeatForever(autoreverses: true)) {
+                            floatingAnimation = true
+                        }
                     }
-                }
-                .onChange(of: manager.orbSpeed) { _ in
-                    withAnimation(.easeInOut(duration: 11.0 - manager.orbSpeed).repeatForever(autoreverses: true)) {
-                        floatingAnimation.toggle()
+                    .onChange(of: manager.orbSpeed) { _ in
+                        withAnimation(.easeInOut(duration: 11.0 - manager.orbSpeed).repeatForever(autoreverses: true)) {
+                            floatingAnimation.toggle()
+                        }
                     }
                 }
             }
         }
+        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .compositingGroup()
         .scaleEffect(1.2) // Scale up to cover blur edges
         .blur(radius: manager.blurRadius)
         .opacity(manager.opacity)
