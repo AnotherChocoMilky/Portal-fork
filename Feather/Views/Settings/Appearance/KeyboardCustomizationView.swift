@@ -9,6 +9,10 @@ struct KeyboardCustomizationView: View {
     @State private var bgColor: Color = .black
     @State private var selectedItem: PhotosPickerItem?
 
+    @FocusState private var isKeyboardFocused: Bool
+    @State private var dummyText: String = ""
+    @State private var showingAdvancedGradient = false
+
     var body: some View {
         List {
             Section {
@@ -110,6 +114,22 @@ struct KeyboardCustomizationView: View {
                         VStack(alignment: .leading, spacing: 8) {
                             AppearanceRowLabel(icon: "number", title: "Color Count: \(manager.dynamicGradientColorCount)", color: .orange)
                             Slider(value: Binding(get: { Double(manager.dynamicGradientColorCount) }, set: { manager.dynamicGradientColorCount = Int($0) }), in: 2...10, step: 1)
+
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 12) {
+                                    ForEach(0..<manager.dynamicGradientColorCount, id: \.self) { index in
+                                        ColorPicker("", selection: Binding(
+                                            get: { Color(hex: manager.dynamicGradientColors[index]) },
+                                            set: { manager.dynamicGradientColors[index] = $0.toHex() ?? "#FFFFFF" }
+                                        ))
+                                        .labelsHidden()
+                                        .frame(width: 40, height: 40)
+                                        .background(Color(hex: manager.dynamicGradientColors[index]))
+                                        .clipShape(Circle())
+                                    }
+                                }
+                                .padding(.vertical, 4)
+                            }
                         }
                         .padding(.vertical, 4)
 
@@ -120,10 +140,20 @@ struct KeyboardCustomizationView: View {
                         .padding(.vertical, 4)
 
                         VStack(alignment: .leading, spacing: 8) {
-                            AppearanceRowLabel(icon: "arrow.up.right.circle", title: "Direction: \(Int(manager.dynamicGradientDirection))°", color: .cyan)
-                            Slider(value: $manager.dynamicGradientDirection, in: 0...360, step: 1)
+                            AppearanceRowLabel(icon: "arrow.up.right.circle", title: "Direction", color: .cyan)
+                            HStack {
+                                Spacer()
+                                KeyboardDirectionPicker(direction: $manager.dynamicGradientDirection, color: .cyan)
+                                Spacer()
+                            }
                         }
                         .padding(.vertical, 4)
+
+                        Button {
+                            showingAdvancedGradient = true
+                        } label: {
+                            AppearanceRowLabel(icon: "slider.horizontal.2.square", title: "Modify Advanced Controls", color: .purple)
+                        }
 
                         Toggle(isOn: $manager.dynamicGradientShuffle) {
                             AppearanceRowLabel(icon: "shuffle", title: "Shuffle Colors", color: .indigo)
@@ -161,25 +191,26 @@ struct KeyboardCustomizationView: View {
                 }
 
                 Section {
-                    KeyboardBackdropView()
-                        .frame(height: 150)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .overlay(
-                            Text("Preview")
-                                .font(.caption.bold())
-                                .padding(4)
-                                .background(.ultraThinMaterial)
-                                .clipShape(RoundedRectangle(cornerRadius: 4))
-                                .padding(8),
-                            alignment: .topLeading
-                        )
+                    Button {
+                        isKeyboardFocused = true
+                    } label: {
+                        AppearanceRowLabel(icon: "keyboard", title: "Open Keyboard", color: .blue)
+                    }
+
+                    TextField("Type here to test your backdrop...", text: $dummyText)
+                        .focused($isKeyboardFocused)
                 } header: {
-                    AppearanceSectionHeader(title: "Preview", icon: "eye")
+                    AppearanceSectionHeader(title: "Test Backdrop", icon: "pencil")
+                } footer: {
+                    Text("Tap to open the keyboard and see your custom backdrop in action.")
                 }
             }
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Keyboard Backdrop")
+        .fullScreenCover(isPresented: $showingAdvancedGradient) {
+            KeyboardDynamicGradientView()
+        }
         .onAppear {
             startColor = Color(hex: manager.gradientStart)
             endColor = Color(hex: manager.gradientEnd)
