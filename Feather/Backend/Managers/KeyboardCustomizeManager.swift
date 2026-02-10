@@ -67,6 +67,24 @@ class KeyboardCustomizeManager: ObservableObject {
     @Published var dynamicGradientColors: [String] {
         didSet { UserDefaults.standard.set(dynamicGradientColors, forKey: "Feather.keyboard.dynamicGradientColors") }
     }
+    @Published var dynamicGradientSpeed: Double {
+        didSet { UserDefaults.standard.set(dynamicGradientSpeed, forKey: "Feather.keyboard.dynamicGradientSpeed") }
+    }
+    @Published var dynamicGradientNoiseOpacity: Double {
+        didSet { UserDefaults.standard.set(dynamicGradientNoiseOpacity, forKey: "Feather.keyboard.dynamicGradientNoiseOpacity") }
+    }
+    @Published var dynamicGradientSaturation: Double {
+        didSet { UserDefaults.standard.set(dynamicGradientSaturation, forKey: "Feather.keyboard.dynamicGradientSaturation") }
+    }
+    @Published var dynamicGradientContrast: Double {
+        didSet { UserDefaults.standard.set(dynamicGradientContrast, forKey: "Feather.keyboard.dynamicGradientContrast") }
+    }
+    @Published var dynamicGradientBrightness: Double {
+        didSet { UserDefaults.standard.set(dynamicGradientBrightness, forKey: "Feather.keyboard.dynamicGradientBrightness") }
+    }
+    @Published var dynamicGradientMeshComplexity: Int {
+        didSet { UserDefaults.standard.set(dynamicGradientMeshComplexity, forKey: "Feather.keyboard.dynamicGradientMeshComplexity") }
+    }
 
     @Published var keyboardHeight: CGFloat = 0
     @Published var isKeyboardVisible: Bool = false
@@ -95,6 +113,12 @@ class KeyboardCustomizeManager: ObservableObject {
         self.dynamicGradientDirection = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientDirection") as? Double ?? 0.0
         self.dynamicGradientPulseIntensity = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientPulseIntensity") as? Double ?? 1.0
         self.dynamicGradientPreset = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientPreset") as? Int ?? 0
+        self.dynamicGradientSpeed = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientSpeed") as? Double ?? 1.0
+        self.dynamicGradientNoiseOpacity = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientNoiseOpacity") as? Double ?? 0.0
+        self.dynamicGradientSaturation = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientSaturation") as? Double ?? 1.0
+        self.dynamicGradientContrast = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientContrast") as? Double ?? 1.0
+        self.dynamicGradientBrightness = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientBrightness") as? Double ?? 0.0
+        self.dynamicGradientMeshComplexity = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientMeshComplexity") as? Int ?? 3
 
         let savedColors = UserDefaults.standard.stringArray(forKey: "Feather.keyboard.dynamicGradientColors") ?? []
         var colors = savedColors
@@ -236,39 +260,60 @@ struct DynamicGradientView: View {
             let date = timeline.date.timeIntervalSinceReferenceDate
             let frequency = manager.dynamicGradientFrequency
             let amount = manager.dynamicGradientAmount
+            let speed = manager.dynamicGradientSpeed
 
             let baseColors = getColors(for: date)
-            let angle = Angle(degrees: manager.dynamicGradientDirection + (date * 20 * frequency))
+            let angle = Angle(degrees: manager.dynamicGradientDirection + (date * 20 * frequency * speed))
 
-            if #available(iOS 18.0, *) {
-                MeshGradient(
-                    width: 3,
-                    height: 3,
-                    points: [
-                        [0, 0], [0.5, 0], [1, 0],
-                        [0, 0.5], [0.5, 0.5], [1, 0.5],
-                        [0, 1], [0.5, 1], [1, 1]
-                    ].enumerated().map { i, point in
-                        let x = point[0]
-                        let y = point[1]
-                        let offset = Double(i) * 0.5
-                        let dx = sin(date * frequency + offset) * 0.1 * amount
-                        let dy = cos(date * frequency + offset) * 0.1 * amount
-                        return simd_float2(Float(max(0, min(1, x + dx))), Float(max(0, min(1, y + dy))))
-                    },
-                    colors: (0..<9).map { baseColors[$0 % baseColors.count] }
-                )
-                .hueRotation(.degrees(amount * date * 10))
-                .scaleEffect(1.0 + sin(date * frequency) * 0.1 * manager.dynamicGradientPulseIntensity)
-            } else {
-                LinearGradient(
-                    colors: baseColors,
-                    startPoint: UnitPoint(x: 0.5 + 0.5 * cos(angle.radians), y: 0.5 + 0.5 * sin(angle.radians)),
-                    endPoint: UnitPoint(x: 0.5 - 0.5 * cos(angle.radians), y: 0.5 - 0.5 * sin(angle.radians))
-                )
-                .hueRotation(.degrees(amount * date * 10))
-                .scaleEffect(1.0 + sin(date * frequency) * 0.1 * manager.dynamicGradientPulseIntensity)
+            ZStack {
+                if #available(iOS 18.0, *) {
+                    let w = max(2, manager.dynamicGradientMeshComplexity)
+                    let h = max(2, manager.dynamicGradientMeshComplexity)
+
+                    MeshGradient(
+                        width: w,
+                        height: h,
+                        points: (0..<h).flatMap { row in
+                            (0..<w).map { col in
+                                let x = Float(col) / Float(w - 1)
+                                let y = Float(row) / Float(h - 1)
+                                let offset = Double(row * w + col) * 0.5
+                                let dx = sin(date * frequency * speed + offset) * 0.1 * amount
+                                let dy = cos(date * frequency * speed + offset) * 0.1 * amount
+                                return simd_float2(max(0, min(1, x + Float(dx))), max(0, min(1, y + Float(dy))))
+                            }
+                        },
+                        colors: (0..<(w*h)).map { baseColors[$0 % baseColors.count] }
+                    )
+                    .hueRotation(.degrees(amount * date * 10))
+                } else {
+                    LinearGradient(
+                        colors: baseColors,
+                        startPoint: UnitPoint(x: 0.5 + 0.5 * cos(angle.radians), y: 0.5 + 0.5 * sin(angle.radians)),
+                        endPoint: UnitPoint(x: 0.5 - 0.5 * cos(angle.radians), y: 0.5 - 0.5 * sin(angle.radians))
+                    )
+                    .hueRotation(.degrees(amount * date * 10))
+                }
+
+                if manager.dynamicGradientNoiseOpacity > 0 {
+                    Color.black.opacity(0.01)
+                        .overlay(
+                            Canvas { context, size in
+                                for _ in 0..<1000 {
+                                    let x = CGFloat.random(in: 0...size.width)
+                                    let y = CGFloat.random(in: 0...size.height)
+                                    context.fill(Path(CGRect(x: x, y: y, width: 1, height: 1)), with: .color(.white.opacity(0.5)))
+                                }
+                            }
+                        )
+                        .blendMode(.overlay)
+                        .opacity(manager.dynamicGradientNoiseOpacity)
+                }
             }
+            .saturation(manager.dynamicGradientSaturation)
+            .contrast(manager.dynamicGradientContrast)
+            .brightness(manager.dynamicGradientBrightness)
+            .scaleEffect(1.0 + sin(date * frequency * speed) * 0.1 * manager.dynamicGradientPulseIntensity)
         }
     }
 
@@ -285,7 +330,9 @@ struct DynamicGradientView: View {
         case 4: // Nebula
             baseColors = [.purple, .blue, .pink, .indigo]
         default: // Custom / Default
-            baseColors = manager.dynamicGradientColors.map { Color(hex: $0) }
+            // Use only the colors defined by dynamicGradientColorCount
+            let customColors = manager.dynamicGradientColors.prefix(manager.dynamicGradientColorCount).map { Color(hex: $0) }
+            baseColors = customColors.isEmpty ? [.blue, .purple] : Array(customColors)
         }
 
         var colors = baseColors

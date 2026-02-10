@@ -28,7 +28,12 @@ struct KeyboardCustomizationView: View {
             if manager.isEnabled {
                 Section {
                     PhotosPicker(selection: $selectedItem, matching: .images) {
-                        AppearanceRowLabel(icon: "photo.fill", title: "Custom Image", color: .green)
+                        VStack(alignment: .leading, spacing: 4) {
+                            AppearanceRowLabel(icon: "photo.fill", title: "Custom Image", color: .green)
+                            Text("Set a personal image as the backdrop for your keyboard.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                     .onChange(of: selectedItem) { newItem in
                         Task {
@@ -43,7 +48,12 @@ struct KeyboardCustomizationView: View {
                             manager.backgroundImageData = nil
                             selectedItem = nil
                         } label: {
-                            AppearanceRowLabel(icon: "trash", title: "Remove Image", color: .red)
+                            VStack(alignment: .leading, spacing: 4) {
+                                AppearanceRowLabel(icon: "trash", title: "Remove Image", color: .red)
+                                Text("Clear the current image and return to using colors or gradients.")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
                 } header: {
@@ -52,40 +62,71 @@ struct KeyboardCustomizationView: View {
 
                 Section {
                     Toggle(isOn: $manager.showAnimatedOrbs) {
-                        AppearanceRowLabel(icon: "sparkles", title: "Animated Orbs", color: .blue)
+                        VStack(alignment: .leading, spacing: 4) {
+                            AppearanceRowLabel(icon: "sparkles", title: "Animated Orbs", color: .blue)
+                            Text("Floating glowing circles that move dynamically behind the keys.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
 
                     if manager.showAnimatedOrbs {
                         VStack(alignment: .leading, spacing: 8) {
                             AppearanceRowLabel(icon: "circle.dotted", title: "Orb Count: \(manager.orbCount)", color: .blue)
+                            Text("Adjust the total number of orbs appearing on screen.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                             Slider(value: Binding(get: { Double(manager.orbCount) }, set: { manager.orbCount = Int($0) }), in: 1...10, step: 1)
                         }
                         .padding(.vertical, 4)
 
                         VStack(alignment: .leading, spacing: 8) {
                             AppearanceRowLabel(icon: "bolt.fill", title: "Orb Speed: \(Int(manager.orbSpeed))", color: .yellow)
+                            Text("Change how quickly the orbs float and bounce around.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                             Slider(value: $manager.orbSpeed, in: 1...10)
                         }
                         .padding(.vertical, 4)
                     }
 
                     Toggle(isOn: $manager.useGradient) {
-                        AppearanceRowLabel(icon: "paintpalette", title: "Custom Gradient", color: .orange)
+                        VStack(alignment: .leading, spacing: 4) {
+                            AppearanceRowLabel(icon: "paintpalette", title: "Custom Gradient", color: .orange)
+                            Text("Switch between a solid color and a two-color linear gradient.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
 
                     if manager.useGradient {
                         ColorPicker(selection: $startColor, supportsOpacity: false) {
-                            AppearanceRowLabel(icon: "1.circle", title: "Start Color", color: .orange)
+                            VStack(alignment: .leading, spacing: 4) {
+                                AppearanceRowLabel(icon: "1.circle", title: "Start Color", color: .orange)
+                                Text("The beginning color for the linear gradient transition.")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                         .onChange(of: startColor) { manager.gradientStart = $0.toHex() ?? "#0077BE" }
 
                         ColorPicker(selection: $endColor, supportsOpacity: false) {
-                            AppearanceRowLabel(icon: "2.circle", title: "End Color", color: .orange)
+                            VStack(alignment: .leading, spacing: 4) {
+                                AppearanceRowLabel(icon: "2.circle", title: "End Color", color: .orange)
+                                Text("The final color for the linear gradient transition.")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                         .onChange(of: endColor) { manager.gradientEnd = $0.toHex() ?? "#00AEEF" }
                     } else {
                         ColorPicker(selection: $bgColor, supportsOpacity: false) {
-                            AppearanceRowLabel(icon: "paintbrush.fill", title: "Background Color", color: .orange)
+                            VStack(alignment: .leading, spacing: 4) {
+                                AppearanceRowLabel(icon: "paintbrush.fill", title: "Background Color", color: .orange)
+                                Text("The base solid color for your keyboard background.")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                         .onChange(of: bgColor) { manager.backgroundColor = $0.toHex() ?? "#1A1A1A" }
                     }
@@ -95,52 +136,71 @@ struct KeyboardCustomizationView: View {
 
                 Section {
                     Toggle(isOn: $manager.isDynamicGradientEnabled) {
-                        AppearanceRowLabel(icon: "sparkles.rectangle.stack", title: "Dynamic Gradient", color: .purple)
+                        VStack(alignment: .leading, spacing: 4) {
+                            AppearanceRowLabel(icon: "sparkles.rectangle.stack", title: "Dynamic Gradient", color: .purple)
+                            Text("A high-performance mesh gradient that moves and shifts over time.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
 
                     if manager.isDynamicGradientEnabled {
                         VStack(alignment: .leading, spacing: 8) {
                             AppearanceRowLabel(icon: "timer", title: "Frequency: \(String(format: "%.1f", manager.dynamicGradientFrequency))", color: .blue)
+                            Text("Adjust the speed of the color shifting and warping animation.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                             Slider(value: $manager.dynamicGradientFrequency, in: 0.1...5.0, step: 0.1)
                         }
                         .padding(.vertical, 4)
 
                         VStack(alignment: .leading, spacing: 8) {
                             AppearanceRowLabel(icon: "slider.horizontal.3", title: "Amount: \(String(format: "%.1f", manager.dynamicGradientAmount))", color: .green)
+                            Text("Control how much the colors distort and spread across the screen.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                             Slider(value: $manager.dynamicGradientAmount, in: 0.1...10.0, step: 0.1)
                         }
                         .padding(.vertical, 4)
 
                         VStack(alignment: .leading, spacing: 8) {
                             AppearanceRowLabel(icon: "number", title: "Color Count: \(manager.dynamicGradientColorCount)", color: .orange)
+                            Text("Select how many unique colors are used in the mesh generation.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                             Slider(value: Binding(get: { Double(manager.dynamicGradientColorCount) }, set: { manager.dynamicGradientColorCount = Int($0) }), in: 2...10, step: 1)
 
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
-                                    ForEach(0..<manager.dynamicGradientColorCount, id: \.self) { index in
-                                        ColorPicker("", selection: Binding(
-                                            get: { Color(hex: manager.dynamicGradientColors[index]) },
-                                            set: { manager.dynamicGradientColors[index] = $0.toHex() ?? "#FFFFFF" }
-                                        ))
-                                        .labelsHidden()
-                                        .frame(width: 40, height: 40)
-                                        .background(Color(hex: manager.dynamicGradientColors[index]))
-                                        .clipShape(Circle())
-                                    }
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 44))], spacing: 12) {
+                                ForEach(0..<manager.dynamicGradientColorCount, id: \.self) { index in
+                                    ColorPicker("", selection: Binding(
+                                        get: { Color(hex: manager.dynamicGradientColors[index]) },
+                                        set: { manager.dynamicGradientColors[index] = $0.toHex() ?? "#FFFFFF" }
+                                    ))
+                                    .labelsHidden()
+                                    .frame(width: 40, height: 40)
+                                    .background(Color(hex: manager.dynamicGradientColors[index]))
+                                    .clipShape(Circle())
+                                    .overlay(Circle().stroke(Color.primary.opacity(0.1), lineWidth: 1))
                                 }
-                                .padding(.vertical, 4)
                             }
+                            .padding(.vertical, 8)
                         }
                         .padding(.vertical, 4)
 
                         VStack(alignment: .leading, spacing: 8) {
                             AppearanceRowLabel(icon: "waveform.path.ecg", title: "Pulse Intensity: \(String(format: "%.1f", manager.dynamicGradientPulseIntensity))", color: .red)
+                            Text("Add a subtle 'breathing' scale effect to the background.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                             Slider(value: $manager.dynamicGradientPulseIntensity, in: 0.0...2.0, step: 0.1)
                         }
                         .padding(.vertical, 4)
 
                         VStack(alignment: .leading, spacing: 8) {
                             AppearanceRowLabel(icon: "arrow.up.right.circle", title: "Direction", color: .cyan)
+                            Text("Set the primary flow angle for the gradient's movement.")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                             HStack {
                                 Spacer()
                                 KeyboardDirectionPicker(direction: $manager.dynamicGradientDirection, color: .cyan)
@@ -152,11 +212,21 @@ struct KeyboardCustomizationView: View {
                         Button {
                             showingAdvancedGradient = true
                         } label: {
-                            AppearanceRowLabel(icon: "slider.horizontal.2.square", title: "Modify Advanced Controls", color: .purple)
+                            VStack(alignment: .leading, spacing: 4) {
+                                AppearanceRowLabel(icon: "slider.horizontal.2.square", title: "Modify Advanced Controls", color: .purple)
+                                Text("Access granular settings like speed, noise, and color vibrancy.")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
 
                         Toggle(isOn: $manager.dynamicGradientShuffle) {
-                            AppearanceRowLabel(icon: "shuffle", title: "Shuffle Colors", color: .indigo)
+                            VStack(alignment: .leading, spacing: 4) {
+                                AppearanceRowLabel(icon: "shuffle", title: "Shuffle Colors", color: .indigo)
+                                Text("Randomize the color order over time for a more organic feel.")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
 
                         Picker(selection: $manager.dynamicGradientPreset) {
@@ -166,7 +236,12 @@ struct KeyboardCustomizationView: View {
                             Text("Ocean").tag(3)
                             Text("Nebula").tag(4)
                         } label: {
-                            AppearanceRowLabel(icon: "wand.and.stars", title: "Preset", color: .pink)
+                            VStack(alignment: .leading, spacing: 4) {
+                                AppearanceRowLabel(icon: "wand.and.stars", title: "Preset", color: .pink)
+                                Text("Select from pre-designed high-quality color combinations.")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                         .pickerStyle(.menu)
                     }
@@ -177,12 +252,18 @@ struct KeyboardCustomizationView: View {
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
                         AppearanceRowLabel(icon: "drop", title: "Opacity: \(Int(manager.opacity * 100))%", color: .blue)
+                        Text("Set the overall transparency of the keyboard backdrop layer.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                         Slider(value: $manager.opacity, in: 0...1)
                     }
                     .padding(.vertical, 4)
 
                     VStack(alignment: .leading, spacing: 8) {
                         AppearanceRowLabel(icon: "fossil.shell", title: "Blur: \(Int(manager.blurRadius))", color: .cyan)
+                        Text("Apply a Gaussian blur to the background for better key readability.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                         Slider(value: $manager.blurRadius, in: 0...30)
                     }
                     .padding(.vertical, 4)
