@@ -2,13 +2,23 @@ import SwiftUI
 import NimbleViews
 
 // MARK: - Credits Item Model
-struct CreditItem {
+struct CreditItem: Identifiable {
+	var id: String { githubUsername }
 	let username: String
 	let githubUsername: String // Username to fetch from GitHub API
 	let role: String
 	let githubUrl: String
 	let gradientColors: [Color]
 	let icon: String
+}
+
+// MARK: - WSF Link Model
+struct WSFLink: Identifiable {
+	let id = UUID()
+	let title: String
+	let url: String
+	let icon: String
+	let color: Color
 }
 
 // MARK: - View
@@ -36,47 +46,102 @@ struct CreditsView: View {
 			icon: "star.fill"
 		)
 	]
+
+	private let wsfLinks: [WSFLink] = [
+		WSFLink(
+			title: .localized("WSF Website"),
+			url: "https://wsfteam.xyz",
+			icon: "globe",
+			color: .blue
+		),
+		WSFLink(
+			title: .localized("Join Our Discord"),
+			url: "https://wsfteam.xyz/discord",
+			icon: "bubble.left.and.bubble.right.fill",
+			color: Color(hex: "#5865F2")
+		),
+		WSFLink(
+			title: .localized("Follow Us On X"),
+			url: "https://x.com/wsf_team",
+			icon: "xmark",
+			color: .primary
+		),
+		WSFLink(
+			title: .localized("Star Our GitHub Repo"),
+			url: "https://github.com/WSF-Team/WSF",
+			icon: "star.fill",
+			color: .orange
+		)
+	]
 	
 	// MARK: Body
 	var body: some View {
 		NBList(.localized("Credits")) {
+			// Header Section
 			Section {
-				VStack(spacing: 24) {
-					// Title with gradient and rotation animation
-					VStack(spacing: 12) {
-						Image(systemName: "person.3.fill")
-							.font(.system(size: 42, weight: .bold))
-							.foregroundStyle(
-								LinearGradient(
-									colors: [.purple, .blue, .cyan],
-									startPoint: .topLeading,
-									endPoint: .bottomTrailing
-								)
+				VStack(spacing: 16) {
+					Image(systemName: "person.3.fill")
+						.font(.system(size: 48, weight: .bold))
+						.foregroundStyle(
+							LinearGradient(
+								colors: [.blue, .purple, .pink],
+								startPoint: .topLeading,
+								endPoint: .bottomTrailing
 							)
-							.scaleEffect(cardScale)
-							.opacity(cardOpacity)
-							.rotationEffect(.degrees(rotationAngle))
-						
-						Text(.localized("Credits"))
-							.font(.title)
-							.bold()
-							.scaleEffect(cardScale)
-							.opacity(cardOpacity)
-					}
-					.frame(maxWidth: .infinity)
-					.padding(.top, 8)
+						)
+						.shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
+						.scaleEffect(cardScale)
+						.opacity(cardOpacity)
+						.rotationEffect(.degrees(rotationAngle))
 					
-					// Credit Cards
-					ForEach(Array(credits.enumerated()), id: \.offset) { index, credit in
+					Text(.localized("Credits"))
+						.font(.system(size: 28, weight: .bold, design: .rounded))
+						.scaleEffect(cardScale)
+						.opacity(cardOpacity)
+				}
+				.frame(maxWidth: .infinity)
+				.padding(.vertical, 24)
+			}
+			.listRowBackground(Color.clear)
+			.listRowSeparator(.hidden)
+
+			// Developers Section
+			Section {
+				VStack(spacing: 12) {
+					ForEach(Array(credits.enumerated()), id: \.element.id) { index, credit in
 						GitHubCreditCard(
 							credit: credit,
 							delay: Double(index) * 0.1 + 0.1
 						)
 					}
 				}
-				.padding(.vertical, 12)
+			} header: {
+				Text(.localized("Team"))
+					.font(.system(size: 14, weight: .bold, design: .rounded))
+					.foregroundStyle(.secondary)
+					.padding(.bottom, 8)
 			}
-			.listRowBackground(EmptyView())
+			.listRowBackground(Color.clear)
+			.listRowSeparator(.hidden)
+
+			// WSF Team Links Section
+			Section {
+				VStack(spacing: 12) {
+					ForEach(Array(wsfLinks.enumerated()), id: \.element.id) { index, link in
+						WSFLinkButton(
+							link: link,
+							delay: Double(credits.count + index) * 0.1 + 0.1
+						)
+					}
+				}
+			} header: {
+				Text(.localized("Links"))
+					.font(.system(size: 14, weight: .bold, design: .rounded))
+					.foregroundStyle(.secondary)
+					.padding(.bottom, 8)
+			}
+			.listRowBackground(Color.clear)
+			.listRowSeparator(.hidden)
 		}
 		.onAppear {
 			// Animate title appearance
@@ -93,6 +158,58 @@ struct CreditsView: View {
 	}
 }
 
+// MARK: - WSF Link Button
+struct WSFLinkButton: View {
+	let link: WSFLink
+	let delay: Double
+
+	@State private var cardScale: CGFloat = 0.8
+	@State private var cardOpacity: Double = 0
+
+	var body: some View {
+		Button {
+			guard let url = URL(string: link.url) else { return }
+			UIApplication.open(url)
+		} label: {
+			HStack(spacing: 12) {
+				// Icon with background
+				Image(systemName: link.icon)
+					.font(.system(size: 18, weight: .semibold))
+					.foregroundStyle(.white)
+					.frame(width: 36, height: 36)
+					.background(
+						RoundedRectangle(cornerRadius: 10, style: .continuous)
+							.fill(link.color.gradient)
+					)
+
+				Text(link.title)
+					.font(.system(size: 16, weight: .medium))
+					.foregroundStyle(.primary)
+
+				Spacer()
+
+				// Chevron
+				Image(systemName: "chevron.right")
+					.font(.system(size: 12, weight: .bold))
+					.foregroundStyle(.secondary.opacity(0.5))
+			}
+			.padding(10)
+			.background(Color(uiColor: .secondarySystemGroupedBackground))
+			.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+			.shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
+			.scaleEffect(cardScale)
+			.opacity(cardOpacity)
+		}
+		.buttonStyle(CreditsScaleButtonStyle())
+		.onAppear {
+			withAnimation(.spring(response: 0.8, dampingFraction: 0.6).delay(delay)) {
+				cardScale = 1.0
+				cardOpacity = 1.0
+			}
+		}
+	}
+}
+
 // MARK: - GitHub Credit Card View
 struct GitHubCreditCard: View {
 	let credit: CreditItem
@@ -101,136 +218,95 @@ struct GitHubCreditCard: View {
 	@StateObject private var viewModel = GitHubUserViewModel()
 	@State private var cardScale: CGFloat = 0.8
 	@State private var cardOpacity: Double = 0
-	@State private var shimmerOffset: CGFloat = -200
 	
 	var body: some View {
 		Button {
 			guard let url = URL(string: credit.githubUrl) else { return }
 			UIApplication.open(url)
 		} label: {
-			ZStack {
-				// Gradient background with enhanced effects
-				LinearGradient(
-					colors: credit.gradientColors + [credit.gradientColors[0].opacity(0.5)],
-					startPoint: .topLeading,
-					endPoint: .bottomTrailing
-				)
-				.clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-				.opacity(0.15)
-				
-				// Shimmer effect
-				LinearGradient(
-					colors: [
-						.clear,
-						credit.gradientColors[0].opacity(0.3),
-						.clear
-					],
-					startPoint: .leading,
-					endPoint: .trailing
-				)
-				.frame(width: 100)
-				.offset(x: shimmerOffset)
-				.clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-				
-				// Card content
-				HStack(spacing: 16) {
-					// Profile picture or icon with gradient
-					ZStack {
-						if let avatarImage = viewModel.avatarImage {
-							Image(uiImage: avatarImage)
-								.resizable()
-								.aspectRatio(contentMode: .fill)
-								.frame(width: 56, height: 56)
-								.clipShape(Circle())
-								.overlay(
-									Circle()
-										.stroke(
-											LinearGradient(
-												colors: credit.gradientColors,
-												startPoint: .topLeading,
-												endPoint: .bottomTrailing
-											),
-											lineWidth: 2
-										)
-								)
-								.shadow(color: credit.gradientColors[0].opacity(0.4), radius: 8, x: 0, y: 4)
-						} else {
-							// Fallback to icon while loading or on error
-							Circle()
-								.fill(
-									LinearGradient(
-										colors: credit.gradientColors,
-										startPoint: .topLeading,
-										endPoint: .bottomTrailing
+			HStack(spacing: 12) {
+				// Profile picture or icon with gradient
+				ZStack {
+					if let avatarImage = viewModel.avatarImage {
+						Image(uiImage: avatarImage)
+							.resizable()
+							.aspectRatio(contentMode: .fill)
+							.frame(width: 48, height: 48)
+							.clipShape(Circle())
+							.overlay(
+								Circle()
+									.stroke(
+										LinearGradient(
+											colors: credit.gradientColors,
+											startPoint: .topLeading,
+											endPoint: .bottomTrailing
+										),
+										lineWidth: 1.5
 									)
-								)
-								.frame(width: 56, height: 56)
-								.shadow(color: credit.gradientColors[0].opacity(0.3), radius: 8, x: 0, y: 4)
-							
-							if viewModel.isLoading {
-								// Loading indicator
-								ProgressView()
-									.tint(.white)
-							} else {
-								// Icon when not loading and no avatar
-								Image(systemName: credit.icon)
-									.font(.system(size: 24, weight: .semibold))
-									.foregroundStyle(.white)
-							}
-						}
-					}
-					
-					// Text content
-					VStack(alignment: .leading, spacing: 4) {
-						Text(viewModel.user?.name ?? credit.username)
-							.font(.headline)
-							.fontWeight(.bold)
-							.foregroundStyle(.primary)
-						
-						Text(credit.role)
-							.font(.subheadline)
-							.foregroundStyle(.secondary)
-						
-						if let bio = viewModel.user?.bio, !bio.isEmpty {
-							Text(bio)
-								.font(.caption)
-								.foregroundStyle(.secondary)
-								.lineLimit(2)
-								.padding(.top, 2)
-						}
-					}
-					
-					Spacer()
-					
-					// Arrow with gradient
-					Image(systemName: "arrow.up.right")
-						.font(.system(size: 18, weight: .semibold))
-						.foregroundStyle(
-							LinearGradient(
-								colors: credit.gradientColors,
-								startPoint: .topLeading,
-								endPoint: .bottomTrailing
 							)
-						)
+					} else {
+						// Fallback to icon while loading or on error
+						Circle()
+							.fill(
+								LinearGradient(
+									colors: credit.gradientColors,
+									startPoint: .topLeading,
+									endPoint: .bottomTrailing
+								)
+							)
+							.frame(width: 48, height: 48)
+						
+						if viewModel.isLoading {
+							ProgressView()
+								.tint(.white)
+						} else {
+							Image(systemName: credit.icon)
+								.font(.system(size: 20, weight: .semibold))
+								.foregroundStyle(.white)
+						}
+					}
 				}
-				.padding(16)
+
+				// Text content
+				VStack(alignment: .leading, spacing: 2) {
+					Text(viewModel.user?.name ?? credit.username)
+						.font(.system(size: 16, weight: .bold))
+						.foregroundStyle(.primary)
+					
+					Text(credit.role)
+						.font(.system(size: 14))
+						.foregroundStyle(.secondary)
+					
+					if let bio = viewModel.user?.bio, !bio.isEmpty {
+						Text(bio)
+							.font(.system(size: 11))
+							.foregroundStyle(.secondary.opacity(0.8))
+							.lineLimit(1)
+					}
+				}
+
+				Spacer()
+
+				// Arrow
+				Image(systemName: "arrow.up.right")
+					.font(.system(size: 14, weight: .semibold))
+					.foregroundStyle(.secondary.opacity(0.5))
 			}
-			.frame(maxWidth: .infinity)
-			.frame(minHeight: 88)
+			.padding(12)
 			.background(Color(uiColor: .secondarySystemGroupedBackground))
-			.clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+			.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 			.overlay(
-				RoundedRectangle(cornerRadius: 20, style: .continuous)
+				RoundedRectangle(cornerRadius: 16, style: .continuous)
 					.stroke(
 						LinearGradient(
-							colors: credit.gradientColors.map { $0.opacity(0.4) },
+							colors: credit.gradientColors.map { $0.opacity(0.2) },
 							startPoint: .topLeading,
 							endPoint: .bottomTrailing
 						),
-						lineWidth: 1.5
+						lineWidth: 1
 					)
 			)
-			.shadow(color: Color.black.opacity(0.08), radius: 12, x: 0, y: 6)
+			.shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
 			.scaleEffect(cardScale)
 			.opacity(cardOpacity)
 		}
@@ -243,11 +319,6 @@ struct GitHubCreditCard: View {
 			withAnimation(.spring(response: 0.8, dampingFraction: 0.6).delay(delay)) {
 				cardScale = 1.0
 				cardOpacity = 1.0
-			}
-			
-			// Shimmer animation
-			withAnimation(.linear(duration: 2).repeatForever(autoreverses: false).delay(delay)) {
-				shimmerOffset = 400
 			}
 		}
 	}
