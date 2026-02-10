@@ -63,6 +63,9 @@ class KeyboardCustomizeManager: ObservableObject {
     @Published var dynamicGradientPreset: Int {
         didSet { UserDefaults.standard.set(dynamicGradientPreset, forKey: "Feather.keyboard.dynamicGradientPreset") }
     }
+    @Published var dynamicGradientColors: [String] {
+        didSet { UserDefaults.standard.set(dynamicGradientColors, forKey: "Feather.keyboard.dynamicGradientColors") }
+    }
 
     @Published var keyboardHeight: CGFloat = 0
     @Published var isKeyboardVisible: Bool = false
@@ -91,6 +94,14 @@ class KeyboardCustomizeManager: ObservableObject {
         self.dynamicGradientDirection = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientDirection") as? Double ?? 0.0
         self.dynamicGradientPulseIntensity = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientPulseIntensity") as? Double ?? 1.0
         self.dynamicGradientPreset = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientPreset") as? Int ?? 0
+
+        let savedColors = UserDefaults.standard.stringArray(forKey: "Feather.keyboard.dynamicGradientColors") ?? []
+        var colors = savedColors
+        let defaults = ["#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF", "#FFA500", "#800080", "#008000", "#000080"]
+        while colors.count < 10 {
+            colors.append(defaults[colors.count])
+        }
+        self.dynamicGradientColors = colors
 
         setupObservers()
     }
@@ -168,8 +179,8 @@ class KeyboardCustomizeManager: ObservableObject {
         let screenSize = UIScreen.main.bounds.size
         // Ensure the window is always at the bottom of the screen and slightly larger to prevent edges from showing
         // Adding 100pt extra height at the bottom just in case
-        // Overscan by 12pt upward as requested
-        let overscan: CGFloat = 12
+        // Overscan by 40pt upward as requested
+        let overscan: CGFloat = 40
         let frame = CGRect(x: 0, y: screenSize.height - height - overscan, width: screenSize.width, height: height + overscan + 100)
 
         window.isHidden = false
@@ -217,23 +228,46 @@ class KeyboardCustomizeManager: ObservableObject {
 // MARK: - Views and Modifiers
 
 struct DynamicGradientView: View {
-    @ObservedObject var manager: KeyboardCustomizeManager
+    @ObservedObject var manager: KeyboardCustomizeManager = .shared
 
     var body: some View {
         TimelineView(.animation) { timeline in
             let date = timeline.date.timeIntervalSinceReferenceDate
             let frequency = manager.dynamicGradientFrequency
+            let amount = manager.dynamicGradientAmount
 
-            let colors = getColors(for: date)
+            let baseColors = getColors(for: date)
             let angle = Angle(degrees: manager.dynamicGradientDirection + (date * 20 * frequency))
 
-            LinearGradient(
-                colors: colors,
-                startPoint: UnitPoint(x: 0.5 + 0.5 * cos(angle.radians), y: 0.5 + 0.5 * sin(angle.radians)),
-                endPoint: UnitPoint(x: 0.5 - 0.5 * cos(angle.radians), y: 0.5 - 0.5 * sin(angle.radians))
-            )
-            .hueRotation(.degrees(manager.dynamicGradientAmount * date * 10))
-            .scaleEffect(1.0 + sin(date * frequency) * 0.1 * manager.dynamicGradientPulseIntensity)
+            if #available(iOS 18.0, *) {
+                MeshGradient(
+                    width: 3,
+                    height: 3,
+                    points: [
+                        [0, 0], [0.5, 0], [1, 0],
+                        [0, 0.5], [0.5, 0.5], [1, 0.5],
+                        [0, 1], [0.5, 1], [1, 1]
+                    ].enumerated().map { i, point in
+                        let x = point[0]
+                        let y = point[1]
+                        let offset = Double(i) * 0.5
+                        let dx = sin(date * frequency + offset) * 0.1 * amount
+                        let dy = cos(date * frequency + offset) * 0.1 * amount
+                        return simd_float2(Float(max(0, min(1, x + dx))), Float(max(0, min(1, y + dy))))
+                    },
+                    colors: (0..<9).map { baseColors[$0 % baseColors.count] }
+                )
+                .hueRotation(.degrees(amount * date * 10))
+                .scaleEffect(1.0 + sin(date * frequency) * 0.1 * manager.dynamicGradientPulseIntensity)
+            } else {
+                LinearGradient(
+                    colors: baseColors,
+                    startPoint: UnitPoint(x: 0.5 + 0.5 * cos(angle.radians), y: 0.5 + 0.5 * sin(angle.radians)),
+                    endPoint: UnitPoint(x: 0.5 - 0.5 * cos(angle.radians), y: 0.5 - 0.5 * sin(angle.radians))
+                )
+                .hueRotation(.degrees(amount * date * 10))
+                .scaleEffect(1.0 + sin(date * frequency) * 0.1 * manager.dynamicGradientPulseIntensity)
+            }
         }
     }
 
@@ -250,7 +284,7 @@ struct DynamicGradientView: View {
         case 4: // Nebula
             baseColors = [.purple, .blue, .pink, .indigo]
         default: // Custom / Default
-            baseColors = [Color(hex: manager.gradientStart), Color(hex: manager.gradientEnd)]
+            baseColors = manager.dynamicGradientColors.map { Color(hex: $0) }
         }
 
         var colors = baseColors
@@ -270,7 +304,7 @@ struct DynamicGradientView: View {
 }
 
 struct KeyboardBackdropView: View {
-    @ObservedObject var manager = KeyboardCustomizeManager.shared
+    @ObservedObject var manager: KeyboardCustomizeManager = .shared
     @State private var floatingAnimation = false
     @Environment(\.colorScheme) var colorScheme
 
@@ -318,9 +352,10 @@ struct KeyboardBackdropView: View {
                 }
             }
         }
-        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 38, style: .continuous))
+        .offset(y: 40) // Align with keyboard top (compensating for 40pt overscan)
         .compositingGroup()
-        .scaleEffect(1.2) // Scale up to cover blur edges
+        .scaleEffect(1.1) // Scale up slightly to cover blur edges
         .blur(radius: manager.blurRadius)
         .opacity(manager.opacity)
         .allowsHitTesting(false)
