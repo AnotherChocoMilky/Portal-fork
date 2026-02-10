@@ -20,17 +20,9 @@ struct CreditsView: View {
 	
 	private let credits: [CreditItem] = [
 		CreditItem(
-			username: "aoyn1xw",
-			githubUsername: "aoyn1xw",
-			role: .localized("Developer"),
-			githubUrl: "https://github.com/aoyn1xw",
-			gradientColors: [SwiftUI.Color(hex: "#0077BE"), SwiftUI.Color(hex: "#00A8E8")],
-			icon: "person.fill"
-		),
-		CreditItem(
 			username: "dylans2010",
 			githubUsername: "dylans2010",
-			role: .localized("Designer"),
+			role: .localized("Developer"),
 			githubUrl: "https://github.com/dylans2010",
 			gradientColors: [SwiftUI.Color(hex: "#ff7a83"), SwiftUI.Color(hex: "#FF2D55")],
 			icon: "paintbrush.fill"

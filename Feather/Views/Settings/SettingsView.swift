@@ -127,6 +127,7 @@ struct SettingsView: View {
     private var resourcesSection: some View {
         Section {
             SettingsRow(icon: "apple.intelligence", title: String.localized("Guides With AI"), color: .accentColor, destination: GuidesSettingsView())
+            SettingsRow(icon: "person.crop.circle.fill.badge.checkmark", title: String.localized("Credits"), color: .accentColor, destination: CreditsView())
             SettingsRow(icon: "bubble.left.and.bubble.right.fill", title: String.localized("Feedback"), color: .accentColor, destination: FeedbackView())
         } header: {
             SettingsSectionHeader(title: String.localized("Resources"), icon: "books.vertical.fill")
@@ -156,7 +157,7 @@ struct SettingsView: View {
             SettingsSectionHeader(title: String.localized("Internal"), icon: "wrench.and.screwdriver.fill")
         }
     }
-    
+
     // MARK: - Developer Mode
     
     private func handleDeveloperModeTap() {

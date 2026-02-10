@@ -236,7 +236,7 @@ struct AllAppsCustomizationView: View {
                 } label: {
                     HStack {
                         Image(systemName: "arrow.counterclockwise")
-                        Text("Reset to Defaults")
+                        Text("Reset To Defaults")
                     }
                     .frame(maxWidth: .infinity)
                     .foregroundStyle(.red)

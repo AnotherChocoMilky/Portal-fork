@@ -76,7 +76,7 @@ struct NearbyTransferView: View {
                     icon: "lock.shield.fill",
                     iconColor: .green,
                     title: .localized("Secure & Encrypted"),
-                    description: .localized("All transfers are encrypted end-to-end using AES-256 encryption for maximum security.")
+                    description: .localized("All transfers are fully private and never shared with anyone and run fully on both senders and receivers devices and in your network.")
                 )
                 
                 featureCard(
@@ -90,7 +90,7 @@ struct NearbyTransferView: View {
                     icon: "speedometer",
                     iconColor: .orange,
                     title: .localized("Fast & Reliable"),
-                    description: .localized("Direct device to device transfer with real time progress monitoring and speed reporting.")
+                    description: .localized("Direct device to device transfer with real time progress monitoring and speed reporting using Apple's Multipeer Connectivity framework.")
                 )
             } header: {
                 AppearanceSectionHeader(title: String.localized("Features"), icon: "star.fill")

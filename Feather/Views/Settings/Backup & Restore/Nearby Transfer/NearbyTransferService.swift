@@ -174,7 +174,7 @@ class NearbyTransferService: NSObject, ObservableObject {
                 
                 await MainActor.run {
                     state = .completed
-                    currentItem = "Transfer Completed"
+                    currentItem = "Transfer Completed!"
                 }
                 
             } catch {
@@ -314,7 +314,7 @@ extension NearbyTransferService: MCSessionDelegate {
                 
                 await MainActor.run {
                     state = .completed
-                    currentItem = "Backup Received Successfully"
+                    currentItem = "Backup Received Successfully!"
                     // Store the temp directory path for later restoration
                     UserDefaults.standard.set(tempDir.path, forKey: "pendingNearbyBackupRestore")
                 }
