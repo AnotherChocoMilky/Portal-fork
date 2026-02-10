@@ -89,7 +89,7 @@ class DownloadsPortalService: ObservableObject {
     @Published var errorMessage: String?
     @Published var rawJSONResponse: String?
     
-    private let githubURL = "https://raw.githubusercontent.com/WSF-Team/WSF/main/Portal/ConfigurationFiles/Downloads.json"
+    private let githubURL = "https://raw.githubusercontent.com/WhySooooFurious/Ultimate-Sideloading-Guide/refs/heads/main/raw-files/downloads.json"
     
     func fetchDownloads() async {
         await MainActor.run {
