@@ -1,3 +1,8 @@
+// Made by dylan, made for Portal
+// When doing a fork, please credit me so DO NOT remove these comments.
+// This manager works by adding a UIWindow above the keyboard window and works ONLY for iOS 26
+// Customizations can be done through the KeyboardCustomizationView.swift so add a file view for that as well
+
 import SwiftUI
 import Combine
 import simd
