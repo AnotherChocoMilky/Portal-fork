@@ -3,7 +3,6 @@ import PhotosUI
 
 struct KeyboardCustomizationView: View {
     @StateObject private var manager = KeyboardCustomizeManager.shared
-    @State private var selectedItem: PhotosPickerItem?
 
     @State private var startColor: Color = .blue
     @State private var endColor: Color = .cyan
@@ -17,50 +16,17 @@ struct KeyboardCustomizationView: View {
             } header: {
                 AppearanceSectionHeader(title: "Status", icon: "power")
             } footer: {
-                Text("When enabled, a custom background will appear behind the system keyboard. This works best with the system keyboard's natural translucency.")
+                Text("When enabled, a custom dynamic background will appear behind the system keyboard. This works best with the system keyboard's natural translucency.")
             }
 
             if manager.isEnabled {
                 Section {
-                    Toggle(isOn: Binding(
-                        get: { manager.useImage },
-                        set: { if $0 { manager.useImage = true; manager.useGradient = false } else { manager.useImage = false } }
-                    )) {
-                        AppearanceRowLabel(icon: "photo", title: "Use Image", color: .blue)
+                    Toggle(isOn: $manager.showAnimatedOrbs) {
+                        AppearanceRowLabel(icon: "sparkles", title: "Animated Orbs", color: .blue)
                     }
 
-                    if manager.useImage {
-                        PhotosPicker(selection: $selectedItem, matching: .images) {
-                            HStack {
-                                AppearanceRowLabel(icon: "photo.stack", title: "Select Image", color: .blue)
-                                Spacer()
-                                if let image = manager.cachedImage {
-                                    Image(uiImage: image)
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fill)
-                                        .frame(width: 40, height: 40)
-                                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                                } else {
-                                    Text("None")
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                        .onChange(of: selectedItem) { newItem in
-                            Task {
-                                if let data = try? await newItem?.loadTransferable(type: Data.self),
-                                   let image = UIImage(data: data) {
-                                    manager.saveImage(image)
-                                }
-                            }
-                        }
-                    }
-
-                    Toggle(isOn: Binding(
-                        get: { manager.useGradient },
-                        set: { if $0 { manager.useGradient = true; manager.useImage = false } else { manager.useGradient = false } }
-                    )) {
-                        AppearanceRowLabel(icon: "paintpalette", title: "Use Gradient", color: .orange)
+                    Toggle(isOn: $manager.useGradient) {
+                        AppearanceRowLabel(icon: "paintpalette", title: "Custom Gradient", color: .orange)
                     }
 
                     if manager.useGradient {
@@ -123,14 +89,13 @@ struct KeyboardCustomizationView: View {
 
 struct KeyboardBackdropView: View {
     @ObservedObject var manager = KeyboardCustomizeManager.shared
+    @State private var floatingAnimation = false
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         ZStack {
-            if manager.useImage, let image = manager.cachedImage {
-                Image(uiImage: image)
-                    .resizable()
-                    .aspectRatio(contentMode: .fill)
-            } else if manager.useGradient {
+            // Base Background
+            if manager.useGradient {
                 LinearGradient(
                     colors: [Color(hex: manager.gradientStart), Color(hex: manager.gradientEnd)],
                     startPoint: .top,
@@ -139,9 +104,78 @@ struct KeyboardBackdropView: View {
             } else {
                 Color(uiColor: .systemBackground)
             }
+
+            // Dynamic Animated Orbs
+            if manager.showAnimatedOrbs {
+                GeometryReader { geo in
+                    ZStack {
+                        // Primary accent orb
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    colors: [
+                                        Color.accentColor.opacity(0.4),
+                                        Color.accentColor.opacity(0.1),
+                                        Color.clear
+                                    ],
+                                    center: .center,
+                                    startRadius: 0,
+                                    endRadius: 100
+                                )
+                            )
+                            .frame(width: 200, height: 200)
+                            .blur(radius: 40)
+                            .offset(x: floatingAnimation ? -30 : 30, y: floatingAnimation ? -20 : 20)
+                            .position(x: geo.size.width * 0.2, y: geo.size.height * 0.3)
+
+                        // Secondary orb
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    colors: [
+                                        Color.purple.opacity(0.3),
+                                        Color.purple.opacity(0.05),
+                                        Color.clear
+                                    ],
+                                    center: .center,
+                                    startRadius: 0,
+                                    endRadius: 80
+                                )
+                            )
+                            .frame(width: 160, height: 160)
+                            .blur(radius: 30)
+                            .offset(x: floatingAnimation ? 25 : -25, y: floatingAnimation ? 10 : -10)
+                            .position(x: geo.size.width * 0.8, y: geo.size.height * 0.7)
+
+                        // Tertiary orb
+                        Circle()
+                            .fill(
+                                RadialGradient(
+                                    colors: [
+                                        Color.cyan.opacity(0.2),
+                                        Color.clear
+                                    ],
+                                    center: .center,
+                                    startRadius: 0,
+                                    endRadius: 60
+                                )
+                            )
+                            .frame(width: 120, height: 120)
+                            .blur(radius: 20)
+                            .offset(x: floatingAnimation ? -15 : 15, y: floatingAnimation ? 20 : -20)
+                            .position(x: geo.size.width * 0.5, y: geo.size.height * 0.8)
+                    }
+                }
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true)) {
+                        floatingAnimation = true
+                    }
+                }
+            }
         }
         .blur(radius: manager.blurRadius)
         .opacity(manager.opacity)
+        .allowsHitTesting(false) // Non-interactive
     }
 }
 

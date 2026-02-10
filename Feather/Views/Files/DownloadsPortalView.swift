@@ -11,74 +11,113 @@ struct DownloadsPortalItem: Codable, Identifiable {
     let version: String?
     let size: String?
     
-    var id: String { url }
+    var id: String { url + name }
     
     enum CodingKeys: String, CodingKey {
         case name, description, url, icon, category, version, size
+        case downloadURL // Map from JSON
+        case note // Map to description
     }
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         name = try container.decode(String.self, forKey: .name)
-        description = try? container.decodeIfPresent(String.self, forKey: .description)
-        url = try container.decode(String.self, forKey: .url)
+
+        // Handle url or downloadURL
+        if let dURL = try? container.decode(String.self, forKey: .downloadURL) {
+            url = dURL
+        } else {
+            url = try container.decode(String.self, forKey: .url)
+        }
+
+        // Handle description or note
+        if let note = try? container.decodeIfPresent(String.self, forKey: .note) {
+            description = note
+        } else {
+            description = try? container.decodeIfPresent(String.self, forKey: .description)
+        }
+
         icon = try? container.decodeIfPresent(String.self, forKey: .icon)
         category = try? container.decodeIfPresent(String.self, forKey: .category)
         version = try? container.decodeIfPresent(String.self, forKey: .version)
         size = try? container.decodeIfPresent(String.self, forKey: .size)
     }
+
+    // Custom initializer for flattened apps
+    init(name: String, url: String, description: String?, icon: String?, category: String?) {
+        self.name = name
+        self.url = url
+        self.description = description
+        self.icon = icon
+        self.category = category
+        self.version = nil
+        self.size = nil
+    }
+}
+
+// Intermediate models for complex JSON
+struct DownloadsPortalApp: Codable {
+    let name: String
+    let image: String?
+    let certs: [DownloadsPortalCert]?
+}
+
+struct DownloadsPortalCert: Codable {
+    let certName: String
+    let downloadURL: String
 }
 
 struct DownloadsPortalResponse: Codable {
-    let downloads: [DownloadsPortalItem]
+    var downloads: [DownloadsPortalItem] = []
     
     enum CodingKeys: String, CodingKey {
-        case downloads, items, files, data
-    }
-    
-    init(downloads: [DownloadsPortalItem] = []) {
-        self.downloads = downloads
+        case downloads, items, files, data, apps
     }
     
     init(from decoder: Decoder) throws {
-        // Try multiple possible JSON structures
-        if let container = try? decoder.container(keyedBy: CodingKeys.self) {
-            // Try "downloads" key first
-            if let items = try? container.decode([DownloadsPortalItem].self, forKey: .downloads) {
-                downloads = items
-                return
-            }
-            // Try "items" key
-            if let items = try? container.decode([DownloadsPortalItem].self, forKey: .items) {
-                downloads = items
-                return
-            }
-            // Try "files" key
-            if let items = try? container.decode([DownloadsPortalItem].self, forKey: .files) {
-                downloads = items
-                return
-            }
-            // Try "data" key
-            if let items = try? container.decode([DownloadsPortalItem].self, forKey: .data) {
-                downloads = items
-                return
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        var allItems: [DownloadsPortalItem] = []
+
+        // Try "files" key (WSF structure)
+        if let files = try? container.decode([DownloadsPortalItem].self, forKey: .files) {
+            allItems.append(contentsOf: files)
+        }
+
+        // Try "apps" key (WSF structure)
+        if let apps = try? container.decode([DownloadsPortalApp].self, forKey: .apps) {
+            for app in apps {
+                if let certs = app.certs {
+                    for cert in certs {
+                        allItems.append(DownloadsPortalItem(
+                            name: "\(app.name) - \(cert.certName)",
+                            url: cert.downloadURL,
+                            description: "App from Downloads Portal",
+                            icon: "app.badge.fill",
+                            category: "App"
+                        ))
+                    }
+                }
             }
         }
         
-        // Try decoding the entire JSON as an array
-        let singleContainer = try decoder.singleValueContainer()
-        if let items = try? singleContainer.decode([DownloadsPortalItem].self) {
-            downloads = items
-            return
+        // Try other standard keys
+        if let items = try? container.decode([DownloadsPortalItem].self, forKey: .downloads) {
+            allItems.append(contentsOf: items)
+        } else if let items = try? container.decode([DownloadsPortalItem].self, forKey: .items) {
+            allItems.append(contentsOf: items)
+        } else if let items = try? container.decode([DownloadsPortalItem].self, forKey: .data) {
+            allItems.append(contentsOf: items)
         }
         
-        // If all else fails, return empty array
-        downloads = []
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(downloads, forKey: .downloads)
+        // If still empty, try decoding the entire JSON as an array
+        if allItems.isEmpty {
+            let singleContainer = try decoder.singleValueContainer()
+            if let items = try? singleContainer.decode([DownloadsPortalItem].self) {
+                allItems.append(contentsOf: items)
+            }
+        }
+
+        self.downloads = allItems
     }
 }
 
@@ -95,60 +134,23 @@ class DownloadsPortalService: ObservableObject {
         await MainActor.run {
             isLoading = true
             errorMessage = nil
-            rawJSONResponse = nil
         }
         
         AppLogManager.shared.info("Starting Downloads Portal fetch from: \(githubURL)", category: "Downloads")
         
         do {
             guard let url = URL(string: githubURL) else {
-                let error = "Invalid URL: \(githubURL)"
-                AppLogManager.shared.error(error, category: "Downloads")
-                throw NSError(domain: "DownloadsPortal", code: -1, userInfo: [NSLocalizedDescriptionKey: error])
+                throw NSError(domain: "DownloadsPortal", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL"])
             }
             
-            AppLogManager.shared.debug("Fetching data from URL...", category: "Downloads")
-            
-            let (data, urlResponse) = try await URLSession.shared.data(from: url)
-            
-            // Log HTTP response
-            if let httpResponse = urlResponse as? HTTPURLResponse {
-                AppLogManager.shared.info("HTTP Status Code: \(httpResponse.statusCode)", category: "Downloads")
-                
-                if httpResponse.statusCode != 200 {
-                    let error = "HTTP Error: Status code \(httpResponse.statusCode)"
-                    AppLogManager.shared.error(error, category: "Downloads")
-                    throw NSError(domain: "DownloadsPortal", code: httpResponse.statusCode, userInfo: [NSLocalizedDescriptionKey: error])
-                }
-            }
+            let (data, _) = try await URLSession.shared.data(from: url)
             
             // Log raw JSON for debugging
-            let jsonString = String(data: data, encoding: .utf8) ?? "Unable to decode as UTF-8"
-            AppLogManager.shared.debug("Raw JSON Response (\(data.count) bytes):\n\(jsonString.prefix(1000))...", category: "Downloads")
-            
+            let jsonString = String(data: data, encoding: .utf8) ?? "Unable to decode"
             await MainActor.run {
                 self.rawJSONResponse = jsonString
             }
             
-            // Check if data is empty
-            if data.isEmpty {
-                let error = "Empty response from server"
-                AppLogManager.shared.error(error, category: "Downloads")
-                throw NSError(domain: "DownloadsPortal", code: -2, userInfo: [NSLocalizedDescriptionKey: error])
-            }
-            
-            // Try to parse as JSON first to check structure
-            if let jsonObject = try? JSONSerialization.jsonObject(with: data) {
-                AppLogManager.shared.debug("JSON Type: \(type(of: jsonObject))", category: "Downloads")
-                
-                if let dict = jsonObject as? [String: Any] {
-                    AppLogManager.shared.debug("JSON Keys: \(dict.keys.joined(separator: ", "))", category: "Downloads")
-                } else if let array = jsonObject as? [[String: Any]] {
-                    AppLogManager.shared.debug("JSON is array with \(array.count) items", category: "Downloads")
-                }
-            }
-            
-            // Try to decode the response
             let decoder = JSONDecoder()
             let decodedResponse = try decoder.decode(DownloadsPortalResponse.self, from: data)
             
@@ -157,52 +159,14 @@ class DownloadsPortalService: ObservableObject {
                 self.isLoading = false
             }
             
-            AppLogManager.shared.success("Successfully loaded \(decodedResponse.downloads.count) download items", category: "Downloads")
+            AppLogManager.shared.success("Successfully loaded \(decodedResponse.downloads.count) items", category: "Downloads")
             
-            // Log each item
-            for (index, item) in decodedResponse.downloads.enumerated() {
-                AppLogManager.shared.debug("Item \(index + 1): \(item.name) - \(item.url)", category: "Downloads")
-            }
-            
-        } catch let decodingError as DecodingError {
-            let errorDescription = formatDecodingError(decodingError)
-            AppLogManager.shared.error("Decoding Error: \(errorDescription)", category: "Downloads")
-            
-            await MainActor.run {
-                self.errorMessage = errorDescription
-                self.isLoading = false
-            }
-        } catch let urlError as URLError {
-            let errorDescription = "Network Error: \(urlError.localizedDescription) (Code: \(urlError.code.rawValue))"
-            AppLogManager.shared.error(errorDescription, category: "Downloads")
-            
-            await MainActor.run {
-                self.errorMessage = errorDescription
-                self.isLoading = false
-            }
         } catch {
-            let errorDescription = "Error: \(error.localizedDescription)"
-            AppLogManager.shared.error(errorDescription, category: "Downloads")
-            
+            AppLogManager.shared.error("Fetch Error: \(error.localizedDescription)", category: "Downloads")
             await MainActor.run {
-                self.errorMessage = errorDescription
+                self.errorMessage = error.localizedDescription
                 self.isLoading = false
             }
-        }
-    }
-    
-    private func formatDecodingError(_ error: DecodingError) -> String {
-        switch error {
-        case .keyNotFound(let key, let context):
-            return "Missing key '\(key.stringValue)' at path: \(context.codingPath.map { $0.stringValue }.joined(separator: " -> "))"
-        case .typeMismatch(let type, let context):
-            return "Type mismatch: expected \(type) at path: \(context.codingPath.map { $0.stringValue }.joined(separator: " -> ")). \(context.debugDescription)"
-        case .valueNotFound(let type, let context):
-            return "Missing value for type \(type) at path: \(context.codingPath.map { $0.stringValue }.joined(separator: " -> "))"
-        case .dataCorrupted(let context):
-            return "Data corrupted at path: \(context.codingPath.map { $0.stringValue }.joined(separator: " -> ")). \(context.debugDescription)"
-        @unknown default:
-            return "Unknown decoding error: \(error)"
         }
     }
 }
@@ -495,12 +459,5 @@ struct DownloadItemCard: View {
                 }
             }
         }
-    }
-}
-
-// MARK: - Preview
-struct DownloadsPortalView_Previews: PreviewProvider {
-    static var previews: some View {
-        DownloadsPortalView()
     }
 }
