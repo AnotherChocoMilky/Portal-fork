@@ -3244,6 +3244,7 @@ struct FeatureFlagsView: View {
     @AppStorage("feature_usePortalCert") var usePortalCert = false
     @AppStorage("feature_advancedFilesFeatures") var advancedFilesFeatures = false
     @AppStorage("feature_advancedBackupTools") var advancedBackupTools = false
+    @AppStorage("feature_passwordChanger") var passwordChanger = false
     
     var body: some View {
         List {
@@ -3260,6 +3261,8 @@ struct FeatureFlagsView: View {
             }
             
             Section {
+                Toggle("Password Changer", isOn: $passwordChanger)
+
                 Toggle("Use .portalcert for certificates", isOn: $usePortalCert)
             } header: {
                 Text("Certificates")
