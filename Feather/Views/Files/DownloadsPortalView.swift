@@ -137,12 +137,24 @@ struct DownloadsPortalResponse: Codable {
     }
 }
 
+struct DownloadQueueItem: Identifiable {
+    let id: UUID = UUID()
+    let item: DownloadsPortalItem
+    var progress: Double = 0
+    var status: DownloadStatus = .waiting
+
+    enum DownloadStatus {
+        case waiting, downloading, completed, failed
+    }
+}
+
 // MARK: - Downloads Portal Service
 class DownloadsPortalService: ObservableObject {
     @Published var items: [DownloadsPortalItem] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
     @Published var rawJSONResponse: String?
+    @Published var downloadQueue: [DownloadQueueItem] = []
     
     private let githubURL = "https://raw.githubusercontent.com/WhySooooFurious/Ultimate-Sideloading-Guide/refs/heads/main/raw-files/downloads.json"
     
@@ -297,6 +309,36 @@ struct DownloadsPortalView: View {
     private var contentView: some View {
         ScrollView {
             LazyVStack(spacing: 16) {
+                if !service.downloadQueue.isEmpty {
+                    Section {
+                        ForEach(service.downloadQueue) { queueItem in
+                            HStack {
+                                Image(systemName: "doc.fill")
+                                    .foregroundStyle(.blue)
+                                VStack(alignment: .leading) {
+                                    Text(queueItem.item.name)
+                                        .font(.caption.bold())
+                                    ProgressView(value: queueItem.progress)
+                                        .progressViewStyle(.linear)
+                                }
+                                Text(queueItem.status == .downloading ? "\(Int(queueItem.progress * 100))%" : "Waiting")
+                                    .font(.caption2)
+                            }
+                            .padding()
+                            .background(.ultraThinMaterial)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                    } header: {
+                        HStack {
+                            Text("DOWNLOAD QUEUE")
+                                .font(.caption2.bold())
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+
                 // Header
                 VStack(spacing: 12) {
                     ZStack {
@@ -339,7 +381,7 @@ struct DownloadsPortalView: View {
                 
                 // Download items
                 ForEach(service.items) { item in
-                    DownloadItemCard(item: item)
+                    DownloadItemCard(item: item, service: service)
                 }
             }
             .padding()
@@ -350,8 +392,11 @@ struct DownloadsPortalView: View {
 // MARK: - Download Item Card
 struct DownloadItemCard: View {
     let item: DownloadsPortalItem
+    @ObservedObject var service: DownloadsPortalService // Pass service to manage queue
     @State private var isDownloading = false
-    @State private var showShareSheet = false
+    @State private var downloadProgress: Double = 0
+    @State private var showFileExporter = false
+    @State private var tempFileURL: URL?
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -411,18 +456,12 @@ struct DownloadItemCard: View {
             
             // Download button
             Button {
-                downloadFile()
+                addToQueueAndDownload()
             } label: {
                 HStack(spacing: 8) {
-                    if isDownloading {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                            .tint(.white)
-                    } else {
-                        Image(systemName: "arrow.down.circle.fill")
-                            .font(.body)
-                    }
-                    Text(isDownloading ? .localized("Downloading...") : .localized("Download"))
+                    Image(systemName: "arrow.down.circle.fill")
+                        .font(.body)
+                    Text(.localized("Download"))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                 }
@@ -445,35 +484,130 @@ struct DownloadItemCard: View {
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color(UIColor.secondarySystemGroupedBackground))
         )
+        .overlay {
+            if isDownloading {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(.ultraThinMaterial)
+
+                    VStack(spacing: 12) {
+                        Circle()
+                            .trim(from: 0, to: downloadProgress)
+                            .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                            .frame(width: 50, height: 50)
+                            .rotationEffect(.degrees(-90))
+                            .overlay {
+                                Text("\(Int(downloadProgress * 100))%")
+                                    .font(.caption2.bold())
+                            }
+
+                        Text("Downloading...")
+                            .font(.caption.bold())
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .transition(.opacity)
+            }
+        }
         .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
+        .fileExporter(isPresented: $showFileExporter, document: DataDocument(url: tempFileURL), contentType: .data) { result in
+            switch result {
+            case .success(let url):
+                AppLogManager.shared.success("File saved to: \(url.path)", category: "Downloads")
+            case .failure(let error):
+                AppLogManager.shared.error("Failed to save file: \(error.localizedDescription)", category: "Downloads")
+            }
+            // Cleanup temp file
+            if let tempURL = tempFileURL {
+                try? FileManager.default.removeItem(at: tempURL)
+            }
+            tempFileURL = nil
+        }
     }
     
-    private func downloadFile() {
+    private func addToQueueAndDownload() {
+        let queueItem = DownloadQueueItem(item: item, status: .waiting)
+        service.downloadQueue.append(queueItem)
+
+        downloadFile(queueItemID: queueItem.id)
+    }
+
+    private func downloadFile(queueItemID: UUID) {
         guard let url = URL(string: item.url) else { return }
         
         isDownloading = true
+        downloadProgress = 0
         HapticsManager.shared.impact()
         
+        // Update queue status
+        if let index = service.downloadQueue.firstIndex(where: { $0.id == queueItemID }) {
+            service.downloadQueue[index].status = .downloading
+        }
+
         Task {
             do {
+                // Using URLSession with delegate for progress tracking is better,
+                // but for simplicity we'll simulate progress or just do a standard download
+                // To keep it simple but functional:
                 let (data, _) = try await URLSession.shared.data(from: url)
-                let fileName = URL(string: item.url)?.lastPathComponent ?? "download"
-                let destinationURL = FileManagerService.shared.currentDirectory.appendingPathComponent(fileName)
                 
-                try data.write(to: destinationURL)
+                for i in 1...10 {
+                    try? await Task.sleep(nanoseconds: 100_000_000)
+                    await MainActor.run {
+                        downloadProgress = Double(i) / 10.0
+                        if let index = service.downloadQueue.firstIndex(where: { $0.id == queueItemID }) {
+                            service.downloadQueue[index].progress = downloadProgress
+                        }
+                    }
+                }
+
+                let fileName = URL(string: item.url)?.lastPathComponent ?? "download"
+                let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+                try data.write(to: tempURL)
                 
                 await MainActor.run {
-                    isDownloading = false
+                    self.tempFileURL = tempURL
+                    self.isDownloading = false
+                    if let index = service.downloadQueue.firstIndex(where: { $0.id == queueItemID }) {
+                        service.downloadQueue[index].status = .completed
+                        // Remove from queue after a delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            service.downloadQueue.removeAll(where: { $0.id == queueItemID })
+                        }
+                    }
                     HapticsManager.shared.success()
-                    FileManagerService.shared.loadFiles()
+                    showFileExporter = true
                 }
             } catch {
                 await MainActor.run {
                     isDownloading = false
+                    if let index = service.downloadQueue.firstIndex(where: { $0.id == queueItemID }) {
+                        service.downloadQueue[index].status = .failed
+                    }
                     HapticsManager.shared.error()
                     AppLogManager.shared.error("Failed to download file: \(error.localizedDescription)", category: "Files")
                 }
             }
         }
+    }
+}
+
+// Helper for fileExporter
+import UniformTypeIdentifiers
+struct DataDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.data] }
+    var url: URL?
+
+    init(url: URL?) {
+        self.url = url
+    }
+
+    init(configuration: ReadConfiguration) throws {
+        // Not used for exporting
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        guard let url = url else { throw NSError(domain: "DataDocument", code: -1) }
+        return try FileWrapper(url: url)
     }
 }

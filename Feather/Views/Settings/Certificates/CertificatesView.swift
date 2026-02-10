@@ -6,6 +6,7 @@ struct CertificatesView: View {
 	@AppStorage("feather.selectedCert") private var _storedSelectedCert: Int = 0
 	@AppStorage("Feather.certificateExperience") private var certificateExperience: String = CertificateExperience.developer.rawValue
 	@AppStorage("forceShowGuides") private var forceShowGuides = false
+	@AppStorage("feature_passwordChanger") private var passwordChanger = false
 	
 	@State private var _isAddingPresenting = false
 	@State private var _isPasswordChangePresenting = false
@@ -60,12 +61,14 @@ struct CertificatesView: View {
 		.toolbar(content: {
 			ToolbarItem(placement: .topBarTrailing) {
 				HStack(spacing: 12) {
-					Button {
-						_isPasswordChangePresenting = true
-					} label: {
-						Image(systemName: "lock.rotation")
-							.font(.system(size: 20, weight: .medium))
-							.foregroundStyle(Color.accentColor)
+					if passwordChanger {
+						Button {
+							_isPasswordChangePresenting = true
+						} label: {
+							Image(systemName: "lock.rotation")
+								.font(.system(size: 20, weight: .medium))
+								.foregroundStyle(Color.accentColor)
+						}
 					}
 
 					Button {

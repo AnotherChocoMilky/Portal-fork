@@ -6,6 +6,8 @@ struct KeyboardCustomizationView: View {
 
     @State private var startColor: Color = .blue
     @State private var endColor: Color = .cyan
+    @State private var bgColor: Color = .black
+    @State private var selectedItem: PhotosPickerItem?
 
     var body: some View {
         List {
@@ -21,8 +23,46 @@ struct KeyboardCustomizationView: View {
 
             if manager.isEnabled {
                 Section {
+                    PhotosPicker(selection: $selectedItem, matching: .images) {
+                        AppearanceRowLabel(icon: "photo.fill", title: "Custom Image", color: .green)
+                    }
+                    .onChange(of: selectedItem) { newItem in
+                        Task {
+                            if let data = try? await newItem?.loadTransferable(type: Data.self) {
+                                manager.backgroundImageData = data
+                            }
+                        }
+                    }
+
+                    if manager.backgroundImageData != nil {
+                        Button(role: .destructive) {
+                            manager.backgroundImageData = nil
+                            selectedItem = nil
+                        } label: {
+                            AppearanceRowLabel(icon: "trash", title: "Remove Image", color: .red)
+                        }
+                    }
+                } header: {
+                    AppearanceSectionHeader(title: "Media", icon: "photo")
+                }
+
+                Section {
                     Toggle(isOn: $manager.showAnimatedOrbs) {
                         AppearanceRowLabel(icon: "sparkles", title: "Animated Orbs", color: .blue)
+                    }
+
+                    if manager.showAnimatedOrbs {
+                        VStack(alignment: .leading, spacing: 8) {
+                            AppearanceRowLabel(icon: "circle.dotted", title: "Orb Count: \(manager.orbCount)", color: .blue)
+                            Slider(value: Binding(get: { Double(manager.orbCount) }, set: { manager.orbCount = Int($0) }), in: 1...10, step: 1)
+                        }
+                        .padding(.vertical, 4)
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            AppearanceRowLabel(icon: "bolt.fill", title: "Orb Speed: \(Int(manager.orbSpeed))", color: .yellow)
+                            Slider(value: $manager.orbSpeed, in: 1...10)
+                        }
+                        .padding(.vertical, 4)
                     }
 
                     Toggle(isOn: $manager.useGradient) {
@@ -39,6 +79,11 @@ struct KeyboardCustomizationView: View {
                             AppearanceRowLabel(icon: "2.circle", title: "End Color", color: .orange)
                         }
                         .onChange(of: endColor) { manager.gradientEnd = $0.toHex() ?? "#00AEEF" }
+                    } else {
+                        ColorPicker(selection: $bgColor, supportsOpacity: false) {
+                            AppearanceRowLabel(icon: "paintbrush.fill", title: "Background Color", color: .orange)
+                        }
+                        .onChange(of: bgColor) { manager.backgroundColor = $0.toHex() ?? "#1A1A1A" }
                     }
                 } header: {
                     AppearanceSectionHeader(title: "Background Type", icon: "square.fill")
@@ -83,6 +128,7 @@ struct KeyboardCustomizationView: View {
         .onAppear {
             startColor = Color(hex: manager.gradientStart)
             endColor = Color(hex: manager.gradientEnd)
+            bgColor = Color(hex: manager.backgroundColor)
         }
     }
 }

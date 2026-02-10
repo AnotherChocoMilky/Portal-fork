@@ -150,7 +150,10 @@ struct AppearanceView: View {
             AppearanceNavRow(icon: "rectangle.stack.fill", title: "All Apps", color: .blue, destination: AllAppsCustomizationView())
             AppearanceNavRow(icon: "rectangle.topthird.inset.filled", title: "Status Bar", color: .cyan, destination: StatusBarCustomizationView())
             AppearanceNavRow(icon: "dock.rectangle", title: "Tab Bar", color: .indigo, destination: TabBarCustomizationView())
-            AppearanceNavRow(icon: "keyboard", title: "Keyboard Backdrop", color: .purple, destination: KeyboardCustomizationView())
+
+            if ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 26 {
+                AppearanceNavRow(icon: "keyboard", title: "Keyboard Backdrop", color: .purple, destination: KeyboardCustomizationView())
+            }
         } header: {
             AppearanceSectionHeader(title: "Customization", icon: "slider.horizontal.3")
         }

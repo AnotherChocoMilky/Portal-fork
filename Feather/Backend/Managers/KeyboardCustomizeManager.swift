@@ -25,6 +25,18 @@ class KeyboardCustomizeManager: ObservableObject {
     @Published var showAnimatedOrbs: Bool {
         didSet { UserDefaults.standard.set(showAnimatedOrbs, forKey: "Feather.keyboard.showAnimatedOrbs") }
     }
+    @Published var orbCount: Int {
+        didSet { UserDefaults.standard.set(orbCount, forKey: "Feather.keyboard.orbCount") }
+    }
+    @Published var orbSpeed: Double {
+        didSet { UserDefaults.standard.set(orbSpeed, forKey: "Feather.keyboard.orbSpeed") }
+    }
+    @Published var backgroundColor: String {
+        didSet { UserDefaults.standard.set(backgroundColor, forKey: "Feather.keyboard.backgroundColor") }
+    }
+    @Published var backgroundImageData: Data? {
+        didSet { UserDefaults.standard.set(backgroundImageData, forKey: "Feather.keyboard.backgroundImageData") }
+    }
 
     @Published var keyboardHeight: CGFloat = 0
     @Published var isKeyboardVisible: Bool = false
@@ -40,6 +52,10 @@ class KeyboardCustomizeManager: ObservableObject {
         self.gradientEnd = UserDefaults.standard.string(forKey: "Feather.keyboard.gradientEnd") ?? "#00AEEF"
         self.useGradient = UserDefaults.standard.object(forKey: "Feather.keyboard.useGradient") as? Bool ?? true
         self.showAnimatedOrbs = UserDefaults.standard.object(forKey: "Feather.keyboard.showAnimatedOrbs") as? Bool ?? true
+        self.orbCount = UserDefaults.standard.object(forKey: "Feather.keyboard.orbCount") as? Int ?? 3
+        self.orbSpeed = UserDefaults.standard.object(forKey: "Feather.keyboard.orbSpeed") as? Double ?? 5.0
+        self.backgroundColor = UserDefaults.standard.string(forKey: "Feather.keyboard.backgroundColor") ?? "#1A1A1A"
+        self.backgroundImageData = UserDefaults.standard.data(forKey: "Feather.keyboard.backgroundImageData")
 
         setupObservers()
     }
@@ -115,8 +131,9 @@ class KeyboardCustomizeManager: ObservableObject {
         guard let window = backdropWindow else { return }
 
         let screenSize = UIScreen.main.bounds.size
-        // Ensure the window is always at the bottom of the screen
-        let frame = CGRect(x: 0, y: screenSize.height - height, width: screenSize.width, height: height)
+        // Ensure the window is always at the bottom of the screen and slightly larger to prevent edges from showing
+        // Adding 100pt extra height at the bottom just in case
+        let frame = CGRect(x: 0, y: screenSize.height - height, width: screenSize.width, height: height + 100)
 
         window.isHidden = false
 
@@ -170,87 +187,95 @@ struct KeyboardBackdropView: View {
     var body: some View {
         ZStack {
             // Base Background
-            if manager.useGradient {
+            if let imageData = manager.backgroundImageData, let uiImage = UIImage(data: imageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else if manager.useGradient {
                 LinearGradient(
                     colors: [Color(hex: manager.gradientStart), Color(hex: manager.gradientEnd)],
                     startPoint: .top,
                     endPoint: .bottom
                 )
             } else {
-                Color(uiColor: .systemBackground)
+                Color(hex: manager.backgroundColor)
             }
 
             // Dynamic Animated Orbs
             if manager.showAnimatedOrbs {
                 GeometryReader { geo in
                     ZStack {
-                        // Primary accent orb
-                        Circle()
-                            .fill(
-                                RadialGradient(
-                                    colors: [
-                                        Color.accentColor.opacity(0.4),
-                                        Color.accentColor.opacity(0.1),
-                                        Color.clear
-                                    ],
-                                    center: .center,
-                                    startRadius: 0,
-                                    endRadius: 100
-                                )
-                            )
-                            .frame(width: 200, height: 200)
-                            .blur(radius: 40)
-                            .offset(x: floatingAnimation ? -30 : 30, y: floatingAnimation ? -20 : 20)
-                            .position(x: geo.size.width * 0.2, y: geo.size.height * 0.3)
-
-                        // Secondary orb
-                        Circle()
-                            .fill(
-                                RadialGradient(
-                                    colors: [
-                                        Color.purple.opacity(0.3),
-                                        Color.purple.opacity(0.05),
-                                        Color.clear
-                                    ],
-                                    center: .center,
-                                    startRadius: 0,
-                                    endRadius: 80
-                                )
-                            )
-                            .frame(width: 160, height: 160)
-                            .blur(radius: 30)
-                            .offset(x: floatingAnimation ? 25 : -25, y: floatingAnimation ? 10 : -10)
-                            .position(x: geo.size.width * 0.8, y: geo.size.height * 0.7)
-
-                        // Tertiary orb
-                        Circle()
-                            .fill(
-                                RadialGradient(
-                                    colors: [
-                                        Color.cyan.opacity(0.2),
-                                        Color.clear
-                                    ],
-                                    center: .center,
-                                    startRadius: 0,
-                                    endRadius: 60
-                                )
-                            )
-                            .frame(width: 120, height: 120)
-                            .blur(radius: 20)
-                            .offset(x: floatingAnimation ? -15 : 15, y: floatingAnimation ? 20 : -20)
-                            .position(x: geo.size.width * 0.5, y: geo.size.height * 0.8)
+                        ForEach(0..<manager.orbCount, id: \.self) { index in
+                            orbView(for: index, in: geo.size)
+                        }
                     }
                 }
                 .onAppear {
-                    withAnimation(.easeInOut(duration: 5).repeatForever(autoreverses: true)) {
+                    withAnimation(.easeInOut(duration: 11.0 - manager.orbSpeed).repeatForever(autoreverses: true)) {
                         floatingAnimation = true
+                    }
+                }
+                .onChange(of: manager.orbSpeed) { _ in
+                    withAnimation(.easeInOut(duration: 11.0 - manager.orbSpeed).repeatForever(autoreverses: true)) {
+                        floatingAnimation.toggle()
                     }
                 }
             }
         }
+        .scaleEffect(1.2) // Scale up to cover blur edges
         .blur(radius: manager.blurRadius)
         .opacity(manager.opacity)
         .allowsHitTesting(false)
+    }
+
+    @ViewBuilder
+    private func orbView(for index: Int, in size: CGSize) -> some View {
+        let colors: [Color] = [.accentColor, .purple, .cyan, .blue, .pink, .indigo, .mint]
+        let color = colors[index % colors.count]
+        let orbSize = CGFloat.random(in: 100...250, seed: index)
+        let xPos = CGFloat.random(in: 0...size.width, seed: index)
+        let yPos = CGFloat.random(in: 0...size.height, seed: index)
+
+        Circle()
+            .fill(
+                RadialGradient(
+                    colors: [
+                        color.opacity(0.4),
+                        color.opacity(0.1),
+                        Color.clear
+                    ],
+                    center: .center,
+                    startRadius: 0,
+                    endRadius: orbSize / 2
+                )
+            )
+            .frame(width: orbSize, height: orbSize)
+            .blur(radius: orbSize / 5)
+            .offset(x: floatingAnimation ? CGFloat.random(in: -40...40, seed: index + 100) : CGFloat.random(in: -40...40, seed: index + 200),
+                    y: floatingAnimation ? CGFloat.random(in: -30...30, seed: index + 300) : CGFloat.random(in: -30...30, seed: index + 400))
+            .position(x: xPos, y: yPos)
+    }
+}
+
+// Helper for deterministic random numbers with seed
+extension CGFloat {
+    static func random(in range: ClosedRange<CGFloat>, seed: Int) -> CGFloat {
+        var g = SeededGenerator(seed: UInt64(seed))
+        return CGFloat.random(in: range, using: &g)
+    }
+}
+
+struct SeededGenerator: RandomNumberGenerator {
+    private var state: UInt64
+    init(seed: UInt64) {
+        state = seed
+    }
+    mutating func next() -> UInt64 {
+        state = state &+ 0x9E3779B97F4A7C15
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
+        z = (z ^ (z >> 27)) &* 0x94D049BB133111EB
+        return z ^ (z >> 31)
     }
 }
 
