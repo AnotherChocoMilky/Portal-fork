@@ -158,10 +158,19 @@ class KeyboardCustomizeManager: ObservableObject {
             }
             .store(in: &cancellables)
 
+        NotificationCenter.default.publisher(for: UIResponder.keyboardDidHideNotification)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] _ in
+                self?.hideWindow(duration: 0)
+            }
+            .store(in: &cancellables)
+
         $isEnabled
             .receive(on: RunLoop.main)
             .sink { [weak self] enabled in
                 if !enabled {
+                    self?.isKeyboardVisible = false
+                    self?.keyboardHeight = 0
                     self?.hideWindow()
                 }
             }
@@ -181,7 +190,7 @@ class KeyboardCustomizeManager: ObservableObject {
 
         let screenSize = UIScreen.main.bounds.size
 
-        let isActuallyVisible = keyboardFrame.origin.y < screenSize.height
+        let isActuallyVisible = visible && keyboardFrame.origin.y < screenSize.height
         let height = isActuallyVisible ? (screenSize.height - keyboardFrame.origin.y) : 0
 
         let duration = userInfo[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double ?? 0.25
@@ -225,8 +234,8 @@ class KeyboardCustomizeManager: ObservableObject {
             window.alpha = 0
             let screenSize = UIScreen.main.bounds.size
             window.frame.origin.y = screenSize.height
-        }) { _ in
-            if window.alpha == 0 {
+        }) { [weak self] _ in
+            if self?.isKeyboardVisible == false {
                 window.isHidden = true
             }
         }
@@ -359,7 +368,7 @@ struct KeyboardBackdropView: View {
 
     var body: some View {
         ZStack {
-            if ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 26 {
+            if manager.isEnabled && manager.isKeyboardVisible && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 26 {
                 // Base Background
                 Group {
                     if manager.isDynamicGradientEnabled {
@@ -399,8 +408,10 @@ struct KeyboardBackdropView: View {
                         }
                     }
                 }
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
             }
         }
+        .animation(.spring(response: 0.35, dampingFraction: 0.85), value: manager.isKeyboardVisible)
         .clipShape(RoundedRectangle(cornerRadius: 38, style: .continuous))
         .offset(y: 40) 
         .compositingGroup()
