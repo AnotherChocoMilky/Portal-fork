@@ -53,9 +53,7 @@ struct DownloadsPortalItem: Codable, Identifiable {
         self.version = nil
         self.size = nil
     }
-}
 
-extension DownloadsPortalItem: Encodable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(name, forKey: .name)
@@ -132,9 +130,7 @@ struct DownloadsPortalResponse: Codable {
 
         self.downloads = allItems
     }
-}
 
-extension DownloadsPortalResponse: Encodable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(downloads, forKey: .downloads)
