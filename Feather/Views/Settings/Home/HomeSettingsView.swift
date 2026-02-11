@@ -61,7 +61,7 @@ enum HomeWidgetType: String, CaseIterable, Codable, Identifiable {
         case .sourcesOverview: return String.localized("Sources Overview")
         case .networkStatus: return String.localized("Network Status")
         case .tips: return String.localized("Tips & Tricks")
-        case .deviceInfo: return String.localized("Device Info")
+        case .deviceInfo: return String.localized("Device Information")
         case .appStats: return String.localized("App Statistics")
         case .favoriteApps: return String.localized("Favorite Apps")
         case .signingHistory: return String.localized("Signing History")

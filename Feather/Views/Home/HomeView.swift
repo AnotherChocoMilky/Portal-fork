@@ -55,6 +55,8 @@ struct HomeView: View {
     @State private var _currentTipIndex = 0
     @State private var _showAppUpdatesSheet = false
     @State private var _selectedUpdateForSigning: AppUpdateInfo? = nil
+    @State private var _deviceUDID: String = ""
+    @State private var _deviceModel: String = ""
     
     // Tips for the Tips widget
     private let _tips = [
@@ -192,6 +194,10 @@ struct HomeView: View {
             }
             // Rotate tip
             _currentTipIndex = Int.random(in: 0..<_tips.count)
+
+            // Cache device info
+            _deviceUDID = UIDevice.current.grabUDID()
+            _deviceModel = UIDevice.current.humanReadableModelName
         }
         .task(id: Array(_sources)) {
             await viewModel.fetchSources(_sources)
@@ -1009,15 +1015,60 @@ struct HomeView: View {
     private func deviceInfoSection(size: WidgetSize) -> some View {
         VStack(alignment: .leading, spacing: _compactMode ? 8 : 16) {
             if !_compactMode {
-                sectionHeader("Device Info", icon: "iphone")
+                sectionHeader("Device Information", icon: "iphone")
             }
             
-            VStack(spacing: 8) {
-                DeviceInfoRow(title: "Device", value: UIDevice.current.name, icon: "iphone", color: .indigo)
+            VStack(spacing: 12) {
+                DeviceInfoRow(title: "Model", value: _deviceModel, icon: "iphone", color: .indigo)
                 DeviceInfoRow(title: "iOS Version", value: UIDevice.current.systemVersion, icon: "gear", color: .blue)
-                DeviceInfoRow(title: "Model", value: UIDevice.current.model, icon: "cpu", color: .purple)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "number")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(Color.purple)
+                            .frame(width: 24)
+
+                        Text("UDID")
+                            .font(.system(size: 14, weight: .regular))
+                            .foregroundStyle(.secondary)
+
+                        Spacer()
+
+                        Button {
+                            UIPasteboard.general.string = _deviceUDID
+                            HapticsManager.shared.success()
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "doc.on.doc")
+                                    .font(.system(size: 12))
+                                Text("Copy")
+                                    .font(.system(size: 12, weight: .bold))
+                            }
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(Capsule().fill(Color.purple))
+                        }
+                    }
+
+                    Text(_deviceUDID)
+                        .font(.system(size: 12, weight: .medium, design: .monospaced))
+                        .foregroundStyle(.primary)
+                        .padding(.leading, 36)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
             }
             .padding(_compactMode ? 12 : 16)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color(UIColor.separator).opacity(0.2), lineWidth: 0.5)
+            )
         }
         .opacity(_appearAnimation ? 1 : 0)
         .offset(y: _appearAnimation ? 0 : 20)
