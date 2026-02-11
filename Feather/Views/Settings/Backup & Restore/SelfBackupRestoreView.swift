@@ -327,8 +327,27 @@ struct SelfBackupRestoreView: View {
         } message: { message in
             Text(message)
         }
+        .alert("Apply Backup", isPresented: $viewModel.showingApplyBackupPrompt, presenting: viewModel.backupToApply) { backup in
+            Button("Apply Now") {
+                Task {
+                    await viewModel.restoreBackup(backup)
+                }
+            }
+            Button("Later", role: .cancel) { }
+        } message: { backup in
+            Text("Do you want to apply '\(backup.name)' now? This will overwrite your current data and the app will need to restart.")
+        }
+        .alert("Restart Required", isPresented: $viewModel.showingRestartAlert) {
+            Button("Exit App") {
+                exit(0)
+            }
+        } message: {
+            Text("Backup restored successfully! Portal needs to restart to apply all changes.")
+        }
         .alert("Enter Backup Password", isPresented: $viewModel.showingPasswordPrompt) {
             SecureField("Password", text: $viewModel.passwordInput)
+                .textContentType(.password)
+                .keyboardType(.default)
             Button("Cancel", role: .cancel) {
                 viewModel.onPasswordSubmit?("")
             }
@@ -491,6 +510,10 @@ class SelfBackupRestoreViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var successMessage: String?
     
+    @Published var showingApplyBackupPrompt = false
+    @Published var backupToApply: LocalBackup?
+    @Published var showingRestartAlert = false
+
     @Published var showingPasswordPrompt = false
     @Published var passwordInput = ""
     var onPasswordSubmit: ((String) -> Void)?
@@ -561,28 +584,38 @@ class SelfBackupRestoreViewModel: ObservableObject {
             
             // Create ZIP archive using a more robust manual approach
             let backupZipPath = backupsDirectory.appendingPathComponent("\(backupID.uuidString).zip")
-            guard let archive = Archive(url: backupZipPath, accessMode: .create) else {
-                throw NSError(domain: "SelfBackup", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create archive at \(backupZipPath.path)"])
-            }
 
-            // Add files individually for better error handling and recursion
-            let enumerator = fileManager.enumerator(at: tempBackupDir, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles])
-            var filesToZip: [URL] = []
-            while let fileURL = enumerator?.nextObject() as? URL {
-                filesToZip.append(fileURL)
-            }
-
-            for (index, fileURL) in filesToZip.enumerated() {
-                operationProgress = 0.5 + (Double(index) / Double(filesToZip.count)) * 0.3
-                let relativePath = fileURL.path.replacingOccurrences(of: tempBackupDir.path + "/", with: "")
-                currentOperation = "Zipping: \(relativePath)"
-
-                do {
-                    try archive.addEntry(with: relativePath, relativeTo: tempBackupDir)
-                } catch {
-                    AppLogManager.shared.error("Failed to add \(relativePath) to archive: \(error.localizedDescription)", category: "Self Backup")
+            // Use a nested scope to ensure Archive is finalized before reading it back
+            try await Task.detached { [weak self, tempBackupDir] in
+                guard let self = self else { return }
+                guard let archive = Archive(url: backupZipPath, accessMode: .create) else {
+                    throw NSError(domain: "SelfBackup", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create archive at \(backupZipPath.path)"])
                 }
-            }
+
+                // Add files individually for better error handling and recursion
+                let fileManager = FileManager.default
+                let enumerator = fileManager.enumerator(at: tempBackupDir, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles])
+                var filesToZip: [URL] = []
+                while let fileURL = enumerator?.nextObject() as? URL {
+                    filesToZip.append(fileURL)
+                }
+
+                for (index, fileURL) in filesToZip.enumerated() {
+                    let progress = 0.5 + (Double(index) / Double(filesToZip.count)) * 0.3
+                    let relativePath = fileURL.path.replacingOccurrences(of: tempBackupDir.path + "/", with: "")
+
+                    await MainActor.run { [weak self] in
+                        self?.operationProgress = progress
+                        self?.currentOperation = "Zipping: \(relativePath)"
+                    }
+
+                    do {
+                        try archive.addEntry(with: relativePath, relativeTo: tempBackupDir)
+                    } catch {
+                        AppLogManager.shared.error("Failed to add \(relativePath) to archive: \(error.localizedDescription)", category: "Self Backup")
+                    }
+                }
+            }.value
             
             operationProgress = 0.8
             currentOperation = "Encrypting Backup"
@@ -725,9 +758,7 @@ class SelfBackupRestoreViewModel: ObservableObject {
             operationProgress = 1.0
             currentOperation = "Restore Completed"
             
-            successMessage = "Backup restored successfully! Please restart Portal to apply changes."
-            showSuccess = true
-            
+            showingRestartAlert = true
         } catch {
             errorMessage = "Failed to restore backup: \(error.localizedDescription)"
             showError = true
@@ -890,8 +921,8 @@ class SelfBackupRestoreViewModel: ObservableObject {
             localBackups.sort { $0.date > $1.date }
             saveMetadata()
             
-            successMessage = "Backup Imported Successfully!"
-            showSuccess = true
+            backupToApply = backup
+            showingApplyBackupPrompt = true
         } catch {
             errorMessage = "Failed to import backup: \(error.localizedDescription)"
             showError = true
@@ -1013,15 +1044,23 @@ class SelfBackupRestoreViewModel: ObservableObject {
             try? fileManager.copyItem(at: shmURL, to: dbDir.appendingPathComponent(shmURL.lastPathComponent))
         }
         
-        // Settings
+        // Settings (App Group)
         if let userDefaults = UserDefaults(suiteName: Storage.appGroupID) {
             let settingsDict = userDefaults.dictionaryRepresentation()
             let filteredSettings = settingsDict.filter { key, _ in
-                !key.hasPrefix("NS") && !key.hasPrefix("Apple") && !key.hasPrefix("AK")
+                !key.hasPrefix("NS") && !key.hasPrefix("Apple") && !key.hasPrefix("AK") && !key.hasPrefix("WebKit") && !key.hasPrefix("CPU") && !key.hasPrefix("metal")
             }
             let settingsPlist = try PropertyListSerialization.data(fromPropertyList: filteredSettings, format: .xml, options: 0)
             try settingsPlist.write(to: directory.appendingPathComponent("settings.plist"))
         }
+
+        // Settings (Standard)
+        let standardDefaults = UserDefaults.standard.dictionaryRepresentation()
+        let filteredStandard = standardDefaults.filter { key, _ in
+            !key.hasPrefix("NS") && !key.hasPrefix("Apple") && !key.hasPrefix("AK") && !key.hasPrefix("WebKit") && !key.hasPrefix("CPU") && !key.hasPrefix("metal")
+        }
+        let standardPlist = try PropertyListSerialization.data(fromPropertyList: filteredStandard, format: .xml, options: 0)
+        try standardPlist.write(to: directory.appendingPathComponent("standard_settings.plist"))
         
         // Marker file
         try kBackupMarkerContent.write(to: directory.appendingPathComponent(kBackupMarkerFilename), atomically: true, encoding: .utf8)
@@ -1094,7 +1133,7 @@ class SelfBackupRestoreViewModel: ObservableObject {
             try? fileManager.copyItem(at: archivesDir, to: fileManager.archives)
         }
         
-        // Restore settings
+        // Restore settings (App Group)
         let settingsFile = directory.appendingPathComponent("settings.plist")
         if fileManager.fileExists(atPath: settingsFile.path) {
             let settingsData = try Data(contentsOf: settingsFile)
@@ -1105,6 +1144,19 @@ class SelfBackupRestoreViewModel: ObservableObject {
                     }
                     userDefaults.synchronize()
                 }
+            }
+        }
+
+        // Restore settings (Standard)
+        let standardFile = directory.appendingPathComponent("standard_settings.plist")
+        if fileManager.fileExists(atPath: standardFile.path) {
+            let standardData = try Data(contentsOf: standardFile)
+            if let standardSettings = try PropertyListSerialization.propertyList(from: standardData, format: nil) as? [String: Any] {
+                let standardDefaults = UserDefaults.standard
+                for (key, value) in standardSettings {
+                    standardDefaults.set(value, forKey: key)
+                }
+                standardDefaults.synchronize()
             }
         }
     }

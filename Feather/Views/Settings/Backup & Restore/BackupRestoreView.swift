@@ -354,14 +354,30 @@ struct BackupRestoreView: View {
                     return
                 }
 
-                // 2. Restore UserDefaults (Settings)
+                // 2. Restore UserDefaults (App Group)
                 let settingsURL = tempRestoreDir.appendingPathComponent("settings.plist")
                 if fileManager.fileExists(atPath: settingsURL.path) {
                     if let data = try? Data(contentsOf: settingsURL),
                        let dict = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
-                        if let bundleID = Bundle.main.bundleIdentifier {
-                            UserDefaults.standard.setPersistentDomain(dict, forName: bundleID)
+                        if let userDefaults = UserDefaults(suiteName: Storage.appGroupID) {
+                            for (key, value) in dict {
+                                userDefaults.set(value, forKey: key)
+                            }
+                            userDefaults.synchronize()
                         }
+                    }
+                }
+
+                // 2a. Restore UserDefaults (Standard)
+                let standardURL = tempRestoreDir.appendingPathComponent("standard_settings.plist")
+                if fileManager.fileExists(atPath: standardURL.path) {
+                    if let data = try? Data(contentsOf: standardURL),
+                       let dict = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
+                        let standardDefaults = UserDefaults.standard
+                        for (key, value) in dict {
+                            standardDefaults.set(value, forKey: key)
+                        }
+                        standardDefaults.synchronize()
                     }
                 }
 
@@ -904,14 +920,24 @@ struct BackupRestoreView: View {
                 }
             }
 
-            // 9. Settings (Always)
+            // 9. Settings (Standard)
             let defaults = UserDefaults.standard.dictionaryRepresentation()
             let filtered = defaults.filter { k, _ in
                 !k.hasPrefix("NS") && !k.hasPrefix("AK") && !k.hasPrefix("Apple") &&
                 !k.hasPrefix("WebKit") && !k.hasPrefix("CPU") && !k.hasPrefix("metal")
             }
             let data = try PropertyListSerialization.data(fromPropertyList: filtered, format: .xml, options: 0)
-            try data.write(to: tempDir.appendingPathComponent("settings.plist"))
+            try data.write(to: tempDir.appendingPathComponent("standard_settings.plist"))
+
+            // 9a. Settings (App Group)
+            if let userDefaults = UserDefaults(suiteName: Storage.appGroupID) {
+                let settingsDict = userDefaults.dictionaryRepresentation()
+                let filteredSettings = settingsDict.filter { key, _ in
+                    !key.hasPrefix("NS") && !key.hasPrefix("Apple") && !key.hasPrefix("AK") && !key.hasPrefix("WebKit") && !key.hasPrefix("CPU") && !key.hasPrefix("metal")
+                }
+                let settingsPlist = try PropertyListSerialization.data(fromPropertyList: filteredSettings, format: .xml, options: 0)
+                try settingsPlist.write(to: tempDir.appendingPathComponent("settings.plist"))
+            }
 
             // 10. Zip
             let finalURL = FileManager.default.temporaryDirectory.appendingPathComponent("PortalBackup_\(UUID().uuidString).zip")
