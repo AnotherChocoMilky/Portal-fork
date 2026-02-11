@@ -16,7 +16,6 @@ struct ColorCustomizationView: View {
     @AppStorage(UserDefaults.Keys.text) private var textColorHex: String = Color.defaultText
     @AppStorage("Feather.userTintColor") private var tintColorHex: String = "#0077BE"
     @AppStorage("Feather.userThemes") private var userThemesData: Data = Data()
-    @AppStorage("Feather.appearance.mode") private var appearanceMode: Int = 0 // 0: Auto, 1: Light, 2: Dark
 
     @State private var bgColor: Color = .white
     @State private var uiElementColor: Color = .blue
@@ -70,9 +69,6 @@ struct ColorCustomizationView: View {
                     .padding(.horizontal)
 
                 VStack(alignment: .leading, spacing: 20) {
-                    // MARK: - Appearance Mode
-                    appearanceModeSection
-
                     // MARK: - Theme Gallery
                     themeGallerySection
 
@@ -195,46 +191,6 @@ struct ColorCustomizationView: View {
             .frame(height: 220)
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
-    }
-
-    private var appearanceModeSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("System Appearance")
-                .font(.system(.subheadline, design: .rounded))
-                .fontWeight(.bold)
-                .foregroundStyle(.secondary)
-                .padding(.leading, 8)
-
-            HStack(spacing: 12) {
-                appearanceToggle(title: "Auto", icon: "circle.lefthalf.filled", mode: 0)
-                appearanceToggle(title: "Light", icon: "sun.max.fill", mode: 1)
-                appearanceToggle(title: "Dark", icon: "moon.fill", mode: 2)
-            }
-            .padding(8)
-            .background(Color(UIColor.secondarySystemGroupedBackground))
-            .cornerRadius(16)
-        }
-    }
-
-    private func appearanceToggle(title: String, icon: String, mode: Int) -> some View {
-        Button {
-            appearanceMode = mode
-            HapticsManager.shared.light()
-        } label: {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.title3)
-                Text(title)
-                    .font(.caption)
-                    .fontWeight(.medium)
-            }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(appearanceMode == mode ? Color.accentColor : Color.clear)
-            .foregroundStyle(appearanceMode == mode ? .white : .primary)
-            .cornerRadius(12)
-        }
-        .buttonStyle(.plain)
     }
 
     private var themeGallerySection: some View {
@@ -392,7 +348,6 @@ struct ColorCustomizationView: View {
         uiElementColorHex = Color.defaultUIElement
         textColorHex = Color.defaultText
         tintColorHex = "#0077BE"
-        appearanceMode = 0
         loadColors()
         HapticsManager.shared.success()
     }

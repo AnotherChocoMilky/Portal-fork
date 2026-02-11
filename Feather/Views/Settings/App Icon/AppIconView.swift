@@ -120,9 +120,11 @@ enum AppIconOption: String, CaseIterable, Identifiable {
 
 // MARK: - View
 struct AppIconView: View {
+	@Environment(\.scenePhase) private var scenePhase
 	@State private var currentIcon: String? = UIApplication.shared.alternateIconName
 	@State private var showingError = false
 	@State private var errorMessage = ""
+	@State private var isChangingIcon = false
 	
 	private var selectedOption: AppIconOption {
 		if let iconName = currentIcon {
@@ -206,19 +208,48 @@ struct AppIconView: View {
 	}
 	
 	private func setAppIcon(_ option: AppIconOption) {
+		// 1. Debounce and concurrency guard
+		guard !isChangingIcon else { return }
+
+		// 2. Ensure app is active to avoid background invalidation issues
+		guard scenePhase == .active, UIApplication.shared.applicationState == .active else {
+			return
+		}
+
+		// 3. Check support
 		guard UIApplication.shared.supportsAlternateIcons else {
 			errorMessage = .localized("Rare alert but this device doesn't support alternate icons")
 			showingError = true
 			return
 		}
 		
-		UIApplication.shared.setAlternateIconName(option.iconName) { error in
-			if let error = error {
-				errorMessage = error.localizedDescription
-				showingError = true
-			} else {
-				currentIcon = option.iconName
-				HapticsManager.shared.success()
+		// 4. Redundant call check
+		if option.iconName == UIApplication.shared.alternateIconName {
+			// Even if redundant, we update local state just in case of inconsistency
+			currentIcon = option.iconName
+			return
+		}
+
+		isChangingIcon = true
+
+		// 5. Execute on main thread
+		DispatchQueue.main.async {
+			UIApplication.shared.setAlternateIconName(option.iconName) { error in
+				// Always reset changing flag with a small debounce delay
+				DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+					isChangingIcon = false
+				}
+
+				if let error = error as NSError? {
+					// 6. Log full error details including _code
+					print("[AppIcon] Failed to set alternate icon: \(error.localizedDescription) (Code: \(error.code))")
+
+					errorMessage = "\(error.localizedDescription) (\(error.code))"
+					showingError = true
+				} else {
+					currentIcon = option.iconName
+					HapticsManager.shared.success()
+				}
 			}
 		}
 	}
