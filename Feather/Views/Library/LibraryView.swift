@@ -10,6 +10,7 @@ struct LibraryView: View {
     @AppStorage("Feather.useGradients") private var _useGradients: Bool = true
     
     @StateObject var downloadManager = DownloadManager.shared
+    @StateObject private var hideManager = LibraryHideManager.shared
     
     @State private var _selectedInfoAppPresenting: AnyApp?
     @State private var _selectedSigningAppPresenting: AnyApp?
@@ -106,7 +107,9 @@ struct LibraryView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        filterChips
+                        if !hideManager.isHidden("library.filterChips") {
+                            filterChips
+                        }
                         
                         appsContent
                     }
@@ -117,13 +120,15 @@ struct LibraryView: View {
                 .navigationTitle("Library")
                 .toolbar(content: {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Menu {
-                            _importActions()
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 22))
-                                .foregroundStyle(Color.accentColor)
-                                .symbolRenderingMode(.hierarchical)
+                        if !hideManager.isHidden("library.importButton") {
+                            Menu {
+                                _importActions()
+                            } label: {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 22))
+                                    .foregroundStyle(Color.accentColor)
+                                    .symbolRenderingMode(.hierarchical)
+                            }
                         }
                     }
                 })
@@ -483,7 +488,7 @@ extension LibraryView {
             
             Spacer()
             
-            if totalAppCount >= 2 {
+            if totalAppCount >= 2 && !hideManager.isHidden("library.selectionButton") {
                 Button {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
                         _isSelectionMode.toggle()

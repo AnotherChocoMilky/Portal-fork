@@ -147,6 +147,7 @@ struct AppearanceView: View {
     
     private var customizationSection: some View {
         Section {
+            AppearanceNavRow(icon: "eye.slash.fill", title: "Hide UI Elements", color: .red, destination: AppHideElementsView())
             AppearanceNavRow(icon: "rectangle.stack.fill", title: "All Apps", color: .blue, destination: AllAppsCustomizationView())
             AppearanceNavRow(icon: "rectangle.topthird.inset.filled", title: "Status Bar", color: .cyan, destination: StatusBarCustomizationView())
             AppearanceNavRow(icon: "dock.rectangle", title: "Tab Bar", color: .indigo, destination: TabBarCustomizationView())

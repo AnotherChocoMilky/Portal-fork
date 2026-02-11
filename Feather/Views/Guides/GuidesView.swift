@@ -4,6 +4,7 @@ import NimbleViews
 // MARK: - GuidesView
 struct GuidesView: View {
     @AppStorage("forceShowGuides") private var forceShowGuides = false
+    @StateObject private var hideManager = GuidesHideManager.shared
     @State private var guides: [Guide] = []
     @State private var isLoading = false
     @State private var errorMessage: String?
@@ -12,9 +13,13 @@ struct GuidesView: View {
         NBNavigationView(.localized("Guides")) {
             Group {
                 if forceShowGuides {
-                    guidesListView
+                    if !hideManager.isHidden("guides.guidesList") {
+                        guidesListView
+                    }
                 } else {
-                    placeholderView
+                    if !hideManager.isHidden("guides.placeholderView") {
+                        placeholderView
+                    }
                 }
             }
         }
