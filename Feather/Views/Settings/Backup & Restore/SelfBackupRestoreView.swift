@@ -72,7 +72,7 @@ struct SelfBackupRestoreView: View {
                             Text(.localized("Create Backup"))
                                 .font(.headline)
                                 .foregroundStyle(.primary)
-                            Text(.localized("Save your current data."))
+                            Text(.localized("Save Your Current Data"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -106,7 +106,7 @@ struct SelfBackupRestoreView: View {
                             Text(.localized("Restore Backup"))
                                 .font(.headline)
                                 .foregroundStyle(.primary)
-                            Text(.localized("Load previously saved data."))
+                            Text(.localized("Load Previously Saved Data"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -140,7 +140,7 @@ struct SelfBackupRestoreView: View {
                             Text(.localized("Import Backup"))
                                 .font(.headline)
                                 .foregroundStyle(.primary)
-                            Text(.localized("Import .backup File."))
+                            Text(.localized("Import Backup File"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -202,7 +202,7 @@ struct SelfBackupRestoreView: View {
                     icon: "lock.shield.fill",
                     iconColor: .green,
                     title: .localized("Encrypted Storage"),
-                    description: .localized("All backups are encrypted using AES-256 encryption for security.")
+                    description: .localized("All backups are encrypted for security. You can optionally set a password for additional protection (Coming Soon).")
                 )
                 
                 featureCard(
@@ -338,7 +338,7 @@ struct SelfBackupRestoreView: View {
             Text("Do you want to apply '\(backup.name)' now? This will overwrite your current data and the app will need to restart.")
         }
         .alert("Restart Required", isPresented: $viewModel.showingRestartAlert) {
-            Button("Exit App") {
+            Button("Restart Portal") {
                 exit(0)
             }
         } message: {
@@ -359,7 +359,7 @@ struct SelfBackupRestoreView: View {
             Text("This backup is encrypted. Please enter the password to import it.")
         }
         .alert("Export Backup", isPresented: $viewModel.showingExportPrompt) {
-            Button("Yes, with Password") {
+            Button("Yes, with Password (Don't)") {
                 viewModel.onExportSubmit?(true)
             }
             Button("No, Decrypt First") {
@@ -369,7 +369,7 @@ struct SelfBackupRestoreView: View {
                 viewModel.onExportSubmit?(nil)
             }
         } message: {
-            Text("Do you want to export this backup with password protection?")
+            Text("Do you want to export this backup with password protection? This will break the bakcup file, fix soon!")
         }
         .onAppear {
             viewModel.loadBackups()
@@ -523,10 +523,6 @@ class SelfBackupRestoreViewModel: ObservableObject {
 
     private let fileManager = FileManager.default
     private let backupsDirectory: URL
-    // Note: This password provides basic encryption. For production use, consider:
-    // 1. Deriving password from device-specific secure storage (Keychain)
-    // 2. Allowing users to set their own password
-    // 3. Using biometric authentication for additional security
     private let password = "PortalLocalBackup2026"
     
     var totalBackupSize: String {

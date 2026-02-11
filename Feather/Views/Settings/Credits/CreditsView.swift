@@ -35,7 +35,7 @@ struct CreditsView: View {
 		CreditItem(
 			username: "Feather",
 			githubUsername: "khcrysalis",
-			role: .localized("Original Developer Team"),
+			role: .localized("Original Developer"),
 			githubUrl: "https://github.com/khcrysalis/Feather",
 			gradientColors: [SwiftUI.Color(hex: "#4CD964"), SwiftUI.Color(hex: "#4860e8")],
 			icon: "star.fill"
@@ -90,7 +90,7 @@ struct CreditsView: View {
 						.font(.system(size: 24, weight: .bold, design: .rounded))
 						.foregroundStyle(.primary)
 
-					Text(.localized("The amazing people who made this project possible."))
+					Text(.localized("Check out who made this Portal."))
 						.font(.subheadline)
 						.foregroundStyle(.secondary)
 						.multilineTextAlignment(.center)
@@ -109,7 +109,7 @@ struct CreditsView: View {
 					}
 				}
 			} header: {
-				Text(.localized("Core Team"))
+				Text(.localized("Development"))
 					.font(.footnote.bold())
 					.foregroundStyle(.secondary)
 					.textCase(.uppercase)
@@ -125,7 +125,7 @@ struct CreditsView: View {
 					}
 				}
 			} header: {
-				Text(.localized("Community & Support"))
+				Text(.localized("Join WSF"))
 					.font(.footnote.bold())
 					.foregroundStyle(.secondary)
 					.textCase(.uppercase)

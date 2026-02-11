@@ -21,7 +21,7 @@ struct AppHideElementsView: View {
                         guidesManager.resetToDefaults()
                         settingsManager.resetToDefaults()
                     } label: {
-                        Label("Reset All to Defaults", systemImage: "arrow.counterclockwise")
+                        Label("Reset All To Defaults", systemImage: "arrow.counterclockwise")
                     }
                 }
 
@@ -32,7 +32,7 @@ struct AppHideElementsView: View {
                 managerSection(title: "Settings", manager: settingsManager)
             }
             .listStyle(.insetGrouped)
-            .searchable(text: $searchText, prompt: "Search items")
+            .searchable(text: $searchText, prompt: "Search Items")
         }
     }
 
