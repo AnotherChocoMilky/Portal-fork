@@ -23,11 +23,6 @@ struct WSFLink: Identifiable {
 
 // MARK: - View
 struct CreditsView: View {
-	@State private var animationOffset: CGFloat = 0
-	@State private var cardScale: CGFloat = 0.8
-	@State private var cardOpacity: Double = 0
-	@State private var rotationAngle: Double = 0
-	
 	private let credits: [CreditItem] = [
 		CreditItem(
 			username: "dylans2010",
@@ -79,28 +74,29 @@ struct CreditsView: View {
 		NBList(.localized("Credits")) {
 			// Header Section
 			Section {
-				VStack(spacing: 16) {
+				VStack(spacing: 12) {
 					Image(systemName: "person.3.fill")
-						.font(.system(size: 48, weight: .bold))
+						.font(.system(size: 56, weight: .bold))
 						.foregroundStyle(
 							LinearGradient(
-								colors: [.blue, .purple, .pink],
+								colors: [.blue, .purple],
 								startPoint: .topLeading,
 								endPoint: .bottomTrailing
 							)
 						)
-						.shadow(color: .blue.opacity(0.3), radius: 10, x: 0, y: 5)
-						.scaleEffect(cardScale)
-						.opacity(cardOpacity)
-						.rotationEffect(.degrees(rotationAngle))
+						.padding(.bottom, 4)
 					
 					Text(.localized("Credits"))
-						.font(.system(size: 28, weight: .bold, design: .rounded))
-						.scaleEffect(cardScale)
-						.opacity(cardOpacity)
+						.font(.system(size: 24, weight: .bold, design: .rounded))
+						.foregroundStyle(.primary)
+
+					Text(.localized("The amazing people who made this project possible."))
+						.font(.subheadline)
+						.foregroundStyle(.secondary)
+						.multilineTextAlignment(.center)
 				}
 				.frame(maxWidth: .infinity)
-				.padding(.vertical, 24)
+				.padding(.vertical, 32)
 			}
 			.listRowBackground(Color.clear)
 			.listRowSeparator(.hidden)
@@ -108,18 +104,15 @@ struct CreditsView: View {
 			// Developers Section
 			Section {
 				VStack(spacing: 12) {
-					ForEach(Array(credits.enumerated()), id: \.element.id) { index, credit in
-						GitHubCreditCard(
-							credit: credit,
-							delay: Double(index) * 0.1 + 0.1
-						)
+					ForEach(credits) { credit in
+						GitHubCreditCard(credit: credit)
 					}
 				}
 			} header: {
-				Text(.localized("Team"))
-					.font(.system(size: 14, weight: .bold, design: .rounded))
+				Text(.localized("Core Team"))
+					.font(.footnote.bold())
 					.foregroundStyle(.secondary)
-					.padding(.bottom, 8)
+					.textCase(.uppercase)
 			}
 			.listRowBackground(Color.clear)
 			.listRowSeparator(.hidden)
@@ -127,33 +120,18 @@ struct CreditsView: View {
 			// WSF Team Links Section
 			Section {
 				VStack(spacing: 12) {
-					ForEach(Array(wsfLinks.enumerated()), id: \.element.id) { index, link in
-						WSFLinkButton(
-							link: link,
-							delay: Double(credits.count + index) * 0.1 + 0.1
-						)
+					ForEach(wsfLinks) { link in
+						WSFLinkButton(link: link)
 					}
 				}
 			} header: {
-				Text(.localized("Links"))
-					.font(.system(size: 14, weight: .bold, design: .rounded))
+				Text(.localized("Community & Support"))
+					.font(.footnote.bold())
 					.foregroundStyle(.secondary)
-					.padding(.bottom, 8)
+					.textCase(.uppercase)
 			}
 			.listRowBackground(Color.clear)
 			.listRowSeparator(.hidden)
-		}
-		.onAppear {
-			// Animate title appearance
-			withAnimation(.spring(response: 0.8, dampingFraction: 0.6)) {
-				cardScale = 1.0
-				cardOpacity = 1.0
-			}
-			
-			// Continuous subtle rotation animation
-			withAnimation(.linear(duration: 10).repeatForever(autoreverses: false)) {
-				rotationAngle = 360
-			}
 		}
 	}
 }
@@ -161,10 +139,6 @@ struct CreditsView: View {
 // MARK: - WSF Link Button
 struct WSFLinkButton: View {
 	let link: WSFLink
-	let delay: Double
-
-	@State private var cardScale: CGFloat = 0.8
-	@State private var cardOpacity: Double = 0
 
 	var body: some View {
 		Button {
@@ -183,41 +157,30 @@ struct WSFLinkButton: View {
 					)
 
 				Text(link.title)
-					.font(.system(size: 16, weight: .medium))
+					.font(.body.weight(.medium))
 					.foregroundStyle(.primary)
 
 				Spacer()
 
 				// Chevron
 				Image(systemName: "chevron.right")
-					.font(.system(size: 12, weight: .bold))
+					.font(.system(size: 14, weight: .bold))
 					.foregroundStyle(.secondary.opacity(0.5))
 			}
-			.padding(10)
+			.padding(12)
 			.background(Color(uiColor: .secondarySystemGroupedBackground))
 			.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-			.shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
-			.scaleEffect(cardScale)
-			.opacity(cardOpacity)
+			.shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 2)
 		}
 		.buttonStyle(CreditsScaleButtonStyle())
-		.onAppear {
-			withAnimation(.spring(response: 0.8, dampingFraction: 0.6).delay(delay)) {
-				cardScale = 1.0
-				cardOpacity = 1.0
-			}
-		}
 	}
 }
 
 // MARK: - GitHub Credit Card View
 struct GitHubCreditCard: View {
 	let credit: CreditItem
-	let delay: Double
 	
 	@StateObject private var viewModel = GitHubUserViewModel()
-	@State private var cardScale: CGFloat = 0.8
-	@State private var cardOpacity: Double = 0
 	
 	var body: some View {
 		Button {
@@ -270,16 +233,16 @@ struct GitHubCreditCard: View {
 				// Text content
 				VStack(alignment: .leading, spacing: 2) {
 					Text(viewModel.user?.name ?? credit.username)
-						.font(.system(size: 16, weight: .bold))
+						.font(.body.weight(.bold))
 						.foregroundStyle(.primary)
 					
 					Text(credit.role)
-						.font(.system(size: 14))
+						.font(.subheadline)
 						.foregroundStyle(.secondary)
 					
 					if let bio = viewModel.user?.bio, !bio.isEmpty {
 						Text(bio)
-							.font(.system(size: 11))
+							.font(.caption)
 							.foregroundStyle(.secondary.opacity(0.8))
 							.lineLimit(1)
 					}
@@ -306,20 +269,12 @@ struct GitHubCreditCard: View {
 						lineWidth: 1
 					)
 			)
-			.shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
-			.scaleEffect(cardScale)
-			.opacity(cardOpacity)
+			.shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 2)
 		}
 		.buttonStyle(CreditsScaleButtonStyle())
 		.onAppear {
 			// Fetch GitHub user data using the explicit GitHub username
 			viewModel.fetchUser(username: credit.githubUsername)
-			
-			// Stagger card animations
-			withAnimation(.spring(response: 0.8, dampingFraction: 0.6).delay(delay)) {
-				cardScale = 1.0
-				cardOpacity = 1.0
-			}
 		}
 	}
 }
