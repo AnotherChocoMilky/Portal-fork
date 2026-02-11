@@ -51,7 +51,7 @@ struct ColorCustomizationView: View {
             guard let themes = try? JSONDecoder().decode([ColorTheme].self, from: userThemesData) else { return [] }
             return themes
         }
-        set {
+        nonmutating set {
             if let encoded = try? JSONEncoder().encode(newValue) {
                 userThemesData = encoded
             }
@@ -119,10 +119,10 @@ struct ColorCustomizationView: View {
         } message: {
             Text("This will restore all colors to their original system defaults. Your saved custom themes will not be deleted.")
         }
-        .onChange(of: bgColor) { _, newValue in bgColorHex = newValue.toHex() ?? Color.defaultBackground }
-        .onChange(of: uiElementColor) { _, newValue in uiElementColorHex = newValue.toHex() ?? Color.defaultUIElement }
-        .onChange(of: textColor) { _, newValue in textColorHex = newValue.toHex() ?? Color.defaultText }
-        .onChange(of: tintColor) { _, newValue in tintColorHex = newValue.toHex() ?? "#0077BE" }
+        .onChange(of: bgColor) { newValue in bgColorHex = newValue.toHex() ?? Color.defaultBackground }
+        .onChange(of: uiElementColor) { newValue in uiElementColorHex = newValue.toHex() ?? Color.defaultUIElement }
+        .onChange(of: textColor) { newValue in textColorHex = newValue.toHex() ?? Color.defaultText }
+        .onChange(of: tintColor) { newValue in tintColorHex = newValue.toHex() ?? "#0077BE" }
     }
 
     // MARK: - Component Views
@@ -219,7 +219,7 @@ struct ColorCustomizationView: View {
     private func appearanceToggle(title: String, icon: String, mode: Int) -> some View {
         Button {
             appearanceMode = mode
-            HapticsManager.shared.impact(.light)
+            HapticsManager.shared.light()
         } label: {
             VStack(spacing: 8) {
                 Image(systemName: icon)
