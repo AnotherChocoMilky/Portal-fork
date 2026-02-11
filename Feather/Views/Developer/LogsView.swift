@@ -1,5 +1,6 @@
 import SwiftUI
 import NimbleViews
+import UniformTypeIdentifiers
 
 // MARK: - App Logs View
 struct AppLogsView: View {
@@ -8,8 +9,9 @@ struct AppLogsView: View {
     @State private var selectedLevel: LogEntry.LogLevel?
     @State private var selectedCategory: String?
     @State private var showFilters = false
-    @State private var showShareSheet = false
-    @State private var shareText = ""
+    @State private var showExporter = false
+    @State private var logDocument: LogDocument?
+    @State private var exportType: UTType = .plainText
     @State private var autoScroll = true
     @Environment(\.colorScheme) var colorScheme
 
@@ -25,15 +27,15 @@ struct AppLogsView: View {
 
             VStack(spacing: 0) {
                 // Search and Filter Bar
-                VStack(spacing: 12) {
-                    HStack(spacing: 12) {
+                VStack(spacing: 10) {
+                    HStack(spacing: 10) {
                         Image(systemName: "magnifyingglass")
                             .foregroundStyle(.secondary)
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 14, weight: .medium))
 
                         TextField("Search Logs", text: $searchText)
                             .textFieldStyle(.plain)
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 15, weight: .medium))
 
                         if !searchText.isEmpty {
                             Button(action: { searchText = "" }) {
@@ -42,13 +44,13 @@ struct AppLogsView: View {
                             }
                         }
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(.ultraThinMaterial)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color(UIColor.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .stroke(.white.opacity(colorScheme == .dark ? 0.1 : 0.3), lineWidth: 1)
+                        RoundedRectangle(cornerRadius: 12, style: .continuous)
+                            .stroke(.white.opacity(colorScheme == .dark ? 0.05 : 0.1), lineWidth: 1)
                     )
 
                     // Filter Pills
@@ -151,12 +153,12 @@ struct AppLogsView: View {
 
                 // Share menu
                 Menu {
-                    Button(action: shareAsText) {
-                        Label("Share As Text", systemImage: "doc.text")
+                    Button(action: saveAsText) {
+                        Label("Save As Text", systemImage: "doc.text")
                     }
 
-                    Button(action: shareAsJSON) {
-                        Label("Share As JSON", systemImage: "doc.badge.gearshape")
+                    Button(action: saveAsJSON) {
+                        Label("Save As JSON", systemImage: "doc.badge.gearshape")
                     }
 
                     Button(action: copyToClipboard) {
@@ -176,21 +178,35 @@ struct AppLogsView: View {
                 }
             }
         })
-        .sheet(isPresented: $showShareSheet) {
-            ActivityViewController(activityItems: [shareText])
+        .fileExporter(
+            isPresented: $showExporter,
+            document: logDocument,
+            contentType: exportType,
+            defaultFilename: "PortalLogs"
+        ) { result in
+            switch result {
+            case .success(let url):
+                logManager.success("Logs saved to \(url.lastPathComponent)", category: "AppLogs")
+            case .failure(let error):
+                logManager.error("Failed to save logs: \(error.localizedDescription)", category: "AppLogs")
+            }
         }
     }
 
-    private func shareAsText() {
-        shareText = logManager.exportLogs()
-        showShareSheet = true
+    private func saveAsText() {
+        let text = logManager.exportLogs()
+        if let data = text.data(using: .utf8) {
+            logDocument = LogDocument(data: data, isJSON: false)
+            exportType = .plainText
+            showExporter = true
+        }
     }
 
-    private func shareAsJSON() {
-        if let jsonData = logManager.exportLogsAsJSON(),
-           let jsonString = String(data: jsonData, encoding: .utf8) {
-            shareText = jsonString
-            showShareSheet = true
+    private func saveAsJSON() {
+        if let data = logManager.exportLogsAsJSON() {
+            logDocument = LogDocument(data: data, isJSON: true)
+            exportType = .json
+            showExporter = true
         }
     }
 
@@ -271,30 +287,30 @@ struct LogEntryRow: View {
                         .frame(width: 4)
                         .padding(.vertical, 4)
 
-                    VStack(alignment: .leading, spacing: 6) {
+                    VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Text(entry.level.icon)
-                                .font(.system(size: 12))
+                                .font(.system(size: 11))
 
                             Text(entry.formattedTimestamp)
-                                .font(.system(size: 11, weight: .medium, design: .monospaced))
+                                .font(.system(size: 10, weight: .medium, design: .monospaced))
                                 .foregroundStyle(.secondary)
 
                             Spacer()
 
                             Text(entry.category.uppercased())
-                                .font(.system(size: 9, weight: .bold, design: .rounded))
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
+                                .font(.system(size: 8, weight: .bold, design: .rounded))
+                                .padding(.horizontal, 5)
+                                .padding(.vertical, 1)
                                 .background(levelColor(entry.level).opacity(0.15))
                                 .foregroundStyle(levelColor(entry.level))
                                 .clipShape(Capsule())
                         }
 
                         Text(entry.message)
-                            .font(.system(size: 13, weight: .medium, design: .monospaced))
+                            .font(.system(size: 12, weight: .medium, design: .monospaced))
                             .foregroundStyle(.primary)
-                            .lineLimit(isExpanded ? nil : 2)
+                            .lineLimit(isExpanded ? nil : 3)
                             .multilineTextAlignment(.leading)
                     }
 
@@ -374,16 +390,28 @@ struct DetailRow: View {
 }
 
 // MARK: - Activity View Controller
-struct ActivityViewController: UIViewControllerRepresentable {
-    let activityItems: [Any]
+// MARK: - Log Document
+struct LogDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.json, .plainText] }
 
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        let controller = UIActivityViewController(
-            activityItems: activityItems,
-            applicationActivities: nil
-        )
-        return controller
+    var data: Data
+    var isJSON: Bool
+
+    init(data: Data, isJSON: Bool) {
+        self.data = data
+        self.isJSON = isJSON
     }
 
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
+    init(configuration: ReadConfiguration) throws {
+        if let data = configuration.file.regularFileContents {
+            self.data = data
+            self.isJSON = configuration.contentType == .json
+        } else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        return FileWrapper(regularFileWithContents: data)
+    }
 }
