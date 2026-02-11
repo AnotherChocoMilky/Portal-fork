@@ -16,6 +16,7 @@ struct ColorCustomizationView: View {
     @AppStorage(UserDefaults.Keys.text) private var textColorHex: String = Color.defaultText
     @AppStorage("Feather.userTintColor") private var tintColorHex: String = "#0077BE"
     @AppStorage("Feather.userThemes") private var userThemesData: Data = Data()
+    @AppStorage("Feather.appearance.mode") private var appearanceMode: Int = 0 // 0: Auto, 1: Light, 2: Dark
 
     @State private var bgColor: Color = .white
     @State private var uiElementColor: Color = .blue
@@ -25,7 +26,9 @@ struct ColorCustomizationView: View {
     @State private var showAllThemes = false
     @State private var themeName: String = ""
     @State private var showSaveAlert = false
+    @State private var showResetAlert = false
     @ObservedObject private var appState = AppStateManager.shared
+    @Environment(\.colorScheme) var colorScheme
 
     private let presetThemes: [ColorTheme] = [
         ColorTheme(name: "Classic", bg: "#F2F2F7", ui: "#007AFF", text: "#000000", tint: "#007AFF"),
@@ -48,7 +51,7 @@ struct ColorCustomizationView: View {
             guard let themes = try? JSONDecoder().decode([ColorTheme].self, from: userThemesData) else { return [] }
             return themes
         }
-        nonmutating set {
+        set {
             if let encoded = try? JSONEncoder().encode(newValue) {
                 userThemesData = encoded
             }
@@ -60,105 +63,30 @@ struct ColorCustomizationView: View {
     }
 
     var body: some View {
-        Form {
-            Section {
-                VStack(alignment: .leading, spacing: 16) {
-                    HStack {
-                        Text("Color Themes")
-                            .font(.headline)
-                        Spacer()
-                        if allThemes.count >= 10 {
-                            Button {
-                                showAllThemes = true
-                            } label: {
-                                Image(systemName: "chevron.right.circle.fill")
-                                    .font(.title2)
-                                    .foregroundStyle(Color.accentColor)
-                            }
-                        }
-                    }
+        ScrollView {
+            VStack(spacing: 24) {
+                // MARK: - Live Preview Header
+                previewHeader
+                    .padding(.horizontal)
 
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                        ForEach(allThemes.prefix(allThemes.count >= 10 ? 4 : allThemes.count)) { theme in
-                            ThemeCard(theme: theme) {
-                                if !appState.isSigning {
-                                    applyTheme(theme)
-                                }
-                            }
-                            .disabled(appState.isSigning)
-                            .opacity(appState.isSigning ? 0.6 : 1.0)
-                        }
-                    }
+                VStack(alignment: .leading, spacing: 20) {
+                    // MARK: - Appearance Mode
+                    appearanceModeSection
+
+                    // MARK: - Theme Gallery
+                    themeGallerySection
+
+                    // MARK: - Custom Colors
+                    customColorsSection
+
+                    // MARK: - Actions
+                    actionsSection
                 }
-                .padding(.vertical, 8)
-            } header: {
-                Text("Presets")
-            } footer: {
-                Text("Select a theme or save your own below.")
+                .padding(.horizontal)
             }
-
-            Section {
-                ColorPicker("Background", selection: $bgColor, supportsOpacity: false)
-                ColorPicker("UI Elements", selection: $uiElementColor, supportsOpacity: false)
-                ColorPicker("Text", selection: $textColor, supportsOpacity: false)
-                ColorPicker("Accent", selection: $tintColor, supportsOpacity: false)
-            } header: {
-                Text("Custom Colors")
-            }
-
-            Section {
-                Button {
-                    showSaveAlert = true
-                } label: {
-                    HStack {
-                        Image(systemName: "plus.circle.fill")
-                        Text("Save Style")
-                    }
-                    .frame(maxWidth: .infinity)
-                    .font(.headline)
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Color.accentColor)
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
-                .disabled(appState.isSigning)
-            }
-
-            Section {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Preview")
-                        .font(.headline)
-
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(bgColor)
-                            .frame(height: 120)
-                            .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
-
-                        VStack(spacing: 12) {
-                            Text("Sample Text")
-                                .foregroundColor(textColor)
-                                .font(.headline)
-
-                            HStack(spacing: 16) {
-                                Capsule()
-                                    .fill(uiElementColor)
-                                    .frame(width: 90, height: 36)
-                                    .overlay(Text("Action").foregroundColor(.white).font(.system(size: 14, weight: .bold)))
-
-                                Circle()
-                                    .fill(tintColor)
-                                    .frame(width: 36, height: 36)
-                                    .overlay(Image(systemName: "sparkles").foregroundColor(.white).font(.system(size: 14)))
-                            }
-                        }
-                    }
-                    .padding(.vertical, 8)
-                }
-            } header: {
-                Text("Live Preview")
-            }
+            .padding(.vertical)
         }
+        .background(Color(UIColor.systemGroupedBackground))
         .navigationTitle("Appearance")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -183,16 +111,256 @@ struct ColorCustomizationView: View {
         } message: {
             Text("Enter a name for your custom theme.")
         }
-        .onChange(of: bgColor) { bgColorHex = $0.toHex() ?? Color.defaultBackground }
-        .onChange(of: uiElementColor) { uiElementColorHex = $0.toHex() ?? Color.defaultUIElement }
-        .onChange(of: textColor) { textColorHex = $0.toHex() ?? Color.defaultText }
-        .onChange(of: tintColor) { tintColorHex = $0.toHex() ?? "#0077BE" }
+        .alert("Reset Appearance", isPresented: $showResetAlert) {
+            Button("Reset Everything", role: .destructive) {
+                resetToDefaults()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This will restore all colors to their original system defaults. Your saved custom themes will not be deleted.")
+        }
+        .onChange(of: bgColor) { _, newValue in bgColorHex = newValue.toHex() ?? Color.defaultBackground }
+        .onChange(of: uiElementColor) { _, newValue in uiElementColorHex = newValue.toHex() ?? Color.defaultUIElement }
+        .onChange(of: textColor) { _, newValue in textColorHex = newValue.toHex() ?? Color.defaultText }
+        .onChange(of: tintColor) { _, newValue in tintColorHex = newValue.toHex() ?? "#0077BE" }
     }
+
+    // MARK: - Component Views
+
+    private var previewHeader: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Live Preview")
+                .font(.system(.subheadline, design: .rounded))
+                .fontWeight(.bold)
+                .foregroundStyle(.secondary)
+                .padding(.leading, 8)
+
+            ZStack {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(bgColor)
+                    .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+
+                VStack(spacing: 0) {
+                    // Fake Nav Bar
+                    HStack {
+                        Circle().fill(uiElementColor.opacity(0.2)).frame(width: 32, height: 32)
+                        Spacer()
+                        Text("Preview").font(.headline).foregroundStyle(textColor)
+                        Spacer()
+                        Image(systemName: "magnifyingglass").foregroundStyle(uiElementColor)
+                    }
+                    .padding()
+
+                    Divider().background(textColor.opacity(0.1))
+
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            // Fake List Item
+                            HStack(spacing: 16) {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(uiElementColor.opacity(0.1))
+                                    .frame(width: 50, height: 50)
+                                    .overlay(Image(systemName: "app.fill").foregroundStyle(uiElementColor))
+
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("Application Name").font(.headline).foregroundStyle(textColor)
+                                    Text("Version 1.0.0 • 42 MB").font(.caption).foregroundStyle(textColor.opacity(0.6))
+                                }
+                                Spacer()
+                                Button("OPEN") {}
+                                    .font(.system(size: 12, weight: .bold))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(uiElementColor)
+                                    .foregroundStyle(.white)
+                                    .clipShape(Capsule())
+                            }
+                            .padding()
+                            .background(textColor.opacity(0.05))
+                            .cornerRadius(16)
+
+                            // Fake Tab Bar
+                            HStack(spacing: 40) {
+                                Image(systemName: "house.fill").foregroundStyle(uiElementColor)
+                                Image(systemName: "square.stack.3d.up.fill").foregroundStyle(textColor.opacity(0.3))
+                                Image(systemName: "person.fill").foregroundStyle(textColor.opacity(0.3))
+                            }
+                            .padding(.top, 8)
+                        }
+                        .padding()
+                    }
+                    .disabled(true)
+                }
+            }
+            .frame(height: 220)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        }
+    }
+
+    private var appearanceModeSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("System Appearance")
+                .font(.system(.subheadline, design: .rounded))
+                .fontWeight(.bold)
+                .foregroundStyle(.secondary)
+                .padding(.leading, 8)
+
+            HStack(spacing: 12) {
+                appearanceToggle(title: "Auto", icon: "circle.lefthalf.filled", mode: 0)
+                appearanceToggle(title: "Light", icon: "sun.max.fill", mode: 1)
+                appearanceToggle(title: "Dark", icon: "moon.fill", mode: 2)
+            }
+            .padding(8)
+            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .cornerRadius(16)
+        }
+    }
+
+    private func appearanceToggle(title: String, icon: String, mode: Int) -> some View {
+        Button {
+            appearanceMode = mode
+            HapticsManager.shared.impact(.light)
+        } label: {
+            VStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.title3)
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.medium)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(appearanceMode == mode ? Color.accentColor : Color.clear)
+            .foregroundStyle(appearanceMode == mode ? .white : .primary)
+            .cornerRadius(12)
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var themeGallerySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Theme Gallery")
+                    .font(.system(.subheadline, design: .rounded))
+                    .fontWeight(.bold)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("View All") {
+                    showAllThemes = true
+                }
+                .font(.caption)
+                .fontWeight(.bold)
+            }
+            .padding(.horizontal, 8)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 16) {
+                    ForEach(allThemes.prefix(8)) { theme in
+                        ModernThemeCard(theme: theme) {
+                            if !appState.isSigning {
+                                applyTheme(theme)
+                            }
+                        }
+                        .disabled(appState.isSigning)
+                        .opacity(appState.isSigning ? 0.6 : 1.0)
+                    }
+                }
+                .padding(.horizontal, 4)
+                .padding(.bottom, 8)
+            }
+        }
+    }
+
+    private var customColorsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Custom Colors")
+                .font(.system(.subheadline, design: .rounded))
+                .fontWeight(.bold)
+                .foregroundStyle(.secondary)
+                .padding(.leading, 8)
+
+            VStack(spacing: 0) {
+                colorPickerRow(title: "Background", color: $bgColor, icon: "square.fill")
+                Divider().padding(.leading, 44)
+                colorPickerRow(title: "UI Elements", color: $uiElementColor, icon: "app.fill")
+                Divider().padding(.leading, 44)
+                colorPickerRow(title: "Text", color: $textColor, icon: "textformat")
+                Divider().padding(.leading, 44)
+                colorPickerRow(title: "Accent", color: $tintColor, icon: "sparkles")
+            }
+            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .cornerRadius(16)
+        }
+    }
+
+    private func colorPickerRow(title: String, color: Binding<Color>, icon: String) -> some View {
+        ColorPicker(selection: color, supportsOpacity: false) {
+            HStack(spacing: 12) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(color.wrappedValue.opacity(0.1))
+                        .frame(width: 32, height: 32)
+                    Image(systemName: icon)
+                        .font(.system(size: 14))
+                        .foregroundStyle(color.wrappedValue)
+                }
+                Text(title)
+                    .font(.body)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+    }
+
+    private var actionsSection: some View {
+        VStack(spacing: 12) {
+            Button {
+                showSaveAlert = true
+            } label: {
+                HStack {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Save Current Style")
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.accentColor)
+                .foregroundStyle(.white)
+                .font(.headline)
+                .cornerRadius(16)
+            }
+            .disabled(appState.isSigning)
+
+            Button {
+                showResetAlert = true
+            } label: {
+                HStack {
+                    Image(systemName: "arrow.counterclockwise")
+                    Text("Reset to Defaults")
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(Color.red.opacity(0.1))
+                .foregroundStyle(.red)
+                .font(.headline)
+                .cornerRadius(16)
+            }
+            .disabled(appState.isSigning)
+        }
+    }
+
+    // MARK: - Helper Methods
 
     private func loadColors() {
         bgColor = Color(hex: bgColorHex)
         uiElementColor = Color(hex: uiElementColorHex)
-        textColor = Color(hex: textColorHex)
+
+        // Handle dark mode default text color specifically in UI
+        if colorScheme == .dark && (textColorHex == Color.defaultText || textColorHex == "#000000") {
+            textColor = .white
+        } else {
+            textColor = Color(hex: textColorHex)
+        }
+
         tintColor = Color(hex: tintColorHex)
     }
 
@@ -218,39 +386,51 @@ struct ColorCustomizationView: View {
         userThemes = updatedThemes
         HapticsManager.shared.success()
     }
+
+    private func resetToDefaults() {
+        bgColorHex = Color.defaultBackground
+        uiElementColorHex = Color.defaultUIElement
+        textColorHex = Color.defaultText
+        tintColorHex = "#0077BE"
+        appearanceMode = 0
+        loadColors()
+        HapticsManager.shared.success()
+    }
 }
 
-struct ThemeCard: View {
+// MARK: - Modern Theme Card
+
+struct ModernThemeCard: View {
     let theme: ColorTheme
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 10) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(Color(hex: theme.bg))
-                        .frame(height: 80)
-                        .shadow(color: .black.opacity(0.1), radius: 4)
+                        .frame(width: 130, height: 90)
+                        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
 
-                    VStack(spacing: 6) {
-                        HStack(spacing: 6) {
+                    VStack(spacing: 8) {
+                        HStack(spacing: 8) {
                             Circle()
                                 .fill(Color(hex: theme.ui))
-                                .frame(width: 14, height: 14)
+                                .frame(width: 16, height: 16)
                             Circle()
                                 .fill(Color(hex: theme.tint))
-                                .frame(width: 14, height: 14)
+                                .frame(width: 16, height: 16)
                         }
 
-                        RoundedRectangle(cornerRadius: 2)
+                        RoundedRectangle(cornerRadius: 3)
                             .fill(Color(hex: theme.text))
-                            .frame(width: 40, height: 4)
+                            .frame(width: 50, height: 6)
                     }
                 }
 
                 Text(theme.name)
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .padding(.leading, 4)
@@ -260,28 +440,31 @@ struct ThemeCard: View {
     }
 }
 
+// MARK: - Theme Library View
+
 struct ThemeLibraryView: View {
     @Environment(\.dismiss) var dismiss
     let themes: [ColorTheme]
     let onSelect: (ColorTheme) -> Void
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 20) {
                     ForEach(themes) { theme in
-                        ThemeCard(theme: theme) {
+                        ModernThemeCard(theme: theme) {
                             onSelect(theme)
                         }
                     }
                 }
                 .padding(20)
             }
-            .navigationTitle("View Themes")
+            .navigationTitle("All Themes")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
+                        .fontWeight(.bold)
                 }
             }
             .background(Color(UIColor.systemGroupedBackground))
