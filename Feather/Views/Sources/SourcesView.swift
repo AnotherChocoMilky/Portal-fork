@@ -14,6 +14,7 @@ struct SourcesView: View {
     #endif
     @AppStorage("Feather.certificateTooltipDismissed") private var _certificateTooltipDismissed: Bool = false
     @StateObject var viewModel = SourcesViewModel.shared
+    @StateObject private var hideManager = SourcesHideManager.shared
     @State private var _isAddingPresenting = false
     @State private var _addingSourceLoading = false
     @State private var _searchText = ""
@@ -93,7 +94,9 @@ struct SourcesView: View {
                         VStack(spacing: 20) {
                             if !_filteredSources.isEmpty {
                                 // All Apps Card
-                                allAppsCard
+                                if !hideManager.isHidden("sources.allAppsCard") {
+                                    allAppsCard
+                                }
                                 
                                 // Source Cards
                                 sourcesCardsSection
@@ -146,35 +149,43 @@ struct SourcesView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                 
-                Text("View All Your Sources")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
+                if !hideManager.isHidden("sources.headerSubtitle") {
+                    Text("View All Your Sources")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
             }
             
             Spacer()
             
             HStack(spacing: 10) {
                 // Sparkles button
-                Button {
-                    _showCertificateTooltip = true
-                } label: {
-                    navBarButton(systemImage: "sparkles", color: .cyan)
+                if !hideManager.isHidden("sources.sparklesButton") {
+                    Button {
+                        _showCertificateTooltip = true
+                    } label: {
+                        navBarButton(systemImage: "sparkles", color: .cyan)
+                    }
                 }
                 
                 // Edit button
-                Button {
-                    _showEditSourcesView = true
-                } label: {
-                    navBarButton(systemImage: "pencil", color: .orange)
+                if !hideManager.isHidden("sources.editButton") {
+                    Button {
+                        _showEditSourcesView = true
+                    } label: {
+                        navBarButton(systemImage: "pencil", color: .orange)
+                    }
                 }
                 
                 // Add button
-                Button {
-                    _isAddingPresenting = true
-                } label: {
-                    navBarButton(systemImage: "plus", color: .green)
+                if !hideManager.isHidden("sources.addButton") {
+                    Button {
+                        _isAddingPresenting = true
+                    } label: {
+                        navBarButton(systemImage: "plus", color: .green)
+                    }
+                    .disabled(_addingSourceLoading)
                 }
-                .disabled(_addingSourceLoading)
             }
         }
         .padding(.horizontal, 20)

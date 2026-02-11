@@ -22,6 +22,7 @@ struct SettingsView: View {
     @AppStorage("isDeveloperModeEnabled") private var isDeveloperModeEnabled = false
     @AppStorage("Feather.certificateExperience") private var certificateExperience: String = CertificateExperience.developer.rawValue
     @AppStorage("forceShowGuides") private var forceShowGuides = false
+    @StateObject private var hideManager = SettingsHideManager.shared
     @Environment(\.navigateToUpdates) private var navigateToUpdates
     
     private var isEnterprise: Bool { certificateExperience == CertificateExperience.enterprise.rawValue }
@@ -72,16 +73,24 @@ struct SettingsView: View {
     
     private var preferencesSection: some View {
         Section {
-            SettingsRow(icon: "house.fill", title: String.localized("Home"), color: .accentColor, destination: HomeSettingsView())
-            SettingsRow(icon: "paintbrush.fill", title: String.localized("Appearance"), color: .accentColor, destination: AppearanceView())
-            SettingsRow(icon: "widget.small.badge.plus", title: String.localized("Live Activities"), color: .accentColor, destination: LiveActivitySettingsView())
+            if !hideManager.isHidden("settings.home") {
+                SettingsRow(icon: "house.fill", title: String.localized("Home"), color: .accentColor, destination: HomeSettingsView())
+            }
+            if !hideManager.isHidden("settings.appearance") {
+                SettingsRow(icon: "paintbrush.fill", title: String.localized("Appearance"), color: .accentColor, destination: AppearanceView())
+            }
+            if !hideManager.isHidden("settings.liveActivities") {
+                SettingsRow(icon: "widget.small.badge.plus", title: String.localized("Live Activities"), color: .accentColor, destination: LiveActivitySettingsView())
+            }
 
-            Button {
-                if let url = URL(string: UIApplication.openSettingsURLString) {
-                    UIApplication.shared.open(url)
+            if !hideManager.isHidden("settings.language") {
+                Button {
+                    if let url = URL(string: UIApplication.openSettingsURLString) {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    SettingsRowContent(icon: "translate", title: String.localized("Language"), color: .accentColor)
                 }
-            } label: {
-                SettingsRowContent(icon: "translate", title: String.localized("Language"), color: .accentColor)
             }
         } header: {
             SettingsSectionHeader(title: String.localized("Customizations"), icon: "slider.horizontal.3")
@@ -90,8 +99,12 @@ struct SettingsView: View {
     
     private var signingSection: some View {
         Section {
-            SettingsRow(icon: "person.badge.key.fill", title: String.localized("Certificates"), color: .accentColor, destination: CertificatesView())
-            SettingsRow(icon: "signature", title: String.localized("Signing"), color: .accentColor, destination: ConfigurationView())
+            if !hideManager.isHidden("settings.certificates") {
+                SettingsRow(icon: "person.badge.key.fill", title: String.localized("Certificates"), color: .accentColor, destination: CertificatesView())
+            }
+            if !hideManager.isHidden("settings.signing") {
+                SettingsRow(icon: "signature", title: String.localized("Signing"), color: .accentColor, destination: ConfigurationView())
+            }
         } header: {
             SettingsSectionHeader(title: String.localized("Signing"), icon: "shield.lefthalf.filled.badge.checkmark")
         }
@@ -104,19 +117,27 @@ struct SettingsView: View {
 
     private var dataSection: some View {
         Section {
-            SettingsRow(icon: "folder.fill", title: String.localized("Files"), color: .accentColor, destination: FilesSettingsView())
-            if !isEnterprise {
+            if !hideManager.isHidden("settings.files") {
+                SettingsRow(icon: "folder.fill", title: String.localized("Files"), color: .accentColor, destination: FilesSettingsView())
+            }
+            if !isEnterprise && !hideManager.isHidden("settings.storage") {
                 SettingsRow(icon: "externaldrive.fill.badge.person.crop", title: String.localized("Storage"), color: .accentColor, destination: ManageStorageView())
             }
-            SettingsRow(icon: "externaldrive.fill.badge.timemachine", title: String.localized("Backup & Restore"), color: .accentColor, destination: BackupRestoreView())
-            SettingsRow(icon: "terminal.fill", title: String.localized("Logs"), color: .accentColor, destination: AppLogsView())
+            if !hideManager.isHidden("settings.backupRestore") {
+                SettingsRow(icon: "externaldrive.fill.badge.timemachine", title: String.localized("Backup & Restore"), color: .accentColor, destination: BackupRestoreView())
+            }
+            if !hideManager.isHidden("settings.logs") {
+                SettingsRow(icon: "terminal.fill", title: String.localized("Logs"), color: .accentColor, destination: AppLogsView())
+            }
 
-            SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: _isFetchingFullData ? String.localized("Fetching Source Data...") : String.localized("Fetch Full Data"), color: Color("AccentColor"), isLoading: _isFetchingFullData) {
-                Task {
-                    _isFetchingFullData = true
-                    await SourcesViewModel.shared.forceFetchAllSources(_sources)
-                    _isFetchingFullData = false
-                    HapticsManager.shared.success()
+            if !hideManager.isHidden("settings.fetchData") {
+                SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: _isFetchingFullData ? String.localized("Fetching Source Data...") : String.localized("Fetch Full Data"), color: Color("AccentColor"), isLoading: _isFetchingFullData) {
+                    Task {
+                        _isFetchingFullData = true
+                        await SourcesViewModel.shared.forceFetchAllSources(_sources)
+                        _isFetchingFullData = false
+                        HapticsManager.shared.success()
+                    }
                 }
             }
         } header: {
@@ -126,9 +147,15 @@ struct SettingsView: View {
     
     private var resourcesSection: some View {
         Section {
-            SettingsRow(icon: "apple.intelligence", title: String.localized("Guides With AI"), color: .accentColor, destination: GuidesSettingsView())
-            SettingsRow(icon: "person.crop.circle.fill.badge.checkmark", title: String.localized("Credits"), color: .accentColor, destination: CreditsView())
-            SettingsRow(icon: "bubble.left.and.bubble.right.fill", title: String.localized("Feedback"), color: .accentColor, destination: FeedbackView())
+            if !hideManager.isHidden("settings.guides") {
+                SettingsRow(icon: "apple.intelligence", title: String.localized("Guides With AI"), color: .accentColor, destination: GuidesSettingsView())
+            }
+            if !hideManager.isHidden("settings.credits") {
+                SettingsRow(icon: "person.crop.circle.fill.badge.checkmark", title: String.localized("Credits"), color: .accentColor, destination: CreditsView())
+            }
+            if !hideManager.isHidden("settings.feedback") {
+                SettingsRow(icon: "bubble.left.and.bubble.right.fill", title: String.localized("Feedback"), color: .accentColor, destination: FeedbackView())
+            }
         } header: {
             SettingsSectionHeader(title: String.localized("Resources"), icon: "books.vertical.fill")
         }
@@ -136,14 +163,18 @@ struct SettingsView: View {
     
     private var appSection: some View {
         Section {
-            SettingsRow(icon: "app.badge.fill", title: String.localized("App Icons"), color: .accentColor, destination: AppIconView())
-            Button {
-                navigateToCheckForUpdates = true
-            } label: {
-                SettingsRowContent(icon: "arrow.triangle.2.circlepath", title: String.localized("Check For Updates"), color: .accentColor)
+            if !hideManager.isHidden("settings.appIcons") {
+                SettingsRow(icon: "app.badge.fill", title: String.localized("App Icons"), color: .accentColor, destination: AppIconView())
             }
-            .navigationDestination(isPresented: $navigateToCheckForUpdates) {
-                CheckForUpdatesView()
+            if !hideManager.isHidden("settings.updates") {
+                Button {
+                    navigateToCheckForUpdates = true
+                } label: {
+                    SettingsRowContent(icon: "arrow.triangle.2.circlepath", title: String.localized("Check For Updates"), color: .accentColor)
+                }
+                .navigationDestination(isPresented: $navigateToCheckForUpdates) {
+                    CheckForUpdatesView()
+                }
             }
         } header: {
             SettingsSectionHeader(title: String.localized("App"), icon: "app.fill")
@@ -152,7 +183,9 @@ struct SettingsView: View {
     
     private var developerSection: some View {
         Section {
-            SettingsRow(icon: "person.2.badge.gearshape.fill", title: String.localized("Debug"), color: .red, destination: DeveloperView())
+            if !hideManager.isHidden("settings.debug") {
+                SettingsRow(icon: "person.2.badge.gearshape.fill", title: String.localized("Debug"), color: .red, destination: DeveloperView())
+            }
         } header: {
             SettingsSectionHeader(title: String.localized("Internal"), icon: "wrench.and.screwdriver.fill")
         }

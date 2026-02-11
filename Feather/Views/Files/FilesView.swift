@@ -6,6 +6,7 @@ import QuickLook
 // MARK: - FilesView
 struct FilesView: View {
     @StateObject private var fileManager = FileManagerService.shared
+    @StateObject private var hideManager = FilesHideManager.shared
     @State private var showCreateMenu = false
     @State private var showCreateFolder = false
     @State private var showCreateTextFile = false
@@ -116,12 +117,12 @@ struct FilesView: View {
         NBNavigationView(.localized("Files")) {
             VStack(spacing: 0) {
                 // Certificate Quick Add Banner (at top, before breadcrumb)
-                if hasCertificateFiles && !dismissedCertificateBanner {
+                if hasCertificateFiles && !dismissedCertificateBanner && !hideManager.isHidden("files.certBanner") {
                     certificateQuickAddBanner
                 }
                 
                 // Breadcrumb Navigation - pinned at top (only if enabled)
-                if enableBreadcrumbs {
+                if enableBreadcrumbs && !hideManager.isHidden("files.breadcrumbView") {
                     BreadcrumbView(
                         currentPath: fileManager.currentDirectory.path,
                         baseDirectory: fileManager.baseDirectory,
@@ -172,11 +173,13 @@ struct FilesView: View {
                 
                 ToolbarItemGroup(placement: .navigationBarTrailing) {
                     // Downloads Portal button
-                    Button {
-                        showDownloadsPortal = true
-                    } label: {
-                        Image(systemName: "square.and.arrow.down")
-                            .font(.title3)
+                    if !hideManager.isHidden("files.downloadsPortalButton") {
+                        Button {
+                            showDownloadsPortal = true
+                        } label: {
+                            Image(systemName: "square.and.arrow.down")
+                                .font(.title3)
+                        }
                     }
                     
                     // Bulk actions menu when in selection mode
@@ -189,48 +192,52 @@ struct FilesView: View {
                         }
                     }
                     
-                    Menu {
-                        Button {
-                            layoutMode = layoutMode == .list ? .grid : .list
-                        } label: {
-                            Label(layoutMode == .list ? .localized("Grid View") : .localized("List View"), 
-                                  systemImage: layoutMode == .list ? "square.grid.2x2" : "list.bullet")
-                        }
-                        
+                    if !hideManager.isHidden("files.ellipsisMenuButton") {
                         Menu {
-                            ForEach(SortOption.allCases, id: \.self) { option in
-                                Button {
-                                    sortOption = option
-                                } label: {
-                                    if sortOption == option {
-                                        Label(option.rawValue, systemImage: "checkmark")
-                                    } else {
-                                        Text(option.rawValue)
+                            Button {
+                                layoutMode = layoutMode == .list ? .grid : .list
+                            } label: {
+                                Label(layoutMode == .list ? .localized("Grid View") : .localized("List View"),
+                                      systemImage: layoutMode == .list ? "square.grid.2x2" : "list.bullet")
+                            }
+
+                            Menu {
+                                ForEach(SortOption.allCases, id: \.self) { option in
+                                    Button {
+                                        sortOption = option
+                                    } label: {
+                                        if sortOption == option {
+                                            Label(option.rawValue, systemImage: "checkmark")
+                                        } else {
+                                            Text(option.rawValue)
+                                        }
                                     }
                                 }
+                            } label: {
+                                Label(.localized("Sort By"), systemImage: "arrow.up.arrow.down")
+                            }
+
+                            Button {
+                                isSelectionMode.toggle()
+                                if !isSelectionMode {
+                                    selectedFiles.removeAll()
+                                }
+                            } label: {
+                                Label(.localized("Select"), systemImage: "checkmark.circle")
                             }
                         } label: {
-                            Label(.localized("Sort By"), systemImage: "arrow.up.arrow.down")
+                            Image(systemName: "ellipsis.circle")
                         }
-                        
-                        Button {
-                            isSelectionMode.toggle()
-                            if !isSelectionMode {
-                                selectedFiles.removeAll()
-                            }
-                        } label: {
-                            Label(.localized("Select"), systemImage: "checkmark.circle")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
                     }
                     
-                    Menu {
-                        createMenuItems
-                    } label: {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title3)
-                            .foregroundStyle(.tint)
+                    if !hideManager.isHidden("files.plusButton") {
+                        Menu {
+                            createMenuItems
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title3)
+                                .foregroundStyle(.tint)
+                        }
                     }
                 }
             })
@@ -563,27 +570,29 @@ struct FilesView: View {
                     .padding(.horizontal, 40)
             }
             
-            Button {
-                showDocumentPicker = true
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "square.and.arrow.down.fill")
-                        .font(.headline)
-                    Text(.localized("Import Files"))
-                        .font(.headline)
-                }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 28)
-                .padding(.vertical, 14)
-                .background(
-                    LinearGradient(
-                        colors: [Color.accentColor, Color.accentColor.opacity(0.85)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
+            if !hideManager.isHidden("files.emptyStateImportButton") {
+                Button {
+                    showDocumentPicker = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "square.and.arrow.down.fill")
+                            .font(.headline)
+                        Text(.localized("Import Files"))
+                            .font(.headline)
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 28)
+                    .padding(.vertical, 14)
+                    .background(
+                        LinearGradient(
+                            colors: [Color.accentColor, Color.accentColor.opacity(0.85)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                )
-                .clipShape(Capsule())
-                .shadow(color: .accentColor.opacity(0.4), radius: 10, x: 0, y: 6)
+                    .clipShape(Capsule())
+                    .shadow(color: .accentColor.opacity(0.4), radius: 10, x: 0, y: 6)
+                }
             }
         }
     }
