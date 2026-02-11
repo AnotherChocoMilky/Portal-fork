@@ -247,10 +247,11 @@ struct SelfBackupRestoreView: View {
         .sheet(isPresented: $showingBackupOptions) {
             BackupOptionsView(
                 options: $backupOptions,
+                isPreparing: viewModel.isCreatingBackup,
                 onConfirm: {
-                    showingBackupOptions = false
                     Task {
                         await viewModel.createBackup(with: backupOptions)
+                        showingBackupOptions = false
                     }
                 }
             )
@@ -326,6 +327,31 @@ struct SelfBackupRestoreView: View {
         } message: { message in
             Text(message)
         }
+        .alert("Enter Backup Password", isPresented: $viewModel.showingPasswordPrompt) {
+            SecureField("Password", text: $viewModel.passwordInput)
+            Button("Cancel", role: .cancel) {
+                viewModel.onPasswordSubmit?("")
+            }
+            Button("OK") {
+                viewModel.onPasswordSubmit?(viewModel.passwordInput)
+                viewModel.passwordInput = ""
+            }
+        } message: {
+            Text("This backup is encrypted. Please enter the password to import it.")
+        }
+        .alert("Export Backup", isPresented: $viewModel.showingExportPrompt) {
+            Button("Yes, with Password") {
+                viewModel.onExportSubmit?(true)
+            }
+            Button("No, Decrypt First") {
+                viewModel.onExportSubmit?(false)
+            }
+            Button("Cancel", role: .cancel) {
+                viewModel.onExportSubmit?(nil)
+            }
+        } message: {
+            Text("Do you want to export this backup with password protection?")
+        }
         .onAppear {
             viewModel.loadBackups()
         }
@@ -374,7 +400,9 @@ struct SelfBackupRestoreView: View {
             }
             
             Button {
-                viewModel.exportBackup(backup)
+                Task {
+                    await viewModel.exportBackup(backup)
+                }
             } label: {
                 Label("Export As Backup", systemImage: "square.and.arrow.up")
             }
@@ -443,6 +471,7 @@ struct LocalBackup: Identifiable, Codable {
     let date: Date
     let size: Int64
     let path: String
+    var isEncrypted: Bool?
     
     var sizeString: String {
         ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
@@ -462,6 +491,13 @@ class SelfBackupRestoreViewModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var successMessage: String?
     
+    @Published var showingPasswordPrompt = false
+    @Published var passwordInput = ""
+    var onPasswordSubmit: ((String) -> Void)?
+
+    @Published var showingExportPrompt = false
+    var onExportSubmit: ((Bool?) -> Void)?
+
     private let fileManager = FileManager.default
     private let backupsDirectory: URL
     // Note: This password provides basic encryption. For production use, consider:
@@ -530,9 +566,19 @@ class SelfBackupRestoreViewModel: ObservableObject {
             operationProgress = 0.8
             currentOperation = "Encrypting Backup"
             
+            var backupPassword: String? = nil
+            if options.usePassword {
+                // Generate a random password
+                let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+                backupPassword = String((0..<12).map{ _ in letters.randomElement()! })
+
+                // Save to Keychain
+                try KeychainManager.shared.save(backupPassword!, account: "backup_\(backupID.uuidString)")
+            }
+
             // Encrypt the backup
             let zipData = try Data(contentsOf: backupZipPath)
-            let encryptedData = try encryptData(zipData)
+            let encryptedData = try encryptData(zipData, with: backupPassword)
             try encryptedData.write(to: backupZipPath)
             
             operationProgress = 0.9
@@ -548,7 +594,8 @@ class SelfBackupRestoreViewModel: ObservableObject {
                 name: "Backup \(timestamp.formatted(date: .abbreviated, time: .shortened))",
                 date: timestamp,
                 size: fileSize,
-                path: backupZipPath.path
+                path: backupZipPath.path,
+                isEncrypted: options.usePassword
             )
             
             localBackups.append(backup)
@@ -562,7 +609,11 @@ class SelfBackupRestoreViewModel: ObservableObject {
             operationProgress = 1.0
             currentOperation = "Backup Completed"
             
-            successMessage = "Backup Created Successfully!"
+            if let password = backupPassword {
+                successMessage = "Backup Created Successfully!\n\nBackup Password: \(password)\n\nPlease save this password to restore your backup on other devices."
+            } else {
+                successMessage = "Backup Created Successfully!"
+            }
             showSuccess = true
             
         } catch {
@@ -588,9 +639,40 @@ class SelfBackupRestoreViewModel: ObservableObject {
             operationProgress = 0.1
             currentOperation = "Decrypting Backup"
             
-            // Decrypt the backup
-            let encryptedData = try Data(contentsOf: URL(fileURLWithPath: backup.path))
-            let decryptedData = try decryptData(encryptedData)
+            let fileData = try Data(contentsOf: URL(fileURLWithPath: backup.path))
+            let decryptedData: Data
+
+            if backup.isEncrypted == true {
+                // Try Keychain first
+                var backupPassword = try? KeychainManager.shared.retrieve(account: "backup_\(backup.id.uuidString)")
+
+                // If not in Keychain, prompt
+                if backupPassword == nil {
+                    backupPassword = await promptForPassword()
+                    guard let pwd = backupPassword, !pwd.isEmpty else {
+                        isRestoring = false
+                        return
+                    }
+                    // Save to Keychain for next time
+                    try? KeychainManager.shared.save(pwd, account: "backup_\(backup.id.uuidString)")
+                    backupPassword = pwd
+                }
+
+                decryptedData = try decryptData(fileData, with: backupPassword)
+            } else {
+                // Handle potentially old encrypted backups or plain ZIPs
+                if fileData.starts(with: "PORTAL_ENC".data(using: .utf8)!) {
+                    decryptedData = try decryptData(fileData, with: nil)
+                } else {
+                    // Try to decrypt with default password (old style)
+                    if let decrypted = try? decryptData(fileData, with: nil) {
+                        decryptedData = decrypted
+                    } else {
+                        // Plain ZIP
+                        decryptedData = fileData
+                    }
+                }
+            }
             
             operationProgress = 0.3
             currentOperation = "Extracting Backup"
@@ -653,13 +735,16 @@ class SelfBackupRestoreViewModel: ObservableObject {
         saveMetadata()
     }
     
-    func exportBackup(_ backup: LocalBackup) {
+    func exportBackup(_ backup: LocalBackup) async {
         guard fileManager.fileExists(atPath: backup.path) else {
             errorMessage = "Backup File Not Found"
             showError = true
             return
         }
         
+        let usePassword = await promptForExportEncryption()
+        guard let usePassword = usePassword else { return }
+
         do {
             let sourceURL = URL(fileURLWithPath: backup.path)
             // Sanitize filename by removing invalid characters
@@ -668,11 +753,36 @@ class SelfBackupRestoreViewModel: ObservableObject {
             let fileName = "\(sanitizedName).backup"
             let destinationURL = fileManager.temporaryDirectory.appendingPathComponent(fileName)
             
-            // Copy to temp location with .backup extension
             if fileManager.fileExists(atPath: destinationURL.path) {
                 try fileManager.removeItem(at: destinationURL)
             }
-            try fileManager.copyItem(at: sourceURL, to: destinationURL)
+
+            if usePassword {
+                // Just copy the already encrypted file
+                try fileManager.copyItem(at: sourceURL, to: destinationURL)
+            } else {
+                // Decrypt first
+                let fileData = try Data(contentsOf: sourceURL)
+                let decryptedData: Data
+
+                if backup.isEncrypted == true {
+                    var backupPassword = try? KeychainManager.shared.retrieve(account: "backup_\(backup.id.uuidString)")
+                    if backupPassword == nil {
+                        backupPassword = await promptForPassword()
+                        if backupPassword?.isEmpty == true { return }
+                    }
+                    decryptedData = try decryptData(fileData, with: backupPassword)
+                } else {
+                    // Check if it's an old encrypted style or already a ZIP
+                    if let decrypted = try? decryptData(fileData, with: nil) {
+                        decryptedData = decrypted
+                    } else {
+                        decryptedData = fileData
+                    }
+                }
+
+                try decryptedData.write(to: destinationURL)
+            }
             
             // Present share sheet
             DispatchQueue.main.async {
@@ -695,16 +805,44 @@ class SelfBackupRestoreViewModel: ObservableObject {
     func importBackup(from url: URL) async {
         do {
             // Access the security-scoped resource
-            guard url.startAccessingSecurityScopedResource() else {
-                throw NSError(domain: "SelfBackup", code: -1, userInfo: [NSLocalizedDescriptionKey: "Cannot access file"])
-            }
-            defer { url.stopAccessingSecurityScopedResource() }
+            let isSecurityScoped = url.startAccessingSecurityScopedResource()
+            defer { if isSecurityScoped { url.stopAccessingSecurityScopedResource() } }
             
             // Copy to backups directory
             let backupID = UUID()
             let destinationURL = backupsDirectory.appendingPathComponent("\(backupID.uuidString).zip")
+
+            if fileManager.fileExists(atPath: destinationURL.path) {
+                try fileManager.removeItem(at: destinationURL)
+            }
             try fileManager.copyItem(at: url, to: destinationURL)
             
+            // Check if encrypted
+            let fileData = try Data(contentsOf: destinationURL)
+            let header = "PORTAL_ENC".data(using: .utf8)!
+            let isEncrypted = fileData.starts(with: header)
+
+            var passwordToStore: String? = nil
+            if isEncrypted {
+                // Prompt for password
+                let password = await promptForPassword()
+                guard !password.isEmpty else {
+                    try? fileManager.removeItem(at: destinationURL)
+                    return
+                }
+
+                // Verify password
+                do {
+                    _ = try decryptData(fileData, with: password)
+                    passwordToStore = password
+                } catch {
+                    try? fileManager.removeItem(at: destinationURL)
+                    errorMessage = "Incorrect password for backup."
+                    showError = true
+                    return
+                }
+            }
+
             // Get file size
             let attributes = try fileManager.attributesOfItem(atPath: destinationURL.path)
             let fileSize = attributes[.size] as? Int64 ?? 0
@@ -719,9 +857,14 @@ class SelfBackupRestoreViewModel: ObservableObject {
                 name: sanitizedName.isEmpty ? "Imported Backup" : sanitizedName,
                 date: Date(),
                 size: fileSize,
-                path: destinationURL.path
+                path: destinationURL.path,
+                isEncrypted: isEncrypted
             )
             
+            if let password = passwordToStore {
+                try? KeychainManager.shared.save(password, account: "backup_\(backupID.uuidString)")
+            }
+
             localBackups.append(backup)
             localBackups.sort { $0.date > $1.date }
             saveMetadata()
@@ -734,6 +877,24 @@ class SelfBackupRestoreViewModel: ObservableObject {
         }
     }
     
+    private func promptForPassword() async -> String {
+        await withCheckedContinuation { continuation in
+            onPasswordSubmit = { password in
+                continuation.resume(returning: password)
+            }
+            showingPasswordPrompt = true
+        }
+    }
+
+    private func promptForExportEncryption() async -> Bool? {
+        await withCheckedContinuation { continuation in
+            onExportSubmit = { useEncryption in
+                continuation.resume(returning: useEncryption)
+            }
+            showingExportPrompt = true
+        }
+    }
+
     // MARK: - Private Helpers
     
     private func saveMetadata() {
@@ -927,7 +1088,9 @@ class SelfBackupRestoreViewModel: ObservableObject {
         }
     }
     
-    private func encryptData(_ data: Data) throws -> Data {
+    private func encryptData(_ data: Data, with customPassword: String? = nil) throws -> Data {
+        let encryptionPassword = customPassword ?? password
+
         // BackupPayload doesn't have this initializer, need to use the proper one
         // For now, we'll create a simple wrapper
         struct SimplePayload: Codable {
@@ -940,12 +1103,25 @@ class SelfBackupRestoreViewModel: ObservableObject {
         let payloadData = try encoder.encode(simplePayload)
         
         // Use AES-GCM encryption directly
-        let key = SymmetricKey(data: SHA256.hash(data: password.data(using: .utf8)!))
+        let key = SymmetricKey(data: SHA256.hash(data: encryptionPassword.data(using: .utf8)!))
         let sealedBox = try AES.GCM.seal(payloadData, using: key)
-        return sealedBox.combined!
+
+        // Add a magic header to identify encrypted backups
+        var combined = "PORTAL_ENC".data(using: .utf8)!
+        combined.append(sealedBox.combined!)
+        return combined
     }
     
-    private func decryptData(_ encryptedData: Data) throws -> Data {
+    private func decryptData(_ encryptedData: Data, with customPassword: String? = nil) throws -> Data {
+        let decryptionPassword = customPassword ?? password
+
+        // Check for magic header
+        var dataToDecrypt = encryptedData
+        let header = "PORTAL_ENC".data(using: .utf8)!
+        if encryptedData.starts(with: header) {
+            dataToDecrypt = encryptedData.suffix(from: header.count)
+        }
+
         // Decrypt using the same method as encrypt
         struct SimplePayload: Codable {
             let version: String
@@ -953,8 +1129,8 @@ class SelfBackupRestoreViewModel: ObservableObject {
             let data: Data
         }
         
-        let key = SymmetricKey(data: SHA256.hash(data: password.data(using: .utf8)!))
-        let sealedBox = try AES.GCM.SealedBox(combined: encryptedData)
+        let key = SymmetricKey(data: SHA256.hash(data: decryptionPassword.data(using: .utf8)!))
+        let sealedBox = try AES.GCM.SealedBox(combined: dataToDecrypt)
         let decryptedData = try AES.GCM.open(sealedBox, using: key)
         
         let decoder = JSONDecoder()

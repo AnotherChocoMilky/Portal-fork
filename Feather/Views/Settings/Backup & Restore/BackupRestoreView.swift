@@ -12,6 +12,7 @@ struct BackupOptions {
     var includeSources: Bool = true
     var includeDefaultFrameworks: Bool = true
     var includeArchives: Bool = true
+    var usePassword: Bool = true
 }
 
 // MARK: - View
@@ -40,7 +41,6 @@ struct BackupRestoreView: View {
     var body: some View {
         NBList(.localized("Backup & Restore")) {
             _headerSection
-            _quickActionsSection
             _nearbyTransferSection
             _advancedToolsSection
             _aboutSection
@@ -48,8 +48,8 @@ struct BackupRestoreView: View {
         .sheet(isPresented: $isBackupOptionsPresented) {
             BackupOptionsView(
                 options: $backupOptions,
+                isPreparing: isPreparingBackup,
                 onConfirm: {
-                    isBackupOptionsPresented = false
                     handleCreateBackup()
                 }
             )
@@ -154,22 +154,41 @@ struct BackupRestoreView: View {
     }
 
     @ViewBuilder
-    private var _quickActionsSection: some View {
+    private var _nearbyTransferSection: some View {
         Section {
             HStack(spacing: 16) {
-                Button {
-                    isBackupOptionsPresented = true
-                } label: {
+                NavigationLink(destination: NearbyTransferView()) {
+                    VStack(spacing: 12) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                .fill(Color.purple.opacity(0.15))
+                                .frame(width: 54, height: 54)
+                            Image(systemName: "network.badge.shield.half.filled")
+                                .font(.title2)
+                                .foregroundStyle(.purple)
+                        }
+                        Text(.localized("Nearby Transfer"))
+                            .font(.system(size: 15, weight: .bold, design: .rounded))
+                            .foregroundStyle(.purple)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                    .background(Color.purple.opacity(0.05))
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                }
+                .buttonStyle(.plain)
+
+                NavigationLink(destination: SelfBackupRestoreView()) {
                     VStack(spacing: 12) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
                                 .fill(Color.green.opacity(0.15))
                                 .frame(width: 54, height: 54)
-                            Image(systemName: "arrow.up.doc.fill")
+                            Image(systemName: "externaldrive.fill")
                                 .font(.title2)
                                 .foregroundStyle(.green)
                         }
-                        Text(.localized("Create Backup"))
+                        Text(.localized("Self Backup"))
                             .font(.system(size: 15, weight: .bold, design: .rounded))
                             .foregroundStyle(.green)
                     }
@@ -179,85 +198,9 @@ struct BackupRestoreView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                 }
                 .buttonStyle(.plain)
-
-                Button {
-                    isImportIPAPresented = true
-                } label: {
-                    VStack(spacing: 12) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.blue.opacity(0.15))
-                                .frame(width: 54, height: 54)
-                            Image(systemName: "arrow.down.doc.fill")
-                                .font(.title2)
-                                .foregroundStyle(.blue)
-                        }
-                        Text(.localized("Restore Backup"))
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(.blue)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 20)
-                    .background(Color.blue.opacity(0.05))
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                }
-                .buttonStyle(.plain)
             }
             .listRowBackground(Color.clear)
             .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
-        } header: {
-            AppearanceSectionHeader(title: String.localized("Quick Actions"), icon: "bolt.fill")
-        }
-    }
-
-    @ViewBuilder
-    private var _nearbyTransferSection: some View {
-        Section {
-            NavigationLink(destination: NearbyTransferView()) {
-                HStack(spacing: 16) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.purple.opacity(0.15))
-                            .frame(width: 50, height: 50)
-                        
-                        Image(systemName: "network.badge.shield.half.filled")
-                            .font(.title2)
-                            .foregroundStyle(.purple)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(.localized("Nearby Transfer"))
-                            .font(.headline)
-                        Text(.localized("Use Nearby Transfer to transfer backups wirelessly to nearby devices on the same Wi-Fi network."))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(.vertical, 8)
-            }
-            
-            NavigationLink(destination: SelfBackupRestoreView()) {
-                HStack(spacing: 16) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.green.opacity(0.15))
-                            .frame(width: 50, height: 50)
-                        
-                        Image(systemName: "externaldrive.fill")
-                            .font(.title2)
-                            .foregroundStyle(.green)
-                    }
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(.localized("Self Backup"))
-                            .font(.headline)
-                        Text(.localized("Use Self Backup to backup and restore locally using the Backup file type for easy sharing across your devices."))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .padding(.vertical, 8)
-            }
         } header: {
             AppearanceSectionHeader(title: String.localized("Wireless Transfer"), icon: "wifi")
         }
@@ -797,10 +740,12 @@ struct BackupRestoreView: View {
                     isPreparingBackup = false
                     backupDocument = BackupDocument(url: url)
                     showExporter = true
+                    isBackupOptionsPresented = false
                 }
             } else {
                 await MainActor.run {
                     isPreparingBackup = false
+                    isBackupOptionsPresented = false
                 }
             }
         }
@@ -995,6 +940,7 @@ struct BackupDocument: FileDocument {
 struct BackupOptionsView: View {
     @Environment(\.dismiss) var dismiss
     @Binding var options: BackupOptions
+    var isPreparing: Bool = false
     let onConfirm: () -> Void
     var body: some View {
         NavigationStack {
@@ -1053,6 +999,15 @@ struct BackupOptionsView: View {
                             }
                         } icon: { Image(systemName: "archivebox.fill").foregroundStyle(.indigo) }
                     }
+
+                    Toggle(isOn: $options.usePassword) {
+                        Label {
+                            VStack(alignment: .leading) {
+                                Text(.localized("Use Encryption"))
+                                Text(.localized("Protect backup with a generated password")).font(.caption).foregroundStyle(.secondary)
+                            }
+                        } icon: { Image(systemName: "lock.fill").foregroundStyle(.green) }
+                    }
                 } header: {
                     AppearanceSectionHeader(title: String.localized("Backup Content"), icon: "list.bullet.indent")
                 }
@@ -1071,15 +1026,23 @@ struct BackupOptionsView: View {
 
                 Section {
                     Button { onConfirm() } label: {
-                        Text(.localized("Create Portal Backup"))
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 12)
-                            .background(Color.accentColor)
-                            .foregroundStyle(.white)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        HStack {
+                            if isPreparing {
+                                ProgressView()
+                                    .tint(.white)
+                                    .padding(.trailing, 8)
+                            }
+                            Text(isPreparing ? .localized("Preparing...") : .localized("Create Portal Backup"))
+                        }
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(isPreparing ? Color.gray : Color.accentColor)
+                        .foregroundStyle(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     .buttonStyle(.plain)
+                    .disabled(isPreparing)
                 }
             }
             .navigationTitle(.localized("Backup Options"))

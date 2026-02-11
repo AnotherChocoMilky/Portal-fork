@@ -33,6 +33,10 @@ final class KeychainManager {
     }
     
     func save(_ value: String, for key: KeychainKey) throws {
+        try save(value, account: key.rawValue)
+    }
+
+    func save(_ value: String, account: String) throws {
         guard let data = value.data(using: .utf8) else {
             throw KeychainError.invalidData
         }
@@ -40,7 +44,7 @@ final class KeychainManager {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: key.rawValue,
+            kSecAttrAccount as String: account,
             kSecValueData as String: data,
             kSecAttrAccessible as String: kSecAttrAccessibleWhenUnlockedThisDeviceOnly
         ]
@@ -56,10 +60,14 @@ final class KeychainManager {
     }
     
     func retrieve(for key: KeychainKey) throws -> String {
+        try retrieve(account: key.rawValue)
+    }
+
+    func retrieve(account: String) throws -> String {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: key.rawValue,
+            kSecAttrAccount as String: account,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
@@ -83,10 +91,14 @@ final class KeychainManager {
     }
     
     func delete(for key: KeychainKey) throws {
+        try delete(account: key.rawValue)
+    }
+
+    func delete(account: String) throws {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
-            kSecAttrAccount as String: key.rawValue
+            kSecAttrAccount as String: account
         ]
         
         let status = SecItemDelete(query as CFDictionary)
@@ -97,8 +109,12 @@ final class KeychainManager {
     }
     
     func exists(for key: KeychainKey) -> Bool {
+        exists(account: key.rawValue)
+    }
+
+    func exists(account: String) -> Bool {
         do {
-            _ = try retrieve(for: key)
+            _ = try retrieve(account: account)
             return true
         } catch {
             return false
