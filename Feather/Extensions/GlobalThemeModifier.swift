@@ -10,16 +10,39 @@ struct GlobalThemeModifier: ViewModifier {
     @Environment(\.colorScheme) var colorScheme
 
     func body(content: Content) -> some View {
-        let bgColor = appState.isSigning ? Color(hex: bgColorHex) : (colorScheme == .light ? .black : Color(hex: bgColorHex))
-        let uiColor = appState.isSigning ? Color(hex: uiElementColorHex) : (colorScheme == .light ? .black : Color(hex: uiElementColorHex))
-        let textColor = appState.isSigning ? Color(hex: textColorHex) : (colorScheme == .light ? .black : Color(hex: textColorHex))
+        let isLight = colorScheme == .light
+
+        // Background logic: Light mode gets system background, Dark mode gets custom or default dark
+        let bgColor: Color = if appState.isSigning {
+            Color(hex: bgColorHex)
+        } else {
+            isLight ? Color(UIColor.systemGroupedBackground) : Color(hex: bgColorHex)
+        }
+
+        // UI Elements logic
+        let uiColor: Color = if appState.isSigning {
+            Color(hex: uiElementColorHex)
+        } else {
+            isLight ? .accentColor : Color(hex: uiElementColorHex)
+        }
+
+        // Text color logic: Dark mode defaults to white if textColorHex is black
+        let textColor: Color = if appState.isSigning {
+            Color(hex: textColorHex)
+        } else {
+            if isLight {
+                .primary
+            } else {
+                (textColorHex == Color.defaultText || textColorHex == "#000000") ? .white : Color(hex: textColorHex)
+            }
+        }
 
         return content
             .foregroundStyle(textColor)
             .tint(uiColor)
             .accentColor(uiColor)
             .background(bgColor.ignoresSafeArea())
-            .toolbarColorScheme(colorScheme == .light ? .dark : nil, for: .navigationBar)
+            .toolbarColorScheme(isLight ? .light : .dark, for: .navigationBar)
     }
 }
 

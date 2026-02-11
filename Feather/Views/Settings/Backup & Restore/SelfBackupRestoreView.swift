@@ -556,12 +556,33 @@ class SelfBackupRestoreViewModel: ObservableObject {
             
             try await collectBackupData(to: tempBackupDir, options: options)
             
-            operationProgress = 0.6
+            operationProgress = 0.5
             currentOperation = "Creating Archive"
             
-            // Create ZIP archive
+            // Create ZIP archive using a more robust manual approach
             let backupZipPath = backupsDirectory.appendingPathComponent("\(backupID.uuidString).zip")
-            try fileManager.zipItem(at: tempBackupDir, to: backupZipPath, shouldKeepParent: false)
+            guard let archive = Archive(url: backupZipPath, accessMode: .create) else {
+                throw NSError(domain: "SelfBackup", code: -1, userInfo: [NSLocalizedDescriptionKey: "Failed to create archive at \(backupZipPath.path)"])
+            }
+
+            // Add files individually for better error handling and recursion
+            let enumerator = fileManager.enumerator(at: tempBackupDir, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles])
+            var filesToZip: [URL] = []
+            while let fileURL = enumerator?.nextObject() as? URL {
+                filesToZip.append(fileURL)
+            }
+
+            for (index, fileURL) in filesToZip.enumerated() {
+                operationProgress = 0.5 + (Double(index) / Double(filesToZip.count)) * 0.3
+                let relativePath = fileURL.path.replacingOccurrences(of: tempBackupDir.path + "/", with: "")
+                currentOperation = "Zipping: \(relativePath)"
+
+                do {
+                    try archive.addEntry(with: relativePath, relativeTo: tempBackupDir)
+                } catch {
+                    AppLogManager.shared.error("Failed to add \(relativePath) to archive: \(error.localizedDescription)", category: "Self Backup")
+                }
+            }
             
             operationProgress = 0.8
             currentOperation = "Encrypting Backup"
@@ -576,8 +597,8 @@ class SelfBackupRestoreViewModel: ObservableObject {
                 try KeychainManager.shared.save(backupPassword!, account: "backup_\(backupID.uuidString)")
             }
 
-            // Encrypt the backup
-            let zipData = try Data(contentsOf: backupZipPath)
+            // Encrypt the backup - Avoid JSON overhead for large files
+            let zipData = try Data(contentsOf: backupZipPath, options: .mappedIfSafe)
             let encryptedData = try encryptData(zipData, with: backupPassword)
             try encryptedData.write(to: backupZipPath)
             
@@ -1090,46 +1111,42 @@ class SelfBackupRestoreViewModel: ObservableObject {
     
     private func encryptData(_ data: Data, with customPassword: String? = nil) throws -> Data {
         let encryptionPassword = customPassword ?? password
-
-        // BackupPayload doesn't have this initializer, need to use the proper one
-        // For now, we'll create a simple wrapper
-        struct SimplePayload: Codable {
-            let version: String
-            let timestamp: TimeInterval
-            let data: Data
-        }
-        let simplePayload = SimplePayload(version: "1.0", timestamp: Date().timeIntervalSince1970, data: data)
-        let encoder = JSONEncoder()
-        let payloadData = try encoder.encode(simplePayload)
-        
-        // Use AES-GCM encryption directly
         let key = SymmetricKey(data: SHA256.hash(data: encryptionPassword.data(using: .utf8)!))
-        let sealedBox = try AES.GCM.seal(payloadData, using: key)
 
-        // Add a magic header to identify encrypted backups
-        var combined = "PORTAL_ENC".data(using: .utf8)!
+        // Use direct binary format for better efficiency
+        let sealedBox = try AES.GCM.seal(data, using: key)
+
+        // Add a magic header to identify binary encrypted backups (v2)
+        var combined = "PORTAL_V2".data(using: .utf8)!
         combined.append(sealedBox.combined!)
         return combined
     }
     
     private func decryptData(_ encryptedData: Data, with customPassword: String? = nil) throws -> Data {
         let decryptionPassword = customPassword ?? password
+        let key = SymmetricKey(data: SHA256.hash(data: decryptionPassword.data(using: .utf8)!))
 
-        // Check for magic header
-        var dataToDecrypt = encryptedData
-        let header = "PORTAL_ENC".data(using: .utf8)!
-        if encryptedData.starts(with: header) {
-            dataToDecrypt = encryptedData.suffix(from: header.count)
+        // Check for binary magic header (v2)
+        let v2Header = "PORTAL_V2".data(using: .utf8)!
+        if encryptedData.starts(with: v2Header) {
+            let dataToDecrypt = encryptedData.suffix(from: v2Header.count)
+            let sealedBox = try AES.GCM.SealedBox(combined: dataToDecrypt)
+            return try AES.GCM.open(sealedBox, using: key)
         }
 
-        // Decrypt using the same method as encrypt
+        // Fallback to legacy JSON format (v1)
+        var dataToDecrypt = encryptedData
+        let v1Header = "PORTAL_ENC".data(using: .utf8)!
+        if encryptedData.starts(with: v1Header) {
+            dataToDecrypt = encryptedData.suffix(from: v1Header.count)
+        }
+
         struct SimplePayload: Codable {
             let version: String
             let timestamp: TimeInterval
             let data: Data
         }
         
-        let key = SymmetricKey(data: SHA256.hash(data: decryptionPassword.data(using: .utf8)!))
         let sealedBox = try AES.GCM.SealedBox(combined: dataToDecrypt)
         let decryptedData = try AES.GCM.open(sealedBox, using: key)
         
