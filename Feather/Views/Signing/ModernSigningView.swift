@@ -1518,7 +1518,7 @@ struct ModernSigningOptionsView: View {
                     .tracking(0.5)
                 
                 if isBeta {
-                    Text("BETA")
+                    Text("Beta")
                         .font(.system(size: 8, weight: .bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 5)

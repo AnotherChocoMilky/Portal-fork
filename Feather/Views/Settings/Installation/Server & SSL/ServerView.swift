@@ -54,7 +54,7 @@ extension ServerView {
 		var description: String {
 			switch self {
 			case .fullyLocal: return .localized("Fully signs and installs apps on device.")
-			case .semiLocal: return .localized("Signs locally but uses a local server for installation via Wi-Fi. This method is more reliable.")
+			case .semiLocal: return .localized("Signs locally but uses a local server for installation via Wi-Fi.")
 			case .custom: return .localized("Use your own custom API endpoint for remote signing and installation.")
 			}
 		}
@@ -311,7 +311,7 @@ struct ServerView: View {
 		} header: {
 			Label(.localized("SSL Certificates"), systemImage: "lock.shield.fill")
 		} footer: {
-			Text(.localized("Download the latest SSL certificates for secure connections. Click it if you are having any signing errors."))
+			Text(.localized("Download the latest SSL certificates for secure connections. Update them if you are having any signing errors."))
 				.font(.caption)
 		}
 	}
@@ -383,7 +383,7 @@ struct ServerView: View {
 
 		let urlString: String
 		if _serverMethod == 2 {
-			urlString = _customSigningAPI.isEmpty ? "https://google.com" : _customSigningAPI
+			urlString = _customSigningAPI.isEmpty ? "https://google.com" : _customSigningAPI //lmaoo google
 		} else if _serverMethod == 1 {
 			urlString = "http://localhost:4000" // Default local server port
 		} else {
@@ -413,11 +413,11 @@ struct ServerView: View {
 					if (200...399).contains(httpResponse.statusCode) {
 						_serverStatus = "Online"
 						_statusColor = .green
-						_responseTime = "\(time)MS"
+						_responseTime = "\(time)ms"
 					} else {
 						_serverStatus = "Error \(httpResponse.statusCode)"
 						_statusColor = .orange
-						_responseTime = "\(time)MS"
+						_responseTime = "\(time)ms"
 					}
 				}
 			}

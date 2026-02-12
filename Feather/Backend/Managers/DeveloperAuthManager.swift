@@ -136,7 +136,7 @@ final class DeveloperAuthManager: ObservableObject {
         if success {
             AppLogManager.shared.success("Developer Passcode Set", category: "Security")
         } else {
-            authenticationError = "Failed to save passcode"
+            authenticationError = "Failed To Save Passcode"
             AppLogManager.shared.error("Failed to set developer passcode", category: "Security")
         }
         
@@ -178,7 +178,7 @@ final class DeveloperAuthManager: ObservableObject {
         
         if success {
             lockDeveloperMode()
-            AppLogManager.shared.info("Developer passcode removed", category: "Security")
+            AppLogManager.shared.info("Developer Passcode Removed", category: "Security")
         }
         
         return success
@@ -206,7 +206,7 @@ final class DeveloperAuthManager: ObservableObject {
         var error: NSError?
         
         guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &error) else {
-            completion(false, error?.localizedDescription ?? "Biometrics not available")
+            completion(false, error?.localizedDescription ?? "Biometrics Not Available")
             return
         }
         
@@ -219,7 +219,7 @@ final class DeveloperAuthManager: ObservableObject {
                     self?.lastAuthTime = Date()
                     self?.authenticationError = nil
                     self?.saveRememberedSession()
-                    AppLogManager.shared.success("Biometric authentication successful", category: "Security")
+                    AppLogManager.shared.success("Biometric Authentication Auccessful!", category: "Security")
                     completion(true, nil)
                 } else {
                     let errorMessage = authError?.localizedDescription ?? "Authentication Failed"

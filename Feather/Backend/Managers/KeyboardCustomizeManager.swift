@@ -452,7 +452,6 @@ struct KeyboardBackdropView: View {
     }
 }
 
-// Helper for deterministic random numbers with seed
 extension CGFloat {
     static func random(in range: ClosedRange<CGFloat>, seed: Int) -> CGFloat {
         var g = SeededGenerator(seed: UInt64(seed))

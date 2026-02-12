@@ -115,10 +115,10 @@ struct LiveActivitySettings: Codable, Hashable {
     }
 
     enum GradientDirection: String, Codable, Hashable, CaseIterable {
-        case topToBottom = "Top to Bottom"
-        case leftToRight = "Left to Right"
-        case topLeftToBottomRight = "Top Left to Bottom Right"
-        case bottomLeftToTopRight = "Bottom Left to Top Right"
+        case topToBottom = "Top To Bottom"
+        case leftToRight = "Left To Right"
+        case topLeftToBottomRight = "Top Left To Bottom Right"
+        case bottomLeftToTopRight = "Bottom Left To Top Right"
     }
 
     enum GradientPattern: String, Codable, Hashable, CaseIterable {

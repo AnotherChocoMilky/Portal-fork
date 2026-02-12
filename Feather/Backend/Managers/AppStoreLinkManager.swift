@@ -6,9 +6,6 @@ class AppStoreLinkManager: ObservableObject {
 
     private init() {}
 
-    /// Checks if an app exists in the App Store and returns its URL
-    /// - Parameter bundleId: The bundle identifier of the app
-    /// - Returns: The App Store URL if found, otherwise nil
     func fetchAppStoreURL(bundleId: String) async -> URL? {
         // Use the iTunes Search API to lookup by bundleId
         let urlString = "https://itunes.apple.com/lookup?bundleId=\(bundleId)"

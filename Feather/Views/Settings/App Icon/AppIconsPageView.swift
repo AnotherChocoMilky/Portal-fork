@@ -1,3 +1,5 @@
+// This is LostView aka the old AppIconsPageView but now it will be used when users access unknown pages or accessing private views.
+
 import SwiftUI
 import NimbleViews
 
@@ -7,7 +9,7 @@ struct AppIconsPageView: View {
 	
 	// MARK: Body
 	var body: some View {
-		NBNavigationView(.localized("App Icons")) {
+		NBNavigationView(.localized("I'm Lost")) {
 			Form {
 				Section {
 					VStack(spacing: 16) {

@@ -185,7 +185,7 @@ final class AppUpdateTrackingManager: ObservableObject {
                     autoFetchProgress = 1.0
                     BackgroundAudioManager.shared.stop()
                 }
-                AppLogManager.shared.info("No sources to fetch", category: "AutoFetch")
+                AppLogManager.shared.info("No Sources To Fetch", category: "AutoFetch")
                 return
             }
             
@@ -222,7 +222,7 @@ final class AppUpdateTrackingManager: ObservableObject {
                 BackgroundAudioManager.shared.stop()
             }
             
-            AppLogManager.shared.success("Auto-fetch completed: \(fetchedSources.count)/\(totalSources) sources fetched, \(cachedApps.count) apps cached", category: "AutoFetch")
+            AppLogManager.shared.success("Auto Fetch Completed: \(fetchedSources.count)/\(totalSources) sources fetched, \(cachedApps.count) apps cached", category: "AutoFetch")
             
             // Also check for updates after fetching
             await checkForUpdates(sources: fetchedSources)

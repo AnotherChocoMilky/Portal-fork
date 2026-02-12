@@ -25,7 +25,7 @@ final class KeychainManager {
             case .unknown(let status):
                 return "Keychain Error: \(status)"
             case .itemNotFound:
-                return "Item not found in keychain"
+                return "Item Not Found In Keychain"
             case .invalidData:
                 return "Invalid Data Format"
             }
