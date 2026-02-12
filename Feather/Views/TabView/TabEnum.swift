@@ -10,6 +10,7 @@ enum TabEnum: String, CaseIterable, Hashable {
 	case certificates
 	case files
 	case guides
+	case allapps
 	
 	var title: String {
 		switch self {
@@ -20,6 +21,7 @@ enum TabEnum: String, CaseIterable, Hashable {
 		case .certificates:	return .localized("Certificates")
 		case .files:		return .localized("Files")
 		case .guides:		return .localized("Guides")
+		case .allapps:		return .localized("All Apps")
 		}
 	}
 	
@@ -32,6 +34,7 @@ enum TabEnum: String, CaseIterable, Hashable {
 		case .certificates: return "person.text.rectangle"
 		case .files:		return "folder.fill"
 		case .guides:		return "book.fill"
+		case .allapps:		return "square.stack.3d.up.fill"
 		}
 	}
 	
@@ -45,6 +48,7 @@ enum TabEnum: String, CaseIterable, Hashable {
 		case .certificates: NBNavigationView(.localized("Certificates")) { CertificatesView() }
 		case .files: FilesView()
 		case .guides: GuidesView()
+		case .allapps: AllAppsTabView()
 		}
 	}
 	

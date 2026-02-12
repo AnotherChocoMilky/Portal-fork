@@ -497,6 +497,9 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 			Storage.shared.updateWidgetData(certName: defaultCert.nickname ?? "Certificate", expiryDate: defaultCert.expiration)
 		}
 
+		// Initialize KeyboardCustomizeManager
+		_ = KeyboardCustomizeManager.shared
+
 		// Log app launch
 		AppLogManager.shared.info("Application launched successfully", category: "Lifecycle")
 		
