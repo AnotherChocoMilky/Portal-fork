@@ -134,7 +134,9 @@ struct SettingsView: View {
                 SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: _isFetchingFullData ? String.localized("Fetching Source Data...") : String.localized("Fetch Full Data"), color: Color("AccentColor"), isLoading: _isFetchingFullData) {
                     Task {
                         _isFetchingFullData = true
+                        // Fetch both manager's data
                         await SourcesViewModel.shared.forceFetchAllSources(_sources)
+                        await AppUpdateTrackingManager.shared.manualFetchAllSources()
                         _isFetchingFullData = false
                         HapticsManager.shared.success()
                     }

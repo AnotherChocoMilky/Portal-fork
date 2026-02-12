@@ -43,6 +43,12 @@ final class SourcesViewModel: ObservableObject {
     private var _lastFetchTime: Date?
     private let _minimumRefreshInterval: TimeInterval = 30 // 30 seconds minimum between refreshes
     
+    init() {
+        Task {
+            await loadAllSourcesFromCache()
+        }
+    }
+
     var isFinished = true
     @Published var sources: [AltSource: ASRepository] = [:]
     @Published var fetchState: SourceFetchState = .idle
@@ -69,6 +75,32 @@ final class SourcesViewModel: ObservableObject {
         sources.count
     }
     
+    // MARK: - Cache Loading
+    /// Loads all existing sources from the file cache without hitting the network
+    func loadAllSourcesFromCache() async {
+        let allSources = Storage.shared.getSources()
+        guard !allSources.isEmpty else { return }
+
+        await withTaskGroup(of: (AltSource, ASRepository?).self) { group in
+            for source in allSources {
+                group.addTask {
+                    if let url = source.sourceURL, let cachedRepo = self._cacheManager.getCachedRepository(for: url) {
+                        return (source, cachedRepo)
+                    }
+                    return (source, nil)
+                }
+            }
+
+            for await (source, repo) in group {
+                if let repo = repo {
+                    self.sources[source] = repo
+                }
+            }
+        }
+
+        AppLogManager.shared.info("Loaded \(sources.count)/\(allSources.count) sources from cache on startup", category: "Sources")
+    }
+
     // MARK: - Pin Management
     func togglePin(for source: AltSource) {
         guard let id = source.sourceURL?.absoluteString else { return }
@@ -337,7 +369,7 @@ final class RepositoryCacheManager: @unchecked Sendable {
 	
 	private let cacheDirectory: URL
 	private let fileManager = FileManager.default
-	private let cacheExpirationInterval: TimeInterval = 86400 // 24 hours
+	private let cacheExpirationInterval: TimeInterval = 43200 // 12 hours
 	
 	private init() {
 		let cachesDirectory = fileManager.urls(for: .cachesDirectory, in: .userDomainMask).first!

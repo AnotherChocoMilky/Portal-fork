@@ -58,7 +58,8 @@ enum TabEnum: String, CaseIterable, Hashable {
 			.sources,
 			.guides,
 			.library,
-			.settings
+			.settings,
+			.allapps
 		]
 	}
 	

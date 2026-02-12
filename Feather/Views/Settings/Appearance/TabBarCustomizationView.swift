@@ -339,8 +339,18 @@ struct TabBarCustomizationView: View {
     }
     
     private func loadTabOrder() {
-        let tabs = tabOrder.split(separator: ",").map(String.init)
-        orderedTabs = tabs.isEmpty ? ["dashboard", "sources", "guides", "library", "files", "settings", "allapps"] : tabs
+        var tabs = tabOrder.split(separator: ",").map(String.init)
+        if tabs.isEmpty {
+            tabs = ["dashboard", "sources", "guides", "library", "files", "settings", "allapps"]
+        } else if !tabs.contains("allapps") {
+            // Add allapps if missing, usually before settings
+            if let settingsIndex = tabs.firstIndex(of: "settings") {
+                tabs.insert("allapps", at: settingsIndex)
+            } else {
+                tabs.append("allapps")
+            }
+        }
+        orderedTabs = tabs
     }
     
     private func moveTab(from source: IndexSet, to destination: Int) {

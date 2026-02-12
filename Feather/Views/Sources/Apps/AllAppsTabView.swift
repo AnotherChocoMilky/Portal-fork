@@ -8,7 +8,7 @@ struct AllAppsTabView: View {
     var body: some View {
         Group {
             if useNewAllAppsView {
-                AllAppsView(object: Storage.shared.getSources(), viewModel: viewModel)
+                AllAppsView(isTab: true, object: Storage.shared.getSources(), viewModel: viewModel)
             } else {
                 VStack(spacing: 20) {
                     Spacer()
