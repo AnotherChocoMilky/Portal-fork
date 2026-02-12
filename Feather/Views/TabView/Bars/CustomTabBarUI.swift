@@ -301,6 +301,9 @@ extension TabEnum {
         case .guides: return "book.fill"
         case .settings: return "gearshape.fill"
         case .certificates: return "person.text.rectangle.fill"
+        case .allapps: return "square.stack.3d.up.fill"
+        @unknown default:
+            return "questionmark.circle"
         }
     }
 }
