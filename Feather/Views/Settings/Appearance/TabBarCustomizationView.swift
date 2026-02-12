@@ -8,7 +8,8 @@ struct TabBarCustomizationView: View {
     @AppStorage("Feather.tabBar.library") private var showLibrary = true
     @AppStorage("Feather.tabBar.files") private var showFiles = false
     @AppStorage("Feather.tabBar.guides") private var showGuides = true
-    @AppStorage("Feather.tabBar.order") private var tabOrder: String = "dashboard,sources,guides,library,files,settings"
+    @AppStorage("Feather.tabBar.allApps") private var showAllApps = true
+    @AppStorage("Feather.tabBar.order") private var tabOrder: String = "dashboard,sources,guides,library,files,settings,allapps"
     @AppStorage("Feather.tabBar.hideLabels") private var hideTabLabels = false
     @AppStorage("Feather.tabBar.defaultTab") private var defaultTab: String = "dashboard"
     // Settings cannot be disabled
@@ -24,6 +25,7 @@ struct TabBarCustomizationView: View {
         if showGuides { tabs.append("guides") }
         if showLibrary { tabs.append("library") }
         if showFiles { tabs.append("files") }
+        if showAllApps { tabs.append("allapps") }
         tabs.append("settings")
         return tabs
     }
@@ -217,6 +219,9 @@ struct TabBarCustomizationView: View {
             case "guides":
                 Image(systemName: "book.fill")
                     .foregroundStyle(.orange)
+            case "allapps":
+                Image(systemName: "square.stack.3d.up.fill")
+                    .foregroundStyle(.pink)
             case "settings":
                 Image(systemName: "gearshape.2")
                     .foregroundStyle(.gray)
@@ -235,6 +240,7 @@ struct TabBarCustomizationView: View {
         case "library": return String.localized("Library")
         case "files": return String.localized("Files")
         case "guides": return String.localized("Guides")
+        case "allapps": return String.localized("All Apps")
         case "settings": return String.localized("Settings")
         default: return tabId.capitalized
         }
@@ -302,6 +308,18 @@ struct TabBarCustomizationView: View {
             }
             .disabled(!canDisable(.guides))
             .onChange(of: showGuides) { _ in validateMinimumTabs() }
+
+        case "allapps":
+            Toggle(isOn: $showAllApps) {
+                HStack {
+                    Image(systemName: "square.stack.3d.up.fill")
+                        .foregroundStyle(.pink)
+                        .frame(width: 24)
+                    Text(verbatim: .localized("All Apps"))
+                }
+            }
+            .disabled(!canDisable(.allapps))
+            .onChange(of: showAllApps) { _ in validateMinimumTabs() }
             
         case "settings":
             HStack {
@@ -322,7 +340,7 @@ struct TabBarCustomizationView: View {
     
     private func loadTabOrder() {
         let tabs = tabOrder.split(separator: ",").map(String.init)
-        orderedTabs = tabs.isEmpty ? ["dashboard", "sources", "guides", "library", "files", "settings"] : tabs
+        orderedTabs = tabs.isEmpty ? ["dashboard", "sources", "guides", "library", "files", "settings", "allapps"] : tabs
     }
     
     private func moveTab(from source: IndexSet, to destination: Int) {
@@ -353,16 +371,16 @@ struct TabBarCustomizationView: View {
     }
     
     private func resetTabOrder() {
-        orderedTabs = ["dashboard", "sources", "guides", "library", "files", "settings"]
+        orderedTabs = ["dashboard", "sources", "guides", "library", "files", "settings", "allapps"]
         saveTabOrder()
     }
     
     private func validateMinimumTabs() {
-        let visibleCount = [showDashboard, showSources, showLibrary, showFiles, showGuides].filter { $0 }.count + 1 // +1 for Settings
+        let visibleCount = [showDashboard, showSources, showLibrary, showFiles, showGuides, showAllApps].filter { $0 }.count + 1 // +1 for Settings
         if visibleCount < 2 {
             showMinimumWarning = true
             // Revert the last change
-            if !showDashboard && !showSources && !showLibrary && !showFiles && !showGuides {
+            if !showDashboard && !showSources && !showLibrary && !showFiles && !showGuides && !showAllApps {
                 // Need at least one non-settings tab
                 showDashboard = true
             }
@@ -370,7 +388,7 @@ struct TabBarCustomizationView: View {
     }
     
     private func canDisable(_ tab: TabEnum) -> Bool {
-        let visibleCount = [showDashboard, showSources, showLibrary, showFiles, showGuides].filter { $0 }.count + 1
+        let visibleCount = [showDashboard, showSources, showLibrary, showFiles, showGuides, showAllApps].filter { $0 }.count + 1
         if visibleCount <= 2 {
             // Check if this specific tab is currently enabled
             switch tab {
@@ -379,6 +397,7 @@ struct TabBarCustomizationView: View {
             case .library: return !showLibrary
             case .files: return !showFiles
             case .guides: return !showGuides
+            case .allapps: return !showAllApps
             default: return false
             }
         }

@@ -14,7 +14,8 @@ struct ExtendedTabbarView: View {
 	@AppStorage("Feather.tabBar.library") private var showLibrary = true
 	@AppStorage("Feather.tabBar.files") private var showFiles = true
 	@AppStorage("Feather.tabBar.guides") private var showGuides = true
-	@AppStorage("Feather.tabBar.order") private var tabOrder: String = "dashboard,sources,guides,library,files,settings"
+	@AppStorage("Feather.tabBar.allApps") private var showAllApps = true
+	@AppStorage("Feather.tabBar.order") private var tabOrder: String = "dashboard,sources,guides,library,files,settings,allapps"
 	@AppStorage("Feather.tabBar.hideLabels") private var hideTabLabels = false
 	@AppStorage("Feather.tabBar.defaultTab") private var defaultTab: String = "dashboard"
 	@AppStorage("Feather.certificateExperience") private var certificateExperience: String = "Developer"
@@ -45,7 +46,8 @@ struct ExtendedTabbarView: View {
 		if showSources { enabledTabs.append(.sources) }
 		if showLibrary { enabledTabs.append(.library) }
 		if showFiles { enabledTabs.append(.files) }
-		
+		if showAllApps { enabledTabs.append(.allapps) }
+
 		// Only show Guides if:
 		// 1. forceShowGuides is enabled (set by Enterprise certificate)
 		// 2. OR certificate experience is Enterprise

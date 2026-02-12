@@ -135,8 +135,8 @@ struct CertificatesInfoView: View {
     
     // MARK: - Header Card
     private func headerCard(data: Certificate) -> some View {
-        VStack(spacing: 20) {
-            // Icon
+        VStack(spacing: 24) {
+            // Modern Floating Icon
             ZStack {
                 Circle()
                     .fill(
@@ -146,53 +146,66 @@ struct CertificatesInfoView: View {
                             endPoint: .bottomTrailing
                         )
                     )
-                    .frame(width: 80, height: 80)
+                    .frame(width: 90, height: 90)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.2), lineWidth: 4)
+                    )
                 
                 Image(systemName: statusIcon)
-                    .font(.system(size: 34, weight: .semibold))
+                    .font(.system(size: 38, weight: .bold))
                     .foregroundStyle(.white)
+                    .shadow(color: .black.opacity(0.15), radius: 4, x: 0, y: 2)
             }
-            .shadow(color: statusGradientColors[0].opacity(0.4), radius: 12, x: 0, y: 6)
+            .shadow(color: statusGradientColors[0].opacity(0.3), radius: 20, x: 0, y: 10)
             
             // Name & App ID
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 Text(cert.nickname ?? data.Name)
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
+                    .padding(.horizontal)
                 
-                Text(data.AppIDName)
-                    .font(.system(size: 14, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 4)
-                    .background(Color.primary.opacity(0.05), in: Capsule())
+                HStack(spacing: 6) {
+                    Image(systemName: "app.badge")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text(data.AppIDName)
+                }
+                .font(.system(size: 13, weight: .bold, design: .monospaced))
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(Color.primary.opacity(0.04))
+                        .overlay(Capsule().stroke(Color.primary.opacity(0.08), lineWidth: 0.5))
+                )
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 32)
+        .padding(.vertical, 40)
         .padding(.horizontal, 20)
         .background(cardBackground)
     }
     
     // MARK: - Status Badges
     private func statusBadges(data: Certificate) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             // Active/Revoked
             statusBadge(
-                title: cert.revoked == true ? "Revoked" : "Active",
-                icon: cert.revoked == true ? "xmark.circle.fill" : "checkmark.circle.fill",
+                title: cert.revoked == true ? "REVOKED" : "ACTIVE",
+                icon: cert.revoked == true ? "xmark.seal.fill" : "checkmark.seal.fill",
                 color: cert.revoked == true ? .red : .green
             )
             
             // PPQ Check
             if let ppq = data.PPQCheck {
                 statusBadge(
-                    title: ppq ? "PPQ Check" : "No PPQ",
-                    icon: ppq ? "exclamationmark.shield.fill" : "shield.fill",
-                    color: ppq ? .orange : .green
+                    title: ppq ? "PPQ ACTIVE" : "PPQ CLEAN",
+                    icon: ppq ? "shield.lefthalf.filled" : "shield.checkered",
+                    color: ppq ? .orange : .blue
                 )
             }
             
@@ -203,19 +216,19 @@ struct CertificatesInfoView: View {
     private func statusBadge(title: String, icon: String, color: Color) -> some View {
         HStack(spacing: 6) {
             Image(systemName: icon)
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: 11, weight: .bold))
             Text(title)
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: 10, weight: .bold, design: .rounded))
         }
         .foregroundStyle(color)
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
         .background(
             Capsule()
-                .fill(color.opacity(0.12))
+                .fill(color.opacity(0.08))
                 .overlay(
                     Capsule()
-                        .stroke(color.opacity(0.2), lineWidth: 1)
+                        .stroke(color.opacity(0.15), lineWidth: 1)
                 )
         )
     }
@@ -238,90 +251,102 @@ struct CertificatesInfoView: View {
     }
     
     private func infoRow(icon: String, title: String, value: String, color: Color) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(color.opacity(0.12))
-                    .frame(width: 32, height: 32)
+                    .fill(color.opacity(0.1))
+                    .frame(width: 36, height: 36)
                 Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(color)
             }
             
-            Text(title)
-                .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title.uppercased())
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.secondary)
+
+                Text(value)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+            }
             
             Spacer()
-            
-            Text(value)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.vertical, 14)
     }
     
     // MARK: - Validity Card
     private func validityCard(data: Certificate) -> some View {
-        VStack(spacing: 18) {
+        VStack(spacing: 24) {
             // Header
             HStack {
-                ZStack {
-                    Circle()
-                        .fill(Color.blue.opacity(0.12))
-                        .frame(width: 28, height: 28)
-                    Image(systemName: "calendar.badge.clock")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.blue)
-                }
-                Text("VALIDITY")
-                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                Image(systemName: "clock.badge.checkmark.fill")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.blue)
+                Text("VALIDITY & TIMELINE")
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
                     .foregroundStyle(.secondary)
                 Spacer()
             }
             
-            // Timeline
-            HStack(spacing: 0) {
-                // Created
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("CREATED")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(.secondary)
-                    Text(data.CreationDate.formatted(date: .abbreviated, time: .omitted))
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(.primary)
+            VStack(spacing: 20) {
+                // Timeline
+                HStack(spacing: 0) {
+                    // Created
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("ISSUED")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.secondary)
+                        Text(data.CreationDate.formatted(date: .abbreviated, time: .omitted))
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(.primary)
+                    }
+
+                    Spacer()
+
+                    // Progress Ring
+                    progressRing(data: data)
+
+                    Spacer()
+
+                    // Expires
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("EXPIRES")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.secondary)
+                        Text(data.ExpirationDate.formatted(date: .abbreviated, time: .omitted))
+                            .font(.system(size: 14, weight: .bold))
+                            .foregroundStyle(expirationColor(for: data.ExpirationDate))
+                    }
                 }
                 
-                Spacer()
-                
-                // Progress Ring
-                progressRing(data: data)
-                
-                Spacer()
-                
-                // Expires
-                VStack(alignment: .trailing, spacing: 6) {
-                    Text("EXPIRES")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundStyle(.secondary)
-                    Text(data.ExpirationDate.formatted(date: .abbreviated, time: .omitted))
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(expirationColor(for: data.ExpirationDate))
+                // Remaining time large badge
+                HStack {
+                    Image(systemName: "hourglass.circle.fill")
+                        .font(.system(size: 16))
+                    Text(data.ExpirationDate.expirationInfo().formatted.uppercased())
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
                 }
-            }
-            
-            // Remaining time
-            Text(data.ExpirationDate.expirationInfo().formatted.uppercased())
-                .font(.system(size: 11, weight: .bold, design: .rounded))
                 .foregroundStyle(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(expirationColor(for: data.ExpirationDate))
-                .clipShape(Capsule())
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [expirationColor(for: data.ExpirationDate), expirationColor(for: data.ExpirationDate).opacity(0.8)],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                )
+                .shadow(color: expirationColor(for: data.ExpirationDate).opacity(0.3), radius: 8, x: 0, y: 4)
+            }
         }
-        .padding(20)
+        .padding(24)
         .background(cardBackground)
     }
     
@@ -575,13 +600,14 @@ struct CertificatesInfoView: View {
     
     // MARK: - Helpers
     private var cardBackground: some View {
-        RoundedRectangle(cornerRadius: 24, style: .continuous)
-            .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.6))
+        RoundedRectangle(cornerRadius: 28, style: .continuous)
+            .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.7))
             .background(.ultraThinMaterial)
             .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .stroke(Color.primary.opacity(0.06), lineWidth: 1)
             )
+            .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
     }
     
     private var statusIcon: String {
