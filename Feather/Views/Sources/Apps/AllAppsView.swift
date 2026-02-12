@@ -35,6 +35,7 @@ struct DidYouKnowFacts {
 
 // MARK: - All Apps View (Modern Integrated Style)
 struct AllAppsView: View {
+    var isTab: Bool = false
     @Environment(\.dismiss) private var dismiss
     @AppStorage("Feather.useGradients") private var _useGradients: Bool = true
     @AppStorage("Feather.allApps.showSorting") private var _showSorting: Bool = true
@@ -107,56 +108,70 @@ struct AllAppsView: View {
                 loadingScreen
             } else if let _sources, !_sources.isEmpty {
                 // Main content
-                ScrollView {
-                    VStack(spacing: 0) {
-                        if !_searchBarFloating {
-                            headerView
-                            searchBar
-                        } else {
-                            headerView
-                        }
-
-                        // Results count when searching
-                        if !_searchText.isEmpty {
-                            HStack {
-                                Text("\(_filteredApps.count) Result\(_filteredApps.count == 1 ? "" : "s")")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.bottom, 12)
-                        }
-                        
-                        // Apps list
-                        if _filteredApps.isEmpty && !_searchText.isEmpty {
-                            emptySearchResultsView
-                        } else {
-                            LazyVStack(spacing: _rowSpacing) {
-                                ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
-                                    AllAppsRowView(
-                                        source: entry.source,
-                                        app: entry.app,
-                                        onTap: {
-                                            HapticsManager.shared.softImpact()
-                                            _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
-                                        },
-                                        isLast: index == _filteredApps.count - 1
-                                    )
-                                    .padding(.horizontal, _rowHorizontalPadding)
-                                }
-                            }
-                        }
+                if isTab {
+                    List {
+                        appsListContent
 
                         // Bottom padding
-                        Color.clear.frame(height: _searchBarFloating ? 100 : 30)
+                        Color.clear
+                            .frame(height: 80)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
                     }
-                }
+                    .listStyle(.plain)
+                    .searchable(text: $_searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search \(_totalAppCount) Apps")
+                } else {
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            if !_searchBarFloating {
+                                headerView
+                                searchBar
+                            } else {
+                                headerView
+                            }
 
-                if _searchBarFloating {
-                    searchBar
-                        .padding(.bottom, 20)
-                        .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity))
+                            // Results count when searching
+                            if !_searchText.isEmpty {
+                                HStack {
+                                    Text("\(_filteredApps.count) Result\(_filteredApps.count == 1 ? "" : "s")")
+                                        .font(.system(size: 13, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 12)
+                            }
+
+                            // Apps list
+                            if _filteredApps.isEmpty && !_searchText.isEmpty {
+                                emptySearchResultsView
+                            } else {
+                                LazyVStack(spacing: _rowSpacing) {
+                                    ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
+                                        AllAppsRowView(
+                                            source: entry.source,
+                                            app: entry.app,
+                                            onTap: {
+                                                HapticsManager.shared.softImpact()
+                                                _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
+                                            },
+                                            isLast: index == _filteredApps.count - 1
+                                        )
+                                        .padding(.horizontal, _rowHorizontalPadding)
+                                    }
+                                }
+                            }
+
+                            // Bottom padding
+                            Color.clear.frame(height: _searchBarFloating ? 100 : 30)
+                        }
+                    }
+
+                    if _searchBarFloating {
+                        searchBar
+                            .padding(.bottom, 20)
+                            .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity))
+                    }
                 }
             } else {
                 emptySourcesView
@@ -182,16 +197,18 @@ struct AllAppsView: View {
 
     private var headerView: some View {
         HStack(spacing: 16) {
-            Button {
-                HapticsManager.shared.softImpact()
-                dismiss()
-            } label: {
-                Image(systemName: "chevron.left")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(Color.accentColor)
-                    .frame(width: 40, height: 40)
-                    .background(Color.accentColor.opacity(0.1))
-                    .clipShape(Circle())
+            if !isTab {
+                Button {
+                    HapticsManager.shared.softImpact()
+                    dismiss()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(Color.accentColor)
+                        .frame(width: 40, height: 40)
+                        .background(Color.accentColor.opacity(0.1))
+                        .clipShape(Circle())
+                }
             }
 
             if _showAppCount {
@@ -485,6 +502,46 @@ struct AllAppsView: View {
 		}
 	}
 
+    @ViewBuilder
+    private var appsListContent: some View {
+        // Results count when searching
+        if !_searchText.isEmpty {
+            HStack {
+                Text("\(_filteredApps.count) Result\(_filteredApps.count == 1 ? "" : "s")")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            .padding(.horizontal, 20)
+            .padding(.bottom, 12)
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+        }
+
+        // Apps list
+        if _filteredApps.isEmpty && !_searchText.isEmpty {
+            emptySearchResultsView
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+        } else {
+            ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
+                AllAppsRowView(
+                    source: entry.source,
+                    app: entry.app,
+                    onTap: {
+                        HapticsManager.shared.softImpact()
+                        _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
+                    },
+                    isLast: index == _filteredApps.count - 1
+                )
+                .padding(.horizontal, _rowHorizontalPadding)
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+                .listRowSeparator(.hidden)
+            }
+        }
+    }
+
 	// MARK: - Load All Sources
 	private func _loadAllSources() {
 		// Immediate check for cached data
@@ -499,9 +556,7 @@ struct AllAppsView: View {
 				_loadedSourcesCount = object.count
 				
 				// Immediately hide loading if we have cached data
-				withAnimation(.easeOut(duration: 0.2)) {
-					_isLoading = false
-				}
+				_isLoading = false
 
 				if viewModel.isFinished {
 					return

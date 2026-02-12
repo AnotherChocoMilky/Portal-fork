@@ -7,7 +7,7 @@ struct CustomTabBarUI: View {
     @AppStorage("Feather.tabBar.library") private var showLibrary = true
     @AppStorage("Feather.tabBar.files") private var showFiles = false
     @AppStorage("Feather.tabBar.guides") private var showGuides = true
-    @AppStorage("Feather.tabBar.order") private var tabOrder: String = "dashboard,sources,guides,library,files,settings"
+    @AppStorage("Feather.tabBar.order") private var tabOrder: String = "dashboard,sources,guides,library,files,settings,allapps"
     @AppStorage("Feather.tabBar.defaultTab") private var defaultTab: String = "dashboard"
     @AppStorage("Feather.certificateExperience") private var certificateExperience: String = "Developer"
     @AppStorage("forceShowGuides") private var forceShowGuides = false

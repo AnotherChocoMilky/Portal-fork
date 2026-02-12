@@ -78,8 +78,8 @@ final class AppUpdateTrackingManager: ObservableObject {
     private let dismissedUpdatesKey = "Feather.dismissedAppUpdates"
     private let cachedAppsKey = "Feather.cachedAvailableApps"
     private let lastAutoFetchKey = "Feather.lastAutoSourceFetch"
-    private let cacheExpirationInterval: TimeInterval = 3600 // 1 hour cache
-    private let autoFetchInterval: TimeInterval = 3600 // 1 hour auto-fetch interval
+    private let cacheExpirationInterval: TimeInterval = 43200 // 12 hour cache
+    private let autoFetchInterval: TimeInterval = 43200 // 12 hour auto-fetch interval
     
     @Published var trackedApps: [TrackedAppConfig] = []
     @Published var availableUpdates: [AppUpdateInfo] = []

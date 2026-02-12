@@ -500,6 +500,10 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		// Initialize KeyboardCustomizeManager
 		_ = KeyboardCustomizeManager.shared
 
+        // Initialize Source and Update Managers
+        _ = SourcesViewModel.shared
+        _ = AppUpdateTrackingManager.shared
+
 		// Log app launch
 		AppLogManager.shared.info("Application launched successfully", category: "Lifecycle")
 		
