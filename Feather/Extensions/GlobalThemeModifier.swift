@@ -54,7 +54,7 @@ struct GlobalThemeModifier: ViewModifier {
             .foregroundStyle(textColor)
             .tint(uiColor)
             .accentColor(uiColor)
-            .fontDesign(selectedFontDesign)
+            .applyFontDesign(selectedFontDesign)
             .background(bgColor.opacity(blurOpacity).ignoresSafeArea())
             .toolbarColorScheme(isLight ? .light : .dark, for: .navigationBar)
     }
@@ -63,5 +63,15 @@ struct GlobalThemeModifier: ViewModifier {
 extension View {
     func applyGlobalTheme() -> some View {
         self.modifier(GlobalThemeModifier())
+    }
+
+    /// Conditionally applies the font design modifier if available (iOS 16.1+).
+    @ViewBuilder
+    func applyFontDesign(_ design: Font.Design) -> some View {
+        if #available(iOS 16.1, *) {
+            self.fontDesign(design)
+        } else {
+            self
+        }
     }
 }
