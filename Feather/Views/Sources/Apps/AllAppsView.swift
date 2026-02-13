@@ -47,9 +47,11 @@ struct AllAppsView: View {
     // Advanced Customization
     @AppStorage("Feather.allApps.useGrid") private var _useGrid: Bool = false
     @AppStorage("Feather.allApps.gridColumns") private var _gridColumns: Int = 3
+    @AppStorage("Feather.allApps.gridSpacing") private var _gridSpacing: Double = 16.0
     @AppStorage("Feather.allApps.useGlassEffects") private var _useGlassEffects: Bool = true
     @AppStorage("Feather.allApps.searchBarFloating") private var _searchBarFloating: Bool = false
     @AppStorage("Feather.allApps.showAppCount") private var _showAppCount: Bool = true
+    @AppStorage("Feather.allApps.searchBarStyle") private var _searchBarStyle: Int = 0
 
     enum AllAppsRowStyle: String, CaseIterable, Identifiable {
         case minimal = "Minimal"
@@ -111,6 +113,9 @@ struct AllAppsView: View {
         .navigationBarHidden(!isTab)
         .onAppear {
             _loadAllSources()
+        }
+        .onChange(of: _searchText) { _ in
+            _filterApps()
         }
         .onChange(of: object) { _ in
             _loadAllSources()
@@ -178,20 +183,7 @@ struct AllAppsView: View {
                         if _filteredApps.isEmpty && !_searchText.isEmpty {
                             emptySearchResultsView
                         } else {
-                            LazyVStack(spacing: _rowSpacing) {
-                                ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
-                                    AllAppsRowView(
-                                        source: entry.source,
-                                        app: entry.app,
-                                        onTap: {
-                                            HapticsManager.shared.softImpact()
-                                            _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
-                                        },
-                                        isLast: index == _filteredApps.count - 1
-                                    )
-                                    .padding(.horizontal, _rowHorizontalPadding)
-                                }
-                            }
+                            appsListView
                         }
 
                         // Bottom padding
@@ -296,9 +288,6 @@ struct AllAppsView: View {
                 .submitLabel(.search)
                 .autocorrectionDisabled()
                 .textInputAutocapitalization(.never)
-                .onChange(of: _searchText) { _ in
-                    _filterApps()
-                }
 
             if !_searchText.isEmpty {
                 Button {
@@ -312,17 +301,31 @@ struct AllAppsView: View {
                 }
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
+        .padding(.horizontal, _searchBarStyle == 2 ? 0 : 14)
+        .padding(.vertical, _searchBarStyle == 1 ? 14 : 10)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(_useGlassEffects ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground)))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
-                )
-                .shadow(color: _searchBarFloating ? Color.black.opacity(0.1) : Color.clear, radius: 10, x: 0, y: 5)
+            Group {
+                if _searchBarStyle == 2 {
+                    Color.clear
+                } else {
+                    RoundedRectangle(cornerRadius: _searchBarStyle == 1 ? 20 : 14, style: .continuous)
+                        .fill(_useGlassEffects ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground)))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: _searchBarStyle == 1 ? 20 : 14, style: .continuous)
+                                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
+                        )
+                }
+            }
         )
+        .overlay(alignment: .bottom) {
+            if _searchBarStyle == 2 {
+                Rectangle()
+                    .fill(Color.secondary.opacity(0.3))
+                    .frame(height: 1)
+                    .offset(y: 8)
+            }
+        }
+        .shadow(color: _searchBarFloating ? Color.black.opacity(0.1) : Color.clear, radius: 10, x: 0, y: 5)
         .padding(.horizontal, 20)
         .padding(.bottom, _searchBarFloating ? 0 : 16)
     }
@@ -330,8 +333,8 @@ struct AllAppsView: View {
     private var appsListView: some View {
         Group {
             if _useGrid {
-                let columns = Array(repeating: GridItem(.flexible(), spacing: 16), count: _useGrid ? _gridColumns : 1)
-                LazyVGrid(columns: columns, spacing: 16) {
+                let columns = Array(repeating: GridItem(.flexible(), spacing: _gridSpacing), count: _useGrid ? _gridColumns : 1)
+                LazyVGrid(columns: columns, spacing: _gridSpacing) {
                     ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
                         AllAppsRowView(
                             source: entry.source,
@@ -357,7 +360,7 @@ struct AllAppsView: View {
                             },
                             isLast: index == _filteredApps.count - 1
                         )
-                        .padding(.horizontal, 20)
+                        .padding(.horizontal, _rowHorizontalPadding)
                     }
                 }
             }
@@ -641,11 +644,15 @@ struct AllAppsRowView: View {
 	@AppStorage("Feather.allApps.iconCornerRadius") private var iconCornerRadius: Double = 12.0
 	@AppStorage("Feather.allApps.iconPadding") private var iconPadding: Double = 0
 	@AppStorage("Feather.allApps.iconShadowRadius") private var iconShadowRadius: Double = 0.0
+    @AppStorage("Feather.allApps.iconBorderWidth") private var iconBorderWidth: Double = 0.0
+    @AppStorage("Feather.allApps.iconBorderColor") private var iconBorderColor: String = "#0000001A"
+
 	@AppStorage("Feather.allApps.rowStyle") private var rowStyle: AllAppsView.AllAppsRowStyle = .minimal
 	@AppStorage("Feather.allApps.rowHorizontalPadding") private var rowHorizontalPadding: Double = 20.0
+    @AppStorage("Feather.allApps.rowVerticalPadding") private var rowVerticalPadding: Double = 10.0
 	@AppStorage("Feather.allApps.infoSpacing") private var infoSpacing: Double = 14.0
 	@AppStorage("Feather.allApps.showDividers") private var showDividers: Bool = true
-	@AppStorage("Feather.allApps.dividerOpacity") private var dividerOpacity: Double = 0.5
+	@AppStorage("Feather.allApps.rowDividerOpacity") private var rowDividerOpacity: Double = 0.5
 	@AppStorage("Feather.allApps.useSpringAnimations") private var useSpringAnimations: Bool = true
 
 	@AppStorage("Feather.allApps.nameFontSize") private var nameFontSize: Double = 17.0
@@ -661,6 +668,7 @@ struct AllAppsRowView: View {
     @AppStorage("Feather.allApps.showDescription") private var showDescription: Bool = false
     @AppStorage("Feather.allApps.descriptionLimit") private var descriptionLimit: Int = 2
     @AppStorage("Feather.allApps.rowDividerOpacity") private var rowDividerOpacity: Double = 0.5
+    @AppStorage("Feather.allApps.cardBackgroundOpacity") private var cardBackgroundOpacity: Double = 1.0
 
 	@ObservedObject private var downloadManager = DownloadManager.shared
 	@State private var downloadProgress: Double = 0
@@ -693,122 +701,19 @@ struct AllAppsRowView: View {
 	
 	var body: some View {
 		VStack(spacing: 0) {
-			Button(action: onTap) {
-				VStack(spacing: 12) {
-					HStack(spacing: infoSpacing) {
-						// App Icon
-						appIcon
-							.frame(width: iconSize, height: iconSize)
-							.overlay(alignment: .bottomLeading) {
-								if showSourceIcon, let iconURL = source.currentIconURL {
-									AsyncImage(url: iconURL) { phase in
-										if let image = phase.image {
-											image
-												.resizable()
-												.aspectRatio(contentMode: .fit)
-												.frame(width: iconSize * 0.35, height: iconSize * 0.35)
-												.clipShape(Circle())
-												.background(Circle().fill(Color(uiColor: .secondarySystemBackground)))
-												.overlay(Circle().stroke(Color(uiColor: .systemBackground), lineWidth: 1.5))
-												.offset(x: iconSize * 0.75, y: iconSize * 0.05)
-										}
-									}
-								}
-							}
-							.padding(.leading, iconPadding)
-							.shadow(color: Color.black.opacity(iconShadowRadius > 0 ? 0.15 : 0), radius: iconShadowRadius, x: 0, y: iconShadowRadius * 0.5)
-						
-						// Center column with app info
-						VStack(alignment: .leading, spacing: 3) {
-							// App name
-							Text(app.currentName)
-								.font(.system(size: nameFontSize, weight: useBoldTitles ? .bold : .semibold))
-								.foregroundStyle(.primary)
-								.lineLimit(1)
-
-							// Subtitle (status/developer)
-							if showStatus && !statusText.isEmpty {
-								Text(statusText)
-									.font(.system(size: subtitleFontSize, weight: .medium))
-									.foregroundStyle(Color.accentColor)
-									.lineLimit(1)
-							} else if showDeveloper, let developer = app.developer {
-								Text(developer)
-									.font(.system(size: subtitleFontSize))
-									.foregroundStyle(.secondary)
-									.lineLimit(1)
-							}
-
-							// Version and file size
-							HStack(spacing: 6) {
-							if showVersion, let version = app.currentVersion {
-								Text("v\(version)")
-									.font(.system(size: metadataFontSize))
-									.foregroundStyle(.secondary)
-							}
-							
-							if showSize, !fileSize.isEmpty {
-								if showVersion && app.currentVersion != nil {
-									Text("•")
-										.font(.system(size: metadataFontSize))
-										.foregroundStyle(.secondary)
-								}
-								
-								Text(fileSize)
-									.font(.system(size: metadataFontSize))
-									.foregroundStyle(.secondary)
-							}
-						}
-					}
-					
-					Spacer()
-					
-					// Action button
-					actionButton
-						.frame(width: 34, height: 34)
-				}
-				
-					// Progress bar when downloading
-					if isDownloading {
-						VStack(spacing: 4) {
-							GeometryReader { geometry in
-								ZStack(alignment: .leading) {
-									// Background
-									Capsule()
-										.fill(Color.primary.opacity(0.1))
-										.frame(height: 4)
-
-									// Progress
-									Capsule()
-										.fill(Color.accentColor)
-										.frame(width: geometry.size.width * downloadProgress, height: 4)
-								}
-							}
-							.frame(height: 4)
-
-							// Progress percentage
-							HStack {
-								Spacer()
-								Text("\(Int(downloadProgress * 100))%")
-									.font(.system(size: 11, weight: .medium))
-									.foregroundStyle(.secondary)
-							}
-						}
-						.transition(AnyTransition.opacity.combined(with: .scale(scale: 0.9)))
-					}
-				}
-				.padding(.vertical, rowStyle == .minimal ? 10 : 14)
-				.padding(.horizontal, rowStyle == .minimal ? 4 : 14)
-				.background(rowStyle == .minimal ? Color.clear : Color(uiColor: .secondarySystemGroupedBackground))
-				.cornerRadius(rowStyle == .card || rowStyle == .flat ? 16 : 0)
-				.shadow(color: rowStyle == .card ? Color.black.opacity(0.02) : Color.clear, radius: 10, x: 0, y: 5)
-			}
+            Button(action: onTap) {
+                if useGrid {
+                    gridView
+                } else {
+                    rowView
+                }
+            }
 			.buttonStyle(AllAppsScaleButtonStyle())
 
-			if showDividers && rowStyle == .minimal && !isLast {
+			if !useGrid && showDividers && rowStyle == .minimal && !isLast {
 				Divider()
 					.padding(.leading, iconSize + iconPadding + infoSpacing + 4)
-					.opacity(dividerOpacity)
+					.opacity(rowDividerOpacity)
 			}
 		}
 		.onAppear(perform: setupObserver)
@@ -848,7 +753,7 @@ struct AllAppsRowView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     // App name
                     Text(app.currentName)
-                        .font(.system(size: titleFontSize, weight: boldTitles ? .bold : .semibold))
+                        .font(.system(size: nameFontSize, weight: useBoldTitles ? .bold : .semibold))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
@@ -869,26 +774,26 @@ struct AllAppsRowView: View {
                     HStack(spacing: 6) {
                         if showVersion, let version = app.currentVersion {
                             Text("v\(version)")
-                                .font(.system(size: subtitleFontSize - 1))
+                                .font(.system(size: metadataFontSize))
                                 .foregroundStyle(.secondary)
                         }
 
                         if showSize, !fileSize.isEmpty {
                             if showVersion && app.currentVersion != nil {
                                 Text("•")
-                                    .font(.system(size: subtitleFontSize - 1))
+                                    .font(.system(size: metadataFontSize))
                                     .foregroundStyle(.secondary)
                             }
 
                             Text(fileSize)
-                                .font(.system(size: subtitleFontSize - 1))
+                                .font(.system(size: metadataFontSize))
                                 .foregroundStyle(.secondary)
                         }
                     }
 
                     if showDescription, let description = app.localizedDescription {
                         Text(description)
-                            .font(.system(size: subtitleFontSize - 1))
+                            .font(.system(size: metadataFontSize))
                             .foregroundStyle(.secondary)
                             .lineLimit(descriptionLimit)
                             .padding(.top, 2)
@@ -907,9 +812,22 @@ struct AllAppsRowView: View {
                 downloadProgressBar
             }
         }
-        .padding(.vertical, rowStyle == .minimal ? 10 : 14)
+        .padding(.vertical, rowStyle == .minimal ? rowVerticalPadding : rowVerticalPadding + 4)
         .padding(.horizontal, rowStyle == .minimal ? 4 : 14)
-        .background(rowStyle == .minimal ? AnyShapeStyle(Color.clear) : (useGlassEffects ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground))))
+        .background(
+            Group {
+                if rowStyle != .minimal {
+                    if useGlassEffects {
+                        AnyShapeStyle(.ultraThinMaterial)
+                    } else {
+                        AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground))
+                    }
+                } else {
+                    AnyShapeStyle(Color.clear)
+                }
+            }
+            .opacity(cardBackgroundOpacity)
+        )
         .cornerRadius(rowStyle == .card || rowStyle == .flat ? 16 : 0)
         .shadow(color: rowStyle == .card ? Color.black.opacity(0.02) : Color.clear, radius: 10, x: 0, y: 5)
         .overlay(
@@ -947,7 +865,7 @@ struct AllAppsRowView: View {
 
             VStack(spacing: 2) {
                 Text(app.currentName)
-                    .font(.system(size: titleFontSize - 2, weight: boldTitles ? .bold : .semibold))
+                    .font(.system(size: nameFontSize - 2, weight: useBoldTitles ? .bold : .semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .multilineTextAlignment(.center)
@@ -965,7 +883,16 @@ struct AllAppsRowView: View {
             }
         }
         .padding(12)
-        .background(useGlassEffects ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground)))
+        .background(
+            Group {
+                if useGlassEffects {
+                    AnyShapeStyle(.ultraThinMaterial)
+                } else {
+                    AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground))
+                }
+            }
+            .opacity(cardBackgroundOpacity)
+        )
         .cornerRadius(iconCornerRadius + 4)
         .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
     }
@@ -1010,6 +937,10 @@ struct AllAppsRowView: View {
 						.resizable()
 						.aspectRatio(contentMode: .fill)
 						.clipShape(RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous)
+                                .stroke(Color(hex: iconBorderColor), lineWidth: iconBorderWidth)
+                        )
 				case .failure:
 					iconPlaceholder
 				@unknown default:
@@ -1029,6 +960,10 @@ struct AllAppsRowView: View {
 					.font(.system(size: iconSize * 0.4))
 					.foregroundStyle(.secondary)
 			)
+            .overlay(
+                RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous)
+                    .stroke(Color(hex: iconBorderColor), lineWidth: iconBorderWidth)
+            )
 	}
 	
 	@ViewBuilder
@@ -1108,7 +1043,7 @@ struct AllAppsScaleButtonStyle: ButtonStyle {
 // MARK: - AllAppsWrapperView
 /// Wrapper view that switches between AllAppsView and SourceAppsView based on settings
 struct AllAppsWrapperView: View {
-	@AppStorage("Feather.useNewAllAppsView") private var useNewAllAppsView: Bool = true
+	@AppStorage("Feather.allApps.useNewAllAppsView") private var useNewAllAppsView: Bool = true
 	
 	var object: [AltSource]
 	@ObservedObject var viewModel: SourcesViewModel

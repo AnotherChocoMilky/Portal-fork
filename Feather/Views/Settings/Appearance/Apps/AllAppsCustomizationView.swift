@@ -12,12 +12,16 @@ struct AllAppsCustomizationView: View {
     @AppStorage("Feather.allApps.iconCornerRadius") private var iconCornerRadius: Double = 12.0
     @AppStorage("Feather.allApps.iconPadding") private var iconPadding: Double = 0
     @AppStorage("Feather.allApps.iconShadowRadius") private var iconShadowRadius: Double = 0.0
+    @AppStorage("Feather.allApps.iconBorderWidth") private var iconBorderWidth: Double = 0.0
+    @AppStorage("Feather.allApps.iconBorderColor") private var iconBorderColor: String = "#0000001A"
+
     @AppStorage("Feather.allApps.rowSpacing") private var rowSpacing: Double = 0
     @AppStorage("Feather.allApps.rowStyle") private var rowStyle: AllAppsView.AllAppsRowStyle = .minimal
     @AppStorage("Feather.allApps.rowHorizontalPadding") private var rowHorizontalPadding: Double = 20.0
+    @AppStorage("Feather.allApps.rowVerticalPadding") private var rowVerticalPadding: Double = 10.0
     @AppStorage("Feather.allApps.infoSpacing") private var infoSpacing: Double = 14.0
     @AppStorage("Feather.allApps.showDividers") private var showDividers: Bool = true
-    @AppStorage("Feather.allApps.dividerOpacity") private var dividerOpacity: Double = 0.5
+    @AppStorage("Feather.allApps.rowDividerOpacity") private var rowDividerOpacity: Double = 0.5
     @AppStorage("Feather.allApps.useSpringAnimations") private var useSpringAnimations: Bool = true
 
     @AppStorage("Feather.allApps.nameFontSize") private var nameFontSize: Double = 17.0
@@ -28,6 +32,7 @@ struct AllAppsCustomizationView: View {
     // Advanced Customization
     @AppStorage("Feather.allApps.useGrid") private var useGrid: Bool = false
     @AppStorage("Feather.allApps.gridColumns") private var gridColumns: Int = 3
+    @AppStorage("Feather.allApps.gridSpacing") private var gridSpacing: Double = 16.0
     @AppStorage("Feather.allApps.titleFontSize") private var titleFontSize: Double = 17.0
     @AppStorage("Feather.allApps.boldTitles") private var boldTitles: Bool = true
     @AppStorage("Feather.allApps.useGlassEffects") private var useGlassEffects: Bool = true
@@ -122,6 +127,18 @@ struct AllAppsCustomizationView: View {
                     Slider(value: $iconPadding, in: 0...60, step: 1)
                 }
                 .padding(.vertical, 4)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    AppearanceRowLabel(icon: "scope", title: "Icon Border: \(String(format: "%.1f", iconBorderWidth))", color: .gray)
+                    Slider(value: $iconBorderWidth, in: 0...5, step: 0.5)
+                }
+                .padding(.vertical, 4)
+
+                if iconBorderWidth > 0 {
+                    ColorPicker(selection: Binding(get: { Color(hex: iconBorderColor) }, set: { iconBorderColor = $0.toHex() ?? "#0000001A" })) {
+                        AppearanceRowLabel(icon: "paintpalette", title: "Border Color", color: .blue)
+                    }
+                }
             } header: {
                 AppearanceSectionHeader(title: "Icon Styling", icon: "square.grid.2x2.fill")
             }
@@ -140,12 +157,37 @@ struct AllAppsCustomizationView: View {
                 .padding(.vertical, 4)
 
                 VStack(alignment: .leading, spacing: 8) {
+                    AppearanceRowLabel(icon: "arrow.up.and.down.and.arrow.left.and.right", title: "Row Height Padding: \(Int(rowVerticalPadding))", color: .orange)
+                    Slider(value: $rowVerticalPadding, in: 0...30, step: 1)
+                }
+                .padding(.vertical, 4)
+
+                VStack(alignment: .leading, spacing: 8) {
                     AppearanceRowLabel(icon: "arrow.left.and.right.text.vertical", title: "Info Spacing: \(Int(infoSpacing))", color: .cyan)
                     Slider(value: $infoSpacing, in: 0...40, step: 1)
                 }
                 .padding(.vertical, 4)
             } header: {
                 AppearanceSectionHeader(title: "Row Layout", icon: "square.stack.3d.up.fill")
+            }
+
+            Section {
+                Toggle(isOn: $useGrid) {
+                    AppearanceRowLabel(icon: "square.grid.2x2", title: "Use Grid Layout", color: .blue)
+                }
+
+                if useGrid {
+                    Stepper(value: $gridColumns, in: 1...5) {
+                        AppearanceRowLabel(icon: "rectangle.split.3x1", title: "Grid Columns: \(gridColumns)", color: .cyan)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        AppearanceRowLabel(icon: "square.stack.3d.up", title: "Grid Spacing: \(Int(gridSpacing))", color: .blue)
+                        Slider(value: $gridSpacing, in: 0...40, step: 2)
+                    }
+                }
+            } header: {
+                AppearanceSectionHeader(title: "Grid Options", icon: "square.grid.3x2.fill")
             }
 
             Section {
@@ -178,8 +220,8 @@ struct AllAppsCustomizationView: View {
 
                 if showDividers {
                     VStack(alignment: .leading, spacing: 8) {
-                        AppearanceRowLabel(icon: "opacity", title: "Divider Opacity: \(Int(dividerOpacity * 100))%", color: .gray)
-                        Slider(value: $dividerOpacity, in: 0...1, step: 0.05)
+                        AppearanceRowLabel(icon: "opacity", title: "Divider Opacity: \(Int(rowDividerOpacity * 100))%", color: .gray)
+                        Slider(value: $rowDividerOpacity, in: 0...1, step: 0.05)
                     }
                     .padding(.vertical, 4)
                 }
@@ -260,12 +302,15 @@ struct AllAppsCustomizationView: View {
         iconCornerRadius = 12.0
         iconPadding = 0
         iconShadowRadius = 0.0
+        iconBorderWidth = 0.0
+        iconBorderColor = "#0000001A"
         rowSpacing = 0
         rowStyle = .minimal
         rowHorizontalPadding = 20.0
+        rowVerticalPadding = 10.0
         infoSpacing = 14.0
         showDividers = true
-        dividerOpacity = 0.5
+        rowDividerOpacity = 0.5
         useSpringAnimations = true
         nameFontSize = 17.0
         subtitleFontSize = 13.0
@@ -273,6 +318,7 @@ struct AllAppsCustomizationView: View {
         useBoldTitles = true
         useGrid = false
         gridColumns = 3
+        gridSpacing = 16.0
         titleFontSize = 17.0
         boldTitles = true
         useGlassEffects = true

@@ -56,6 +56,7 @@ struct HomeView: View {
     @State private var _showAppUpdatesSheet = false
     @State private var _selectedUpdateForSigning: AppUpdateInfo? = nil
     @State private var _deviceUDID: String = ""
+    @State private var _deviceUDIDLabel: String = "UDID"
     @State private var _deviceModel: String = ""
     
     // Tips for the Tips widget
@@ -196,7 +197,9 @@ struct HomeView: View {
             _currentTipIndex = Int.random(in: 0..<_tips.count)
 
             // Cache device info
-            _deviceUDID = UIDevice.current.grabUDID()
+            let identifier = UIDevice.current.getDeviceIdentifier()
+            _deviceUDID = identifier.id
+            _deviceUDIDLabel = identifier.label
             _deviceModel = UIDevice.current.humanReadableModelName
         }
         .task(id: Array(_sources)) {
@@ -1029,7 +1032,7 @@ struct HomeView: View {
                             .foregroundStyle(Color.purple)
                             .frame(width: 24)
 
-                        Text("UDID")
+                        Text(_deviceUDIDLabel)
                             .font(.system(size: 14, weight: .regular))
                             .foregroundStyle(.secondary)
 
