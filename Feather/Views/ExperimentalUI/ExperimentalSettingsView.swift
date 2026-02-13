@@ -1,6 +1,6 @@
 //
 //  ExperimentalSettingsView.swift
-//  Feather
+//  Portal
 //
 //  Experimental UI redesigned Settings view
 //

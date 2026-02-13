@@ -34,7 +34,7 @@ struct AllAppsTabView: View {
                                 .font(.title2.bold())
                                 .multilineTextAlignment(.center)
 
-                            Text("In order so you can see the apps here, enable the New Apps View on Settings > Appearance and turn it on.")
+                            Text("In order so you can see the apps here, enable the New Apps View on Settings, Appearance, turn it on, and restart Portal.")
                                 .font(.body)
                                 .foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)

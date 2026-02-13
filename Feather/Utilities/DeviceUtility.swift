@@ -1,8 +1,11 @@
+// created by dylan, this is a utility file for getting device information to display on the Device Information (UDID and device identifier)
+// from HomeView.swift
+
 import UIKit
 import Darwin
 
 extension UIDevice {
-    /// Returns a human-readable name for the device model
+    /// Returns the model name instead of identifier
     var humanReadableModelName: String {
         var systemInfo = utsname()
         uname(&systemInfo)
@@ -13,11 +16,18 @@ extension UIDevice {
         }
 
         switch identifier {
+        // iPhone 17
+        case "iPhone18,1": return "iPhone 17 Pro"
+        case "iPhone18,2": return "iPhone 17 Pro Max"
+        case "iPhone18,3": return "iPhone 17"
+        case "iPhone18,4": return "iPhone Air"
+            
         // iPhone 16
         case "iPhone17,1": return "iPhone 16 Pro"
         case "iPhone17,2": return "iPhone 16 Pro Max"
         case "iPhone17,3": return "iPhone 16"
         case "iPhone17,4": return "iPhone 16 Plus"
+        case "iPhone17,5": return "iPhone 16e"
 
         // iPhone 15
         case "iPhone16,1": return "iPhone 15 Pro"
@@ -82,7 +92,6 @@ extension UIDevice {
         }
     }
 
-    /// Attempts to grab the UDID from various sources
     func grabUDID() -> String {
         getDeviceIdentifier().id
     }
@@ -94,17 +103,16 @@ extension UIDevice {
     }
 
     func getDeviceIdentifier() -> DeviceIdentifier {
-        // 1. Try to grab from embedded.mobileprovision
+    
         if let udid = grabUDIDFromProvisioningProfile() {
             return DeviceIdentifier(id: udid, isRealUDID: true)
         }
 
-        // 2. Try reading from pairingFile.plist in the documents directory
         let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let pairingFileURL = documentsURL.appendingPathComponent("pairingFile.plist")
         if FileManager.default.fileExists(atPath: pairingFileURL.path) {
             if let dict = NSDictionary(contentsOf: pairingFileURL) as? [String: Any] {
-                // Check common keys for UDID in libimobiledevice pairing files
+
                 let keys = ["UDID", "DeviceUDID", "UniqueDeviceID"]
                 for key in keys {
                     if let udid = dict[key] as? String {
@@ -114,7 +122,6 @@ extension UIDevice {
             }
         }
 
-        // 3. Fallback to identifierForVendor as a last resort
         let fallbackID = identifierForVendor?.uuidString ?? "Unknown"
         return DeviceIdentifier(id: fallbackID, isRealUDID: false)
     }
@@ -126,17 +133,12 @@ extension UIDevice {
 
         do {
             let data = try Data(contentsOf: URL(fileURLWithPath: path))
-            // The provisioning profile is a CMS signed message, but the XML is inside.
-            // We search for the XML block.
             if let xmlStart = data.range(of: Data("<?xml".utf8)),
                let plistEnd = data.range(of: Data("</plist>".utf8)) {
                 let xmlData = data.subdata(in: xmlStart.lowerBound..<plistEnd.upperBound)
 
                 if let plist = try PropertyListSerialization.propertyList(from: xmlData, format: nil) as? [String: Any] {
                     if let devices = plist["ProvisionedDevices"] as? [String], !devices.isEmpty {
-                        // If there's only one device, it's highly likely to be this one.
-                        // If there are many, we can't be 100% sure, but returning the first one
-                        // is better than nothing in this context.
                         return devices.first
                     }
                 }

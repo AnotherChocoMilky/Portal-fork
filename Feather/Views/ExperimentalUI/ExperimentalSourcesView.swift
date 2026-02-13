@@ -1,6 +1,6 @@
 //
 //  ExperimentalSourcesView.swift
-//  Feather
+//  Portal
 //
 //  Experimental UI redesigned Sources (Home) view
 //

@@ -137,7 +137,7 @@ struct AppLogsView: View {
                                         .font(.system(size: 24))
                                         .foregroundStyle(.secondary)
 
-                                    Text("These logs always remain on device and never shared with anyone unless they choose to when reporting feedback.")
+                                    Text("These logs always remain on device and never shared with anyone. You can choose to share them when reporting feedback, on the Include section, click the Logs button to send these logs on the GitHub Issue. ")
                                         .font(.system(size: 12, weight: .medium))
                                         .foregroundStyle(.secondary)
                                         .multilineTextAlignment(.center)
@@ -191,7 +191,7 @@ struct AppLogsView: View {
             isPresented: $showExporter,
             document: logDocument,
             contentType: exportType,
-            defaultFilename: "PortalLogs"
+            defaultFilename: "Portal_Logs_\(Date().formatted(date: .numeric, time: .omitted)"
         ) { result in
             switch result {
             case .success(let url):

@@ -1,6 +1,6 @@
 //
 //  ExperimentalTabbarView.swift
-//  Feather
+//  Portal
 //
 //  Experimental UI redesigned tabbar
 //

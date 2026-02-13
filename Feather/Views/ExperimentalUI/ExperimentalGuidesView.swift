@@ -1,6 +1,6 @@
 //
 //  ExperimentalGuidesView.swift
-//  Feather
+//  Portal
 //
 //  Experimental UI redesigned Guides view
 //

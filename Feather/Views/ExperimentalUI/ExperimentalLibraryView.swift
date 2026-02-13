@@ -1,6 +1,6 @@
 //
 //  ExperimentalLibraryView.swift
-//  Feather
+//  Portal
 //
 //  Experimental UI redesigned Library view
 //
