@@ -13,7 +13,7 @@ struct GuidesSettingsView: View {
     
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 24) {
                 // AI Status Card
                 aiStatusCard
                 
@@ -90,9 +90,13 @@ struct GuidesSettingsView: View {
                 )
             }
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(16)
+        .padding(20)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.primary.opacity(0.05), lineWidth: 1)
+        )
     }
     
     @ViewBuilder
@@ -152,9 +156,13 @@ struct GuidesSettingsView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(16)
+        .padding(20)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.primary.opacity(0.05), lineWidth: 1)
+        )
     }
     
     @ViewBuilder
@@ -174,17 +182,20 @@ struct GuidesSettingsView: View {
                         settingsManager.saveOpenRouterModel(model)
                         HapticsManager.shared.softImpact()
                     } label: {
-                        HStack {
+                        Label {
                             Text(formatModelName(model))
+                        } icon: {
                             if model == settingsManager.openRouterModel {
-                                Image(systemName: "checkmark")
+                                Image(systemName: "checkmark.circle.fill")
+                            } else {
+                                Image(systemName: "cpu")
                             }
                         }
                     }
                 }
             } label: {
                 HStack {
-                    Text(formatModelName(settingsManager.openRouterModel))
+                    Label(formatModelName(settingsManager.openRouterModel), systemImage: "sparkles")
                         .fontWeight(.medium)
                     Spacer()
                     Image(systemName: "chevron.up.chevron.down")
@@ -192,8 +203,8 @@ struct GuidesSettingsView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding()
-                .background(Color(.tertiarySystemGroupedBackground))
-                .cornerRadius(10)
+                .background(Color(.tertiarySystemGroupedBackground).opacity(0.5))
+                .cornerRadius(12)
             }
             .buttonStyle(.plain)
             
@@ -217,12 +228,16 @@ struct GuidesSettingsView: View {
                 .disabled(customModelInput.isEmpty)
             }
             .padding()
-            .background(Color(.tertiarySystemGroupedBackground))
-            .cornerRadius(10)
+            .background(Color(.tertiarySystemGroupedBackground).opacity(0.5))
+            .cornerRadius(12)
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(16)
+        .padding(20)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.primary.opacity(0.05), lineWidth: 1)
+        )
     }
     
     @ViewBuilder
@@ -278,9 +293,13 @@ struct GuidesSettingsView: View {
                 }
             }
         }
-        .padding()
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(16)
+        .padding(20)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.primary.opacity(0.05), lineWidth: 1)
+        )
     }
     
     private func getOverallStatus() -> String {
@@ -406,8 +425,8 @@ struct GuideAISettingsRow: View {
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
                 .padding()
-                .background(Color(.tertiarySystemGroupedBackground))
-                .cornerRadius(10)
+                .background(Color(.tertiarySystemGroupedBackground).opacity(0.5))
+                .cornerRadius(12)
             }
             .buttonStyle(.plain)
             
@@ -440,8 +459,8 @@ struct GuideAISettingsRow: View {
                     }
                 }
                 .padding()
-                .background(Color(.tertiarySystemGroupedBackground).opacity(0.5))
-                .cornerRadius(10)
+                .background(Color(.tertiarySystemGroupedBackground).opacity(0.3))
+                .cornerRadius(12)
                 .padding(.top, 4)
             }
         }

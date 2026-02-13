@@ -158,6 +158,8 @@ final class SourcesViewModel: ObservableObject {
 
     // MARK: - Optimized Fetch with Cancellation Support
     func fetchSources(_ sources: FetchedResults<AltSource>, refresh: Bool = false, batchSize: Int = 10) async {
+        AppLogManager.shared.info("Starting source fetch (refresh: \(refresh), count: \(sources.count))", category: "Sources")
+
         // Cancel any existing fetch task
         _fetchTask?.cancel()
         
@@ -276,9 +278,11 @@ final class SourcesViewModel: ObservableObject {
         if !failedSources.isEmpty {
             errorMessage = "\(failedSources.count) sources failed to load."
             fetchState = .error(errorMessage!)
+            AppLogManager.shared.warning("Source fetch completed with \(failedSources.count) errors", category: "Sources")
         } else {
             fetchState = .loaded
             errorMessage = nil
+            AppLogManager.shared.success("Successfully fetched all \(sourcesArray.count) sources", category: "Sources")
         }
         fetchProgress = 1.0
     }

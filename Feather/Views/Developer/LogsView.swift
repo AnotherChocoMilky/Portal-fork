@@ -122,13 +122,30 @@ struct AppLogsView: View {
                 } else {
                     ScrollViewReader { proxy in
                         ScrollView {
-                            LazyVStack(alignment: .leading, spacing: 10) {
+                            LazyVStack(alignment: .leading, spacing: 0) {
                                 ForEach(filteredLogs) { log in
                                     LogEntryRow(entry: log)
                                         .id(log.id)
+
+                                    Divider()
+                                        .padding(.leading, 16)
                                 }
+
+                                // Privacy Disclaimer
+                                VStack(spacing: 8) {
+                                    Image(systemName: "hand.raised.shield.fill")
+                                        .font(.system(size: 24))
+                                        .foregroundStyle(.secondary)
+
+                                    Text("These logs always remain on device and never shared with anyone unless they choose to when reporting feedback.")
+                                        .font(.system(size: 12, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.horizontal, 40)
+                                }
+                                .padding(.vertical, 30)
+                                .frame(maxWidth: .infinity)
                             }
-                            .padding()
                         }
                         .onChange(of: filteredLogs.count) { _ in
                             if autoScroll, let lastLog = filteredLogs.last {
@@ -153,14 +170,6 @@ struct AppLogsView: View {
 
                 // Share menu
                 Menu {
-                    Button(action: saveAsText) {
-                        Label("Save As Text", systemImage: "doc.text")
-                    }
-
-                    Button(action: saveAsJSON) {
-                        Label("Save As JSON", systemImage: "doc.badge.gearshape")
-                    }
-
                     Button(action: copyToClipboard) {
                         Label("Copy To Clipboard", systemImage: "doc.on.clipboard")
                     }
@@ -281,11 +290,11 @@ struct LogEntryRow: View {
                 HapticsManager.shared.softImpact()
             } label: {
                 HStack(alignment: .top, spacing: 12) {
-                    // Level Indicator Line
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(levelColor(entry.level))
-                        .frame(width: 4)
-                        .padding(.vertical, 4)
+                    // Level Icon
+                    Image(systemName: "list.bullet.indent")
+                        .font(.system(size: 14))
+                        .foregroundStyle(levelColor(entry.level))
+                        .padding(.top, 2)
 
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
@@ -298,11 +307,11 @@ struct LogEntryRow: View {
 
                             Spacer()
 
-                            Text(entry.category.uppercased())
+                            Label(entry.category.uppercased(), systemImage: "tag.fill")
                                 .font(.system(size: 8, weight: .bold, design: .rounded))
                                 .padding(.horizontal, 5)
                                 .padding(.vertical, 1)
-                                .background(levelColor(entry.level).opacity(0.15))
+                                .background(levelColor(entry.level).opacity(0.1))
                                 .foregroundStyle(levelColor(entry.level))
                                 .clipShape(Capsule())
                         }
@@ -317,42 +326,32 @@ struct LogEntryRow: View {
                     Spacer()
 
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.system(size: 10, weight: .bold))
                         .foregroundStyle(.tertiary)
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                         .padding(.top, 4)
                 }
-                .padding(12)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 16)
             }
             .buttonStyle(.plain)
 
             if isExpanded {
                 VStack(alignment: .leading, spacing: 8) {
-                    Divider()
-                        .padding(.horizontal, 12)
-
                     VStack(alignment: .leading, spacing: 6) {
                         DetailRow(label: "Level", value: entry.level.rawValue)
                         DetailRow(label: "File", value: entry.file)
                         DetailRow(label: "Function", value: entry.function)
                         DetailRow(label: "Line", value: "\(entry.line)")
                     }
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, 40)
                     .padding(.bottom, 12)
                     .padding(.top, 4)
                 }
-                .transition(AnyTransition.opacity.combined(with: .move(edge: .top)))
+                .transition(.opacity)
             }
         }
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(.white.opacity(colorScheme == .dark ? 0.05 : 0.2), lineWidth: 1)
-        )
-        .shadow(color: .black.opacity(0.03), radius: 5, x: 0, y: 2)
+        .background(Color(UIColor.secondarySystemGroupedBackground).opacity(isExpanded ? 0.5 : 0))
     }
 
     private func levelColor(_ level: LogEntry.LogLevel) -> Color {
