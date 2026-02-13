@@ -5,10 +5,15 @@ struct AllAppsTabView: View {
     @AppStorage("Feather.useNewAllAppsView") private var useNewAllAppsView: Bool = true
     @StateObject private var viewModel = SourcesViewModel.shared
 
+    @FetchRequest(
+        entity: AltSource.entity(),
+        sortDescriptors: [NSSortDescriptor(keyPath: \AltSource.order, ascending: true)]
+    ) private var sources: FetchedResults<AltSource>
+
     var body: some View {
         Group {
             if useNewAllAppsView {
-                AllAppsView(isTab: true, object: Storage.shared.getSources(), viewModel: viewModel)
+                AllAppsView(isTab: true, object: Array(sources), viewModel: viewModel)
             } else {
                 VStack(spacing: 20) {
                     Spacer()
