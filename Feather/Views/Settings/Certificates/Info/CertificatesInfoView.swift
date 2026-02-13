@@ -603,6 +603,7 @@ struct CertificatesInfoView: View {
         RoundedRectangle(cornerRadius: 28, style: .continuous)
             .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.7))
             .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .stroke(Color.primary.opacity(0.06), lineWidth: 1)

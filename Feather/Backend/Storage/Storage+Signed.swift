@@ -16,6 +16,7 @@ extension Storage {
 		size: Int64? = nil,
 		completion: @escaping (Error?) -> Void
 	) {
+		AppLogManager.shared.info("Adding signed app to database: \(appName ?? "Unknown")", category: "Storage")
 		DispatchQueue.main.async { [weak self] in
 			guard let self = self else {
 				completion(NSError(domain: "Storage", code: -1, userInfo: [NSLocalizedDescriptionKey: "Storage instance deallocated"]))

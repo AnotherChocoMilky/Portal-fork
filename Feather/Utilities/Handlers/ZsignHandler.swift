@@ -37,6 +37,9 @@ final class ZsignHandler {
 			throw SigningFileHandlerError.missingCertifcate
 		}
 
+        AppLogManager.shared.info("Starting signing process for: \(_appUrl.lastPathComponent)", category: "Signing")
+        AppLogManager.shared.debug("Using certificate: \(cert.nickname ?? "Unknown")", category: "Signing")
+
 		let _ = Zsign.sign(
 			appPath: _appUrl.relativePath,
 			provisionPath: Storage.shared.getFile(.provision, from: cert)?.path ?? "",
@@ -46,6 +49,11 @@ final class ZsignHandler {
 			removeProvision: !_options.removeProvisioning,
 			completion: { _, error in
 				self.hadError = error
+                if let error = error {
+                    AppLogManager.shared.error("Signing failed: \(error.localizedDescription)", category: "Signing")
+                } else {
+                    AppLogManager.shared.success("Signing completed successfully", category: "Signing")
+                }
 			}
 		)
 	}

@@ -91,7 +91,9 @@ class DownloadManager: NSObject, ObservableObject {
 		id: String = UUID().uuidString,
 		fromSourcesView: Bool = false
 	) -> Download {
+        AppLogManager.shared.info("Starting download: \(url.lastPathComponent) (ID: \(id))", category: "Download")
         if let existingDownload = downloads.first(where: { $0.url == url }) {
+            AppLogManager.shared.info("Resuming existing download: \(url.lastPathComponent)", category: "Download")
             resumeDownload(existingDownload)
             return existingDownload
         }
@@ -140,6 +142,7 @@ class DownloadManager: NSObject, ObservableObject {
     }
     
     func cancelDownload(_ download: Download) {
+        AppLogManager.shared.info("Cancelling download: \(download.fileName)", category: "Download")
         download.task?.cancel()
         
 		// End Live Activity if started

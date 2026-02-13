@@ -61,6 +61,7 @@ struct AllAppsView: View {
     @State private var _searchText = ""
     @State private var _selectedRoute: SourceAppRoute?
     @FocusState private var _searchFieldFocused: Bool
+    @State private var _isSearching = false
 
     @AppStorage("Feather.allApps.sortOption") private var _sortOption: AppSortOption = .name
     @AppStorage("Feather.allApps.sortAscending") private var _sortAscending: Bool = true
@@ -102,7 +103,7 @@ struct AllAppsView: View {
         Group {
             if isTab {
                 mainContent
-                    .searchable(text: $_searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search Apps")
+                    .searchable(text: $_searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search \(_totalAppCount) Apps")
             } else {
                 mainContent
             }
@@ -127,6 +128,23 @@ struct AllAppsView: View {
             // Background
             Color(uiColor: .systemGroupedBackground)
                 .ignoresSafeArea()
+
+            if _isSearching {
+                VStack {
+                    Spacer()
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .padding()
+                    Text("Searching...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(uiColor: .systemGroupedBackground).opacity(0.8))
+                .transition(.opacity)
+                .zIndex(10)
+            }
 
             if _isLoading {
                 // Modern Loading Screen
@@ -477,6 +495,12 @@ struct AllAppsView: View {
 
 			if Task.isCancelled { return }
 
+            await MainActor.run {
+                withAnimation {
+                    _isSearching = true
+                }
+            }
+
 			// Perform filtering and sorting in background
 			let sortedApps = await Task.detached(priority: .userInitiated) {
 				let apps: [(source: ASRepository, app: ASRepository.App)]
@@ -513,18 +537,30 @@ struct AllAppsView: View {
 				}
 			}.value
 
-			if Task.isCancelled { return }
+			if Task.isCancelled {
+                await MainActor.run { _isSearching = false }
+                return
+            }
 
 			await MainActor.run {
-				if useSpringAnimations {
-					withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-						_filteredApps = sortedApps
-					}
-				} else {
-					withAnimation(.easeInOut(duration: 0.25)) {
-						_filteredApps = sortedApps
-					}
-				}
+                if #available(iOS 17.0, *) {
+                    withAnimation(.snappy) {
+                        _filteredApps = sortedApps
+                        _isSearching = false
+                    }
+                } else {
+                    if useSpringAnimations {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            _filteredApps = sortedApps
+                            _isSearching = false
+                        }
+                    } else {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            _filteredApps = sortedApps
+                            _isSearching = false
+                        }
+                    }
+                }
 			}
 		}
 	}
