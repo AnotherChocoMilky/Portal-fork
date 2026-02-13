@@ -191,7 +191,7 @@ struct AppLogsView: View {
             isPresented: $showExporter,
             document: logDocument,
             contentType: exportType,
-            defaultFilename: "Portal_Logs_\(Date().formatted(date: .numeric, time: .omitted)"
+            defaultFilename: "Portal_Logs_\(Date().formatted(date: .numeric, time: .omitted))"
         ) { result in
             switch result {
             case .success(let url):
