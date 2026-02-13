@@ -102,7 +102,7 @@ struct AllAppsView: View {
         Group {
             if isTab {
                 mainContent
-                    .searchable(text: $_searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search \(_totalAppCount) Apps")
+                    .searchable(text: $_searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search Apps")
             } else {
                 mainContent
             }
@@ -210,7 +210,11 @@ struct AllAppsView: View {
                 }
             }
 
-            if _showAppCount {
+            if isTab {
+                Text("Apps")
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+            } else if _showAppCount {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(_totalAppCount)")
                         .font(.system(size: 34, weight: .bold, design: .rounded))
