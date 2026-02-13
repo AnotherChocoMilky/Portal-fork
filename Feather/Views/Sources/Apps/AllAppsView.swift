@@ -308,12 +308,19 @@ struct AllAppsView: View {
                 if _searchBarStyle == 2 {
                     Color.clear
                 } else {
-                    RoundedRectangle(cornerRadius: _searchBarStyle == 1 ? 20 : 14, style: .continuous)
-                        .fill(_useGlassEffects ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground)))
-                        .overlay(
+                    Group {
+                        if _useGlassEffects {
                             RoundedRectangle(cornerRadius: _searchBarStyle == 1 ? 20 : 14, style: .continuous)
-                                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
-                        )
+                                .fill(.ultraThinMaterial)
+                        } else {
+                            RoundedRectangle(cornerRadius: _searchBarStyle == 1 ? 20 : 14, style: .continuous)
+                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                        }
+                    }
+                    .overlay(
+                        RoundedRectangle(cornerRadius: _searchBarStyle == 1 ? 20 : 14, style: .continuous)
+                            .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
+                    )
                 }
             }
         )
@@ -817,12 +824,12 @@ struct AllAppsRowView: View {
             Group {
                 if rowStyle != .minimal {
                     if useGlassEffects {
-                        AnyShapeStyle(.ultraThinMaterial)
+                        Rectangle().fill(.ultraThinMaterial)
                     } else {
-                        AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground))
+                        Color(uiColor: .secondarySystemGroupedBackground)
                     }
                 } else {
-                    AnyShapeStyle(Color.clear)
+                    Color.clear
                 }
             }
             .opacity(cardBackgroundOpacity)
@@ -885,9 +892,9 @@ struct AllAppsRowView: View {
         .background(
             Group {
                 if useGlassEffects {
-                    AnyShapeStyle(.ultraThinMaterial)
+                    Rectangle().fill(.ultraThinMaterial)
                 } else {
-                    AnyShapeStyle(Color(uiColor: .secondarySystemGroupedBackground))
+                    Color(uiColor: .secondarySystemGroupedBackground)
                 }
             }
             .opacity(cardBackgroundOpacity)
