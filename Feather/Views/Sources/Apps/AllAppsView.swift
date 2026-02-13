@@ -91,7 +91,8 @@ struct AllAppsView: View {
     // Optimized State for Large Datasets
     @State private var _allApps: [(source: ASRepository, app: ASRepository.App)] = []
     @State private var _filteredApps: [(source: ASRepository, app: ASRepository.App)] = []
-    
+    @State private var _filterTask: Task<Void, Never>?
+
     private var _totalAppCount: Int {
         _allApps.count
     }
@@ -458,46 +459,70 @@ struct AllAppsView: View {
 	}
 	
 	private func _filterApps() {
-		let apps: [(source: ASRepository, app: ASRepository.App)]
+		_filterTask?.cancel()
 
-		if _searchText.isEmpty {
-			apps = _allApps
-		} else {
-			let query = _searchText.lowercased()
-			apps = _allApps.filter { entry in
-				(entry.app.name?.lowercased().contains(query) ?? false) ||
-				(entry.app.description?.lowercased().contains(query) ?? false) ||
-				(entry.app.subtitle?.lowercased().contains(query) ?? false) ||
-				(entry.app.localizedDescription?.lowercased().contains(query) ?? false)
-			}
-		}
+		let searchText = _searchText
+		let allApps = _allApps
+		let sortOption = _sortOption
+		let sortAscending = _sortAscending
+		let useSpringAnimations = _useSpringAnimations
 
-		let sortedApps = apps.sorted { entry1, entry2 in
-			let result: Bool
-			switch _sortOption {
-			case .name:
-				let name1 = entry1.app.name ?? ""
-				let name2 = entry2.app.name ?? ""
-				result = name1.localizedCaseInsensitiveCompare(name2) == .orderedAscending
-			case .date:
-				let date1 = entry1.app.currentDate?.date ?? .distantPast
-				let date2 = entry2.app.currentDate?.date ?? .distantPast
-				result = date1 < date2
-			case .size:
-				let size1 = entry1.app.size ?? 0
-				let size2 = entry2.app.size ?? 0
-				result = size1 < size2
+		_filterTask = Task {
+			// Debounce search typing
+			if !searchText.isEmpty {
+				try? await Task.sleep(nanoseconds: 300_000_000)
 			}
-			return _sortAscending ? result : !result
-		}
 
-		if _useSpringAnimations {
-			withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-				_filteredApps = sortedApps
-			}
-		} else {
-			withAnimation(.easeInOut(duration: 0.25)) {
-				_filteredApps = sortedApps
+			if Task.isCancelled { return }
+
+			// Perform filtering and sorting in background
+			let sortedApps = await Task.detached(priority: .userInitiated) {
+				let apps: [(source: ASRepository, app: ASRepository.App)]
+
+				if searchText.isEmpty {
+					apps = allApps
+				} else {
+					let query = searchText.lowercased()
+					apps = allApps.filter { entry in
+						(entry.app.name?.lowercased().contains(query) ?? false) ||
+						(entry.app.description?.lowercased().contains(query) ?? false) ||
+						(entry.app.subtitle?.lowercased().contains(query) ?? false) ||
+						(entry.app.localizedDescription?.lowercased().contains(query) ?? false)
+					}
+				}
+
+				return apps.sorted { entry1, entry2 in
+					let result: Bool
+					switch sortOption {
+					case .name:
+						let name1 = entry1.app.name ?? ""
+						let name2 = entry2.app.name ?? ""
+						result = name1.localizedCaseInsensitiveCompare(name2) == .orderedAscending
+					case .date:
+						let date1 = entry1.app.currentDate?.date ?? .distantPast
+						let date2 = entry2.app.currentDate?.date ?? .distantPast
+						result = date1 < date2
+					case .size:
+						let size1 = entry1.app.size ?? 0
+						let size2 = entry2.app.size ?? 0
+						result = size1 < size2
+					}
+					return sortAscending ? result : !result
+				}
+			}.value
+
+			if Task.isCancelled { return }
+
+			await MainActor.run {
+				if useSpringAnimations {
+					withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+						_filteredApps = sortedApps
+					}
+				} else {
+					withAnimation(.easeInOut(duration: 0.25)) {
+						_filteredApps = sortedApps
+					}
+				}
 			}
 		}
 	}
@@ -544,40 +569,15 @@ struct AllAppsView: View {
 
 	// MARK: - Load All Sources
 	private func _loadAllSources() {
-		// Immediate check for cached data
-		if !viewModel.sources.isEmpty {
-			let cachedSources = object.compactMap { viewModel.sources[$0] }
-			if !cachedSources.isEmpty {
-				_sources = cachedSources
-				_allApps = cachedSources.flatMap { source in
-					source.apps.map { (source: source, app: $0) }
-				}
-				_filterApps()
-				_loadedSourcesCount = object.count
-				
-				// Immediately hide loading if we have cached data
-				_isLoading = false
-
-				if viewModel.isFinished {
-					return
-				}
-				
-				// Continue background update if needed
-				Task {
-					await updateSourcesInBackground()
-				}
-				return
-			}
+		// If we don't have apps yet, show the loading screen
+		if _allApps.isEmpty {
+			_isLoading = true
+			_loadedSourcesCount = 0
+			_currentFact = DidYouKnowFacts.random()
 		}
-
-		_isLoading = true
-		_loadedSourcesCount = 0
-		_currentFact = DidYouKnowFacts.random()
 		
 		Task {
 			await updateSourcesInBackground()
-			
-			try? await Task.sleep(nanoseconds: 500_000_000)
 			
 			await MainActor.run {
 				withAnimation(.easeInOut(duration: 0.3)) {

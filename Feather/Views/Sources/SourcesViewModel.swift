@@ -44,12 +44,14 @@ final class SourcesViewModel: ObservableObject {
     private let _minimumRefreshInterval: TimeInterval = 30 // 30 seconds minimum between refreshes
     
     init() {
+        isFinished = false
         Task {
             await loadAllSourcesFromCache()
+            isFinished = true
         }
     }
 
-    var isFinished = true
+    var isFinished = false
     @Published var sources: [AltSource: ASRepository] = [:]
     @Published var fetchState: SourceFetchState = .idle
     @Published var fetchProgress: Double = 0
