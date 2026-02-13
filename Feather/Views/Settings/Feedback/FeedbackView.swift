@@ -928,7 +928,7 @@ struct ModernFormattingToolbar: View {
     @Binding var showLinkDialog: Bool
     @Environment(\.colorScheme) private var colorScheme
     
-    private let toolbarHeight: CGFloat = 52
+    private let toolbarHeight: CGFloat = 50
     
     enum FormatType: CaseIterable {
         case bold, italic, strikethrough, code, quote, link, list, heading
@@ -960,16 +960,7 @@ struct ModernFormattingToolbar: View {
         }
         
         var color: Color {
-            switch self {
-            case .bold: return .blue
-            case .italic: return .purple
-            case .strikethrough: return .red
-            case .code: return .orange
-            case .quote: return .teal
-            case .link: return .blue
-            case .list: return .green
-            case .heading: return .indigo
-            }
+            return .primary
         }
         
         var prefix: String {
@@ -1007,56 +998,44 @@ struct ModernFormattingToolbar: View {
     }
     
     var body: some View {
-        HStack(spacing: 8) {
-            // Formatting buttons in a pill container
-            HStack(spacing: 2) {
-                ForEach(FormatType.allCases, id: \.icon) { format in
-                    ModernFormatButton(format: format) {
-                        if format == .link {
-                            showLinkDialog = true
-                        } else {
-                            applyFormatting(format)
+        HStack(spacing: 0) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 4) {
+                    ForEach(FormatType.allCases, id: \.icon) { format in
+                        ModernFormatButton(format: format) {
+                            if format == .link {
+                                showLinkDialog = true
+                            } else {
+                                applyFormatting(format)
+                            }
+                            HapticsManager.shared.softImpact()
                         }
-                        HapticsManager.shared.softImpact()
                     }
                 }
+                .padding(.horizontal, 12)
             }
-            .padding(.horizontal, 6)
-            .padding(.vertical, 6)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
-            )
             
-            Spacer()
+            Divider()
+                .frame(height: 24)
+                .padding(.horizontal, 8)
             
-            // Dismiss keyboard button
             Button {
                 UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
             } label: {
                 Image(systemName: "keyboard.chevron.compact.down")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 40, height: 40)
-                    .background(
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.gray, Color.gray.opacity(0.8)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    )
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .frame(width: 44, height: 44)
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 12)
         .frame(height: toolbarHeight)
         .background(
-            Rectangle()
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(Color(.systemBackground))
-                .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: -4)
+                .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: -2)
+                .padding(.horizontal, 8)
+                .padding(.bottom, 4)
         )
     }
     
@@ -1086,12 +1065,12 @@ private struct ModernFormatButton: View {
     var body: some View {
         Button(action: action) {
             Image(systemName: format.icon)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(isPressed ? .white : format.color)
-                .frame(width: 34, height: 34)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundStyle(isPressed ? Color.accentColor : .primary.opacity(0.8))
+                .frame(width: 40, height: 40)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(isPressed ? format.color : Color.clear)
+                        .fill(isPressed ? Color.accentColor.opacity(0.1) : Color.clear)
                 )
                 .contentShape(Rectangle())
         }
@@ -1320,6 +1299,7 @@ struct FeedbackView: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.openURL) private var openURL
     
+    @State private var githubAccount: String = ""
     @State private var feedbackTitle: String = ""
     @State private var feedbackMessage: String = ""
     @State private var codeSnippet: String = ""
@@ -1418,6 +1398,39 @@ struct FeedbackView: View {
     private var isFormValid: Bool {
         !feedbackTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
         !feedbackMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+
+    private var descriptionPlaceholder: String {
+        switch feedbackCategory {
+        case .bug: return "Describe the bug..."
+        case .suggestion: return "Describe your suggestion..."
+        case .feature: return "Describe the feature..."
+        case .question: return "Ask your question..."
+        case .crash: return "Describe the crash..."
+        case .other: return "Describe your feedback..."
+        }
+    }
+
+    private var descriptionSubtext: String {
+        switch feedbackCategory {
+        case .bug: return "Please include what happened, what you expected, and steps to reproduce."
+        case .suggestion: return "Please explain how this would improve the app."
+        case .feature: return "Please describe the new functionality you'd like to see."
+        case .question: return "Please be as specific as possible with your question."
+        case .crash: return "Please include what you were doing when the crash occurred."
+        case .other: return "Any other feedback or comments you have."
+        }
+    }
+
+    private var descriptionHeader: String {
+        switch feedbackCategory {
+        case .bug: return "Bug Details"
+        case .suggestion: return "Suggestion Details"
+        case .feature: return "Feature Details"
+        case .question: return "Question Details"
+        case .crash: return "Crash Details"
+        case .other: return "Description"
+        }
     }
     
     var body: some View {
@@ -1821,6 +1834,26 @@ struct FeedbackView: View {
                 }
             }
             
+            // Submitted By field
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Submitted By")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.secondary)
+
+                TextField("GitHub Username", text: $githubAccount)
+                    .font(.system(size: 16))
+                    .padding(14)
+                    .background(Color(.tertiarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .autocapitalization(.none)
+                    .autocorrectionDisabled()
+
+                Text("Enter your GitHub username so we can credit you or follow up.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 4)
+            }
+
             // Title field
             VStack(alignment: .leading, spacing: 8) {
                 Text("Title")
@@ -1840,7 +1873,7 @@ struct FeedbackView: View {
             // Description field
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Description")
+                    Text(descriptionHeader)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundStyle(.secondary)
                     
@@ -1862,7 +1895,7 @@ struct FeedbackView: View {
                         .focused($focusedField, equals: .message)
                     
                     if feedbackMessage.isEmpty {
-                        Text("Describe Your Feedback...")
+                        Text(descriptionPlaceholder)
                             .font(.system(size: 16))
                             .foregroundStyle(.quaternary)
                             .padding(.horizontal, 14)
@@ -1870,6 +1903,11 @@ struct FeedbackView: View {
                             .allowsHitTesting(false)
                     }
                 }
+
+                Text(descriptionSubtext)
+                    .font(.system(size: 12))
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 4)
             }
         }
         .padding(18)
@@ -2612,7 +2650,8 @@ struct FeedbackView: View {
     }
     
     private func buildIssueBody() -> String {
-        var body = "## Description\n\(feedbackMessage.trimmingCharacters(in: .whitespacesAndNewlines))\n\n"
+        var body = "User \(githubAccount.isEmpty ? "Anonymous" : githubAccount) submitted this issue\n\n"
+        body += "## Description\n\(feedbackMessage.trimmingCharacters(in: .whitespacesAndNewlines))\n\n"
         
         if includeCode && !codeSnippet.isEmpty {
             body += "\n## Code Snippet\n```\n\(codeSnippet)\n```\n\n"
@@ -3807,6 +3846,8 @@ struct GitHubMarkdownWebView: UIViewRepresentable {
                     padding: 12px;
                     border-radius: 8px;
                     overflow-x: auto;
+                    overflow-y: auto;
+                    max-height: 400px;
                     margin: 12px 0;
                 }
                 pre code {
