@@ -173,8 +173,8 @@ struct ColorCustomizationView: View {
                                     .overlay(Image(systemName: "app.fill").foregroundStyle(uiElementColor))
 
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("Application Name").font(.headline).foregroundStyle(textColor).fontDesign(selectedDesign)
-                                    Text("Version 1.0.0 • 42 MB").font(.caption).foregroundStyle(secondaryTextColor).fontDesign(selectedDesign)
+                                    Text("Application Name").font(.headline).foregroundStyle(textColor).applyFontDesign(selectedDesign)
+                                    Text("Version 1.0.0 • 42 MB").font(.caption).foregroundStyle(secondaryTextColor).applyFontDesign(selectedDesign)
                                 }
                                 Spacer()
                                 Button("OPEN") {}
