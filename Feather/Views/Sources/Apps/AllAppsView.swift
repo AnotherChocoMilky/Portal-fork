@@ -99,87 +99,15 @@ struct AllAppsView: View {
     
     // MARK: Body
     var body: some View {
-        ZStack(alignment: .bottom) {
-            // Background
-            Color(uiColor: .systemGroupedBackground)
-                .ignoresSafeArea()
-
-            if _isLoading {
-                // Modern Loading Screen
-                loadingScreen
-            } else if let _sources, !_sources.isEmpty {
-                // Main content
-                if isTab {
-                    List {
-                        appsListContent
-
-                        // Bottom padding
-                        Color.clear
-                            .frame(height: 80)
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                    }
-                    .listStyle(.plain)
+        Group {
+            if isTab {
+                mainContent
                     .searchable(text: $_searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search \(_totalAppCount) Apps")
-                } else {
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            if !_searchBarFloating {
-                                headerView
-                                searchBar
-                            } else {
-                                headerView
-                            }
-
-                            // Results count when searching
-                            if !_searchText.isEmpty {
-                                HStack {
-                                    Text("\(_filteredApps.count) Result\(_filteredApps.count == 1 ? "" : "s")")
-                                        .font(.system(size: 13, weight: .medium))
-                                        .foregroundStyle(.secondary)
-                                    Spacer()
-                                }
-                                .padding(.horizontal, 20)
-                                .padding(.bottom, 12)
-                            }
-
-                            // Apps list
-                            if _filteredApps.isEmpty && !_searchText.isEmpty {
-                                emptySearchResultsView
-                            } else {
-                                LazyVStack(spacing: _rowSpacing) {
-                                    ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
-                                        AllAppsRowView(
-                                            source: entry.source,
-                                            app: entry.app,
-                                            onTap: {
-                                                HapticsManager.shared.softImpact()
-                                                _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
-                                            },
-                                            isLast: index == _filteredApps.count - 1
-                                        )
-                                        .padding(.horizontal, _rowHorizontalPadding)
-                                    }
-                                }
-                            }
-
-                            // Bottom padding
-                            Color.clear.frame(height: _searchBarFloating ? 100 : 30)
-                        }
-                    }
-
-                    if _searchBarFloating {
-                        searchBar
-                            .padding(.bottom, 20)
-                            .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity))
-                    }
-                }
             } else {
-                emptySourcesView
+                mainContent
             }
-
         }
-        .navigationBarHidden(true)
+        .navigationBarHidden(!isTab)
         .onAppear {
             _loadAllSources()
         }
@@ -192,6 +120,76 @@ struct AllAppsView: View {
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: _useGrid)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: _searchBarFloating)
+    }
+
+    private var mainContent: some View {
+        ZStack(alignment: .bottom) {
+            // Background
+            Color(uiColor: .systemGroupedBackground)
+                .ignoresSafeArea()
+
+            if _isLoading {
+                // Modern Loading Screen
+                loadingScreen
+            } else if let _sources, !_sources.isEmpty {
+                // Main content
+                ScrollView {
+                    VStack(spacing: 0) {
+                        if !_searchBarFloating {
+                            headerView
+                            if !isTab {
+                                searchBar
+                            }
+                        } else {
+                            headerView
+                        }
+
+                        // Results count when searching
+                        if !_searchText.isEmpty {
+                            HStack {
+                                Text("\(_filteredApps.count) Result\(_filteredApps.count == 1 ? "" : "s")")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.bottom, 12)
+                        }
+
+                        // Apps list
+                        if _filteredApps.isEmpty && !_searchText.isEmpty {
+                            emptySearchResultsView
+                        } else {
+                            LazyVStack(spacing: _rowSpacing) {
+                                ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
+                                    AllAppsRowView(
+                                        source: entry.source,
+                                        app: entry.app,
+                                        onTap: {
+                                            HapticsManager.shared.softImpact()
+                                            _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
+                                        },
+                                        isLast: index == _filteredApps.count - 1
+                                    )
+                                    .padding(.horizontal, _rowHorizontalPadding)
+                                }
+                            }
+                        }
+
+                        // Bottom padding
+                        Color.clear.frame(height: _searchBarFloating ? 100 : 30)
+                    }
+                }
+
+                if _searchBarFloating && !isTab {
+                    searchBar
+                        .padding(.bottom, 20)
+                        .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity))
+                }
+            } else {
+                emptySourcesView
+            }
+        }
     }
 
     // MARK: - Subviews
@@ -527,45 +525,6 @@ struct AllAppsView: View {
 		}
 	}
 
-    @ViewBuilder
-    private var appsListContent: some View {
-        // Results count when searching
-        if !_searchText.isEmpty {
-            HStack {
-                Text("\(_filteredApps.count) Result\(_filteredApps.count == 1 ? "" : "s")")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(.secondary)
-                Spacer()
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 12)
-            .listRowBackground(Color.clear)
-            .listRowSeparator(.hidden)
-        }
-
-        // Apps list
-        if _filteredApps.isEmpty && !_searchText.isEmpty {
-            emptySearchResultsView
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-        } else {
-            ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
-                AllAppsRowView(
-                    source: entry.source,
-                    app: entry.app,
-                    onTap: {
-                        HapticsManager.shared.softImpact()
-                        _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
-                    },
-                    isLast: index == _filteredApps.count - 1
-                )
-                .padding(.horizontal, _rowHorizontalPadding)
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
-            }
-        }
-    }
 
 	// MARK: - Load All Sources
 	private func _loadAllSources() {
