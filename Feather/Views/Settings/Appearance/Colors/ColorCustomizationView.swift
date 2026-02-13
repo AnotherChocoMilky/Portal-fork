@@ -177,7 +177,7 @@ struct ColorCustomizationView: View {
                                     Text("Version 1.0.0 • 42 MB").font(.caption).foregroundStyle(secondaryTextColor).applyFontDesign(selectedDesign)
                                 }
                                 Spacer()
-                                Button("OPEN") {}
+                                Button("Open") {}
                                     .font(.system(size: 12, weight: .bold))
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
@@ -307,7 +307,7 @@ struct ColorCustomizationView: View {
             } label: {
                 HStack {
                     Image(systemName: "arrow.counterclockwise")
-                    Text("Reset to Defaults")
+                    Text("Reset To Defaults")
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
@@ -331,7 +331,7 @@ struct ColorCustomizationView: View {
             VStack(spacing: 16) {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Label("Font Design", systemImage: "text.cursor")
+                        Label("Fonts", systemImage: "text.cursor")
                         Spacer()
                         Picker("Design", selection: $fontDesign) {
                             Text("Default").tag("default")

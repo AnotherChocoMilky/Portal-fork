@@ -369,7 +369,7 @@ struct SelfBackupRestoreView: View {
                 viewModel.onExportSubmit?(nil)
             }
         } message: {
-            Text("Do you want to export this backup with password protection? This will break the bakcup file, fix soon!")
+            Text("Do you want to export this backup with password protection? This will break the backup file, fix soon!")
         }
         .onAppear {
             viewModel.loadBackups()

@@ -195,7 +195,7 @@ struct CertificatesInfoView: View {
         HStack(spacing: 12) {
             // Active/Revoked
             statusBadge(
-                title: cert.revoked == true ? "REVOKED" : "ACTIVE",
+                title: cert.revoked == true ? "Revoked" : "Active",
                 icon: cert.revoked == true ? "xmark.seal.fill" : "checkmark.seal.fill",
                 color: cert.revoked == true ? .red : .green
             )
@@ -203,7 +203,7 @@ struct CertificatesInfoView: View {
             // PPQ Check
             if let ppq = data.PPQCheck {
                 statusBadge(
-                    title: ppq ? "PPQ ACTIVE" : "PPQ CLEAN",
+                    title: ppq ? "PPQ True" : "PPQ False",
                     icon: ppq ? "shield.lefthalf.filled" : "shield.checkered",
                     color: ppq ? .orange : .blue
                 )
@@ -286,7 +286,7 @@ struct CertificatesInfoView: View {
                 Image(systemName: "clock.badge.checkmark.fill")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(.blue)
-                Text("VALIDITY & TIMELINE")
+                Text("Validity & Timeline")
                     .font(.system(size: 12, weight: .bold, design: .rounded))
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -297,7 +297,7 @@ struct CertificatesInfoView: View {
                 HStack(spacing: 0) {
                     // Created
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("ISSUED")
+                        Text("Issued")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundStyle(.secondary)
                         Text(data.CreationDate.formatted(date: .abbreviated, time: .omitted))
@@ -314,7 +314,7 @@ struct CertificatesInfoView: View {
 
                     // Expires
                     VStack(alignment: .trailing, spacing: 4) {
-                        Text("EXPIRES")
+                        Text("Expires")
                             .font(.system(size: 10, weight: .bold))
                             .foregroundStyle(.secondary)
                         Text(data.ExpirationDate.formatted(date: .abbreviated, time: .omitted))
