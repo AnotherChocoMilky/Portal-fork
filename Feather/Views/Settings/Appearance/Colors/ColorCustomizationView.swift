@@ -8,18 +8,28 @@ struct ColorTheme: Identifiable, Codable, Equatable {
     let ui: String
     let text: String
     let tint: String
+    var secondaryText: String?
+    var cardRadius: Double?
+    var fontDesign: String?
 }
 
 struct ColorCustomizationView: View {
     @AppStorage(UserDefaults.Keys.background) private var bgColorHex: String = Color.defaultBackground
     @AppStorage(UserDefaults.Keys.uiElement) private var uiElementColorHex: String = Color.defaultUIElement
     @AppStorage(UserDefaults.Keys.text) private var textColorHex: String = Color.defaultText
+    @AppStorage(UserDefaults.Keys.secondaryText) private var secondaryTextColorHex: String = "#8E8E93"
+    @AppStorage(UserDefaults.Keys.cardCornerRadius) private var cardCornerRadius: Double = 16.0
+    @AppStorage(UserDefaults.Keys.buttonCornerRadius) private var buttonCornerRadius: Double = 12.0
+    @AppStorage(UserDefaults.Keys.fontDesign) private var fontDesign: String = "default"
+    @AppStorage(UserDefaults.Keys.shadowIntensity) private var shadowIntensity: Double = 5.0
+    @AppStorage(UserDefaults.Keys.blurOpacity) private var blurOpacity: Double = 1.0
     @AppStorage("Feather.userTintColor") private var tintColorHex: String = "#0077BE"
     @AppStorage("Feather.userThemes") private var userThemesData: Data = Data()
 
     @State private var bgColor: Color = .white
     @State private var uiElementColor: Color = .blue
     @State private var textColor: Color = .black
+    @State private var secondaryTextColor: Color = .gray
     @State private var tintColor: Color = .blue
 
     @State private var showAllThemes = false
@@ -30,19 +40,19 @@ struct ColorCustomizationView: View {
     @Environment(\.colorScheme) var colorScheme
 
     private let presetThemes: [ColorTheme] = [
-        ColorTheme(name: "Classic", bg: "#F2F2F7", ui: "#007AFF", text: "#000000", tint: "#007AFF"),
-        ColorTheme(name: "Midnight", bg: "#1C1C1E", ui: "#0A84FF", text: "#FFFFFF", tint: "#0A84FF"),
-        ColorTheme(name: "OLED Black", bg: "#000000", ui: "#30D158", text: "#FFFFFF", tint: "#30D158"),
-        ColorTheme(name: "Nordic", bg: "#2E3440", ui: "#88C0D0", text: "#ECEFF4", tint: "#88C0D0"),
-        ColorTheme(name: "Forest", bg: "#1B2E1D", ui: "#74C69D", text: "#D8F3DC", tint: "#74C69D"),
-        ColorTheme(name: "Crimson", bg: "#1A0A0A", ui: "#FF453A", text: "#FFD6D6", tint: "#FF453A"),
-        ColorTheme(name: "Vibrant", bg: "#0F172A", ui: "#F43F5E", text: "#F8FAFC", tint: "#F43F5E"),
-        ColorTheme(name: "Sepia", bg: "#F4ECD8", ui: "#8B4513", text: "#433422", tint: "#8B4513"),
-        ColorTheme(name: "Lavender", bg: "#F3E5F5", ui: "#9C27B0", text: "#4A148C", tint: "#9C27B0"),
-        ColorTheme(name: "Ocean", bg: "#E0F7FA", ui: "#00BCD4", text: "#006064", tint: "#00BCD4"),
-        ColorTheme(name: "Rose Gold", bg: "#FFF1F0", ui: "#FF85C0", text: "#5C0011", tint: "#FF85C0"),
-        ColorTheme(name: "Slate", bg: "#263238", ui: "#90A4AE", text: "#ECEFF1", tint: "#90A4AE"),
-        ColorTheme(name: "Mint", bg: "#E8F5E9", ui: "#4CAF50", text: "#1B5E20", tint: "#4CAF50")
+        ColorTheme(name: "Classic", bg: "#F2F2F7", ui: "#007AFF", text: "#000000", tint: "#007AFF", secondaryText: "#8E8E93", cardRadius: 16, fontDesign: "default"),
+        ColorTheme(name: "Midnight", bg: "#1C1C1E", ui: "#0A84FF", text: "#FFFFFF", tint: "#0A84FF", secondaryText: "#8E8E93", cardRadius: 16, fontDesign: "rounded"),
+        ColorTheme(name: "OLED Black", bg: "#000000", ui: "#30D158", text: "#FFFFFF", tint: "#30D158", secondaryText: "#A1A1A1", cardRadius: 12, fontDesign: "monospaced"),
+        ColorTheme(name: "Nordic", bg: "#2E3440", ui: "#88C0D0", text: "#ECEFF4", tint: "#88C0D0", secondaryText: "#D8DEE9", cardRadius: 8, fontDesign: "default"),
+        ColorTheme(name: "Forest", bg: "#1B2E1D", ui: "#74C69D", text: "#D8F3DC", tint: "#74C69D", secondaryText: "#95D5B2", cardRadius: 20, fontDesign: "serif"),
+        ColorTheme(name: "Crimson", bg: "#1A0A0A", ui: "#FF453A", text: "#FFD6D6", tint: "#FF453A", secondaryText: "#FFBABA", cardRadius: 14, fontDesign: "default"),
+        ColorTheme(name: "Vibrant", bg: "#0F172A", ui: "#F43F5E", text: "#F8FAFC", tint: "#F43F5E", secondaryText: "#E2E8F0", cardRadius: 18, fontDesign: "rounded"),
+        ColorTheme(name: "Sepia", bg: "#F4ECD8", ui: "#8B4513", text: "#433422", tint: "#8B4513", secondaryText: "#5D4037", cardRadius: 4, fontDesign: "serif"),
+        ColorTheme(name: "Lavender", bg: "#F3E5F5", ui: "#9C27B0", text: "#4A148C", tint: "#9C27B0", secondaryText: "#7B1FA2", cardRadius: 24, fontDesign: "rounded"),
+        ColorTheme(name: "Ocean", bg: "#E0F7FA", ui: "#00BCD4", text: "#006064", tint: "#00BCD4", secondaryText: "#00838F", cardRadius: 16, fontDesign: "default"),
+        ColorTheme(name: "Rose Gold", bg: "#FFF1F0", ui: "#FF85C0", text: "#5C0011", tint: "#FF85C0", secondaryText: "#9E1068", cardRadius: 30, fontDesign: "serif"),
+        ColorTheme(name: "Slate", bg: "#263238", ui: "#90A4AE", text: "#ECEFF1", tint: "#90A4AE", secondaryText: "#B0BEC5", cardRadius: 0, fontDesign: "monospaced"),
+        ColorTheme(name: "Mint", bg: "#E8F5E9", ui: "#4CAF50", text: "#1B5E20", tint: "#4CAF50", secondaryText: "#2E7D32", cardRadius: 16, fontDesign: "rounded")
     ]
 
     private var userThemes: [ColorTheme] {
@@ -74,6 +84,9 @@ struct ColorCustomizationView: View {
 
                     // MARK: - Custom Colors
                     customColorsSection
+
+                    // MARK: - Advanced Styling
+                    advancedStylingSection
 
                     // MARK: - Actions
                     actionsSection
@@ -118,6 +131,7 @@ struct ColorCustomizationView: View {
         .onChange(of: bgColor) { newValue in bgColorHex = newValue.toHex() ?? Color.defaultBackground }
         .onChange(of: uiElementColor) { newValue in uiElementColorHex = newValue.toHex() ?? Color.defaultUIElement }
         .onChange(of: textColor) { newValue in textColorHex = newValue.toHex() ?? Color.defaultText }
+        .onChange(of: secondaryTextColor) { newValue in secondaryTextColorHex = newValue.toHex() ?? "#8E8E93" }
         .onChange(of: tintColor) { newValue in tintColorHex = newValue.toHex() ?? "#0077BE" }
     }
 
@@ -134,7 +148,7 @@ struct ColorCustomizationView: View {
             ZStack {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .fill(bgColor)
-                    .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+                    .shadow(color: .black.opacity(shadowIntensity / 100.0), radius: shadowIntensity, x: 0, y: shadowIntensity / 2.0)
 
                 VStack(spacing: 0) {
                     // Fake Nav Bar
@@ -159,8 +173,8 @@ struct ColorCustomizationView: View {
                                     .overlay(Image(systemName: "app.fill").foregroundStyle(uiElementColor))
 
                                 VStack(alignment: .leading, spacing: 4) {
-                                    Text("Application Name").font(.headline).foregroundStyle(textColor)
-                                    Text("Version 1.0.0 • 42 MB").font(.caption).foregroundStyle(textColor.opacity(0.6))
+                                    Text("Application Name").font(.headline).foregroundStyle(textColor).fontDesign(selectedDesign)
+                                    Text("Version 1.0.0 • 42 MB").font(.caption).foregroundStyle(secondaryTextColor).fontDesign(selectedDesign)
                                 }
                                 Spacer()
                                 Button("OPEN") {}
@@ -169,11 +183,11 @@ struct ColorCustomizationView: View {
                                     .padding(.vertical, 6)
                                     .background(uiElementColor)
                                     .foregroundStyle(.white)
-                                    .clipShape(Capsule())
+                                    .cornerRadius(buttonCornerRadius)
                             }
                             .padding()
                             .background(textColor.opacity(0.05))
-                            .cornerRadius(16)
+                            .cornerRadius(cardCornerRadius)
 
                             // Fake Tab Bar
                             HStack(spacing: 40) {
@@ -240,7 +254,9 @@ struct ColorCustomizationView: View {
                 Divider().padding(.leading, 44)
                 colorPickerRow(title: "UI Elements", color: $uiElementColor, icon: "app.fill")
                 Divider().padding(.leading, 44)
-                colorPickerRow(title: "Text", color: $textColor, icon: "textformat")
+                colorPickerRow(title: "Primary Text", color: $textColor, icon: "textformat")
+                Divider().padding(.leading, 44)
+                colorPickerRow(title: "Secondary Text", color: $secondaryTextColor, icon: "textformat.size")
                 Divider().padding(.leading, 44)
                 colorPickerRow(title: "Accent", color: $tintColor, icon: "sparkles")
             }
@@ -304,6 +320,82 @@ struct ColorCustomizationView: View {
         }
     }
 
+    private var advancedStylingSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Advanced Styling")
+                .font(.system(.subheadline, design: .rounded))
+                .fontWeight(.bold)
+                .foregroundStyle(.secondary)
+                .padding(.leading, 8)
+
+            VStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Label("Font Design", systemImage: "text.cursor")
+                        Spacer()
+                        Picker("Design", selection: $fontDesign) {
+                            Text("Default").tag("default")
+                            Text("Rounded").tag("rounded")
+                            Text("Serif").tag("serif")
+                            Text("Monospaced").tag("monospaced")
+                        }
+                        .pickerStyle(.menu)
+                    }
+                }
+
+                Divider()
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Label("Card Corners", systemImage: "square.dashed")
+                        Spacer()
+                        Text("\(Int(cardCornerRadius))pt").font(.caption).foregroundStyle(.secondary)
+                    }
+                    Slider(value: $cardCornerRadius, in: 0...40, step: 2)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Label("Button Corners", systemImage: "rectangle.roundedbottom")
+                        Spacer()
+                        Text("\(Int(buttonCornerRadius))pt").font(.caption).foregroundStyle(.secondary)
+                    }
+                    Slider(value: $buttonCornerRadius, in: 0...20, step: 1)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Label("Shadow Intensity", systemImage: "shadow")
+                        Spacer()
+                        Text("\(Int(shadowIntensity))").font(.caption).foregroundStyle(.secondary)
+                    }
+                    Slider(value: $shadowIntensity, in: 0...20, step: 1)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Label("Blur Opacity", systemImage: "drop.halffull")
+                        Spacer()
+                        Text("\(Int(blurOpacity * 100))%").font(.caption).foregroundStyle(.secondary)
+                    }
+                    Slider(value: $blurOpacity, in: 0...1, step: 0.05)
+                }
+            }
+            .padding()
+            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .cornerRadius(16)
+        }
+    }
+
+    private var selectedDesign: Font.Design {
+        switch fontDesign {
+        case "rounded": return .rounded
+        case "serif": return .serif
+        case "monospaced": return .monospaced
+        default: return .default
+        }
+    }
+
     // MARK: - Helper Methods
 
     private func loadColors() {
@@ -317,6 +409,7 @@ struct ColorCustomizationView: View {
             textColor = Color(hex: textColorHex)
         }
 
+        secondaryTextColor = Color(hex: secondaryTextColorHex)
         tintColor = Color(hex: tintColorHex)
     }
 
@@ -325,6 +418,11 @@ struct ColorCustomizationView: View {
         uiElementColorHex = theme.ui
         textColorHex = theme.text
         tintColorHex = theme.tint
+
+        if let st = theme.secondaryText { secondaryTextColorHex = st }
+        if let cr = theme.cardRadius { cardCornerRadius = cr }
+        if let fd = theme.fontDesign { fontDesign = fd }
+
         loadColors()
         HapticsManager.shared.success()
     }
@@ -335,7 +433,10 @@ struct ColorCustomizationView: View {
             bg: bgColor.toHex() ?? Color.defaultBackground,
             ui: uiElementColor.toHex() ?? Color.defaultUIElement,
             text: textColor.toHex() ?? Color.defaultText,
-            tint: tintColor.toHex() ?? "#0077BE"
+            tint: tintColor.toHex() ?? "#0077BE",
+            secondaryText: secondaryTextColor.toHex() ?? "#8E8E93",
+            cardRadius: cardCornerRadius,
+            fontDesign: fontDesign
         )
         var updatedThemes = userThemes
         updatedThemes.append(newTheme)
@@ -347,6 +448,12 @@ struct ColorCustomizationView: View {
         bgColorHex = Color.defaultBackground
         uiElementColorHex = Color.defaultUIElement
         textColorHex = Color.defaultText
+        secondaryTextColorHex = "#8E8E93"
+        cardCornerRadius = 16.0
+        buttonCornerRadius = 12.0
+        fontDesign = "default"
+        shadowIntensity = 5.0
+        blurOpacity = 1.0
         tintColorHex = "#0077BE"
         loadColors()
         HapticsManager.shared.success()

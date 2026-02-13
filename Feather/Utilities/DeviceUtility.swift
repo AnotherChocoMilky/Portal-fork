@@ -84,19 +84,66 @@ extension UIDevice {
 
     /// Attempts to grab the UDID from various sources
     func grabUDID() -> String {
-        // 1. Try reading from pairingFile.plist in the documents directory
+        getDeviceIdentifier().id
+    }
+
+    struct DeviceIdentifier {
+        let id: String
+        let isRealUDID: Bool
+        var label: String { isRealUDID ? "UDID" : "Device ID" }
+    }
+
+    func getDeviceIdentifier() -> DeviceIdentifier {
+        // 1. Try to grab from embedded.mobileprovision
+        if let udid = grabUDIDFromProvisioningProfile() {
+            return DeviceIdentifier(id: udid, isRealUDID: true)
+        }
+
+        // 2. Try reading from pairingFile.plist in the documents directory
         let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let pairingFileURL = documentsURL.appendingPathComponent("pairingFile.plist")
         if FileManager.default.fileExists(atPath: pairingFileURL.path) {
             if let dict = NSDictionary(contentsOf: pairingFileURL) as? [String: Any] {
                 // Check common keys for UDID in libimobiledevice pairing files
-                if let udid = dict["UDID"] as? String { return udid }
-                if let udid = dict["DeviceUDID"] as? String { return udid }
-                if let udid = dict["UniqueDeviceID"] as? String { return udid }
+                let keys = ["UDID", "DeviceUDID", "UniqueDeviceID"]
+                for key in keys {
+                    if let udid = dict[key] as? String {
+                        return DeviceIdentifier(id: udid, isRealUDID: true)
+                    }
+                }
             }
         }
 
-        // 2. Fallback to identifierForVendor as a last resort
-        return identifierForVendor?.uuidString ?? "Unknown"
+        // 3. Fallback to identifierForVendor as a last resort
+        let fallbackID = identifierForVendor?.uuidString ?? "Unknown"
+        return DeviceIdentifier(id: fallbackID, isRealUDID: false)
+    }
+
+    func grabUDIDFromProvisioningProfile() -> String? {
+        guard let path = Bundle.main.path(forResource: "embedded", ofType: "mobileprovision") else {
+            return nil
+        }
+
+        do {
+            let data = try Data(contentsOf: URL(fileURLWithPath: path))
+            // The provisioning profile is a CMS signed message, but the XML is inside.
+            // We search for the XML block.
+            if let xmlStart = data.range(of: Data("<?xml".utf8)),
+               let plistEnd = data.range(of: Data("</plist>".utf8)) {
+                let xmlData = data.subdata(in: xmlStart.lowerBound..<plistEnd.upperBound)
+
+                if let plist = try PropertyListSerialization.propertyList(from: xmlData, format: nil) as? [String: Any] {
+                    if let devices = plist["ProvisionedDevices"] as? [String], !devices.isEmpty {
+                        // If there's only one device, it's highly likely to be this one.
+                        // If there are many, we can't be 100% sure, but returning the first one
+                        // is better than nothing in this context.
+                        return devices.first
+                    }
+                }
+            }
+        } catch {
+            return nil
+        }
+        return nil
     }
 }
