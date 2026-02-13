@@ -411,33 +411,24 @@ struct MarkdownTextView: View {
     private func renderMarkdown(_ input: String) -> AttributedString {
         var result = input
         
-        // Convert markdown to plain text with basic formatting hints
-        // Bold: **text** or __text__
         result = result.replacingOccurrences(of: "\\*\\*(.+?)\\*\\*", with: "$1", options: .regularExpression)
         result = result.replacingOccurrences(of: "__(.+?)__", with: "$1", options: .regularExpression)
         
-        // Italic: *text* or _text_
         result = result.replacingOccurrences(of: "\\*(.+?)\\*", with: "$1", options: .regularExpression)
         result = result.replacingOccurrences(of: "_(.+?)_", with: "$1", options: .regularExpression)
         
-        // Strikethrough: ~~text~~
         result = result.replacingOccurrences(of: "~~(.+?)~~", with: "$1", options: .regularExpression)
         
-        // Code: `text`
         result = result.replacingOccurrences(of: "`(.+?)`", with: "$1", options: .regularExpression)
         
-        // Links: [text](url)
         result = result.replacingOccurrences(of: "\\[(.+?)\\]\\(.+?\\)", with: "$1", options: .regularExpression)
         
-        // Headers: ## text
         result = result.replacingOccurrences(of: "^#{1,6}\\s*", with: "", options: .regularExpression)
         
-        // Quote: > text (multiline)
         if let regex = try? NSRegularExpression(pattern: "^>\\s*", options: [.anchorsMatchLines]) {
             result = regex.stringByReplacingMatches(in: result, options: [], range: NSRange(result.startIndex..., in: result), withTemplate: "")
         }
         
-        // List: - text (multiline)
         if let regex = try? NSRegularExpression(pattern: "^-\\s*", options: [.anchorsMatchLines]) {
             result = regex.stringByReplacingMatches(in: result, options: [], range: NSRange(result.startIndex..., in: result), withTemplate: "• ")
         }
@@ -1402,19 +1393,19 @@ struct FeedbackView: View {
 
     private var descriptionPlaceholder: String {
         switch feedbackCategory {
-        case .bug: return "Describe the bug..."
-        case .suggestion: return "Describe your suggestion..."
-        case .feature: return "Describe the feature..."
-        case .question: return "Ask your question..."
-        case .crash: return "Describe the crash..."
-        case .other: return "Describe your feedback..."
+        case .bug: return "Describe The Bug"
+        case .suggestion: return "Describe Your Suggestion"
+        case .feature: return "Describe The Feature"
+        case .question: return "Ask Your Question"
+        case .crash: return "Describe The Crash"
+        case .other: return "Describe Your Feedback"
         }
     }
 
     private var descriptionSubtext: String {
         switch feedbackCategory {
         case .bug: return "Please include what happened, what you expected, and steps to reproduce."
-        case .suggestion: return "Please explain how this would improve the app."
+        case .suggestion: return "Please explain how this would improve Portal."
         case .feature: return "Please describe the new functionality you'd like to see."
         case .question: return "Please be as specific as possible with your question."
         case .crash: return "Please include what you were doing when the crash occurred."
@@ -1573,7 +1564,7 @@ struct FeedbackView: View {
                                 .scaleEffect(1.3)
                                 .tint(.accentColor)
                         }
-                        Text("Please Wait...")
+                        Text("Please Wait")
                             .font(.system(size: 15, weight: .medium))
                             .foregroundStyle(.secondary)
                     }
@@ -1590,7 +1581,7 @@ struct FeedbackView: View {
                                 .foregroundStyle(.orange)
                         }
                         VStack(spacing: 6) {
-                            Text("Unable to Load")
+                            Text("Unable To Load")
                                 .font(.system(size: 18, weight: .semibold))
                             Text(error)
                                 .font(.system(size: 14))
@@ -1848,7 +1839,7 @@ struct FeedbackView: View {
                     .autocapitalization(.none)
                     .autocorrectionDisabled()
 
-                Text("Enter your GitHub username so we can credit you or follow up.")
+                Text("Enter your GitHub username so we can credit you or a follow up if needed.")
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                     .padding(.horizontal, 4)
@@ -2007,7 +1998,7 @@ struct FeedbackView: View {
             }
             .disabled(!isFormValid || isSubmitting)
             
-            Text("Your feedback will be submitted as a GitHub Issue")
+            Text("Your feedback will be submitted as a GitHub Issue.")
                 .font(.system(size: 12))
                 .foregroundStyle(.tertiary)
         }
@@ -2079,7 +2070,7 @@ struct FeedbackView: View {
             Text("Report Feedback")
                 .font(.system(size: 22, weight: .bold, design: .rounded))
             
-            Text("Your feedback creates a GitHub Issue directly")
+            Text("Your feedback creates a GitHub Issue directly.")
                 .font(.system(size: 14))
                 .foregroundStyle(.secondary)
         }
@@ -2344,7 +2335,7 @@ struct FeedbackView: View {
                 modernAttachmentToggle(
                     icon: "curlybraces",
                     title: "Code Snippet",
-                    subtitle: codeSnippet.isEmpty ? "Add code" : "\(codeSnippet.components(separatedBy: "\n").count) lines",
+                    subtitle: codeSnippet.isEmpty ? "Add Code" : "\(codeSnippet.components(separatedBy: "\n").count) Lines",
                     color: .purple,
                     isOn: $includeCode,
                     isDisabled: false,
@@ -2599,18 +2590,18 @@ struct FeedbackView: View {
         
         focusedField = nil
         isSubmitting = true
-        submissionStep = "Preparing Feedback..."
+        submissionStep = "Preparing Feedback"
         HapticsManager.shared.softImpact()
         
         Task {
             do {
-                submissionStep = "Fetching Authentication..."
+                submissionStep = "Fetching Authentication"
                 
                 let issueBody = buildIssueBody()
                 let labels = [feedbackCategory.githubLabel, "app-feedback"]
                 let trimmedTitle = feedbackTitle.trimmingCharacters(in: .whitespacesAndNewlines)
                 
-                submissionStep = "Creating GitHub Issue..."
+                submissionStep = "Creating GitHub Issue"
                 
                 let response = try await GitHubFeedbackService.shared.createIssue(
                     title: "[\(feedbackCategory.rawValue)] \(trimmedTitle)",
