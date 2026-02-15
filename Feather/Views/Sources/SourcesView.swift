@@ -113,10 +113,8 @@ struct SourcesView: View {
                 }
             }
             .navigationBarHidden(true)
-            .sheet(isPresented: $_isAddingPresenting) {
+            .fullScreenCover(isPresented: $_isAddingPresenting) {
                 SourcesAddView()
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $_showEditSourcesView) {
                 EditSourcesView(sources: _sources)

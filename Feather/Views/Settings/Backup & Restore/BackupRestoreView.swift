@@ -1026,14 +1026,6 @@ struct BackupOptionsView: View {
                         } icon: { Image(systemName: "archivebox.fill").foregroundStyle(.indigo) }
                     }
 
-                    Toggle(isOn: $options.usePassword) {
-                        Label {
-                            VStack(alignment: .leading) {
-                                Text(.localized("Use Encryption"))
-                                Text(.localized("Protect backup with a generated password")).font(.caption).foregroundStyle(.secondary)
-                            }
-                        } icon: { Image(systemName: "lock.fill").foregroundStyle(.green) }
-                    }
                 } header: {
                     AppearanceSectionHeader(title: String.localized("Backup Content"), icon: "list.bullet.indent")
                 }

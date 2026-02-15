@@ -368,7 +368,7 @@ struct KeyboardBackdropView: View {
 
     var body: some View {
         ZStack {
-            if manager.isEnabled && manager.isKeyboardVisible && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 26 {
+            if manager.isEnabled && manager.isKeyboardVisible && ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 16 {
                 // Base Background
                 Group {
                     if manager.isDynamicGradientEnabled {

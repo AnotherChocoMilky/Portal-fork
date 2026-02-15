@@ -17,6 +17,7 @@ struct SettingsView: View {
     @State private var developerTapCount = 0
     @State private var lastTapTime: Date?
     @State private var _isFetchingFullData = false
+    @State private var _showAddSource = false
     @State private var showDeveloperConfirmation = false
     @State private var navigateToCheckForUpdates = false
     @AppStorage("isDeveloperModeEnabled") private var isDeveloperModeEnabled = false
@@ -39,6 +40,9 @@ struct SettingsView: View {
                 if isDeveloperModeEnabled { developerSection }
             }
             .listStyle(.insetGrouped)
+        }
+        .fullScreenCover(isPresented: $_showAddSource) {
+            SourcesAddView()
         }
         .alert(String.localized("Enable Developer Mode"), isPresented: $showDeveloperConfirmation) {
             Button(String.localized("Cancel"), role: .cancel) { developerTapCount = 0 }
@@ -119,6 +123,11 @@ struct SettingsView: View {
         Section {
             if !hideManager.isHidden("settings.files") {
                 SettingsRow(icon: "folder.fill", title: String.localized("Files"), color: .accentColor, destination: FilesSettingsView())
+            }
+            if !hideManager.isHidden("settings.addSource") {
+                SettingsActionRow(icon: "plus.circle.fill", title: String.localized("Add Source"), color: .accentColor) {
+                    _showAddSource = true
+                }
             }
             if !isEnterprise && !hideManager.isHidden("settings.storage") {
                 SettingsRow(icon: "externaldrive.fill.badge.person.crop", title: String.localized("Storage"), color: .accentColor, destination: ManageStorageView())

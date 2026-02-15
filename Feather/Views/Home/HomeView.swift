@@ -137,10 +137,8 @@ struct HomeView: View {
                 CertificatesAddView()
                     .presentationDetents([.medium])
             }
-            .sheet(isPresented: $_showAddSource) {
+            .fullScreenCover(isPresented: $_showAddSource) {
                 SourcesAddView()
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
             }
             .sheet(isPresented: $_showImportApp) {
                 FileImporterRepresentableView(

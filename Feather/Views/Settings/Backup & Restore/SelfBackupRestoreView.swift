@@ -202,7 +202,7 @@ struct SelfBackupRestoreView: View {
                     icon: "lock.shield.fill",
                     iconColor: .green,
                     title: .localized("Encrypted Storage"),
-                    description: .localized("All backups are encrypted for security. You can optionally set a password for additional protection (Coming Soon).")
+                    description: .localized("All backups are encrypted for security.")
                 )
                 
                 featureCard(
