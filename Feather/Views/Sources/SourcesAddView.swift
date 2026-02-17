@@ -897,10 +897,16 @@ struct PortalExportView: View {
 	
 	private var headerSection: some View {
 		VStack(spacing: 12) {
-			Image(systemName: isImportMode ? "arrow.down.doc.fill" : "arrow.up.doc.fill")
-				.font(.system(size: 48))
-				.foregroundStyle(isImportMode ? .cyan : .purple)
-				.symbolEffect(.bounce, value: isImportMode)
+			if #available(iOS 17.0, *) {
+				Image(systemName: isImportMode ? "arrow.down.doc.fill" : "arrow.up.doc.fill")
+					.font(.system(size: 48))
+					.foregroundStyle(isImportMode ? .cyan : .purple)
+					.symbolEffect(.bounce, value: isImportMode)
+			} else {
+				Image(systemName: isImportMode ? "arrow.down.doc.fill" : "arrow.up.doc.fill")
+					.font(.system(size: 48))
+					.foregroundStyle(isImportMode ? .cyan : .purple)
+			}
 			
 			Text(isImportMode ? .localized("Import Sources") : .localized("Export Sources"))
 				.font(.title2.bold())
@@ -949,7 +955,20 @@ struct PortalExportView: View {
 							.background(.ultraThinMaterial)
 							.cornerRadius(12)
 					} else {
-						ContentUnavailableView(.localized("No Data"), systemImage: "exclamationmark.triangle")
+						if #available(iOS 17.0, *) {
+							ContentUnavailableView(.localized("No Data"), systemImage: "exclamationmark.triangle")
+						} else {
+							VStack(spacing: 16) {
+								Image(systemName: "exclamationmark.triangle")
+									.font(.system(size: 48))
+									.foregroundStyle(.secondary)
+								Text(.localized("No Data"))
+									.font(.headline)
+									.foregroundStyle(.secondary)
+							}
+							.padding()
+							.frame(maxWidth: .infinity)
+						}
 					}
 				}
 			}
