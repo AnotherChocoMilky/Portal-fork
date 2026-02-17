@@ -10,6 +10,7 @@ final class KeychainManager {
     
     enum KeychainKey: String {
         case openRouterAPIKey = "openrouter_api_key"
+        case portalDeviceID = "portal_device_id"
     }
     
     enum KeychainError: Error, LocalizedError {

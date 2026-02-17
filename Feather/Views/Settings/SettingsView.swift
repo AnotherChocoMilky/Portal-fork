@@ -23,6 +23,7 @@ struct SettingsView: View {
     @AppStorage("isDeveloperModeEnabled") private var isDeveloperModeEnabled = false
     @AppStorage("Feather.certificateExperience") private var certificateExperience: String = CertificateExperience.developer.rawValue
     @AppStorage("forceShowGuides") private var forceShowGuides = false
+    @AppStorage("Feather.saveDataToDevice") private var saveDataToDevice = false
     @StateObject private var hideManager = SettingsHideManager.shared
     @Environment(\.navigateToUpdates) private var navigateToUpdates
     
@@ -132,6 +133,18 @@ struct SettingsView: View {
             if !isEnterprise && !hideManager.isHidden("settings.storage") {
                 SettingsRow(icon: "externaldrive.fill.badge.person.crop", title: String.localized("Storage"), color: .accentColor, destination: ManageStorageView())
             }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Toggle(isOn: $saveDataToDevice) {
+                    SettingsRowContent(icon: "idcard.fill", title: String.localized("Save Data To Device"), color: .accentColor)
+                }
+                Text(.localized("Generates a unique ID on your device to recover your saved data even if you change the app's Bundle ID."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 40)
+            }
+            .padding(.vertical, 4)
+
             if !hideManager.isHidden("settings.backupRestore") {
                 SettingsRow(icon: "externaldrive.fill.badge.timemachine", title: String.localized("Backup & Restore"), color: .accentColor, destination: BackupRestoreView())
             }

@@ -14,14 +14,14 @@ extension Image {
 			.scaledToFit()
 			.frame(width: size, height: size)
 			.background(
-				RoundedRectangle(cornerRadius: isCircle ? (size * 2) : (size * 0.2337), style: .continuous)
+				RoundedRectangle(cornerRadius: isCircle ? (size * 2) : (size * 0.2237), style: .continuous)
 					.fill(background)
 			)
 			.overlay {
-				RoundedRectangle(cornerRadius: isCircle ? (size * 2) : (size * 0.2337), style: .continuous)
+				RoundedRectangle(cornerRadius: isCircle ? (size * 2) : (size * 0.2237), style: .continuous)
 					.strokeBorder(.gray.opacity(0.3), lineWidth: lineWidth)
 			}
-			.clipShape(RoundedRectangle(cornerRadius: isCircle ? (size * 2) : (size * 0.2337), style: .continuous))
+			.clipShape(RoundedRectangle(cornerRadius: isCircle ? (size * 2) : (size * 0.2237), style: .continuous))
 	}
 }
 

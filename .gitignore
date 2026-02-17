@@ -51,3 +51,6 @@ copilot-messages.log
 node_modules/
 npm-debug.log*
 .npm
+
+# Build artifacts
+deps/

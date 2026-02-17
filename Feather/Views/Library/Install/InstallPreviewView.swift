@@ -32,10 +32,10 @@ struct InstallPreviewView: View {
     var body: some View {
         ZStack {
             // Modern glass background
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .fill(.ultraThinMaterial)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
                         .stroke(Color.primary.opacity(0.08), lineWidth: 1)
                 )
             
@@ -55,7 +55,7 @@ struct InstallPreviewView: View {
             .padding(20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .padding(16)
+        .padding(24)
         .onAppear {
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                 appearAnimation = true

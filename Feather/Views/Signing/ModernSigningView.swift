@@ -146,9 +146,8 @@ struct ModernSigningView: View {
                     .background(Color(UIColor.systemBackground))
                 }
             }
-            .sheet(isPresented: $_isAddingCertificatePresenting) {
+            .fullScreenCover(isPresented: $_isAddingCertificatePresenting) {
                 CertificatesAddView()
-                    .presentationDetents([.medium])
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(content: {
@@ -422,10 +421,7 @@ struct ModernSigningView: View {
                 ZStack(alignment: .bottomTrailing) {
                     if let icon = appIcon {
                         Image(uiImage: icon)
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 80, height: 80)
-                            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                            .appIconStyle(size: 80)
                     } else {
                         FRAppIconView(app: app, size: 80)
                     }
