@@ -58,6 +58,8 @@ struct HomeView: View {
     @State private var _deviceUDID: String = ""
     @State private var _deviceUDIDLabel: String = "UDID"
     @State private var _deviceModel: String = ""
+    @State private var _showMatrixRain = false
+    @State private var _homeInfoTapCount = 0
     
     // Tips for the Tips widget
     private let _tips = [
@@ -131,6 +133,17 @@ struct HomeView: View {
                     .padding(.bottom, _compactMode ? 80 : 100)
                 }
             }
+            .overlay {
+                if _showMatrixRain {
+                    MatrixRainView()
+                        .transition(.opacity)
+                        .onTapGesture {
+                            withAnimation {
+                                _showMatrixRain = false
+                            }
+                        }
+                }
+            }
             .background(Color(.systemBackground))
             .navigationBarHidden(true)
             .sheet(isPresented: $_showAddCertificate) {
@@ -180,6 +193,14 @@ struct HomeView: View {
                 if let app = _selectedAppForSigning {
                     ModernSigningView(app: app)
                 }
+            }
+        }
+        .onShake {
+            withAnimation {
+                _showMatrixRain.toggle()
+            }
+            if _showMatrixRain {
+                HapticsManager.shared.success()
             }
         }
         .onAppear {
@@ -327,6 +348,14 @@ struct HomeView: View {
                     Text("Portal Information")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.secondary)
+                        .onTapGesture {
+                            _homeInfoTapCount += 1
+                            if _homeInfoTapCount == 5 {
+                                ToastManager.shared.show("🏠 Home is where the IPA is!", type: .info)
+                                HapticsManager.shared.success()
+                                _homeInfoTapCount = 0
+                            }
+                        }
                 }
             }
             

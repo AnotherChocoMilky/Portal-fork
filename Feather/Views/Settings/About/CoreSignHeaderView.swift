@@ -4,6 +4,8 @@ struct CoreSignHeaderView: View {
     // MARK: - State
     @State private var currentSubtitleIndex: Int = 0
     @State private var showCredits = false
+    @State private var showSecretDimension = false
+    @State private var badgeColor: Color = .orange
     var hideAboutButton: Bool = false
 
     // MARK: - Current Subtitle
@@ -21,6 +23,9 @@ struct CoreSignHeaderView: View {
             .sheet(isPresented: $showCredits) {
                 CreditsView()
             }
+            .fullScreenCover(isPresented: $showSecretDimension) {
+                SecretDimensionView()
+            }
     }
     
     // MARK: - Header Card
@@ -35,8 +40,25 @@ struct CoreSignHeaderView: View {
                     Text("Portal")
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
+                        .onTapGesture(count: 2) {
+                            // Secret 2-finger double tap would be hard to detect with just onTapGesture,
+                            // let's use count 3 for 3 taps instead as a "hard" one
+                        }
+                        .simultaneousGesture(
+                            TapGesture(count: 3)
+                                .onEnded {
+                                    showSecretDimension = true
+                                    HapticsManager.shared.success()
+                                }
+                        )
 
                     versionBadge
+                        .onTapGesture {
+                            withAnimation {
+                                badgeColor = [Color.orange, Color.blue, Color.green, Color.purple, Color.red, Color.pink, Color.yellow].randomElement()!
+                            }
+                            HapticsManager.shared.softImpact()
+                        }
                 }
                 
                 Text(currentSubtitle)
@@ -104,7 +126,7 @@ struct CoreSignHeaderView: View {
                 .foregroundStyle(.white)
                 .padding(.horizontal, 4)
                 .padding(.vertical, 1)
-                .background(Capsule().fill(Color.orange))
+                .background(Capsule().fill(badgeColor))
         }
         .foregroundStyle(.primary)
         .padding(.horizontal, 6)
@@ -132,6 +154,14 @@ struct CoreSignHeaderView: View {
             .background(Capsule().fill(Color.accentColor))
             .shadow(color: Color.accentColor.opacity(0.3), radius: 4, x: 0, y: 2)
         }
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 2.0)
+                .onEnded { _ in
+                    ToastManager.shared.show("🤫 Portal is the best, don't tell anyone!", type: .info)
+                    HapticsManager.shared.success()
+                }
+        )
+    }
     }
 
     // MARK: - Lifecycle Observers
