@@ -30,9 +30,9 @@ struct SecretDimensionView: View {
                     .shadow(color: .blue.opacity(0.5), radius: 10, x: 0, y: 0)
 
                 VStack(spacing: 15) {
-                    InfoRow(label: "STATUS", value: "ENCRYPTED")
-                    InfoRow(label: "ACCESS", value: "OMNIPOTENT")
-                    InfoRow(label: "LOCATION", value: "UNKNOWN")
+                    SecretInfoRow(label: "STATUS", value: "ENCRYPTED")
+                    SecretInfoRow(label: "ACCESS", value: "OMNIPOTENT")
+                    SecretInfoRow(label: "LOCATION", value: "UNKNOWN")
                 }
                 .padding(25)
                 .background(.ultraThinMaterial)
@@ -68,7 +68,7 @@ struct SecretDimensionView: View {
     }
 }
 
-struct InfoRow: View {
+struct SecretInfoRow: View {
     let label: String
     let value: String
 
