@@ -27,8 +27,8 @@ struct LibraryView: View {
     @State private var _shouldAutoSignNext = false
     
     // Batch selection states
-    @State private var _isSelectionMode = false
-    @State private var _selectedApps: Set<String> = []
+    @State private var _editMode: EditMode = .inactive
+    @State private var _selectedApps: Set<String?> = []
     @State private var _showBatchSigningSheet = false
     @State private var _showBatchDeleteConfirmation = false
     
@@ -100,39 +100,101 @@ struct LibraryView: View {
     
     var body: some View {
         NavigationStack {
-            ZStack {
-    
-                Color(.systemBackground)
-                    .ignoresSafeArea()
+            VStack(spacing: 0) {
+                LibraryDownloadHeaderView(downloadManager: downloadManager)
+                    .padding(.top, 10)
                 
-                ScrollView {
-                    VStack(spacing: 20) {
-                        if !hideManager.isHidden("library.filterChips") {
-                            filterChips
-                        }
-                        
-                        appsContent
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.top, 20)
-                    .padding(.bottom, 100)
+                if !hideManager.isHidden("library.filterChips") {
+                    filterChips
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
                 }
-                .navigationTitle("Library")
-                .toolbar(content: {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        if !hideManager.isHidden("library.importButton") {
-                            Menu {
-                                _importActions()
-                            } label: {
-                                Image(systemName: "plus.circle.fill")
-                                    .font(.system(size: 22))
-                                    .foregroundStyle(Color.accentColor)
-                                    .symbolRenderingMode(.hierarchical)
+
+                List(selection: $_selectedApps) {
+                    if displayedApps.isEmpty {
+                        Section {
+                            emptyStateView
+                                .listRowBackground(Color.clear)
+                                .listRowSeparator(.hidden)
+                        }
+                    } else {
+                        ForEach(displayedApps, id: \.uuid) { app in
+                            LibraryAppRow(
+                                app: app,
+                                selectedInfoAppPresenting: $_selectedInfoAppPresenting,
+                                selectedSigningAppPresenting: $_selectedSigningAppPresenting,
+                                selectedInstallAppPresenting: $_selectedInstallAppPresenting
+                            )
+                            .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20))
+                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                Button(role: .destructive) {
+                                    Storage.shared.deleteApp(for: app)
+                                } label: {
+                                    Label(String.localized("Delete"), systemImage: "trash")
+                                }
+                                .tint(.red)
+                            }
+                            .contextMenu {
+                                Button {
+                                    _selectedInfoAppPresenting = AnyApp(base: app)
+                                } label: {
+                                    Label(String.localized("Details"), systemImage: "info.circle")
+                                }
+
+                                if app.isSigned {
+                                    Button {
+                                        _selectedInstallAppPresenting = AnyApp(base: app)
+                                    } label: {
+                                        Label(String.localized("Install"), systemImage: "arrow.down.circle")
+                                    }
+                                    Button {
+                                        _selectedSigningAppPresenting = AnyApp(base: app)
+                                    } label: {
+                                        Label(String.localized("Sign Again"), systemImage: "signature")
+                                    }
+                                } else {
+                                    Button {
+                                        _selectedSigningAppPresenting = AnyApp(base: app)
+                                    } label: {
+                                        Label(String.localized("Sign"), systemImage: "signature")
+                                    }
+                                }
+
+                                Divider()
+
+                                Button(role: .destructive) {
+                                    Storage.shared.deleteApp(for: app)
+                                } label: {
+                                    Label(String.localized("Delete"), systemImage: "trash")
+                                }
                             }
                         }
                     }
-                })
+                }
+                .listStyle(.plain)
+                .environment(\.editMode, $_editMode)
+
+                if _editMode == .active && !_selectedApps.isEmpty {
+                    selectionActionBar
+                        .padding(.horizontal, 20)
+                        .background(.ultraThinMaterial)
+                }
             }
+            .navigationTitle("Library")
+            .toolbar(content: {
+                ToolbarItem(placement: .topBarTrailing) {
+                    if !hideManager.isHidden("library.importButton") {
+                        Menu {
+                            _importActions()
+                        } label: {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.system(size: 22))
+                                .foregroundStyle(Color.accentColor)
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                    }
+                }
+            })
                         .sheet(item: $_selectedInfoAppPresenting) { app in
                                 LibraryInfoView(app: app.base)
                         }
@@ -216,7 +278,7 @@ struct LibraryView: View {
                     onComplete: {
                         _showBatchSigningSheet = false
                         _selectedApps.removeAll()
-                        _isSelectionMode = false
+                        _editMode = .inactive
                     }
                 )
             }
@@ -488,19 +550,19 @@ extension LibraryView {
             
             Spacer()
             
-            if totalAppCount >= 2 && !hideManager.isHidden("library.selectionButton") {
+            if totalAppCount >= 1 && !hideManager.isHidden("library.selectionButton") {
                 Button {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        _isSelectionMode.toggle()
-                        if !_isSelectionMode {
+                        _editMode = _editMode == .active ? .inactive : .active
+                        if _editMode == .inactive {
                             _selectedApps.removeAll()
                         }
                     }
                     HapticsManager.shared.softImpact()
                 } label: {
-                    Image(systemName: _isSelectionMode ? "checkmark.circle.fill" : "ellipsis.circle")
-                        .font(.system(size: 20))
-                        .foregroundStyle(_isSelectionMode ? Color.accentColor : Color.secondary)
+                    Text(_editMode == .active ? "Done" : "Edit")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(Color.accentColor)
                 }
                 .buttonStyle(.plain)
             }
@@ -510,7 +572,7 @@ extension LibraryView {
     // MARK: - Selection Action Bar
     @ViewBuilder
     private var selectionActionBar: some View {
-        if _isSelectionMode && !_selectedApps.isEmpty {
+        if _editMode == .active && !_selectedApps.isEmpty {
             HStack(spacing: 16) {
                 Text("\(_selectedApps.count) Selected")
                     .font(.system(size: 15, weight: .medium))
@@ -546,15 +608,13 @@ extension LibraryView {
     
     private func getSelectedUnsignedApps() -> [AppInfoPresentable] {
         displayedApps.filter { app in
-            guard let uuid = app.uuid else { return false }
-            return _selectedApps.contains(uuid) && !app.isSigned
+            _selectedApps.contains(app.uuid) && !app.isSigned
         }
     }
     
     private func getSelectedApps() -> [AppInfoPresentable] {
         displayedApps.filter { app in
-            guard let uuid = app.uuid else { return false }
-            return _selectedApps.contains(uuid)
+            _selectedApps.contains(app.uuid)
         }
     }
     
@@ -564,96 +624,8 @@ extension LibraryView {
             Storage.shared.deleteApp(for: app)
         }
         _selectedApps.removeAll()
-        _isSelectionMode = false
+        _editMode = .inactive
         HapticsManager.shared.success()
-    }
-    
-    // MARK: - Apps Content
-    @ViewBuilder
-    private var appsContent: some View {
-        if displayedApps.isEmpty {
-            emptyStateView
-        } else {
-            LazyVStack(spacing: 0) {
-                ForEach(displayedApps, id: \.uuid) { app in
-                    HStack(spacing: 12) {
-                        if _isSelectionMode {
-                            Button {
-                                guard let uuid = app.uuid else { return }
-                                withAnimation(.easeInOut(duration: 0.2)) {
-                                    if _selectedApps.contains(uuid) {
-                                        _selectedApps.remove(uuid)
-                                    } else {
-                                        _selectedApps.insert(uuid)
-                                    }
-                                }
-                                HapticsManager.shared.softImpact()
-                            } label: {
-                                Image(systemName: app.uuid != nil && _selectedApps.contains(app.uuid!) ? "checkmark.circle.fill" : "circle")
-                                    .font(.system(size: 22))
-                                    .foregroundStyle(app.uuid != nil && _selectedApps.contains(app.uuid!) ? Color.accentColor : Color.secondary.opacity(0.4))
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        
-                        LibraryAppRow(
-                            app: app,
-                            selectedInfoAppPresenting: $_selectedInfoAppPresenting,
-                            selectedSigningAppPresenting: $_selectedSigningAppPresenting,
-                            selectedInstallAppPresenting: $_selectedInstallAppPresenting
-                        )
-                        .allowsHitTesting(!_isSelectionMode)
-                        .contextMenu {
-                            Button {
-                                _selectedInfoAppPresenting = AnyApp(base: app)
-                            } label: {
-                                Label(String.localized("Details"), systemImage: "info.circle")
-                            }
-
-                            if app.isSigned {
-                                Button {
-                                    _selectedInstallAppPresenting = AnyApp(base: app)
-                                } label: {
-                                    Label(String.localized("Install"), systemImage: "arrow.down.circle")
-                                }
-                                Button {
-                                    _selectedSigningAppPresenting = AnyApp(base: app)
-                                } label: {
-                                    Label(String.localized("Sign Again"), systemImage: "signature")
-                                }
-                            } else {
-                                Button {
-                                    _selectedSigningAppPresenting = AnyApp(base: app)
-                                } label: {
-                                    Label(String.localized("Sign"), systemImage: "signature")
-                                }
-                            }
-
-                            Divider()
-
-                            Button(role: .destructive) {
-                                Storage.shared.deleteApp(for: app)
-                            } label: {
-                                Label(String.localized("Delete"), systemImage: "trash")
-                            }
-                        }
-                        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                            Button(role: .destructive) {
-                                Storage.shared.deleteApp(for: app)
-                            } label: {
-                                Label(String.localized("Delete"), systemImage: "trash")
-                            }
-                        }
-                    }
-
-                    Divider()
-                        .padding(.leading, _isSelectionMode ? 94 : 62)
-                }
-            }
-            
-            selectionActionBar
-                .padding(.top, 16)
-        }
     }
     
     // MARK: - Empty State View
@@ -738,6 +710,7 @@ extension LibraryView {
 
 // MARK: - Simplified Library App Row
 struct LibraryAppRow: View {
+    @Environment(\.editMode) private var editMode
     let app: AppInfoPresentable
     @Binding var selectedInfoAppPresenting: AnyApp?
     @Binding var selectedSigningAppPresenting: AnyApp?
@@ -798,8 +771,86 @@ struct LibraryAppRow: View {
         .padding(.vertical, 8)
         .contentShape(Rectangle())
         .onTapGesture {
-            selectedInfoAppPresenting = AnyApp(base: app)
+            if editMode?.wrappedValue == .inactive {
+                selectedInfoAppPresenting = AnyApp(base: app)
+            }
         }
+    }
+}
+
+// MARK: - Library Download Header View
+struct LibraryDownloadHeaderView: View {
+    @ObservedObject var downloadManager: DownloadManager
+
+    var body: some View {
+        if !downloadManager.manualDownloads.isEmpty {
+            VStack(spacing: 12) {
+                if let firstDownload = downloadManager.manualDownloads.first {
+                    LibraryDownloadItemView(download: firstDownload)
+
+                    if downloadManager.manualDownloads.count > 1 {
+                        HStack {
+                            Spacer()
+                            Text(verbatim: "+\(downloadManager.manualDownloads.count - 1) more")
+                                .font(.caption2.bold())
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Capsule().fill(Color.accentColor.opacity(0.1)))
+                        }
+                    }
+                }
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
+            )
+            .padding(.horizontal, 20)
+            .padding(.bottom, 8)
+            .transition(.move(edge: .top).combined(with: .opacity))
+        }
+    }
+}
+
+struct LibraryDownloadItemView: View {
+    let download: Download
+    @State private var progress: Double = 0
+    @State private var bytesDownloaded: Int64 = 0
+    @State private var totalBytes: Int64 = 0
+    @State private var unpackageProgress: Double = 0
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: overallProgress >= 1.0 ? "checkmark.circle.fill" : "arrow.down.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(overallProgress >= 1.0 ? .green : .accentColor)
+
+                Text(download.fileName)
+                    .font(.subheadline.weight(.medium))
+                    .lineLimit(1)
+
+                Spacer()
+
+                Text("\(Int(overallProgress * 100))%")
+                    .font(.caption.monospacedDigit().bold())
+                    .foregroundStyle(.secondary)
+            }
+
+            ProgressView(value: overallProgress)
+                .tint(.accentColor)
+                .scaleEffect(x: 1, y: 0.5, anchor: .center)
+        }
+        .onReceive(download.$progress) { self.progress = $0 }
+        .onReceive(download.$bytesDownloaded) { self.bytesDownloaded = $0 }
+        .onReceive(download.$totalBytes) { self.totalBytes = $0 }
+        .onReceive(download.$unpackageProgress) { self.unpackageProgress = $0 }
+    }
+
+    private var overallProgress: Double {
+        download.onlyArchiving ? unpackageProgress : (0.3 * unpackageProgress) + (0.7 * progress)
     }
 }
 
