@@ -24,6 +24,7 @@ struct SettingsView: View {
     @AppStorage("Feather.certificateExperience") private var certificateExperience: String = CertificateExperience.developer.rawValue
     @AppStorage("forceShowGuides") private var forceShowGuides = false
     @AppStorage("Feather.saveDataToDevice") private var saveDataToDevice = false
+    @AppStorage("Feather.greetingsName") private var greetingsName: String = ""
     @StateObject private var hideManager = SettingsHideManager.shared
     @Environment(\.navigateToUpdates) private var navigateToUpdates
     
