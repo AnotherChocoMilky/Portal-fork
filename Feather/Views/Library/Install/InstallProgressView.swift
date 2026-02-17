@@ -9,16 +9,14 @@ struct InstallProgressView: View {
     var body: some View {
         HStack(spacing: 12) {
             // App icon - simple, no effects
-            FRAppIconView(app: app)
-                .frame(width: 44, height: 44)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            FRAppIconView(app: app, size: 44)
             
             // Status label with symbol
             statusLabel
         }
         .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
         )
     }
