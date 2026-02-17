@@ -3,7 +3,7 @@ import SwiftUI
 import AppIntents
 
 // MARK: - Constants
-private let APP_GROUP_ID = "group.dylans2010.Portal"
+private let APP_GROUP_ID = "group.ayon1xw.PortalDev"
 
 // MARK: - Data Models
 struct WidgetApp: Codable {

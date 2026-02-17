@@ -247,7 +247,7 @@ class LiveActivityManager: ObservableObject {
     @discardableResult
     func startMockActivity() -> Activity<InstallationActivityAttributes>? {
         let mockIconData = createMockIcon()
-        let activity = startActivity(appName: "Portal", bundleId: "com.example.portal", iconData: mockIconData)
+        let activity = startActivity(appName: "Portal", bundleId: "ayon1xw.PortalDev", iconData: mockIconData)
         
         // Simulate progress updates
         Task {
