@@ -105,12 +105,22 @@ struct AllAppsView: View {
         Group {
             if isTab {
                 mainContent
-                    .searchable(text: $_searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search \(_totalAppCount) Apps")
+                    .if(!_isLoading) { view in
+                        view.searchable(text: $_searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search \(_totalAppCount) Apps")
+                    }
+                    .navigationTitle("Apps")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar(content: {
+                        ToolbarItem(placement: .topBarTrailing) {
+                            if _showSorting && !_isLoading {
+                                _sortingMenu
+                            }
+                        }
+                    })
             } else {
                 mainContent
             }
         }
-        .navigationBarHidden(!isTab)
         .onAppear {
             _loadAllSources()
         }
@@ -160,7 +170,7 @@ struct AllAppsView: View {
                     VStack(spacing: 0) {
                         if !_searchBarFloating {
                             headerView
-                            if !isTab {
+                            if !isTab && !_isLoading {
                                 searchBar
                             }
                         } else {
@@ -221,9 +231,7 @@ struct AllAppsView: View {
             }
 
             if isTab {
-                Text("Apps")
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
+                // Title is now in navigation bar
             } else if _showAppCount {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("\(_totalAppCount)")
@@ -241,34 +249,8 @@ struct AllAppsView: View {
 
             Spacer()
 
-            if _showSorting {
-                Menu {
-                    ForEach(AppSortOption.allCases) { option in
-                        Button {
-                            if _sortOption == option {
-                                _sortAscending.toggle()
-                            } else {
-                                _sortOption = option
-                                _sortAscending = true
-                            }
-                            _filterApps()
-                        } label: {
-                            HStack {
-                                Label(option.rawValue, systemImage: option.icon)
-                                if _sortOption == option {
-                                    Image(systemName: _sortAscending ? "chevron.up" : "chevron.down")
-                                }
-                            }
-                        }
-                    }
-                } label: {
-                    Image(systemName: "line.3.horizontal.decrease.circle.fill")
-                        .font(.system(size: 22))
-                        .foregroundStyle(Color.accentColor)
-                        .padding(8)
-                        .background(Color.accentColor.opacity(0.1))
-                        .clipShape(Circle())
-                }
+            if _showSorting && !isTab {
+                _sortingMenu
             }
         }
         .padding(.horizontal, 20)
@@ -276,29 +258,65 @@ struct AllAppsView: View {
         .padding(.bottom, 10)
     }
 
+    private var _sortingMenu: some View {
+        Menu {
+            ForEach(AppSortOption.allCases) { option in
+                Button {
+                    if _sortOption == option {
+                        _sortAscending.toggle()
+                    } else {
+                        _sortOption = option
+                        _sortAscending = true
+                    }
+                    _filterApps()
+                } label: {
+                    HStack {
+                        Label(option.rawValue, systemImage: option.icon)
+                        if _sortOption == option {
+                            Image(systemName: _sortAscending ? "chevron.up" : "chevron.down")
+                        }
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                .font(.system(size: 22))
+                .foregroundStyle(Color.accentColor)
+                .padding(8)
+                .background(Color.accentColor.opacity(0.1))
+                .clipShape(Circle())
+        }
+    }
+
     private var searchBar: some View {
         HStack(spacing: 12) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundStyle(.secondary)
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundStyle(.secondary)
 
-            TextField("Search \(_totalAppCount) Apps", text: $_searchText)
-                .font(.system(size: 16))
-                .focused($_searchFieldFocused)
-                .submitLabel(.search)
-                .autocorrectionDisabled()
-                .textInputAutocapitalization(.never)
+                TextField("Search \(_totalAppCount) Apps", text: $_searchText)
+                    .font(.system(size: 16))
+                    .focused($_searchFieldFocused)
+                    .submitLabel(.search)
+                    .autocorrectionDisabled()
+                    .textInputAutocapitalization(.never)
 
-            if !_searchText.isEmpty {
-                Button {
-                    _searchText = ""
-                    _filterApps()
-                    HapticsManager.shared.softImpact()
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 18))
-                        .foregroundStyle(.tertiary)
+                if !_searchText.isEmpty {
+                    Button {
+                        _searchText = ""
+                        _filterApps()
+                        HapticsManager.shared.softImpact()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(.tertiary)
+                    }
                 }
+            }
+
+            if _showSorting {
+                _sortingMenu
             }
         }
         .padding(.horizontal, _searchBarStyle == 2 ? 0 : 14)
@@ -1044,6 +1062,17 @@ struct AllAppsScaleButtonStyle: ButtonStyle {
 			.scaleEffect(configuration.isPressed ? 0.97 : 1.0)
 			.animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
 	}
+}
+
+extension View {
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
 }
 
 // MARK: - AllAppsWrapperView

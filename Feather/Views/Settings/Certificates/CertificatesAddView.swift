@@ -32,9 +32,15 @@ struct CertificatesAddView: View {
                     Picker("", selection: $_selectedMethod) {
                         Text("Manual").tag(0)
                         Text("Portal Cert").tag(1)
+                            .disabled(!usePortalCert)
                         Text("ZIP File").tag(2)
                     }
                     .pickerStyle(.segmented)
+                    .onChange(of: _selectedMethod) { newValue in
+                        if newValue == 1 && !usePortalCert {
+                            _selectedMethod = 0
+                        }
+                    }
 
                     if _selectedMethod == 0 {
                         manualFilesSection
