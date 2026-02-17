@@ -18,7 +18,6 @@ struct LibraryView: View {
     @State private var _selectedInstallModifyAppPresenting: AnyApp?
     @State private var _isImportingPresenting = false
     @State private var _isDownloadingPresenting = false
-    @State private var _showImportAnimation = false
     @State private var _importStatus: ImportStatus = .loading
     @State private var _importedAppName: String = ""
     @State private var _importErrorMessage: String = ""
@@ -228,9 +227,8 @@ struct LibraryView: View {
                                                         _currentDownloadId = id
                                                         _importStatus = .processing
                                                         _importErrorMessage = ""
-                                                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                                                                _showImportAnimation = true
-                                                        }
+
+                                                        ToastManager.shared.show("\(String.localized("Processing")) \(_importedAppName)...", type: .info)
                                                         
                                                         // Start the import - completion will be handled via notifications
                                                         do {
@@ -238,14 +236,7 @@ struct LibraryView: View {
                                                         } catch {
                                                                 // This catch is for synchronous errors only (rare)
                                                                 _importErrorMessage = error.localizedDescription
-                                                                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                                                                        _importStatus = .failed
-                                                                }
-                                                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                                                                        withAnimation(.easeOut(duration: 0.3)) {
-                                                                                _showImportAnimation = false
-                                                                        }
-                                                                }
+                                                                ToastManager.shared.show("\(String.localized("Import Failed")): \(_importErrorMessage)", type: .error)
                                                         }
                                                 }
                                         }
@@ -262,9 +253,7 @@ struct LibraryView: View {
                                         _importStatus = .downloading
                                         _importErrorMessage = ""
                                         
-                                        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
-                                                _showImportAnimation = true
-                                        }
+                                        ToastManager.shared.show("\(String.localized("Downloading")) \(_importedAppName)...", type: .info)
                                         
                                         // Start the download - progress and completion handled via notifications
                                         _ = downloadManager.startDownload(from: url, id: downloadId)
@@ -296,9 +285,7 @@ struct LibraryView: View {
                                           let downloadId = userInfo["downloadId"] as? String,
                                           downloadId == _currentDownloadId else { return }
                                 
-                                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                                        _importStatus = .success
-                                }
+                                ToastManager.shared.show("\(String.localized("Import Successful!")): \(_importedAppName)", type: .success)
                                 
                                 // Auto-sign logic
                                 if _shouldAutoSignNext {
@@ -310,13 +297,7 @@ struct LibraryView: View {
                                     }
                                 }
 
-                                // Auto-dismiss after showing success
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                                        withAnimation(.easeOut(duration: 0.3)) {
-                                                _showImportAnimation = false
-                                                _currentDownloadId = ""
-                                        }
-                                }
+                                _currentDownloadId = ""
                         }
                         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.TriggerImport"))) { notification in
                             if let userInfo = notification.userInfo, let autoSign = userInfo["autoSign"] as? Bool {
@@ -331,17 +312,8 @@ struct LibraryView: View {
                                           downloadId == _currentDownloadId else { return }
                                 
                                 _importErrorMessage = userInfo["error"] as? String ?? "Unknown Error"
-                                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                                        _importStatus = .failed
-                                }
-                                
-                                // Auto-dismiss after showing error
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                                        withAnimation(.easeOut(duration: 0.3)) {
-                                                _showImportAnimation = false
-                                                _currentDownloadId = ""
-                                        }
-                                }
+                                ToastManager.shared.show("\(String.localized("Import Failed")): \(_importErrorMessage)", type: .error)
+                                _currentDownloadId = ""
                         }
                         // Listen for download failure notifications
                         .onReceive(NotificationCenter.default.publisher(for: DownloadManager.downloadDidFailNotification)) { notification in
@@ -350,17 +322,8 @@ struct LibraryView: View {
                                           downloadId == _currentDownloadId else { return }
                                 
                                 _importErrorMessage = userInfo["error"] as? String ?? "Download Failed"
-                                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                                        _importStatus = .failed
-                                }
-                                
-                                // Auto-dismiss after showing error
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-                                        withAnimation(.easeOut(duration: 0.3)) {
-                                                _showImportAnimation = false
-                                                _currentDownloadId = ""
-                                        }
-                                }
+                                ToastManager.shared.show("\(String.localized("Download Failed")): \(_importErrorMessage)", type: .error)
+                                _currentDownloadId = ""
                         }
                         // Listen for download progress notifications
                         .onReceive(NotificationCenter.default.publisher(for: DownloadManager.downloadDidProgressNotification)) { notification in
@@ -373,9 +336,8 @@ struct LibraryView: View {
                                 
                                 // Switch to processing status when download is complete (progress >= 0.99)
                                 if progress >= 0.99 && _importStatus == .downloading {
-                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                                _importStatus = .processing
-                                        }
+                                        _importStatus = .processing
+                                        ToastManager.shared.show("\(String.localized("Processing")) \(_importedAppName)...", type: .info)
                                 }
                         }
                         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.installApp"))) { _ in
@@ -388,125 +350,7 @@ struct LibraryView: View {
                                         _selectedSigningAppPresenting = AnyApp(base: app)
                                 }
                         }
-                        .overlay {
-                                if _showImportAnimation {
-                                        ZStack {
-                                                Color.black.opacity(0.5)
-                                                        .ignoresSafeArea()
-                                                        .transition(AnyTransition.opacity)
-                                                
-                                                VStack(spacing: 20) {
-                                                        ZStack {
-                                                                // Background circle with status color
-                                                                Circle()
-                                                                        .fill(
-                                                                                _importStatus == .success 
-                                                                                        ? Color.green
-                                                                                        : _importStatus == .failed
-                                                                                        ? Color.red
-                                                                                        : Color.blue
-                                                                        )
-                                                                        .frame(width: 100, height: 100)
-                                                                        .scaleEffect(_showImportAnimation ? 1.0 : 0.5)
-                                                                        .animation(.spring(response: 0.6, dampingFraction: 0.6), value: _showImportAnimation)
-                                                                
-                                                                // Progress ring for downloading state
-                                                                if _importStatus == .downloading {
-                                                                        Circle()
-                                                                                .stroke(Color.white.opacity(0.3), lineWidth: 6)
-                                                                                .frame(width: 90, height: 90)
-                                                                        
-                                                                        Circle()
-                                                                                .trim(from: 0, to: _downloadProgress)
-                                                                                .stroke(Color.white, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                                                                                .frame(width: 90, height: 90)
-                                                                                .rotationEffect(.degrees(-90))
-                                                                                .animation(.easeInOut(duration: 0.2), value: _downloadProgress)
-                                                                }
-                                                                
-                                                                Group {
-                                                                        switch _importStatus {
-                                                                        case .loading, .processing:
-                                                                                ProgressView()
-                                                                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                                                                        .scaleEffect(1.5)
-                                                                        case .downloading:
-                                                                                VStack(spacing: 2) {
-                                                                                        Image(systemName: "arrow.down")
-                                                                                                .font(.system(size: 28, weight: .bold))
-                                                                                                .foregroundStyle(.white)
-                                                                                        Text("\(Int(_downloadProgress * 100))%")
-                                                                                                .font(.system(size: 14, weight: .bold))
-                                                                                                .foregroundStyle(.white)
-                                                                                }
-                                                                        case .success:
-                                                                                Image(systemName: "checkmark")
-                                                                                        .font(.system(size: 50, weight: .bold))
-                                                                                        .foregroundStyle(.white)
-                                                                        case .failed:
-                                                                                Image(systemName: "xmark")
-                                                                                        .font(.system(size: 50, weight: .bold))
-                                                                                        .foregroundStyle(.white)
-                                                                        }
-                                                                }
-                                                                .scaleEffect(_showImportAnimation && (_importStatus == .success || _importStatus == .failed) ? 1.0 : (_importStatus == .downloading ? 1.0 : 0.8))
-                                                                .animation(.spring(response: 0.6, dampingFraction: 0.6).delay((_importStatus == .success || _importStatus == .failed) ? 0.1 : 0), value: _importStatus)
-                                                        }
-                                                        
-                                                        VStack(spacing: 8) {
-                                                                Text(_statusTitle)
-                                                                        .font(.title2)
-                                                                        .fontWeight(.bold)
-                                                                        .foregroundStyle(.white)
-                                                                
-                                                                Text(_importedAppName)
-                                                                        .font(.subheadline)
-                                                                        .foregroundStyle(.white.opacity(0.8))
-                                                                        .lineLimit(2)
-                                                                        .multilineTextAlignment(.center)
-                                                                        .padding(.horizontal, 40)
-                                                                
-                                                                // Show error message if failed
-                                                                if _importStatus == .failed && !_importErrorMessage.isEmpty {
-                                                                        Text(_importErrorMessage)
-                                                                                .font(.caption)
-                                                                                .foregroundStyle(.white.opacity(0.6))
-                                                                                .lineLimit(3)
-                                                                                .multilineTextAlignment(.center)
-                                                                                .padding(.horizontal, 20)
-                                                                                .padding(.top, 4)
-                                                                }
-                                                        }
-                                                        .opacity(_showImportAnimation ? 1.0 : 0.0)
-                                                        .offset(y: _showImportAnimation ? 0 : 20)
-                                                        .animation(.easeOut(duration: 0.4).delay(0.2), value: _showImportAnimation)
-                                                }
-                                                .padding(40)
-                                                .background(
-                                                        RoundedRectangle(cornerRadius: 30, style: .continuous)
-                                                                .fill(Color(uiColor: .systemBackground))
-                                                                .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)
-                                                )
-                                                .scaleEffect(_showImportAnimation ? 1.0 : 0.8)
-                                                .animation(.spring(response: 0.6, dampingFraction: 0.7), value: _showImportAnimation)
-                                        }
-                                }
-                        }
-                }
-        }
-        
-        private var _statusTitle: String {
-                switch _importStatus {
-                case .loading:
-                        return String.localized("Loading")
-                case .downloading:
-                        return String.localized("Downloading")
-                case .processing:
-                        return String.localized("Processing")
-                case .success:
-                        return String.localized("Import Successful!")
-                case .failed:
-                        return String.localized("Import Failed")
+            .withToast()
                 }
         }
 }
