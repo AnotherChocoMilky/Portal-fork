@@ -179,6 +179,7 @@ struct WSFLinkButton: View {
 // MARK: - GitHub Credit Card View
 struct GitHubCreditCard: View {
 	let credit: CreditItem
+	@State private var _tapCount = 0
 	
 	@StateObject private var viewModel = GitHubUserViewModel()
 	
@@ -272,6 +273,19 @@ struct GitHubCreditCard: View {
 			.shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 2)
 		}
 		.buttonStyle(CreditsScaleButtonStyle())
+		.simultaneousGesture(
+			TapGesture()
+				.onEnded {
+					if credit.username == "dylans2010" {
+						_tapCount += 1
+						if _tapCount == 10 {
+							ToastManager.shared.show("🐐 You found dylan! The goat of signers!", type: .success)
+							HapticsManager.shared.success()
+							_tapCount = 0
+						}
+					}
+				}
+		)
 		.onAppear {
 			// Fetch GitHub user data using the explicit GitHub username
 			viewModel.fetchUser(username: credit.githubUsername)

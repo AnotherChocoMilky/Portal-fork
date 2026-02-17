@@ -76,6 +76,17 @@ struct AboutView: View {
 						.foregroundStyle(.secondary)
 						.padding(.vertical, 2)
 				}
+
+				Section {
+					Color.clear
+						.frame(height: 50)
+						.contentShape(Rectangle())
+						.onTapGesture {
+							ToastManager.shared.show("👻 You found the invisible button!", type: .success)
+							HapticsManager.shared.success()
+						}
+				}
+				.listRowBackground(EmptyView())
 			}
 		}
 		.animation(.default, value: isLoading)

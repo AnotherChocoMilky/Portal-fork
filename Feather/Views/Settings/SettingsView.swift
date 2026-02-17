@@ -55,6 +55,17 @@ struct SettingsView: View {
         } message: {
             Text(String.localized("Developer Mode provides advanced debugging tools for app developers. This is NOT recommended for regular users as it may cause instability and crashes. Use at your own risk."))
         }
+        .onChange(of: saveDataToDevice) { newValue in
+            if newValue {
+                ToastManager.shared.show("💾 Your data is now safe with me...", type: .success)
+            }
+        }
+        .onChange(of: greetingsName) { newValue in
+            if newValue == "42" {
+                ToastManager.shared.show("🌌 The meaning of life, the universe, and everything.", type: .info)
+                HapticsManager.shared.success()
+            }
+        }
         .onChange(of: navigateToUpdates.wrappedValue) { shouldNavigate in
             if shouldNavigate {
                 navigateToCheckForUpdates = true
@@ -105,6 +116,10 @@ struct SettingsView: View {
             }
         } header: {
             SettingsSectionHeader(title: String.localized("Customizations"), icon: "slider.horizontal.3")
+                .onLongPressGesture(minimumDuration: 2.0) {
+                    ToastManager.shared.show("🤫 Hidden Credits: Portal was crafted with ❤️ by Dylan and the WSF Team.", type: .info)
+                    HapticsManager.shared.success()
+                }
         }
     }
     
@@ -210,6 +225,13 @@ struct SettingsView: View {
                 } label: {
                     SettingsRowContent(icon: "arrow.triangle.2.circlepath", title: String.localized("Check For Updates"), color: .accentColor)
                 }
+                .simultaneousGesture(
+                    LongPressGesture(minimumDuration: 2.0)
+                        .onEnded { _ in
+                            ToastManager.shared.show("🚀 Turbo Updates Enabled! (Just kidding)", type: .info)
+                            HapticsManager.shared.success()
+                        }
+                )
                 .navigationDestination(isPresented: $navigateToCheckForUpdates) {
                     CheckForUpdatesView()
                 }

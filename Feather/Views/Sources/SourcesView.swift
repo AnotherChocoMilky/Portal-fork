@@ -146,6 +146,10 @@ struct SourcesView: View {
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
+                    .onTapGesture(count: 7) {
+                        ToastManager.shared.show("🛠️ Source Master Unlocked!", type: .success)
+                        HapticsManager.shared.success()
+                    }
                 
                 if !hideManager.isHidden("sources.headerSubtitle") {
                     Text("View All Your Sources")

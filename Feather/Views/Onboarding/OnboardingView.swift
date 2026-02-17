@@ -6,6 +6,7 @@ struct OnboardingView: View {
     @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
     @State private var animateContent = false
     @State private var animateButton = false
+    @State private var _tapCount = 0
     
     var body: some View {
         ZStack {
@@ -28,6 +29,14 @@ struct OnboardingView: View {
                         .shadow(color: Color.accentColor.opacity(0.3), radius: 20, x: 0, y: 10)
                         .scaleEffect(animateContent ? 1.0 : 0.8)
                         .opacity(animateContent ? 1.0 : 0.0)
+                        .onTapGesture {
+                            _tapCount += 1
+                            if _tapCount == 5 {
+                                ToastManager.shared.show("🤫 I see you want to skip... but no shortcuts here!", type: .info)
+                                HapticsManager.shared.success()
+                                _tapCount = 0
+                            }
+                        }
                     
                     VStack(spacing: 16) {
                         // Title

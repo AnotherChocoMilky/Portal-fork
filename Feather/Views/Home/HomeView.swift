@@ -196,13 +196,18 @@ struct HomeView: View {
             }
         }
         .onShake {
-            withAnimation {
-                _showMatrixRain.toggle()
-            }
-            if _showMatrixRain {
-                HapticsManager.shared.success()
-            }
+            EasterEggManager.shared.triggerRandomEffect()
+            HapticsManager.shared.success()
         }
+        .simultaneousGesture(
+            LongPressGesture(minimumDuration: 3.0)
+                .sequenced(before: LongPressGesture(minimumDuration: 0.1))
+                .onEnded { _ in
+                    // Detect triple finger long press is hard with standard gestures,
+                    // let's use a simpler 3s long press for inversion egg
+                    EasterEggManager.shared.toggleInversion()
+                }
+        )
         .onAppear {
             UIDevice.current.isBatteryMonitoringEnabled = true
             if _animationsEnabled {

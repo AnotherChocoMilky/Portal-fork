@@ -19,7 +19,14 @@ struct AppearanceView: View {
         ScrollView {
             VStack(spacing: 24) {
                 // MARK: - Theme
-                appearanceCard(title: "Theme", icon: "paintbrush.fill") {
+                appearanceCard(title: "Theme", icon: "paintbrush.fill", onIconLongPress: {
+                    let icons = ["AppIcon", "AppIcon-1", "AppIcon-2", "AppIcon-3"]
+                    let current = UIApplication.shared.alternateIconName ?? "AppIcon"
+                    let next = icons[(icons.firstIndex(of: current) ?? 0 + 1) % icons.count]
+                    UIApplication.shared.setAlternateIconName(next == "AppIcon" ? nil : next)
+                    ToastManager.shared.show("🎭 Icon Cycle: \(next)", type: .success)
+                    HapticsManager.shared.success()
+                }) {
                     Picker("Appearance", selection: $userInterfaceStyle) {
                         ForEach(UIUserInterfaceStyle.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.rawValue) { style in
                             Label(style.label, systemImage: style.iconName).tag(style.rawValue)
@@ -165,10 +172,13 @@ struct AppearanceView: View {
     
     // MARK: - Helper Views
     
-    private func appearanceCard<Content: View>(title: String, icon: String, footer: String? = nil, @ViewBuilder content: () -> Content) -> some View {
+    private func appearanceCard<Content: View>(title: String, icon: String, footer: String? = nil, onIconLongPress: (() -> Void)? = nil, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             AppearanceSectionHeader(title: title, icon: icon)
                 .padding(.leading, 8)
+                .onLongPressGesture {
+                    onIconLongPress?()
+                }
             
             VStack(spacing: 0) {
                 content()

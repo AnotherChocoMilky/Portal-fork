@@ -171,6 +171,12 @@ struct DeveloperAuthView: View {
             // Title with gradient
             Text("Developer Mode")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
+                .onTapGesture(count: 3) {
+                    if !authManager.isAuthenticated {
+                        ToastManager.shared.show("😏 Nice try, but you need to authenticate!", type: .warning)
+                        HapticsManager.shared.error()
+                    }
+                }
                 .foregroundStyle(
                     LinearGradient(
                         colors: [.primary, .primary.opacity(0.7)],
@@ -556,6 +562,20 @@ struct DeveloperAuthView: View {
             return
         }
 
+        if developerToken.uppercased() == "SECRET" {
+            showSuccessAnimation = true
+            HapticsManager.shared.success()
+            developerToken = ""
+            ToastManager.shared.show("🌌 Entering Secret Dimension...", type: .success)
+            return
+        }
+
+        if developerToken.uppercased() == "GLITCH" {
+            showGlitchView = true
+            developerToken = ""
+            return
+        }
+
         isAuthenticating = true
         HapticsManager.shared.softImpact()
         
@@ -862,7 +882,8 @@ struct DeveloperControlPanelView: View {
                 DevMenuItem(icon: "bell.badge.fill", title: "Notifications", color: .yellow, destination: AnyView(TestNotificationsView()))
             ]),
             ("Tools", "bolt.fill", .yellow, [
-                DevMenuItem(icon: "bolt.fill", title: "Quick Actions", color: .yellow, destination: AnyView(QuickActionsDevView()))
+                DevMenuItem(icon: "bolt.fill", title: "Quick Actions", color: .yellow, destination: AnyView(QuickActionsDevView())),
+                DevMenuItem(icon: "sparkles", title: "Easter Eggs", color: .pink, destination: AnyView(EasterEggsView()))
             ])
         ]
     }
