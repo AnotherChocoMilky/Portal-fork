@@ -7,7 +7,7 @@ struct EasterEggInfo: Identifiable {
     let hint: String
     let difficulty: Difficulty
 
-    enum Difficulty: String {
+    enum Difficulty: String, CaseIterable {
         case easy = "Easy"
         case medium = "Medium"
         case hard = "Hard"
@@ -71,18 +71,23 @@ struct EasterEggsView: View {
             }
 
             ForEach(EasterEggInfo.Difficulty.allCases, id: \.self) { difficulty in
-                Section(header: Text(difficulty.rawValue).foregroundStyle(difficulty.color)) {
-                    ForEach(eggs.filter { $0.difficulty == difficulty }) { egg in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(egg.name)
-                                .font(.headline)
-                            Text(egg.hint)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.vertical, 4)
-                    }
+                section(for: difficulty)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func section(for difficulty: EasterEggInfo.Difficulty) -> some View {
+        Section(header: Text(difficulty.rawValue).foregroundStyle(difficulty.color)) {
+            ForEach(eggs.filter { $0.difficulty == difficulty }) { egg in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(egg.name)
+                        .font(.headline)
+                    Text(egg.hint)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
+                .padding(.vertical, 4)
             }
         }
     }
