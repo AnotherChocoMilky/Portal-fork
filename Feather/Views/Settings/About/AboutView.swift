@@ -19,6 +19,7 @@ struct AboutView: View {
 	@State private var _credits: [CreditsModel] = []
 	@State private var _donators: [CreditsModel] = []
 	@State var isLoading = true
+	@State private var _tapCount = 0
 	
 	private let _creditsUrl = "https://raw.githubusercontent.com/khcrysalis/project-credits/refs/heads/main/feather/creditsv2.json"
 	private let _donatorsUrl = "https://raw.githubusercontent.com/khcrysalis/project-credits/refs/heads/main/sponsors/credits.json"
@@ -31,6 +32,16 @@ struct AboutView: View {
 					VStack {
 						Image(uiImage: AppIconView.altImage(UIApplication.shared.alternateIconName))
 							.appIconStyle(size: 72)
+							.onTapGesture {
+								_tapCount += 1
+								if _tapCount == 7 {
+									ToastManager.shared.show("🎉 You found an easy egg!", type: .success)
+									HapticsManager.shared.success()
+									_tapCount = 0
+								} else {
+									HapticsManager.shared.softImpact()
+								}
+							}
 						
 						Text(Bundle.main.exec)
 							.font(.largeTitle)

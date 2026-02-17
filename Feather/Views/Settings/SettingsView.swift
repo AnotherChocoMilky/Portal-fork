@@ -144,6 +144,11 @@ struct SettingsView: View {
                 Toggle(isOn: $saveDataToDevice) {
                     SettingsRowContent(icon: "idcard.fill", title: String.localized("Save Data To Device"), color: .accentColor)
                 }
+                .onChange(of: saveDataToDevice) { newValue in
+                    if newValue {
+                        ToastManager.shared.show("💾 Your data is now safe with me...", type: .success)
+                    }
+                }
             }
             .padding(.vertical, 4)
 

@@ -48,6 +48,7 @@ struct DeveloperAuthView: View {
     @State private var showSuccessAnimation = false
     @State private var iconScale: CGFloat = 1.0
     @State private var iconRotation: Double = 0
+    @State private var showGlitchView = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.colorScheme) private var colorScheme
     
@@ -106,6 +107,9 @@ struct DeveloperAuthView: View {
                         
                         // Cancel button
                         cancelButton
+                    }
+                    .fullScreenCover(isPresented: $showGlitchView) {
+                        GlitchDeveloperModeView()
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 20)
@@ -546,6 +550,12 @@ struct DeveloperAuthView: View {
     }
     
     private func authenticateWithToken() {
+        if developerToken.uppercased() == "LEAVE" {
+            showGlitchView = true
+            developerToken = ""
+            return
+        }
+
         isAuthenticating = true
         HapticsManager.shared.softImpact()
         
