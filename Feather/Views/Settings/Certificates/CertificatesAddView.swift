@@ -9,6 +9,7 @@ struct CertificatesAddView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("feature_usePortalCert") private var usePortalCert = false
     
+    @State private var _selectedMethod = 0
     @State private var _p12URL: URL? = nil
     @State private var _provisionURL: URL? = nil
     @State private var _p12Password: String = ""
@@ -67,46 +68,76 @@ struct CertificatesAddView: View {
     
     // MARK: - File Import Section
     private var fileImportSection: some View {
-        LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-            compactImportCard(
-                title: "P12",
-                subtitle: _p12URL?.lastPathComponent ?? "Select",
-                icon: "key.fill",
-                isSelected: _p12URL != nil,
-                color: .orange
-            ) {
-                _isImportingP12Presenting = true
+        VStack(spacing: 20) {
+            Picker("", selection: $_selectedMethod) {
+                Text("Manual").tag(0)
+                Text("Portal Cert").tag(1)
+                Text("ZIP File").tag(2)
             }
+            .pickerStyle(.segmented)
             
-            compactImportCard(
-                title: "Provision",
-                subtitle: _provisionURL?.lastPathComponent ?? "Select",
-                icon: "doc.badge.gearshape.fill",
-                isSelected: _provisionURL != nil,
-                color: .blue
-            ) {
-                _isImportingMobileProvisionPresenting = true
-            }
-            
-            compactImportCard(
-                title: "ZIP",
-                subtitle: "Import ZIP",
-                icon: "doc.zipper",
-                isSelected: false,
-                color: .purple
-            ) {
-                _isImportingZipPresenting = true
-            }
+            if _selectedMethod == 0 {
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                    compactImportCard(
+                        title: "P12",
+                        subtitle: _p12URL?.lastPathComponent ?? "Select",
+                        icon: "key.fill",
+                        isSelected: _p12URL != nil,
+                        color: .orange
+                    ) {
+                        _isImportingP12Presenting = true
+                    }
 
-            if usePortalCert {
+                    compactImportCard(
+                        title: "Provision",
+                        subtitle: _provisionURL?.lastPathComponent ?? "Select",
+                        icon: "doc.badge.gearshape.fill",
+                        isSelected: _provisionURL != nil,
+                        color: .blue
+                    ) {
+                        _isImportingMobileProvisionPresenting = true
+                    }
+                }
+            } else if _selectedMethod == 1 {
+                if usePortalCert {
+                    compactImportCard(
+                        title: "Portal",
+                        subtitle: "Custom",
+                        icon: "shippingbox.fill",
+                        isSelected: false,
+                        color: .indigo
+                    ) {
+                        _isImportingPortalCertPresenting = true
+                    }
+                } else {
+                    VStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 32))
+                            .foregroundStyle(.orange)
+
+                        Text("Portal Cert is Unavailable")
+                            .font(.headline)
+
+                        Text("Portal Cert is coming soon on a future update")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 30)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    )
+                }
+            } else {
                 compactImportCard(
-                    title: "Portal",
-                    subtitle: "Custom",
-                    icon: "shippingbox.fill",
+                    title: "ZIP",
+                    subtitle: "Import ZIP",
+                    icon: "doc.zipper",
                     isSelected: false,
-                    color: .indigo
+                    color: .purple
                 ) {
-                    _isImportingPortalCertPresenting = true
+                    _isImportingZipPresenting = true
                 }
             }
         }
@@ -337,18 +368,19 @@ struct CertificatesAddView: View {
             .foregroundStyle(.white)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(
-                RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(
-                        saveButtonDisabled
-                        ? AnyShapeStyle(Color.gray.opacity(0.5))
-                        : AnyShapeStyle(LinearGradient(
+            .background {
+                if saveButtonDisabled {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.gray.opacity(0.5))
+                } else {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(LinearGradient(
                             colors: [.green, .green.opacity(0.8)],
                             startPoint: .leading,
                             endPoint: .trailing
                         ))
-                    )
-            )
+                }
+            }
             .shadow(color: saveButtonDisabled ? .clear : .green.opacity(0.3), radius: 8, x: 0, y: 4)
         }
         .disabled(saveButtonDisabled)

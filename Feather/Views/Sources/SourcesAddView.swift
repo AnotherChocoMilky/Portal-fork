@@ -151,22 +151,61 @@ struct SourcesAddView: View {
 				}
 			}
 		} else {
-			NBToolbarButton(role: .cancel)
-			
-			if !_isImporting {
-				NBToolbarButton(
-					.localized("Save"),
-					style: .text,
-					placement: .confirmationAction,
-					isDisabled: _sourceURL.isEmpty
-				) {
-					FR.handleSource(_sourceURL) {
-						dismiss()
-					}
+			ToolbarItem(placement: .cancellationAction) {
+				Button(.localized("Cancel")) {
+					dismiss()
 				}
-			} else {
-				ToolbarItem(placement: .confirmationAction) {
-					ProgressView()
+			}
+			
+			ToolbarItem(placement: .confirmationAction) {
+				HStack(spacing: 8) {
+					if _isImporting {
+						ProgressView()
+					} else {
+						Button {
+							FR.handleSource(_sourceURL) {
+								dismiss()
+							}
+						} label: {
+							Text(.localized("Save"))
+								.fontWeight(.bold)
+						}
+						.disabled(_sourceURL.isEmpty)
+					}
+
+					Menu {
+						Button {
+							_isImporting = true
+							_fetchImportedRepositories(UIPasteboard.general.string) { }
+						} label: {
+							Label(.localized("Import From Clipboard"), systemImage: "square.and.arrow.down")
+						}
+
+						Button {
+							_isExportMode = true
+							let sources = Storage.shared.getSources()
+							guard !sources.isEmpty else {
+								UIAlertController.showAlertWithOk(
+									title: .localized("No Sources"),
+									message: .localized("No Sources To Export")
+								)
+								_isExportMode = false
+								return
+							}
+							_selectedSourcesForExport = Set(sources.compactMap { $0.sourceURL?.absoluteString })
+						} label: {
+							Label(.localized("Export Mode"), systemImage: "doc.on.doc")
+						}
+
+						Button {
+							_openPortalExportDirectly()
+						} label: {
+							Label(.localized("Portal Transfer"), systemImage: "square.and.arrow.down.on.square.fill")
+						}
+					} label: {
+						Image(systemName: "ellipsis.circle")
+							.font(.system(size: 18))
+					}
 				}
 			}
 		}
@@ -209,43 +248,6 @@ struct SourcesAddView: View {
 				.background(Color(UIColor.secondarySystemGroupedBackground))
 				.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 				.shadow(color: .black.opacity(0.03), radius: 8, x: 0, y: 4)
-
-				HStack(spacing: 12) {
-					_actionButton(
-						title: .localized("Import"),
-						icon: "square.and.arrow.down",
-						color: .blue
-					) {
-						_isImporting = true
-						_fetchImportedRepositories(UIPasteboard.general.string) { }
-					}
-					
-					_actionButton(
-						title: .localized("Export"),
-						icon: "doc.on.doc",
-						color: .green
-					) {
-						_isExportMode = true
-						let sources = Storage.shared.getSources()
-						guard !sources.isEmpty else {
-							UIAlertController.showAlertWithOk(
-								title: .localized("No Sources"),
-								message: .localized("No Sources To Export")
-							)
-							_isExportMode = false
-							return
-						}
-						_selectedSourcesForExport = Set(sources.compactMap { $0.sourceURL?.absoluteString })
-					}
-					
-					_actionButton(
-						title: .localized("Transfer"),
-						icon: "square.and.arrow.down.on.square.fill",
-						color: .purple
-					) {
-						_openPortalExportDirectly()
-					}
-				}
 			}
 			
 			VStack(alignment: .leading, spacing: 4) {
@@ -667,11 +669,12 @@ struct PlainGroupBoxStyle: GroupBoxStyle {
 	
 	// MARK: - Open Portal Export Directly
 	private func _openPortalExportDirectly() {
-		// Open Portal Export view directly for import/export
-		_portalExportData = ""
+		// Open Portal Export view directly and encode all sources automatically
+		let sources = Storage.shared.getSources().compactMap { $0.sourceURL?.absoluteString }
+		_portalExportData = PortalSourceExport.encode(urls: sources)
 		_showPortalExport = true
 		
-		Logger.misc.info("[Portal Export] Opening Portal Export view directly")
+		Logger.misc.info("[Portal Export] Opening Portal Export view directly and encoded \(sources.count) sources")
 	}
 	
 	private func _fetchRecommendedRepositories() async {
@@ -1093,31 +1096,25 @@ struct PortalExportView: View {
 						.stroke(Color.purple.opacity(0.2), lineWidth: 1)
 				)
 			} else {
-				// No data message
-				VStack(spacing: 12) {
-					Image(systemName: "doc.text.magnifyingglass")
-						.font(.system(size: 40))
-						.foregroundStyle(.secondary)
+				// Encoding status
+				HStack(spacing: 12) {
+					Image(systemName: "lock.shield.fill")
+						.font(.title2)
+						.foregroundStyle(.purple)
 					
-					Text(.localized("No Export Data"))
-						.font(.headline)
-						.foregroundStyle(.secondary)
-					
-					Text(.localized("Select sources from the Export Mode to generate the source data."))
-						.font(.caption)
-						.foregroundStyle(.tertiary)
-						.multilineTextAlignment(.center)
+					VStack(alignment: .leading, spacing: 2) {
+						Text(.localized("Securely Encoded"))
+							.font(.headline)
+						Text(.localized("Your sources are ready for transfer."))
+							.font(.subheadline)
+							.foregroundStyle(.secondary)
+					}
+					Spacer()
 				}
-				.frame(maxWidth: .infinity)
-				.padding(30)
+				.padding(20)
 				.background(
 					RoundedRectangle(cornerRadius: 16, style: .continuous)
 						.fill(Color(UIColor.secondarySystemGroupedBackground))
-						.overlay(
-							RoundedRectangle(cornerRadius: 16, style: .continuous)
-								.strokeBorder(style: StrokeStyle(lineWidth: 2, dash: [8]))
-								.foregroundStyle(Color.secondary.opacity(0.3))
-						)
 				)
 			}
 		}
