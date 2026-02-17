@@ -40,6 +40,7 @@ struct LibraryView: View {
     }
     
     @State private var _searchText = ""
+    @State private var _searchGlow = false
     @State private var _filterMode: FilterMode = .all
     
     enum FilterMode: String, CaseIterable {
@@ -107,6 +108,10 @@ struct LibraryView: View {
                     filterChips
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
+                        .shadow(color: _searchGlow ? .purple : .clear, radius: 15)
+                        .shadow(color: _searchGlow ? .cyan : .clear, radius: 10)
+                        .scaleEffect(_searchGlow ? 1.05 : 1.0)
+                        .animation(.spring(), value: _searchGlow)
                 }
 
                 ScrollView {
@@ -173,7 +178,35 @@ struct LibraryView: View {
                 }
             }
             .navigationTitle("Library")
+            .searchable(text: $_searchText)
+            .onChange(of: _searchText) { newValue in
+                if newValue.uppercased() == "FEATHER" {
+                    _searchGlow = true
+                    HapticsManager.shared.success()
+                } else {
+                    _searchGlow = false
+                }
+
+                if newValue.uppercased() == "RAIN" {
+                    EasterEggManager.shared.activeEffect = .rain
+                    _searchText = ""
+                } else if newValue.uppercased() == "SNOW" {
+                    EasterEggManager.shared.activeEffect = .snow
+                    _searchText = ""
+                } else if newValue.uppercased() == "BALL" {
+                    EasterEggManager.shared.activeEffect = .ball
+                    _searchText = ""
+                }
+            }
             .toolbar(content: {
+                ToolbarItem(placement: .principal) {
+                    Text("Library")
+                        .font(.headline)
+                        .onLongPressGesture(minimumDuration: 2.0) {
+                            ToastManager.shared.show("📚 Total Apps: \(totalAppCount)", type: .info)
+                            HapticsManager.shared.success()
+                        }
+                }
                 ToolbarItem(placement: .topBarTrailing) {
                     if !hideManager.isHidden("library.importButton") {
                         Menu {
@@ -618,6 +651,13 @@ struct LibraryAppRow: View {
                         .clipShape(Circle())
                 }
                 .buttonStyle(.plain)
+                .simultaneousGesture(
+                    TapGesture(count: 3)
+                        .onEnded {
+                            ToastManager.shared.show("🧘 Patience is a virtue...", type: .info)
+                            HapticsManager.shared.success()
+                        }
+                )
             }
         }
         .padding(.vertical, 10)
@@ -639,6 +679,13 @@ struct LibraryAppRow: View {
                 selectedInfoAppPresenting = AnyApp(base: app)
             }
         }
+        .simultaneousGesture(
+            TapGesture(count: 3)
+                .onEnded {
+                    ToastManager.shared.show("🆔 \(app.identifier ?? "Unknown Bundle ID")", type: .info)
+                    HapticsManager.shared.success()
+                }
+        )
     }
 }
 

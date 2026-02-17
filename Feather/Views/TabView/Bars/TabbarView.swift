@@ -82,10 +82,11 @@ struct TabbarView: View {
 	}
 
 	var body: some View {
-		TabView(selection: Binding(
-			get: { selectedTab ?? getInitialTab() },
-			set: { selectedTab = $0 }
-		)) {
+		ZStack {
+			TabView(selection: Binding(
+				get: { selectedTab ?? getInitialTab() },
+				set: { selectedTab = $0 }
+			)) {
 			ForEach(visibleTabs, id: \.hashValue) { tab in
 				TabEnum.view(for: tab)
 					.tabItem {
@@ -109,10 +110,13 @@ struct TabbarView: View {
 				InstallModifyDialogView(app: app)
 			}
 		}
-		.onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.SwitchTab"))) { notification in
-			if let tab = notification.object as? TabEnum {
-				selectedTab = tab
+			.onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.SwitchTab"))) { notification in
+				if let tab = notification.object as? TabEnum {
+					selectedTab = tab
+				}
 			}
+
 		}
+		.withEasterEggs()
 	}
 }

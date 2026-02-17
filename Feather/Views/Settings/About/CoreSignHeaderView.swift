@@ -6,6 +6,7 @@ struct CoreSignHeaderView: View {
     @State private var showCredits = false
     @State private var showSecretDimension = false
     @State private var badgeColor: Color = .orange
+    @State private var iconRotationAngle: Double = 0
     var hideAboutButton: Bool = false
 
     // MARK: - Current Subtitle
@@ -33,6 +34,20 @@ struct CoreSignHeaderView: View {
         HStack(spacing: 12) {
             // App Icon
             appIcon
+                .rotationEffect(.degrees(iconRotationAngle))
+                .onTapGesture(count: 3) {
+                    withAnimation(.spring(response: 0.5, dampingFraction: 0.5)) {
+                        iconRotationAngle += 360
+                    }
+                    HapticsManager.shared.success()
+                }
+                .simultaneousGesture(
+                    LongPressGesture(minimumDuration: 2.0)
+                        .onEnded { _ in
+                            ToastManager.shared.show("🤫 Portal is the best, don't tell anyone!", type: .info)
+                            HapticsManager.shared.success()
+                        }
+                )
             
             // Title & Subtitle
             VStack(alignment: .leading, spacing: 2) {
@@ -40,15 +55,26 @@ struct CoreSignHeaderView: View {
                     Text("Portal")
                         .font(.system(size: 18, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
-                        .onTapGesture(count: 2) {
-                            // Secret 2-finger double tap would be hard to detect with just onTapGesture,
-                            // let's use count 3 for 3 taps instead as a "hard" one
-                        }
                         .simultaneousGesture(
                             TapGesture(count: 3)
                                 .onEnded {
                                     showSecretDimension = true
                                     HapticsManager.shared.success()
+                                }
+                        )
+                        .simultaneousGesture(
+                            TapGesture(count: 2)
+                                .onEnded {
+                                    // 2-finger double tap is hard, so we just use double tap for random color
+                                    let colors: [Color] = [.red, .blue, .green, .yellow, .purple, .orange, .pink, .cyan, .mint]
+                                    if let randomColor = colors.randomElement() {
+                                        UIApplication.shared.connectedScenes
+                                            .compactMap { $0 as? UIWindowScene }
+                                            .flatMap { $0.windows }
+                                            .forEach { $0.tintColor = UIColor(randomColor) }
+                                        ToastManager.shared.show("🎨 Color Splash!", type: .info)
+                                        HapticsManager.shared.success()
+                                    }
                                 }
                         )
 
@@ -154,14 +180,6 @@ struct CoreSignHeaderView: View {
             .background(Capsule().fill(Color.accentColor))
             .shadow(color: Color.accentColor.opacity(0.3), radius: 4, x: 0, y: 2)
         }
-        .simultaneousGesture(
-            LongPressGesture(minimumDuration: 2.0)
-                .onEnded { _ in
-                    ToastManager.shared.show("🤫 Portal is the best, don't tell anyone!", type: .info)
-                    HapticsManager.shared.success()
-                }
-        )
-    }
     }
 
     // MARK: - Lifecycle Observers
