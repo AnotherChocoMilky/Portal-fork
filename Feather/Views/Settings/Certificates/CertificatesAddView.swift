@@ -172,7 +172,7 @@ struct CertificatesAddView: View {
                 .foregroundColor(.secondary)
                 .padding(.horizontal, 4)
 
-            SecureField("Leave blank if no password required", text: $_p12Password)
+            SecureField("Leave blank if no password required.", text: $_p12Password)
                 .padding()
                 .background(Color(UIColor.secondarySystemGroupedBackground))
                 .cornerRadius(12)
@@ -196,7 +196,7 @@ struct CertificatesAddView: View {
     private var defaultSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("Set as Default")
+                Text("Set As Default")
                     .font(.body)
                 Spacer()
                 Toggle("", isOn: $_isDefault)

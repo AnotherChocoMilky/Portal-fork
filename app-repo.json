@@ -6,8 +6,8 @@
   "apps": [
     {
       "name": "Portal",
-      "bundleIdentifier": "ayon1xw.portal",
-      "developerName": "aoyn1xw",
+      "bundleIdentifier": "com.dylans2010.Portal",
+      "developerName": "dylans2010",
       "iconURL": "https://github.com/aoyn1xw/Feather/blob/main/Images/icon.png?raw=true",
       "localizedDescription": "Portal is a free on-device iOS application manager/installer built with SwiftUI for quality.",
       "subtitle": "On-device signing application",
