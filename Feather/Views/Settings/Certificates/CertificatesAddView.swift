@@ -15,6 +15,7 @@ struct CertificatesAddView: View {
     @State private var _p12Password: String = ""
     @State private var _certificateName: String = ""
     @State private var _isDefault = false
+    @State private var _isSaving = false
     
     @State private var _isImportingP12Presenting = false
     @State private var _isImportingMobileProvisionPresenting = false
@@ -30,24 +31,31 @@ struct CertificatesAddView: View {
             ScrollView {
                 VStack(spacing: 24) {
                     Picker("", selection: $_selectedMethod) {
-                        Text("Manual").tag(0)
-                        Text("Portal Cert").tag(1)
+                        Label("Manual", systemImage: "hand.tap.fill").tag(0)
+                        Label("Portal Cert", systemImage: "shippingbox.fill").tag(1)
                             .disabled(!usePortalCert)
-                        Text("ZIP File").tag(2)
+                        Label("ZIP File", systemImage: "doc.zipper").tag(2)
                     }
                     .pickerStyle(.segmented)
                     .onChange(of: _selectedMethod) { newValue in
-                        if newValue == 1 && !usePortalCert {
-                            _selectedMethod = 0
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            if newValue == 1 && !usePortalCert {
+                                _selectedMethod = 0
+                            }
                         }
                     }
 
-                    if _selectedMethod == 0 {
-                        manualFilesSection
-                    } else if _selectedMethod == 1 {
-                        portalCertSection
-                    } else {
-                        zipSection
+                    Group {
+                        if _selectedMethod == 0 {
+                            manualFilesSection
+                                .transition(.move(edge: .leading).combined(with: .opacity))
+                        } else if _selectedMethod == 1 {
+                            portalCertSection
+                                .transition(.scale(scale: 0.95).combined(with: .opacity))
+                        } else {
+                            zipSection
+                                .transition(.move(edge: .trailing).combined(with: .opacity))
+                        }
                     }
 
                     VStack(spacing: 16) {
@@ -167,10 +175,14 @@ struct CertificatesAddView: View {
     
     private var passwordFieldSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Password")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 4)
+            HStack(spacing: 4) {
+                Image(systemName: "lock.fill")
+                    .font(.caption)
+                Text("Password")
+                    .font(.subheadline)
+            }
+            .foregroundColor(.secondary)
+            .padding(.horizontal, 4)
 
             SecureField("Leave blank if no password required.", text: $_p12Password)
                 .padding()
@@ -181,10 +193,14 @@ struct CertificatesAddView: View {
 
     private var nicknameFieldSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Nickname (Optional)")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 4)
+            HStack(spacing: 4) {
+                Image(systemName: "tag.fill")
+                    .font(.caption)
+                Text("Nickname (Optional)")
+                    .font(.subheadline)
+            }
+            .foregroundColor(.secondary)
+            .padding(.horizontal, 4)
 
             TextField("Nickname (Optional)", text: $_certificateName)
                 .padding()
@@ -196,6 +212,8 @@ struct CertificatesAddView: View {
     private var defaultSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
+                Image(systemName: "star.fill")
+                    .foregroundColor(.orange)
                 Text("Set As Default")
                     .font(.body)
                 Spacer()
@@ -215,15 +233,24 @@ struct CertificatesAddView: View {
     
     private var saveButton: some View {
         Button {
+            withAnimation { _isSaving = true }
             _saveCertificate()
         } label: {
-            Text("Save Certificate")
-                .fontWeight(.semibold)
-                .frame(maxWidth: .infinity)
+            HStack(spacing: 8) {
+                if _isSaving {
+                    ProgressView()
+                        .tint(.white)
+                } else {
+                    Image(systemName: "checkmark.circle.fill")
+                }
+                Text(_isSaving ? "Saving..." : "Save Certificate")
+                    .fontWeight(.semibold)
+            }
+            .frame(maxWidth: .infinity)
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
-        .disabled(saveButtonDisabled)
+        .disabled(saveButtonDisabled || _isSaving)
     }
 
     // MARK: - Helper Views
@@ -358,6 +385,7 @@ extension CertificatesAddView {
 			let provisionURL = _provisionURL,
 			FR.checkPasswordForCertificate(for: p12URL, with: _p12Password, using: provisionURL)
 		else {
+            withAnimation { _isSaving = false }
 			UIAlertController.showAlertWithOk(
 				title: .localized("Error"),
 				message: .localized("The password you entered is wrong, please try again to add this certificate. If the password from this certificate is WSF, restart Portal and try again.")
@@ -372,7 +400,10 @@ extension CertificatesAddView {
 			certificateName: _certificateName,
 			isDefault: _isDefault
 		) { _ in
-			dismiss()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                _isSaving = false
+                dismiss()
+            }
 		}
 	}
 	

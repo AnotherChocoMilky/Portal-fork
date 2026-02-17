@@ -69,10 +69,16 @@ struct SettingsView: View {
     
     private var headerSection: some View {
         Section {
-            CoreSignHeaderView(hideAboutButton: true)
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
-                .onTapGesture { handleDeveloperModeTap() }
+            VStack(spacing: 8) {
+                CoreSignHeaderView(hideAboutButton: true)
+                    .onTapGesture { handleDeveloperModeTap() }
+
+                Text("Portal \(Bundle.main.bundleIdentifier ?? "ayon1xw.PortalDev")")
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
+                    .foregroundStyle(.secondary.opacity(0.6))
+            }
+            .listRowInsets(EdgeInsets())
+            .listRowBackground(Color.clear)
         }
     }
     
@@ -138,11 +144,14 @@ struct SettingsView: View {
                 Toggle(isOn: $saveDataToDevice) {
                     SettingsRowContent(icon: "idcard.fill", title: String.localized("Save Data To Device"), color: .accentColor)
                 }
-                Text(.localized("Generates a unique ID on your device to recover your saved data even if you change the app's Bundle ID."))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.leading, 40)
             }
+            .padding(.vertical, 4)
+
+            Text(.localized("Generates a unique ID on your device to recover your saved data even if you change the app's Bundle ID."))
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+                .listRowSeparator(.hidden)
+                .padding(.top, -8)
             .padding(.vertical, 4)
 
             if !hideManager.isHidden("settings.backupRestore") {
@@ -153,7 +162,7 @@ struct SettingsView: View {
             }
 
             if !hideManager.isHidden("settings.fetchData") {
-                SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: _isFetchingFullData ? String.localized("Fetching Source Data...") : String.localized("Fetch Full Data"), color: Color("AccentColor"), isLoading: _isFetchingFullData) {
+                SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: _isFetchingFullData ? String.localized("Fetching Source Data...") : String.localized("Fetch Full Data"), color: .accentColor, isLoading: _isFetchingFullData) {
                     Task {
                         _isFetchingFullData = true
                         // Fetch both manager's data

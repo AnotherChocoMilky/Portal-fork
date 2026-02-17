@@ -14,6 +14,12 @@ final class Storage: ObservableObject {
 		
 		if inMemory {
 			container.persistentStoreDescriptions.first!.url = URL(fileURLWithPath: "/dev/null")
+		} else if UserDefaults.standard.bool(forKey: "Feather.saveDataToDevice") {
+			if let groupURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: Storage.appGroupID) {
+				let storeURL = groupURL.appendingPathComponent("\(_name).sqlite")
+				let description = NSPersistentStoreDescription(url: storeURL)
+				container.persistentStoreDescriptions = [description]
+			}
 		}
 		
 		container.loadPersistentStores(completionHandler: { (storeDescription, error) in
