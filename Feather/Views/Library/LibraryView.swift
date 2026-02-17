@@ -109,68 +109,61 @@ struct LibraryView: View {
                         .padding(.vertical, 12)
                 }
 
-                List(selection: $_selectedApps) {
-                    if displayedApps.isEmpty {
-                        Section {
+                ScrollView {
+                    LazyVStack(spacing: 12) {
+                        if displayedApps.isEmpty {
                             emptyStateView
-                                .listRowBackground(Color.clear)
-                                .listRowSeparator(.hidden)
-                        }
-                    } else {
-                        ForEach(displayedApps, id: \.uuid) { app in
-                            LibraryAppRow(
-                                app: app,
-                                selectedInfoAppPresenting: $_selectedInfoAppPresenting,
-                                selectedSigningAppPresenting: $_selectedSigningAppPresenting,
-                                selectedInstallAppPresenting: $_selectedInstallAppPresenting
-                            )
-                            .listRowInsets(EdgeInsets(top: 4, leading: 20, bottom: 4, trailing: 20))
-                            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                Button(role: .destructive) {
-                                    Storage.shared.deleteApp(for: app)
-                                } label: {
-                                    Label(String.localized("Delete"), systemImage: "trash")
-                                }
-                                .tint(.red)
-                            }
-                            .contextMenu {
-                                Button {
-                                    _selectedInfoAppPresenting = AnyApp(base: app)
-                                } label: {
-                                    Label(String.localized("Details"), systemImage: "info.circle")
-                                }
-
-                                if app.isSigned {
+                                .padding(.top, 40)
+                        } else {
+                            ForEach(displayedApps, id: \.uuid) { app in
+                                LibraryAppRow(
+                                    app: app,
+                                    selectedInfoAppPresenting: $_selectedInfoAppPresenting,
+                                    selectedSigningAppPresenting: $_selectedSigningAppPresenting,
+                                    selectedInstallAppPresenting: $_selectedInstallAppPresenting,
+                                    selectedApps: $_selectedApps,
+                                    editMode: $_editMode
+                                )
+                                .padding(.horizontal, 16)
+                                .contextMenu {
                                     Button {
-                                        _selectedInstallAppPresenting = AnyApp(base: app)
+                                        _selectedInfoAppPresenting = AnyApp(base: app)
                                     } label: {
-                                        Label(String.localized("Install"), systemImage: "arrow.down.circle")
+                                        Label(String.localized("Details"), systemImage: "info.circle")
                                     }
-                                    Button {
-                                        _selectedSigningAppPresenting = AnyApp(base: app)
-                                    } label: {
-                                        Label(String.localized("Sign Again"), systemImage: "signature")
-                                    }
-                                } else {
-                                    Button {
-                                        _selectedSigningAppPresenting = AnyApp(base: app)
-                                    } label: {
-                                        Label(String.localized("Sign"), systemImage: "signature")
-                                    }
-                                }
 
-                                Divider()
+                                    if app.isSigned {
+                                        Button {
+                                            _selectedInstallAppPresenting = AnyApp(base: app)
+                                        } label: {
+                                            Label(String.localized("Install"), systemImage: "arrow.down.circle")
+                                        }
+                                        Button {
+                                            _selectedSigningAppPresenting = AnyApp(base: app)
+                                        } label: {
+                                            Label(String.localized("Sign Again"), systemImage: "signature")
+                                        }
+                                    } else {
+                                        Button {
+                                            _selectedSigningAppPresenting = AnyApp(base: app)
+                                        } label: {
+                                            Label(String.localized("Sign"), systemImage: "signature")
+                                        }
+                                    }
 
-                                Button(role: .destructive) {
-                                    Storage.shared.deleteApp(for: app)
-                                } label: {
-                                    Label(String.localized("Delete"), systemImage: "trash")
+                                    Divider()
+
+                                    Button(role: .destructive) {
+                                        Storage.shared.deleteApp(for: app)
+                                    } label: {
+                                        Label(String.localized("Delete"), systemImage: "trash")
+                                    }
                                 }
                             }
                         }
                     }
+                    .padding(.vertical, 8)
                 }
-                .listStyle(.plain)
                 .environment(\.editMode, $_editMode)
 
                 if _editMode == .active && !_selectedApps.isEmpty {
@@ -554,16 +547,35 @@ extension LibraryView {
 
 // MARK: - Simplified Library App Row
 struct LibraryAppRow: View {
-    @Environment(\.editMode) private var editMode
     let app: AppInfoPresentable
     @Binding var selectedInfoAppPresenting: AnyApp?
     @Binding var selectedSigningAppPresenting: AnyApp?
     @Binding var selectedInstallAppPresenting: AnyApp?
+    @Binding var selectedApps: Set<String?>
+    @Binding var editMode: EditMode
     
     var body: some View {
+        let isEditing = editMode == .active
+
         HStack(spacing: 12) {
-            FRAppIconView(app: app, size: 50)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            if isEditing {
+                Button {
+                    if selectedApps.contains(app.uuid) {
+                        selectedApps.remove(app.uuid)
+                    } else {
+                        selectedApps.insert(app.uuid)
+                    }
+                } label: {
+                    Image(systemName: selectedApps.contains(app.uuid) ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 22))
+                        .foregroundStyle(selectedApps.contains(app.uuid) ? Color.accentColor : .secondary.opacity(0.4))
+                }
+                .transition(.move(edge: .leading).combined(with: .opacity))
+            }
+
+            FRAppIconView(app: app, size: 52)
+                .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
+                .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
             
             VStack(alignment: .leading, spacing: 2) {
                 Text(app.name ?? String.localized("Unknown"))
@@ -590,32 +602,40 @@ struct LibraryAppRow: View {
             
             Spacer()
             
-            Button {
-                if app.isSigned {
-                    selectedInstallAppPresenting = AnyApp(base: app)
-                } else {
-                    selectedSigningAppPresenting = AnyApp(base: app)
-                }
-            } label: {
-                HStack(spacing: 6) {
+            if !isEditing {
+                Button {
+                    if app.isSigned {
+                        selectedInstallAppPresenting = AnyApp(base: app)
+                    } else {
+                        selectedSigningAppPresenting = AnyApp(base: app)
+                    }
+                } label: {
                     Image(systemName: app.isSigned ? "arrow.down.circle.fill" : "signature")
-                        .font(.system(size: 11, weight: .bold))
-
-                    Text(app.isSigned ? String.localized("Install") : String.localized("Sign"))
-                        .font(.system(size: 13, weight: .bold))
+                        .font(.system(size: 20, weight: .bold))
+                        .foregroundStyle(app.isSigned ? Color.green : Color.accentColor)
+                        .padding(8)
+                        .background(app.isSigned ? Color.green.opacity(0.1) : Color.accentColor.opacity(0.1))
+                        .clipShape(Circle())
                 }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 6)
-                .background(app.isSigned ? Color.green : Color.accentColor)
-                .clipShape(Capsule())
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
-        .padding(.vertical, 8)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .shadow(color: .black.opacity(0.03), radius: 6, x: 0, y: 3)
+        )
         .contentShape(Rectangle())
         .onTapGesture {
-            if editMode?.wrappedValue == .inactive {
+            if isEditing {
+                if selectedApps.contains(app.uuid) {
+                    selectedApps.remove(app.uuid)
+                } else {
+                    selectedApps.insert(app.uuid)
+                }
+            } else {
                 selectedInfoAppPresenting = AnyApp(base: app)
             }
         }

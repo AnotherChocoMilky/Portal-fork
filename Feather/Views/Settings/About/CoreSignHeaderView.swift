@@ -30,14 +30,17 @@ struct CoreSignHeaderView: View {
             appIcon
             
             // Title & Subtitle
-            VStack(alignment: .leading, spacing: 3) {
-                Text("Portal")
-                    .font(.system(size: 19, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text("Portal")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+
+                    versionBadge
+                }
                 
                 Text(currentSubtitle)
-                    .font(.caption)
-                    .fontWeight(.medium)
+                    .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
                     .transition(AnyTransition.asymmetric(
                         insertion: .move(edge: .bottom).combined(with: .opacity),
@@ -49,23 +52,20 @@ struct CoreSignHeaderView: View {
             Spacer()
             
             // Action Buttons
-            VStack(alignment: .trailing, spacing: 6) {
-                versionBadge
-                if !hideAboutButton {
-                    creditsButton
-                }
+            if !hideAboutButton {
+                creditsButton
             }
         }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .padding(.horizontal, 14)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(UIColor.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.08), radius: 12, x: 0, y: 4)
+                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 3)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.accentColor.opacity(0.15), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(Color.accentColor.opacity(0.1), lineWidth: 0.5)
         )
         .padding(.horizontal)
     }
@@ -78,43 +78,39 @@ struct CoreSignHeaderView: View {
             Image(uiImage: icon)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 44, height: 44)
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .frame(width: 40, height: 40)
+                .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    RoundedRectangle(cornerRadius: 9, style: .continuous)
                         .strokeBorder(Color.white.opacity(0.1), lineWidth: 0.5)
                 )
-                .shadow(color: .accentColor.opacity(0.25), radius: 6, x: 0, y: 3)
+                .shadow(color: .accentColor.opacity(0.15), radius: 4, x: 0, y: 2)
         } else {
             Image(systemName: "questionmark.square.dashed")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 44, height: 44)
+                .frame(width: 40, height: 40)
                 .foregroundColor(.gray)
         }
     }
     
     // MARK: - Version Badge
     private var versionBadge: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "checkmark.seal.fill")
-                .font(.system(size: 8))
-                .symbolRenderingMode(.hierarchical)
-                .foregroundStyle(Color.accentColor)
+        HStack(spacing: 3) {
             Text("3.0")
-                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .font(.system(size: 9, weight: .bold, design: .rounded))
             Text("Release")
-                .font(.system(size: 9, weight: .bold))
+                .font(.system(size: 8, weight: .heavy))
                 .foregroundStyle(.white)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 1)
                 .background(Capsule().fill(Color.orange))
         }
         .foregroundStyle(.primary)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Capsule().fill(Color.accentColor.opacity(0.12)))
-        .overlay(Capsule().strokeBorder(Color.accentColor.opacity(0.2), lineWidth: 0.5))
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(Capsule().fill(Color.accentColor.opacity(0.1)))
+        .overlay(Capsule().strokeBorder(Color.accentColor.opacity(0.15), lineWidth: 0.5))
     }
     
     // MARK: - Credits Button
