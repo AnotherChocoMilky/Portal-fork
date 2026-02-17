@@ -3,7 +3,7 @@ import CoreData
 // MARK: - Class
 final class Storage: ObservableObject {
 	static let shared = Storage()
-	static let appGroupID = "group.dylans2010.Portal"
+	static let appGroupID = "group.ayon1xw.PortalDev"
 
 	let container: NSPersistentContainer
 	

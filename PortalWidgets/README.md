@@ -18,7 +18,7 @@ This directory contains the Widget Extension for Portal. To make widgets appear 
 4. Configure the target:
    - **Product Name**: `PortalWidgets`
    - **Team**: Select your development team
-   - **Bundle Identifier**: `ayon1xw.Portal.PortalWidgets`
+   - **Bundle Identifier**: `ayon1xw.PortalDev.PortalWidgets`
    - **Include Live Activity**: Uncheck (optional)
    - **Include Configuration App Intent**: Uncheck
 5. Click **Finish**
@@ -42,13 +42,13 @@ Both the main app and widget extension need to share data via App Groups.
 1. Select the **Feather** target in Xcode
 2. Go to **Signing & Capabilities**
 3. Click **+ Capability** and add **App Groups**
-4. Add the group: `group.ayon1xw.Portal`
+4. Add the group: `group.ayon1xw.PortalDev`
 
 #### For the Widget Extension:
 1. Select the **PortalWidgets** target
 2. Go to **Signing & Capabilities**
 3. Click **+ Capability** and add **App Groups**
-4. Add the same group: `group.ayon1xw.Portal`
+4. Add the same group: `group.ayon1xw.PortalDev`
 
 ### Step 4: Configure Build Settings
 
@@ -108,7 +108,7 @@ Add URL scheme handling in your `FeatherApp.swift` or `SceneDelegate`:
 The main app shares data with widgets via App Group UserDefaults:
 
 ```swift
-let userDefaults = UserDefaults(suiteName: "group.ayon1xw.Portal")
+let userDefaults = UserDefaults(suiteName: "group.ayon1xw.PortalDev")
 userDefaults?.set(certName, forKey: "widget.selectedCertName")
 userDefaults?.set(expiryDate.timeIntervalSince1970, forKey: "widget.selectedCertExpiry")
 ```
@@ -160,7 +160,7 @@ PortalWidgets/
 
 ### Widget showing "No Certificate"
 - Make sure App Groups are configured on both targets
-- Verify the group identifier matches exactly: `group.ayon1xw.Portal`
+- Verify the group identifier matches exactly: `group.ayon1xw.PortalDev`
 - Call `Storage.shared.updateWidgetData()` when certificates change
 
 ### Widget not updating

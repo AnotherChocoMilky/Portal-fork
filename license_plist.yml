@@ -3,7 +3,7 @@ options:
     - LICENSE
   packagePaths:
     - Package.swift
-  prefix: dylans2010.Portal
+  prefix: ayon1xw.PortalDev
   xcworkspacePath: "*.xcworkspace"
   addVersionNumbers: false
   singlePage: false
