@@ -19,9 +19,9 @@ extension InstallerStatusViewModel {
             return "arrow.up.doc.fill"
         case .installing:
             return "arrow.down.app.fill"
-        case .completed:
+        case .completed(_):
             return "checkmark.circle.fill"
-        case .broken:
+        case .broken(_):
             return "xmark.circle.fill"
         }
     }
@@ -39,9 +39,9 @@ extension InstallerStatusViewModel {
             return .localized("Uploading App")
         case .installing:
             return .localized("Installing")
-        case .completed:
+        case .completed(_):
             return .localized("Completed")
-        case .broken:
+        case .broken(_):
             return .localized("Failed")
         }
     }
@@ -57,9 +57,9 @@ extension InstallerStatusViewModel {
             return .orange
         case .installing:
             return .purple
-        case .completed:
+        case .completed(_):
             return .green
-        case .broken:
+        case .broken(_):
             return .red
         }
     }
@@ -77,9 +77,9 @@ extension InstallerStatusViewModel {
             return .localized("Uploading app data to your device...")
         case .installing:
             return .localized("Installing app on your device...")
-        case .completed:
+        case .completed(_):
             return .localized("App has been successfully installed!")
-        case .broken:
+        case .broken(_):
             return .localized("Installation failed. Please try again.")
         }
     }
@@ -99,7 +99,7 @@ extension InstallerStatusViewModel {
         switch status {
         case .none, .ready, .sendingManifest, .sendingPayload, .installing:
             return true
-        case .completed, .broken:
+        case .completed(_), .broken(_):
             return false
         }
     }
@@ -128,7 +128,7 @@ extension InstallerStatusViewModel {
         case .sendingManifest: return 3
         case .sendingPayload: return 4
         case .installing: return 5
-        case .completed, .broken: return 6
+        case .completed(_), .broken(_): return 6
         }
     }
     
