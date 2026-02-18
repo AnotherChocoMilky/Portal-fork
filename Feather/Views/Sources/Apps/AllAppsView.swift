@@ -732,10 +732,10 @@ struct AllAppsRowView: View {
                     Button(action: onTap) {
                         rowView(showButton: false)
                     }
-                    .buttonStyle(ModernButtonStyle())
+
 
                     actionButton
-                        .buttonStyle(ModernButtonStyle())
+
                         .frame(width: 34, height: 34)
                         .padding(.trailing, rowStyle == .minimal ? 8 : 18)
                 }
@@ -744,10 +744,10 @@ struct AllAppsRowView: View {
                     Button(action: onTap) {
                         gridView(showButton: false)
                     }
-                    .buttonStyle(ModernButtonStyle())
+
 
                     actionButton
-                        .buttonStyle(ModernButtonStyle())
+
                         .frame(width: 28, height: 28)
                         .padding(8)
                 }

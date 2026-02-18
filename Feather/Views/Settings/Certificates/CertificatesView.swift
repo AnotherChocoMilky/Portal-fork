@@ -285,7 +285,7 @@ struct CertificatesView: View {
 				}
 			}
 		}
-		.buttonStyle(ModernButtonStyle())
+
 	}
 	
 	@ViewBuilder
