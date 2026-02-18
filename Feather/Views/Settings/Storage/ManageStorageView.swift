@@ -101,7 +101,7 @@ struct ManageStorageView: View {
             StorageAnalyzerView()
         }
         .sheet(isPresented: $showDuplicateFinder) {
-            DuplicateFinderView()
+            StorageDuplicateFinderView()
         }
         .sheet(isPresented: $showLargeFilesFinder) {
             LargeFilesFinderView()
@@ -1661,7 +1661,7 @@ struct StorageAnalyzerView: View {
 }
 
 // MARK: - Duplicate Finder View
-struct DuplicateFinderView: View {
+struct StorageDuplicateFinderView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isScanning = true
     @State private var duplicates: [[URL]] = []
