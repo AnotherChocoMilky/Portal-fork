@@ -59,7 +59,7 @@ struct InstallProgressView: View {
         }
     }
 
-    private func _handleStatusChange(_ status: InstallerStatus) {
+    private func _handleStatusChange(_ status: InstallerStatusViewModel.InstallerStatus) {
         switch status {
         case .none:
             break
@@ -67,9 +67,9 @@ struct InstallProgressView: View {
             _metalState = .success
         case .sendingManifest, .sendingPayload, .installing:
             _metalState = .loading
-        case .completed:
+        case .completed(_):
             _metalState = .success
-        case .broken:
+        case .broken(_):
             _errorMessage = "Installation failed. Integrity could not be verified."
             _metalState = .error
         }
