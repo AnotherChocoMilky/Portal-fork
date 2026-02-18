@@ -56,6 +56,8 @@ struct FilesView: View {
     @State private var showFileHasher = false
     @State private var showBase64Tool = false
     @State private var showSymlinkCreator = false
+    @State private var showIPAExplorer = false
+    @State private var ipaToExplore: URL?
     
     // Constants for Open in Signer
     private let importPollingIntervalSeconds: Double = 0.5
@@ -405,6 +407,11 @@ struct FilesView: View {
             }
             .sheet(isPresented: $showSymlinkCreator) {
                 SymlinkCreatorView(directoryURL: fileManager.currentDirectory)
+            }
+            .sheet(isPresented: $showIPAExplorer) {
+                if let url = ipaToExplore {
+                    IPAExplorerView(viewModel: IPAExplorerViewModel(ipaURL: url))
+                }
             }
             .alert(.localized("Rename File"), isPresented: $showRenameAlert) {
                 TextField(.localized("New Name"), text: $renameText)
@@ -980,6 +987,14 @@ struct FilesView: View {
                 openInSigner(file)
             } label: {
                 Label(.localized("Open In Signer"), systemImage: "signature")
+            }
+
+            Button {
+                HapticsManager.shared.impact()
+                ipaToExplore = file.url
+                showIPAExplorer = true
+            } label: {
+                Label(.localized("Explore IPA"), systemImage: "folder.magnifyingglass")
             }
         }
         
