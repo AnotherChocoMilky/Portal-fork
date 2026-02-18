@@ -17,6 +17,16 @@ extension UserDefaults {
         static let fontDesign = "Feather.appearance.fontDesign"
         static let shadowIntensity = "Feather.appearance.shadowIntensity"
         static let blurOpacity = "Feather.appearance.blurOpacity"
+        static let navBarColor = "Feather.appearance.navBarColor"
+        static let tabBarColor = "Feather.appearance.tabBarColor"
+        static let dividerColor = "Feather.appearance.dividerColor"
+        static let sheetBackgroundColor = "Feather.appearance.sheetBackgroundColor"
+        static let successColor = "Feather.appearance.successColor"
+        static let warningColor = "Feather.appearance.warningColor"
+        static let errorColor = "Feather.appearance.errorColor"
+        static let glowIntensity = "Feather.appearance.glowIntensity"
+        static let borderWidth = "Feather.appearance.borderWidth"
+        static let cardOpacity = "Feather.appearance.cardOpacity"
         static let installTrigger = "Feather.installTrigger"
     }
 }
