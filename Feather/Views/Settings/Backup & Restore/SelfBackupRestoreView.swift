@@ -59,9 +59,15 @@ struct SelfBackupRestoreView: View {
                 } label: {
                     HStack(spacing: 16) {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color.green.opacity(0.15))
-                                .frame(width: 50, height: 50)
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.green.opacity(0.25), .green.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 56, height: 56)
                             
                             Image(systemName: "square.and.arrow.down.fill")
                                 .font(.title2)
@@ -83,7 +89,7 @@ struct SelfBackupRestoreView: View {
                             ProgressView()
                         }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 10)
                 }
                 .disabled(viewModel.isCreatingBackup || viewModel.isRestoring)
                 
@@ -93,9 +99,15 @@ struct SelfBackupRestoreView: View {
                 } label: {
                     HStack(spacing: 16) {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color.blue.opacity(0.15))
-                                .frame(width: 50, height: 50)
+                            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.blue.opacity(0.25), .blue.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 56, height: 56)
                             
                             Image(systemName: "square.and.arrow.up.fill")
                                 .font(.title2)
@@ -117,7 +129,7 @@ struct SelfBackupRestoreView: View {
                             ProgressView()
                         }
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 10)
                 }
                 .disabled(viewModel.isCreatingBackup || viewModel.isRestoring || viewModel.localBackups.isEmpty)
                 
@@ -440,12 +452,12 @@ struct SelfBackupRestoreView: View {
     private func featureCard(icon: String, iconColor: Color, title: LocalizedStringKey, description: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 16) {
             ZStack {
-                Circle()
-                    .fill(iconColor.opacity(0.15))
-                    .frame(width: 44, height: 44)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(iconColor.opacity(0.1))
+                    .frame(width: 48, height: 48)
                 
                 Image(systemName: icon)
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 22, weight: .bold))
                     .foregroundStyle(iconColor)
             }
             
@@ -460,7 +472,7 @@ struct SelfBackupRestoreView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 10)
     }
     
     @ViewBuilder

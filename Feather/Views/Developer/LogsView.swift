@@ -160,6 +160,13 @@ struct AppLogsView: View {
         }
         .navigationTitle("App Logs")
         .navigationBarTitleDisplayMode(.inline)
+        .onChange(of: searchText) { newValue in
+            if newValue == "dev=True" {
+                UserDefaults.standard.set(true, forKey: "Feather.devModeUnlocked")
+                HapticsManager.shared.success()
+                ToastManager.shared.show("🛠️ Developer Mode Phase 1 Complete!", type: .success)
+            }
+        }
         .toolbar(content: {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 // Auto-scroll toggle

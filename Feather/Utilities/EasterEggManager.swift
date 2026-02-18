@@ -6,6 +6,7 @@ enum EasterEggEffect: String, CaseIterable {
     case rain = "Rain"
     case snow = "Snow"
     case ball = "Ball"
+    case confetti = "Confetti"
     case none = "None"
 }
 
@@ -131,6 +132,8 @@ struct EasterEggOverlayModifier: ViewModifier {
             EmojiRainView(emoji: "❄️")
         case .ball:
             BouncingBallView()
+        case .confetti:
+            ConfettiView()
         case .none:
             EmptyView()
         }
@@ -143,11 +146,9 @@ extension View {
     }
 }
 
-// Placeholder for new effect views
 struct EmojiRainView: View {
     let emoji: String
     @State private var items: [EmojiItem] = []
-    let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
 
     struct EmojiItem: Identifiable {
         let id = UUID()
@@ -155,33 +156,101 @@ struct EmojiRainView: View {
         var y: CGFloat
         var speed: CGFloat
         var opacity: Double
+        var rotation: Double
     }
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                ForEach(items) { item in
-                    Text(emoji)
-                        .font(.system(size: 24))
-                        .position(x: item.x, y: item.y)
-                        .opacity(item.opacity)
+        TimelineView(.animation) { timeline in
+            Canvas { context, size in
+                for item in items {
+                    context.drawLayer { ctx in
+                        ctx.opacity = item.opacity
+                        ctx.translateBy(x: item.x, y: item.y)
+                        ctx.rotate(by: .degrees(item.rotation))
+                        ctx.draw(Text(emoji).font(.system(size: 24)), at: .zero)
+                    }
                 }
             }
-            .onReceive(timer) { _ in
-                if items.count < 50 {
-                    items.append(EmojiItem(
-                        x: CGFloat.random(in: 0...geo.size.width),
-                        y: -50,
-                        speed: CGFloat.random(in: 5...15),
-                        opacity: Double.random(in: 0.5...1.0)
-                    ))
-                }
+            .onAppear {
+                setupItems()
+            }
+            .onChange(of: timeline.date) { _ in
+                updateItems(in: UIScreen.main.bounds.size)
+            }
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
+    }
 
-                for i in 0..<items.count {
-                    items[i].y += items[i].speed
-                }
+    private func setupItems() {
+        items = (0..<40).map { _ in
+            EmojiItem(
+                x: CGFloat.random(in: 0...UIScreen.main.bounds.width),
+                y: CGFloat.random(in: -500...0),
+                speed: CGFloat.random(in: 2...5),
+                opacity: Double.random(in: 0.4...1.0),
+                rotation: Double.random(in: 0...360)
+            )
+        }
+    }
 
-                items.removeAll { $0.y > geo.size.height + 50 }
+    private func updateItems(in size: CGSize) {
+        for i in 0..<items.count {
+            items[i].y += items[i].speed
+            items[i].rotation += 1.0
+            if items[i].y > size.height + 50 {
+                items[i].y = -50
+                items[i].x = CGFloat.random(in: 0...size.width)
+            }
+        }
+    }
+}
+
+struct ConfettiView: View {
+    @State private var particles: [Particle] = []
+
+    struct Particle: Identifiable {
+        let id = UUID()
+        var x: CGFloat
+        var y: CGFloat
+        var color: Color
+        var speed: CGFloat
+        var rotation: Double
+    }
+
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            Canvas { context, size in
+                for particle in particles {
+                    context.drawLayer { ctx in
+                        ctx.translateBy(x: particle.x, y: particle.y)
+                        ctx.rotate(by: .degrees(particle.rotation))
+                        ctx.fill(Path(CGRect(x: -4, y: -4, width: 8, height: 8)), with: .color(particle.color))
+                    }
+                }
+            }
+            .onAppear {
+                let colors: [Color] = [.red, .blue, .green, .yellow, .pink, .purple, .orange]
+                particles = (0..<100).map { _ in
+                    Particle(
+                        x: CGFloat.random(in: 0...UIScreen.main.bounds.width),
+                        y: CGFloat.random(in: -UIScreen.main.bounds.height...0),
+                        color: colors.randomElement()!,
+                        speed: CGFloat.random(in: 3...7),
+                        rotation: Double.random(in: 0...360)
+                    )
+                }
+            }
+            .onChange(of: timeline.date) { _ in
+                let size = UIScreen.main.bounds.size
+                for i in 0..<particles.count {
+                    particles[i].y += particles[i].speed
+                    particles[i].rotation += 2.0
+                    if particles[i].y > size.height + 20 {
+                        particles[i].y = -20
+                        particles[i].x = CGFloat.random(in: 0...size.width)
+                    }
+                }
             }
         }
         .ignoresSafeArea()
