@@ -290,7 +290,7 @@ struct ModernSigningView: View {
                 }
                 
                 // Trigger entrance animation
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                withAnimation(.spring(response: 0.7, dampingFraction: 0.7)) {
                     _headerScale = 1.0
                     _contentOpacity = 1.0
                     _buttonOffset = 0
@@ -315,79 +315,91 @@ struct ModernSigningView: View {
     private var modernBackground: some View {
         ZStack {
             // Subtle system-appropriate background
-            Color(UIColor.systemGroupedBackground)
+            Color(UIColor.systemBackground)
                 .ignoresSafeArea()
 
-            // Very subtle base gradient
-            LinearGradient(
-                colors: [
-                    Color.accentColor.opacity(colorScheme == .dark ? 0.05 : 0.08),
-                    Color(UIColor.systemGroupedBackground)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-            
-            // Animated floating orbs with refined effects
-            GeometryReader { geo in
-                // Primary accent orb
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.accentColor.opacity(colorScheme == .dark ? 0.12 : 0.15),
-                                Color.accentColor.opacity(0.05),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 160
-                        )
-                    )
-                    .frame(width: 320, height: 320)
-                    .blur(radius: 70)
-                    .offset(x: _floatingAnimation ? -40 : 40, y: _floatingAnimation ? -25 : 25)
-                    .position(x: geo.size.width * 0.15, y: geo.size.height * 0.12)
+            if #available(iOS 17.0, *) {
+                TimelineView(.animation) { timeline in
+                    Canvas { context, size in
+                        let time = timeline.date.timeIntervalSinceReferenceDate
+
+                        // Draw moving gradients
+                        context.addFilter(.blur(radius: 60))
+
+                        for i in 0..<3 {
+                            let speed = Double(i + 1) * 0.2
+                            let x = (sin(time * speed) + 1) / 2 * size.width
+                            let y = (cos(time * speed * 0.7) + 1) / 2 * size.height
+
+                            let color = i == 0 ? Color.accentColor : (i == 1 ? Color.purple : Color.cyan)
+
+                            context.fill(
+                                Path(ellipseIn: CGRect(x: x - 150, y: y - 150, width: 300, height: 300)),
+                                with: .radialGradient(
+                                    Gradient(colors: [color.opacity(0.15), .clear]),
+                                    center: CGPoint(x: x, y: y),
+                                    startRadius: 0,
+                                    endRadius: 150
+                                )
+                            )
+                        }
+                    }
+                }
+                .ignoresSafeArea()
+            } else {
+                // Fallback for older iOS
+                LinearGradient(
+                    colors: [
+                        Color.accentColor.opacity(colorScheme == .dark ? 0.05 : 0.08),
+                        Color(UIColor.systemGroupedBackground)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
                 
-                // Secondary purple orb
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.purple.opacity(colorScheme == .dark ? 0.08 : 0.1),
-                                Color.purple.opacity(0.03),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 130
+                // Animated floating orbs with refined effects
+                GeometryReader { geo in
+                    // Primary accent orb
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    Color.accentColor.opacity(colorScheme == .dark ? 0.12 : 0.15),
+                                    Color.accentColor.opacity(0.05),
+                                    Color.clear
+                                ],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 160
+                            )
                         )
-                    )
-                    .frame(width: 260, height: 260)
-                    .blur(radius: 55)
-                    .offset(x: _floatingAnimation ? 35 : -35, y: _floatingAnimation ? 15 : -15)
-                    .position(x: geo.size.width * 0.88, y: geo.size.height * 0.65)
-                
-                // Tertiary subtle orb
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Color.cyan.opacity(colorScheme == .dark ? 0.05 : 0.08),
-                                Color.clear
-                            ],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 100
+                        .frame(width: 320, height: 320)
+                        .blur(radius: 70)
+                        .offset(x: _floatingAnimation ? -40 : 40, y: _floatingAnimation ? -25 : 25)
+                        .position(x: geo.size.width * 0.15, y: geo.size.height * 0.12)
+
+                    // Secondary purple orb
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                colors: [
+                                    Color.purple.opacity(colorScheme == .dark ? 0.08 : 0.1),
+                                    Color.purple.opacity(0.03),
+                                    Color.clear
+                                ],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 130
+                            )
                         )
-                    )
-                    .frame(width: 200, height: 200)
-                    .blur(radius: 45)
-                    .offset(x: _floatingAnimation ? -20 : 20, y: _floatingAnimation ? 30 : -30)
-                    .position(x: geo.size.width * 0.5, y: geo.size.height * 0.85)
+                        .frame(width: 260, height: 260)
+                        .blur(radius: 55)
+                        .offset(x: _floatingAnimation ? 35 : -35, y: _floatingAnimation ? 15 : -15)
+                        .position(x: geo.size.width * 0.88, y: geo.size.height * 0.65)
+                }
+                .ignoresSafeArea()
             }
-            .ignoresSafeArea()
         }
         .onAppear {
             withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true)) {
@@ -424,6 +436,7 @@ struct ModernSigningView: View {
                             .appIconStyle(size: 80)
                     } else {
                         FRAppIconView(app: app, size: 80)
+                            .modifier(BounceEffectModifier(trigger: _appearAnimation))
                     }
                     
                     // Simple edit indicator
@@ -452,6 +465,7 @@ struct ModernSigningView: View {
                         Label(version, systemImage: "number.circle.fill")
                             .font(.caption.weight(.medium))
                             .foregroundStyle(.secondary)
+                            .modifier(BounceEffectModifier(trigger: _appearAnimation))
                     }
                 }
                 
@@ -502,23 +516,8 @@ struct ModernSigningView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(.ultraThinMaterial)
+                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
                 )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    .white.opacity(colorScheme == .dark ? 0.15 : 0.3),
-                                    .white.opacity(colorScheme == .dark ? 0.05 : 0.1)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                )
-                .shadow(color: .black.opacity(colorScheme == .dark ? 0.2 : 0.1), radius: 15, x: 0, y: 8)
             }
             
             // Certificate Section
@@ -572,23 +571,8 @@ struct ModernSigningView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(.ultraThinMaterial)
+                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
                 )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    .white.opacity(colorScheme == .dark ? 0.15 : 0.3),
-                                    .white.opacity(colorScheme == .dark ? 0.05 : 0.1)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                )
-                .shadow(color: .black.opacity(colorScheme == .dark ? 0.2 : 0.1), radius: 15, x: 0, y: 8)
             }
             
             // Advanced (Debug) Section
@@ -656,6 +640,7 @@ struct ModernSigningView: View {
                 Image(systemName: icon)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(color)
+                    .modifier(BounceEffectModifier(trigger: isOn.wrappedValue))
             }
             
             Text(title)
@@ -706,23 +691,8 @@ struct ModernSigningView: View {
                 .padding(14)
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(.ultraThinMaterial)
+                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
                 )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    .white.opacity(colorScheme == .dark ? 0.15 : 0.3),
-                                    .white.opacity(colorScheme == .dark ? 0.05 : 0.1)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                )
-                .shadow(color: .black.opacity(colorScheme == .dark ? 0.2 : 0.1), radius: 15, x: 0, y: 8)
             }
         } else {
             Button {
@@ -752,23 +722,8 @@ struct ModernSigningView: View {
                 .padding(14)
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(.ultraThinMaterial)
+                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
                 )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .stroke(
-                            LinearGradient(
-                                colors: [
-                                    .white.opacity(colorScheme == .dark ? 0.15 : 0.3),
-                                    .white.opacity(colorScheme == .dark ? 0.05 : 0.1)
-                                ],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                )
-                .shadow(color: .black.opacity(colorScheme == .dark ? 0.2 : 0.1), radius: 15, x: 0, y: 8)
             }
             .buttonStyle(.plain)
         }
@@ -871,19 +826,7 @@ struct ModernSigningView: View {
                         .padding(16)
                         .background(
                             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                .fill(.ultraThinMaterial)
-                                .shadow(color: .black.opacity(0.1), radius: 15, x: 0, y: 8)
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [.white.opacity(0.3), .white.opacity(0.1)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
+                                .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
                         )
                     }
                 } else {
@@ -943,19 +886,7 @@ struct ModernSigningView: View {
                     .padding(24)
                     .background(
                         RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .fill(.ultraThinMaterial)
-                            .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 10)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .stroke(
-                                LinearGradient(
-                                    colors: [.white.opacity(0.3), .white.opacity(0.1)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 1
-                            )
+                            .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
                     )
                 }
             }
@@ -1002,19 +933,7 @@ struct ModernSigningView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                        .shadow(color: .black.opacity(0.08), radius: 15, x: 0, y: 8)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .stroke(
-                            LinearGradient(
-                                colors: [.white.opacity(0.3), .white.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
+                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
                 )
                 
                 // Entitlements Section
@@ -1036,19 +955,7 @@ struct ModernSigningView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(.ultraThinMaterial)
-                        .shadow(color: .black.opacity(0.08), radius: 15, x: 0, y: 8)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .stroke(
-                            LinearGradient(
-                                colors: [.orange.opacity(0.3), .orange.opacity(0.1)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
+                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
                 )
             }
             .padding(.horizontal, 16)
@@ -1532,8 +1439,7 @@ struct ModernSigningOptionsView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(.ultraThinMaterial)
-                    .shadow(color: .black.opacity(0.06), radius: 12, x: 0, y: 6)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
             )
         }
     }
@@ -1636,7 +1542,7 @@ struct SwipeToSign: View {
             ZStack(alignment: .leading) {
                 // Track with waiting animation
                 Capsule()
-                    .fill(.ultraThinMaterial)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
                     .frame(height: 60)
                     .overlay(
                         ZStack {
@@ -1761,7 +1667,7 @@ struct HoldToSign: View {
     var body: some View {
         ZStack {
             Capsule()
-                .fill(.ultraThinMaterial)
+                .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
                 .frame(height: 60)
 
             // Progress Fill
@@ -1936,7 +1842,7 @@ struct DoubleTapToSign: View {
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
             .frame(height: 64)
-            .background(.ultraThinMaterial)
+            .background(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -1965,32 +1871,6 @@ struct DoubleTapToSign: View {
     }
 }
 
-// MARK: - iOS 17 Symbol Effect Compatibility Modifiers
-struct BounceEffectModifier: ViewModifier {
-    let trigger: Bool
-    
-    func body(content: Content) -> some View {
-        if #available(iOS 17.0, *) {
-            content.symbolEffect(.bounce, value: trigger)
-        } else {
-            content
-        }
-    }
-}
-
-struct PulseEffectModifier: ViewModifier {
-    let trigger: Bool
-    
-    func body(content: Content) -> some View {
-        if #available(iOS 17.0, *) {
-            content.symbolEffect(.pulse, options: .repeating, value: trigger)
-        } else {
-            content
-                .opacity(trigger ? 1.0 : 0.8)
-                .animation(.easeInOut(duration: 0.5).repeatForever(autoreverses: true), value: trigger)
-        }
-    }
-}
 
 // MARK: - Advanced Debug Tools View
 struct ModernEditSheet: View {
@@ -2093,7 +1973,7 @@ struct ModernEditSheet: View {
                             .background(
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                        .fill(.ultraThinMaterial)
+                                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
                                     
                                     RoundedRectangle(cornerRadius: 28, style: .continuous)
                                         .fill(
@@ -2132,7 +2012,7 @@ struct ModernEditSheet: View {
                                 .padding(.vertical, 12)
                                 .background(
                                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                        .fill(.ultraThinMaterial)
+                                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 28, style: .continuous)

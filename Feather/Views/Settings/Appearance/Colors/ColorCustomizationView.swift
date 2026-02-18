@@ -11,6 +11,18 @@ struct ColorTheme: Identifiable, Codable, Equatable {
     var secondaryText: String?
     var cardRadius: Double?
     var fontDesign: String?
+
+    // New fields
+    var navBarColor: String?
+    var tabBarColor: String?
+    var dividerColor: String?
+    var sheetBackgroundColor: String?
+    var successColor: String?
+    var warningColor: String?
+    var errorColor: String?
+    var glowIntensity: Double?
+    var borderWidth: Double?
+    var cardOpacity: Double?
 }
 
 struct ColorCustomizationView: View {
@@ -23,6 +35,16 @@ struct ColorCustomizationView: View {
     @AppStorage(UserDefaults.Keys.fontDesign) private var fontDesign: String = "default"
     @AppStorage(UserDefaults.Keys.shadowIntensity) private var shadowIntensity: Double = 5.0
     @AppStorage(UserDefaults.Keys.blurOpacity) private var blurOpacity: Double = 1.0
+    @AppStorage(UserDefaults.Keys.navBarColor) private var navBarColorHex: String = "#F2F2F7"
+    @AppStorage(UserDefaults.Keys.tabBarColor) private var tabBarColorHex: String = "#F2F2F7"
+    @AppStorage(UserDefaults.Keys.dividerColor) private var dividerColorHex: String = "#E5E5EA"
+    @AppStorage(UserDefaults.Keys.sheetBackgroundColor) private var sheetBackgroundColorHex: String = "#F2F2F7"
+    @AppStorage(UserDefaults.Keys.successColor) private var successColorHex: String = "#34C759"
+    @AppStorage(UserDefaults.Keys.warningColor) private var warningColorHex: String = "#FF9500"
+    @AppStorage(UserDefaults.Keys.errorColor) private var errorColorHex: String = "#FF3B30"
+    @AppStorage(UserDefaults.Keys.glowIntensity) private var glowIntensity: Double = 10.0
+    @AppStorage(UserDefaults.Keys.borderWidth) private var borderWidth: Double = 0.0
+    @AppStorage(UserDefaults.Keys.cardOpacity) private var cardOpacity: Double = 1.0
     @AppStorage("Feather.userTintColor") private var tintColorHex: String = "#0077BE"
     @AppStorage("Feather.userThemes") private var userThemesData: Data = Data()
 
@@ -31,6 +53,14 @@ struct ColorCustomizationView: View {
     @State private var textColor: Color = .black
     @State private var secondaryTextColor: Color = .gray
     @State private var tintColor: Color = .blue
+
+    @State private var navBarColor: Color = .white
+    @State private var tabBarColor: Color = .white
+    @State private var dividerColor: Color = .gray
+    @State private var sheetBackgroundColor: Color = .white
+    @State private var successColor: Color = .green
+    @State private var warningColor: Color = .orange
+    @State private var errorColor: Color = .red
 
     @State private var showAllThemes = false
     @State private var themeName: String = ""
@@ -133,6 +163,13 @@ struct ColorCustomizationView: View {
         .onChange(of: textColor) { newValue in textColorHex = newValue.toHex() ?? Color.defaultText }
         .onChange(of: secondaryTextColor) { newValue in secondaryTextColorHex = newValue.toHex() ?? "#8E8E93" }
         .onChange(of: tintColor) { newValue in tintColorHex = newValue.toHex() ?? "#0077BE" }
+        .onChange(of: navBarColor) { newValue in navBarColorHex = newValue.toHex() ?? "#FFFFFF" }
+        .onChange(of: tabBarColor) { newValue in tabBarColorHex = newValue.toHex() ?? "#FFFFFF" }
+        .onChange(of: dividerColor) { newValue in dividerColorHex = newValue.toHex() ?? "#E5E5EA" }
+        .onChange(of: sheetBackgroundColor) { newValue in sheetBackgroundColorHex = newValue.toHex() ?? "#FFFFFF" }
+        .onChange(of: successColor) { newValue in successColorHex = newValue.toHex() ?? "#34C759" }
+        .onChange(of: warningColor) { newValue in warningColorHex = newValue.toHex() ?? "#FF9500" }
+        .onChange(of: errorColor) { newValue in errorColorHex = newValue.toHex() ?? "#FF3B30" }
     }
 
     // MARK: - Component Views
@@ -259,6 +296,20 @@ struct ColorCustomizationView: View {
                 colorPickerRow(title: "Secondary Text", color: $secondaryTextColor, icon: "textformat.size")
                 Divider().padding(.leading, 44)
                 colorPickerRow(title: "Accent", color: $tintColor, icon: "sparkles")
+                Divider().padding(.leading, 44)
+                colorPickerRow(title: "Nav Bar", color: $navBarColor, icon: "menubar.rectangle")
+                Divider().padding(.leading, 44)
+                colorPickerRow(title: "Tab Bar", color: $tabBarColor, icon: "dock.rectangle")
+                Divider().padding(.leading, 44)
+                colorPickerRow(title: "Divider", color: $dividerColor, icon: "minus")
+                Divider().padding(.leading, 44)
+                colorPickerRow(title: "Sheet BG", color: $sheetBackgroundColor, icon: "square.stack")
+                Divider().padding(.leading, 44)
+                colorPickerRow(title: "Success", color: $successColor, icon: "checkmark.circle")
+                Divider().padding(.leading, 44)
+                colorPickerRow(title: "Warning", color: $warningColor, icon: "exclamationmark.triangle")
+                Divider().padding(.leading, 44)
+                colorPickerRow(title: "Error", color: $errorColor, icon: "xmark.circle")
             }
             .background(Color(UIColor.secondarySystemGroupedBackground))
             .cornerRadius(16)
@@ -380,6 +431,33 @@ struct ColorCustomizationView: View {
                     }
                     Slider(value: $blurOpacity, in: 0...1, step: 0.05)
                 }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Label("Glow Intensity", systemImage: "sun.max.fill")
+                        Spacer()
+                        Text("\(Int(glowIntensity))").font(.caption).foregroundStyle(.secondary)
+                    }
+                    Slider(value: $glowIntensity, in: 0...30, step: 1)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Label("Border Width", systemImage: "square.and.line.vertical.and.square")
+                        Spacer()
+                        Text(String(format: "%.1fpt", borderWidth)).font(.caption).foregroundStyle(.secondary)
+                    }
+                    Slider(value: $borderWidth, in: 0...5, step: 0.5)
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Label("Card Opacity", systemImage: "square.stack.3d.down.right")
+                        Spacer()
+                        Text("\(Int(cardOpacity * 100))%").font(.caption).foregroundStyle(.secondary)
+                    }
+                    Slider(value: $cardOpacity, in: 0.1...1, step: 0.05)
+                }
             }
             .padding()
             .background(Color(UIColor.secondarySystemGroupedBackground))
@@ -411,6 +489,14 @@ struct ColorCustomizationView: View {
 
         secondaryTextColor = Color(hex: secondaryTextColorHex)
         tintColor = Color(hex: tintColorHex)
+
+        navBarColor = Color(hex: navBarColorHex)
+        tabBarColor = Color(hex: tabBarColorHex)
+        dividerColor = Color(hex: dividerColorHex)
+        sheetBackgroundColor = Color(hex: sheetBackgroundColorHex)
+        successColor = Color(hex: successColorHex)
+        warningColor = Color(hex: warningColorHex)
+        errorColor = Color(hex: errorColorHex)
     }
 
     private func applyTheme(_ theme: ColorTheme) {
@@ -422,6 +508,17 @@ struct ColorCustomizationView: View {
         if let st = theme.secondaryText { secondaryTextColorHex = st }
         if let cr = theme.cardRadius { cardCornerRadius = cr }
         if let fd = theme.fontDesign { fontDesign = fd }
+
+        if let nb = theme.navBarColor { navBarColorHex = nb }
+        if let tb = theme.tabBarColor { tabBarColorHex = tb }
+        if let dc = theme.dividerColor { dividerColorHex = dc }
+        if let sb = theme.sheetBackgroundColor { sheetBackgroundColorHex = sb }
+        if let sc = theme.successColor { successColorHex = sc }
+        if let wc = theme.warningColor { warningColorHex = wc }
+        if let ec = theme.errorColor { errorColorHex = ec }
+        if let gi = theme.glowIntensity { glowIntensity = gi }
+        if let bw = theme.borderWidth { borderWidth = bw }
+        if let co = theme.cardOpacity { cardOpacity = co }
 
         loadColors()
         HapticsManager.shared.success()
@@ -436,7 +533,17 @@ struct ColorCustomizationView: View {
             tint: tintColor.toHex() ?? "#0077BE",
             secondaryText: secondaryTextColor.toHex() ?? "#8E8E93",
             cardRadius: cardCornerRadius,
-            fontDesign: fontDesign
+            fontDesign: fontDesign,
+            navBarColor: navBarColor.toHex(),
+            tabBarColor: tabBarColor.toHex(),
+            dividerColor: dividerColor.toHex(),
+            sheetBackgroundColor: sheetBackgroundColor.toHex(),
+            successColor: successColor.toHex(),
+            warningColor: warningColor.toHex(),
+            errorColor: errorColor.toHex(),
+            glowIntensity: glowIntensity,
+            borderWidth: borderWidth,
+            cardOpacity: cardOpacity
         )
         var updatedThemes = userThemes
         updatedThemes.append(newTheme)
@@ -454,6 +561,16 @@ struct ColorCustomizationView: View {
         fontDesign = "default"
         shadowIntensity = 5.0
         blurOpacity = 1.0
+        navBarColorHex = "#F2F2F7"
+        tabBarColorHex = "#F2F2F7"
+        dividerColorHex = "#E5E5EA"
+        sheetBackgroundColorHex = "#F2F2F7"
+        successColorHex = "#34C759"
+        warningColorHex = "#FF9500"
+        errorColorHex = "#FF3B30"
+        glowIntensity = 10.0
+        borderWidth = 0.0
+        cardOpacity = 1.0
         tintColorHex = "#0077BE"
         loadColors()
         HapticsManager.shared.success()
