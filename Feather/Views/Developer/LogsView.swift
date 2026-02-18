@@ -307,7 +307,7 @@ struct FilterPill: View {
             )
             .contentShape(Capsule())
         }
-        .buttonStyle(ModernButtonStyle())
+
         .scaleEffect(isSelected ? 1.02 : 1.0)
         .animation(.spring(response: 0.3), value: isSelected)
     }
@@ -373,7 +373,7 @@ struct LogEntryRow: View {
                 .padding(.horizontal, 16)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(ModernButtonStyle())
+
 
             if isExpanded {
                 VStack(alignment: .leading, spacing: 8) {
