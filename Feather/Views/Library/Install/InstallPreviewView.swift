@@ -12,6 +12,8 @@ struct InstallPreviewView: View {
     @AppStorage("Feather.serverMethod") private var _serverMethod: Int = 0
     @State private var _isWebviewPresenting = false
     @State private var appearAnimation = false
+    @State private var _metalState: MetalAnimationState = .idle
+    @State private var _errorMessage: String? = nil
     
     var app: AppInfoPresentable
     @StateObject var viewModel: InstallerStatusViewModel
@@ -53,7 +55,11 @@ struct InstallPreviewView: View {
                     .opacity(appearAnimation ? 1 : 0)
             }
             .padding(20)
+
+            FullScreenMetalStateView(state: $_metalState, errorMessage: _errorMessage)
+                .ignoresSafeArea()
         }
+        .disabled(_metalState != .idle)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .padding(24)
         .onAppear {
@@ -222,6 +228,8 @@ struct InstallPreviewView: View {
         }
         
         Task.detached {
+            await MainActor.run { _metalState = .loading }
+
             do {
                 let handler = await ArchiveHandler(app: app, viewModel: viewModel)
                 try await handler.move()
@@ -231,39 +239,41 @@ struct InstallPreviewView: View {
                 if await !isSharing {
                     if await _installationMethod == 0 {
                         await MainActor.run {
+                            _metalState = .success
                             installer.packageUrl = packageUrl
                             viewModel.status = .ready
                         }
                     } else if await _installationMethod == 1 {
                         let handler = await InstallationProxy(viewModel: viewModel)
                         try await handler.install(at: packageUrl, suspend: app.identifier == Bundle.main.bundleIdentifier!)
+                        await MainActor.run { _metalState = .success }
                     }
                 } else {
                     let package = try await handler.moveToArchive(packageUrl, shouldOpen: !_useShareSheet)
                     
                     if await !_useShareSheet {
                         await MainActor.run {
-                            dismiss()
+                            _metalState = .success
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                dismiss()
+                            }
                         }
                     } else {
                         if let package {
                             await MainActor.run {
-                                dismiss()
-                                UIActivityViewController.show(activityItems: [package])
+                                _metalState = .success
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                    dismiss()
+                                    UIActivityViewController.show(activityItems: [package])
+                                }
                             }
                         }
                     }
                 }
             } catch {
                 await MainActor.run {
-                    UIAlertController.showAlertWithOk(
-                        title: .localized("Install"),
-                        message: String(describing: error),
-                        action: {
-                            HeartbeatManager.shared.start(true)
-                            dismiss()
-                        }
-                    )
+                    _errorMessage = error.localizedDescription
+                    _metalState = .error
                 }
             }
         }
