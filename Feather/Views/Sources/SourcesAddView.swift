@@ -609,43 +609,18 @@ struct SourcesAddView: View {
 		VStack(spacing: 0) {
 			ForEach(sources, id: \.sourceURL?.absoluteString) { source in
 				if let urlString = source.sourceURL?.absoluteString {
-					Button {
-						if _selectedSourcesForExport.contains(urlString) {
-							_selectedSourcesForExport.remove(urlString)
-						} else {
-							_selectedSourcesForExport.insert(urlString)
-						}
-						HapticsManager.shared.selectionChanged()
-					} label: {
-						HStack(spacing: 16) {
-							ZStack {
-								Circle()
-									.stroke(_selectedSourcesForExport.contains(urlString) ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: 2)
-									.frame(width: 24, height: 24)
-
-								if _selectedSourcesForExport.contains(urlString) {
-									Circle()
-										.fill(Color.accentColor)
-										.frame(width: 14, height: 14)
-								}
+					ExportSourceRow(
+						source: source,
+						isSelected: _selectedSourcesForExport.contains(urlString),
+						toggleSelect: {
+							if _selectedSourcesForExport.contains(urlString) {
+								_selectedSourcesForExport.remove(urlString)
+							} else {
+								_selectedSourcesForExport.insert(urlString)
 							}
-
-							VStack(alignment: .leading, spacing: 2) {
-								Text(source.name ?? .localized("Unknown"))
-									.font(.system(.body, design: .rounded).bold())
-									.foregroundStyle(.primary)
-								Text(urlString)
-									.font(.system(.caption, design: .monospaced))
-									.foregroundStyle(.secondary)
-									.lineLimit(1)
-							}
-
-							Spacer()
+							HapticsManager.shared.selectionChanged()
 						}
-						.padding(.vertical, 12)
-						.padding(.horizontal, 16)
-					}
-					.buttonStyle(.plain)
+					)
 
 					if sources.last?.sourceURL?.absoluteString != urlString {
 						Divider()
@@ -1161,4 +1136,42 @@ struct ModernGroupBoxStyle: GroupBoxStyle {
 		.background(.ultraThinMaterial)
 		.cornerRadius(16)
 	}
+}
+
+// MARK: - Subviews
+private struct ExportSourceRow: View {
+    let source: AltSource
+    let isSelected: Bool
+    let toggleSelect: () -> Void
+
+    var body: some View {
+        Button(action: toggleSelect) {
+            HStack(spacing: 16) {
+                ZStack {
+                    Circle()
+                        .stroke(isSelected ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: 2)
+                        .frame(width: 24, height: 24)
+
+                    if isSelected {
+                        Circle()
+                            .fill(Color.accentColor)
+                            .frame(width: 14, height: 14)
+                    }
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(source.name ?? .localized("Unknown"))
+                        .font(.system(.body, design: .rounded).bold())
+                        .foregroundStyle(.primary)
+                    Text(source.sourceURL?.absoluteString ?? "")
+                        .font(.system(.caption, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                Spacer()
+            }
+            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+        }
+        .buttonStyle(.plain)
+    }
 }
