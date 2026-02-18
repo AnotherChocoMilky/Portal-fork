@@ -33,10 +33,16 @@ struct FullScreenMetalStateView: View {
 
     private var errorOverlay: some View {
         VStack(spacing: 20) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 60))
-                .foregroundStyle(.white)
-                .symbolEffect(.pulse)
+            if #available(iOS 17.0, *) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.white)
+                    .symbolEffect(.pulse)
+            } else {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 60))
+                    .foregroundStyle(.white)
+            }
 
             Text("Error")
                 .font(.title.bold())
