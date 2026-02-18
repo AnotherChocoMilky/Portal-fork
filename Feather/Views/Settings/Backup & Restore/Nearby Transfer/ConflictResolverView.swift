@@ -285,11 +285,11 @@ class ConflictResolverViewModel: ObservableObject {
         }
         
         let signedApps = (try? Storage.shared.context.fetch(Signed.fetchRequest())) ?? []
-        let localBundleIds = Set(localSignedApps.compactMap { $0.identifier })
+        let localBundleIds = Set(signedApps.compactMap { $0.identifier })
         let metadataPath = backupDirectory.appendingPathComponent("signed_apps_metadata.json")
         if fileManager.fileExists(atPath: metadataPath.path), let metadataData = try? Data(contentsOf: metadataPath), let metadata = try? JSONSerialization.jsonObject(with: metadataData) as? [[String: String]] {
             for app in metadata {
-                if let bundleId = app["identifier"], localBundleIds.contains(bundleId), let localApp = localSignedApps.first(where: { $0.identifier == bundleId }) {
+                if let bundleId = app["identifier"], localBundleIds.contains(bundleId), let localApp = signedApps.first(where: { $0.identifier == bundleId }) {
                     detectedConflicts.append(ConflictItem(type: .bundleID, localName: localApp.name ?? "Unknown", incomingName: app["name"] ?? "Unknown", localDetails: "Version: \(localApp.version ?? "Unknown")", incomingDetails: "Version: \(app["version"] ?? "Unknown")", path: "signed_apps/\(bundleId)"))
                 }
             }
