@@ -727,38 +727,29 @@ struct AllAppsRowView: View {
 	
 	var body: some View {
 		VStack(spacing: 0) {
-            ZStack {
-                Button(action: onTap) {
-                    if useGrid {
-                        gridView(showButton: false)
-                    } else {
+            if !useGrid {
+                HStack(spacing: 0) {
+                    Button(action: onTap) {
                         rowView(showButton: false)
                     }
+                    .buttonStyle(ModernButtonStyle())
+
+                    actionButton
+                        .buttonStyle(ModernButtonStyle())
+                        .frame(width: 34, height: 34)
+                        .padding(.trailing, rowStyle == .minimal ? 8 : 18)
                 }
-                .buttonStyle(AllAppsScaleButtonStyle())
-
-                if !useGrid {
-                    HStack {
-                        Spacer()
-                        actionButton
-                            .frame(width: 34, height: 34)
-                            .padding(.trailing, rowStyle == .minimal ? 8 : 18)
+            } else {
+                ZStack(alignment: .topTrailing) {
+                    Button(action: onTap) {
+                        gridView(showButton: false)
                     }
-                } else {
-                    // For grid, the button is positioned over the icon area
-                    VStack(spacing: 10) {
-                        ZStack(alignment: .bottomTrailing) {
-                            Color.clear
-                                .frame(width: iconSize * 1.2, height: iconSize * 1.2)
+                    .buttonStyle(ModernButtonStyle())
 
-                            actionButton
-                                .frame(width: 28, height: 28)
-                                .offset(x: 8, y: -8)
-                        }
-
-                        // Placeholder for the text area
-                        Color.clear
-                    }
+                    actionButton
+                        .buttonStyle(ModernButtonStyle())
+                        .frame(width: 28, height: 28)
+                        .padding(8)
                 }
             }
 
@@ -1094,14 +1085,6 @@ struct AllAppsRowView: View {
 	}
 }
 
-// MARK: - Scale Button Style
-struct AllAppsScaleButtonStyle: ButtonStyle {
-	func makeBody(configuration: Configuration) -> some View {
-		configuration.label
-			.scaleEffect(configuration.isPressed ? 0.97 : 1.0)
-			.animation(.spring(response: 0.3, dampingFraction: 0.7), value: configuration.isPressed)
-	}
-}
 
 extension View {
     @ViewBuilder
