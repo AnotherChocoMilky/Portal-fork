@@ -16,6 +16,7 @@ struct LibraryView: View {
     @State private var _selectedSigningAppPresenting: AnyApp?
     @State private var _selectedInstallAppPresenting: AnyApp?
     @State private var _selectedInstallModifyAppPresenting: AnyApp?
+    @State private var _showImportSelection = false
     @State private var _isImportingPresenting = false
     @State private var _isDownloadingPresenting = false
     @State private var _importStatus: ImportStatus = .loading
@@ -204,11 +205,12 @@ struct LibraryView: View {
             .toolbar(content: {
                 ToolbarItem(placement: .topBarTrailing) {
                     if !hideManager.isHidden("library.importButton") {
-                        Menu {
-                            _importActions()
+                        Button {
+                            _showImportSelection = true
+                            HapticsManager.shared.softImpact()
                         } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.system(size: 22))
+                            Image(systemName: "document.badge.plus.fill")
+                                .font(.system(size: 20))
                                 .foregroundStyle(Color.accentColor)
                                 .symbolRenderingMode(.hierarchical)
                         }
@@ -263,6 +265,25 @@ struct LibraryView: View {
                                         }
                                 )
                                 .ignoresSafeArea()
+                        }
+                        .sheet(isPresented: $_showImportSelection) {
+                            ImportSelectionSheet(
+                                onImportFiles: {
+                                    _showImportSelection = false
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        _isImportingPresenting = true
+                                    }
+                                },
+                                onImportURL: {
+                                    _showImportSelection = false
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                        _isDownloadingPresenting = true
+                                    }
+                                }
+                            )
+                            .presentationDetents([.height(260)])
+                            .presentationDragIndicator(.visible)
+                            .compatPresentationRadius(24)
                         }
                         .sheet(isPresented: $_isDownloadingPresenting) {
                                 ModernImportURLView { url in
@@ -558,10 +579,10 @@ extension LibraryView {
     
     @ViewBuilder
     private func _importActions() -> some View {
-        Button(String.localized("Import From Files"), systemImage: "folder") {
+        Button(String.localized("Import From Files"), systemImage: "folder.fill") {
             _isImportingPresenting = true
         }
-        Button(String.localized("Import From URL"), systemImage: "globe") {
+        Button(String.localized("Import From URL"), systemImage: "globe.americas.fill") {
             _isDownloadingPresenting = true
         }
     }
@@ -825,6 +846,86 @@ struct CompactFilterChip: View {
 }
 
 
+
+// MARK: - Import Selection Sheet
+struct ImportSelectionSheet: View {
+    let onImportFiles: () -> Void
+    let onImportURL: () -> Void
+    @Environment(\.colorScheme) var colorScheme
+
+    var body: some View {
+        VStack(spacing: 20) {
+            VStack(spacing: 8) {
+                Text(String.localized("Import App"))
+                    .font(.system(.title3, design: .rounded).bold())
+
+                Text(String.localized("Choose a method to import your application"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, 10)
+
+            HStack(spacing: 16) {
+                ImportOptionButton(
+                    title: String.localized("From Files"),
+                    icon: "folder.fill.badge.plus",
+                    color: .blue,
+                    action: onImportFiles
+                )
+
+                ImportOptionButton(
+                    title: String.localized("From URL"),
+                    icon: "link.badge.plus",
+                    color: .purple,
+                    action: onImportURL
+                )
+            }
+        }
+        .padding(24)
+        .frame(maxWidth: .infinity)
+        .background(Color(UIColor.systemBackground))
+    }
+}
+
+struct ImportOptionButton: View {
+    let title: String
+    let icon: String
+    let color: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.12))
+                        .frame(width: 56, height: 56)
+
+                    Image(systemName: icon)
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundStyle(color)
+                }
+
+                Text(title)
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
+            .background(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .stroke(color.opacity(0.1), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+}
 
 // MARK: - Filter Chip Button Style
 struct FilterChipButtonStyle: ButtonStyle {
