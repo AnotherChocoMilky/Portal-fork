@@ -432,7 +432,7 @@ extension LibraryView {
                         }
                         .contentShape(Capsule())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(ModernButtonStyle())
             }
             
             Spacer()
@@ -451,7 +451,7 @@ extension LibraryView {
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(Color.accentColor)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(ModernButtonStyle())
             }
         }
     }
@@ -477,7 +477,7 @@ extension LibraryView {
                             .foregroundStyle(Color.accentColor)
                             .contentShape(Rectangle())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(ModernButtonStyle())
                 }
                 
                 Button {
@@ -488,7 +488,7 @@ extension LibraryView {
                         .foregroundStyle(.red)
                         .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(ModernButtonStyle())
             }
             .padding(.vertical, 12)
             .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity))
@@ -662,7 +662,7 @@ struct LibraryAppRow: View {
                 }
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(ModernButtonStyle())
             
             if !isEditing {
                 Button {
@@ -681,7 +681,7 @@ struct LibraryAppRow: View {
                         .clipShape(Circle())
                         .contentShape(Circle())
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(ModernButtonStyle())
             }
         }
         .padding(.vertical, 10)
@@ -798,7 +798,7 @@ struct ModernFilterChip: View {
                 }
                 .contentShape(Capsule())
         }
-        .buttonStyle(FilterChipButtonStyle())
+        .buttonStyle(ModernButtonStyle())
     }
 }
 
@@ -830,7 +830,7 @@ struct CompactFilterChip: View {
             }
             .contentShape(RoundedRectangle(cornerRadius: 7, style: .continuous))
         }
-        .buttonStyle(FilterChipButtonStyle())
+        .buttonStyle(ModernButtonStyle())
     }
 }
 
@@ -913,16 +913,8 @@ struct ImportOptionButton: View {
             )
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ModernButtonStyle())
     }
 }
 
-// MARK: - Filter Chip Button Style
-struct FilterChipButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.95 : 1.0)
-            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
-    }
-}
 
