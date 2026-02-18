@@ -224,6 +224,7 @@ struct DeveloperAuthView: View {
                                       AnyShapeStyle(Color(UIColor.tertiarySystemBackground)))
                         )
                         .foregroundStyle(authMethod == method ? .white : .primary)
+                        .contentShape(Capsule())
                     }
                     .buttonStyle(.plain)
                 }
@@ -307,6 +308,7 @@ struct DeveloperAuthView: View {
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     .shadow(color: .orange.opacity(0.3), radius: 10, x: 0, y: 5)
+                    .contentShape(Rectangle())
                 }
                 .disabled(passcode.isEmpty || isAuthenticating)
                 .opacity(passcode.isEmpty ? 0.6 : 1)

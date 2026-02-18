@@ -1342,6 +1342,7 @@ struct FileGridItemView: View {
                 .fill(Color(UIColor.secondarySystemGroupedBackground))
         )
         .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 3)
+        .contentShape(Rectangle())
     }
 }
 
