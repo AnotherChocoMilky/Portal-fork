@@ -15,252 +15,153 @@ struct PairingView: View {
     @State private var showPreflightCheck = false
     @State private var showConflictResolver = false
     @State private var showPostRestoreHealthCheck = false
-    @State private var preflightApproved = false
+    @Namespace private var animation
     
     var body: some View {
         NBList(.localized("Nearby Transfer")) {
-            // Mode Selection
+            // Mode Selection - Custom Animated Cards
             Section {
-                Picker("Mode", selection: $selectedMode) {
-                    Text("Send").tag(TransferMode.send)
-                    Text("Receive").tag(TransferMode.receive)
+                HStack(spacing: 12) {
+                    modeCard(mode: .send, title: "Send", icon: "arrow.up.circle.fill", color: .blue)
+                    modeCard(mode: .receive, title: "Receive", icon: "arrow.down.circle.fill", color: .green)
                 }
-                .pickerStyle(.segmented)
-                .onChange(of: selectedMode) { newMode in
-                    service.stop()
-                    if newMode == .send {
-                        service.startSendMode()
-                    } else {
-                        service.startReceiveMode()
-                    }
-                }
+                .padding(.vertical, 8)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
             } header: {
                 AppearanceSectionHeader(title: String.localized("Transfer Mode"), icon: "arrow.left.arrow.right")
             }
             
-            // Instructions
+            // Pairing Method - Modern Interactive Cards
             Section {
-                instructionsView
-            } header: {
-                AppearanceSectionHeader(title: String.localized("Instructions"), icon: "info.circle.fill")
-            }
-            
-            // Pairing Options
-            Section {
-                // Nearby Pairing - Clean Row Design
-                HStack(spacing: 16) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.blue.opacity(0.2), Color.blue.opacity(0.1)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 50, height: 50)
-                        
-                        Image(systemName: "antenna.radiowaves.left.and.right")
-                            .font(.title2)
-                            .foregroundStyle(.blue)
-                                .ifAvailableiOS18SymbolPulse()
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 6) {
-                            Text("Nearby Pairing")
-                                .font(.system(.headline, design: .rounded))
-                            
-                            // Active indicator
-                            Text("Active")
-                                .font(.system(size: 8, weight: .bold))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(
-                                    Capsule()
-                                        .fill(LinearGradient(colors: [.blue, .cyan], startPoint: .leading, endPoint: .trailing))
-                                )
-                        }
-                        
-                        Text("Devices on the same WiFi network. Instant connection.")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Spacer()
-
-                    if selectedMode == .send && !service.discoveredPeers.isEmpty {
-                        ZStack {
-                            Circle()
-                                .fill(Color.green.opacity(0.15))
-                                .frame(width: 32, height: 32)
-
-                            Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(.green)
-                                .font(.system(size: 18))
-                        }
-                    }
-                }
-                .padding(.vertical, 8)
+                // Nearby Pairing Card
+                pairingMethodCard(
+                    title: "Nearby Pairing",
+                    subtitle: "Instant connection for devices on the same Wi-Fi.",
+                    icon: "antenna.radiowaves.left.and.right",
+                    gradientColors: [.blue, .cyan],
+                    isActive: true,
+                    badge: "ACTIVE",
+                    action: {}
+                )
                 
-                // Remote Pairing (OTP) Button - Clean Row Design
+                // Remote Pairing (OTP) Card
                 NavigationLink(destination: PairingThroughOTPView()) {
-                    HStack(spacing: 16) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.purple.opacity(0.2), Color.purple.opacity(0.1)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 50, height: 50)
-                            
-                            Image(systemName: "key.fill")
-                                .font(.title2)
-                                .foregroundStyle(.purple)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(spacing: 6) {
-                                Text("Pair Remotely")
-                                    .font(.headline)
-                                
-                                // Recommended badge
-                                Text("Secure")
-                                    .font(.caption2.weight(.semibold))
-                                    .foregroundStyle(.white)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.purple)
-                                    .clipShape(Capsule())
-                            }
-                            
-                            Text("Connect from anywhere with a code.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        
-                        Spacer()
-                    }
-                    .padding(.vertical, 8)
+                    pairingMethodCard(
+                        title: "Pair Remotely",
+                        subtitle: "Secure 6-digit code connection over the internet.",
+                        icon: "key.fill",
+                        gradientColors: [.purple, .indigo],
+                        isActive: false,
+                        badge: "SECURE",
+                        action: {}
+                    )
                 }
+                .buttonStyle(.plain)
             } header: {
                 AppearanceSectionHeader(title: String.localized("Pairing Method"), icon: "rectangle.connected.to.line.below")
             } footer: {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Choose How To Connect Your Devices:")
-                        .font(.caption.weight(.semibold))
-                    
-                    Text("• Nearby Pairing works automatically when both devices are on the same WiFi network for a seamless experience.")
-                        .font(.caption)
-                    
-                    Text("• Remote Pairing uses a secure 6 digit code generated with your WiFi and works over the internet to other devices.")
-                        .font(.caption)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Choose how to connect:")
+                        .font(.system(.caption, design: .rounded, weight: .semibold))
+                    Text("• Nearby Pairing: Uses Apple's local network discovery.")
+                    Text("• Remote Pairing: Uses a secure code for manual connection.")
                 }
+                .font(.system(.caption, design: .rounded))
                 .foregroundStyle(.secondary)
             }
             
-            // Send Mode - Peer List
+            // Send Mode - Modern Peer List
             if selectedMode == .send {
                 Section {
                     if service.discoveredPeers.isEmpty {
-                        HStack {
+                        VStack(spacing: 16) {
                             ProgressView()
-                                .padding(.trailing, 8)
-                            Text("Searching For Devices")
+                                .scaleEffect(1.2)
+                            Text("Searching for nearby devices...")
+                                .font(.system(.subheadline, design: .rounded))
                                 .foregroundStyle(.secondary)
                         }
-                        .padding(.vertical, 8)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 30)
                     } else {
                         ForEach(service.discoveredPeers, id: \.self) { peer in
                             Button {
                                 selectedPeer = peer
                                 initiateBackupSend(to: peer)
                             } label: {
-                                HStack {
-                                    Image(systemName: "iphone")
-                                        .font(.title2)
-                                        .foregroundStyle(.blue)
-                                        .frame(width: 40)
+                                HStack(spacing: 16) {
+                                    deviceIcon(for: peer.displayName)
                                     
-                                    VStack(alignment: .leading) {
+                                    VStack(alignment: .leading, spacing: 4) {
                                         Text(peer.displayName)
-                                            .font(.headline)
+                                            .font(.system(.headline, design: .rounded))
                                             .foregroundStyle(.primary)
-                                        Text("Tap To Send Backup")
-                                            .font(.caption)
+                                        Text("Tap to establish secure connection")
+                                            .font(.system(.caption, design: .rounded))
                                             .foregroundStyle(.secondary)
                                     }
                                     
                                     Spacer()
                                     
                                     Image(systemName: "chevron.right")
-                                        .foregroundStyle(.secondary)
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundStyle(.secondary.opacity(0.5))
                                 }
-                                .padding(.vertical, 8)
+                                .padding(.vertical, 10)
                             }
                         }
                     }
                 } header: {
-                    AppearanceSectionHeader(title: String.localized("Available Devices"), icon: "antenna.radiowaves.left.and.right")
+                    AppearanceSectionHeader(title: String.localized("Available Devices"), icon: "iphone.radiowaves.left.and.right")
                 }
             }
             
-            // Receive Mode - Status
+            // Receive Mode - Modern Status
             if selectedMode == .receive {
                 Section {
-                    VStack(spacing: 16) {
+                    VStack(spacing: 24) {
                         ZStack {
                             Circle()
-                                .fill(Color.blue.opacity(0.1))
-                                .frame(width: 80, height: 80)
+                                .fill(
+                                    RadialGradient(
+                                        colors: [.blue.opacity(0.2), .clear],
+                                        center: .center,
+                                        startRadius: 0,
+                                        endRadius: 80
+                                    )
+                                )
+                                .frame(width: 160, height: 160)
+
+                            Circle()
+                                .stroke(Color.blue.opacity(0.1), lineWidth: 1)
+                                .frame(width: 120, height: 120)
                             
                             Image(systemName: "antenna.radiowaves.left.and.right")
-                                .font(.system(size: 40))
+                                .font(.system(size: 48))
                                 .foregroundStyle(.blue)
                                 .ifAvailableiOS18SymbolPulse()
                         }
                         
                         VStack(spacing: 8) {
-                            Text("Ready To Receive")
-                                .font(.headline)
-                            Text("Waiting For Sender To Connect...")
-                                .font(.subheadline)
+                            Text("Ready to Receive")
+                                .font(.system(.title3, design: .rounded, weight: .bold))
+                            Text("Stay on this screen to remain visible to senders.")
+                                .font(.system(.subheadline, design: .rounded))
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
                         }
                         
-                        Divider()
-                            .padding(.vertical, 8)
-                        
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Image(systemName: "iphone")
-                                    .foregroundStyle(.blue)
-                                Text("Device Name:")
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Text(UIDevice.current.name)
-                                    .font(.headline)
-                            }
-                            
-                            HStack {
-                                Image(systemName: "lock.fill")
-                                    .foregroundStyle(.green)
-                                Text("Status:")
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Text("Advertising")
-                                    .font(.headline)
-                                    .foregroundStyle(.green)
-                            }
+                        VStack(spacing: 12) {
+                            statusRow(icon: "iphone", label: "Device Name", value: UIDevice.current.name)
+                            statusRow(icon: "lock.shield.fill", label: "Connection", value: "Encrypted", valueColor: .green)
+                            statusRow(icon: "dot.radiowaves.left.and.right", label: "Visibility", value: "Advertising", valueColor: .blue)
                         }
-                        .font(.subheadline)
+                        .padding(16)
+                        .background(Color.secondary.opacity(0.05))
+                        .cornerRadius(18)
                     }
-                    .padding(.vertical, 16)
+                    .padding(.vertical, 20)
                     .frame(maxWidth: .infinity)
                 } header: {
                     AppearanceSectionHeader(title: String.localized("Receiver Status"), icon: "square.and.arrow.down")
@@ -274,15 +175,14 @@ struct PairingView: View {
                     service.stop()
                     dismiss()
                 }
+                .font(.system(.body, design: .rounded, weight: .bold))
             }
         }
         .sheet(isPresented: $showingProgress) {
             NavigationStack {
                 TransferProgressView(
                     service: service,
-                    onCancel: {
-                        service.cancelTransfer()
-                    },
+                    onCancel: { service.cancelTransfer() },
                     onRetry: {
                         if selectedMode == .send, let peer = selectedPeer {
                             initiateBackupSend(to: peer)
@@ -314,9 +214,7 @@ struct PairingView: View {
                     backupDirectory = backupDir
                     showConflictResolver = true
                 },
-                onHealthCheck: {
-                    showPostRestoreHealthCheck = true
-                }
+                onHealthCheck: { showPostRestoreHealthCheck = true }
             )
         }
         .sheet(isPresented: $showPreflightCheck) {
@@ -334,7 +232,6 @@ struct PairingView: View {
                 if let backupDir = backupDirectory {
                     ConflictResolverView(backupDirectory: backupDir) { resolvedConflicts in
                         showConflictResolver = false
-                        // Perform restore with resolved conflicts
                         performRestoreWithConflicts(backupDir: backupDir, resolvedConflicts: resolvedConflicts)
                     }
                 }
@@ -344,17 +241,12 @@ struct PairingView: View {
             NavigationStack {
                 PostRestoreHealthCheckView {
                     showPostRestoreHealthCheck = false
-                    // Show completion screen
                     showRestartCompletionScreen()
                 }
             }
         }
         .onAppear {
-            if selectedMode == .send {
-                service.startSendMode()
-            } else {
-                service.startReceiveMode()
-            }
+            updateServiceMode()
         }
         .onDisappear {
             service.stop()
@@ -373,75 +265,143 @@ struct PairingView: View {
         }
     }
     
+    // MARK: - Helper Components
+
     @ViewBuilder
-    private var instructionsView: some View {
-        if selectedMode == .send {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .top, spacing: 12) {
-                    Image(systemName: "info.circle.fill")
-                        .foregroundStyle(.blue)
-                    Text("Choose Send on your other device and keep Portal open until finished.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
+    private func modeCard(mode: TransferMode, title: String, icon: String, color: Color) -> some View {
+        Button {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) {
+                selectedMode = mode
+                updateServiceMode()
+            }
+        } label: {
+            VStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 28))
+                    .foregroundStyle(selectedMode == mode ? .white : color)
+
+                Text(title)
+                    .font(.system(.headline, design: .rounded))
+                    .foregroundStyle(selectedMode == mode ? .white : .primary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 20)
+            .background {
+                if selectedMode == mode {
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(color)
+                        .matchedGeometryEffect(id: "modeBackground", in: animation)
+                } else {
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .fill(color.opacity(0.1))
+                }
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func pairingMethodCard(title: String, subtitle: String, icon: String, gradientColors: [Color], isActive: Bool, badge: String, action: @escaping () -> Void) -> some View {
+        HStack(spacing: 16) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: gradientColors.map { $0.opacity(0.2) },
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 56, height: 56)
+                
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundStyle(LinearGradient(colors: gradientColors, startPoint: .top, endPoint: .bottom))
+                    .ifAvailableiOS18SymbolPulse()
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 8) {
+                    Text(title)
+                        .font(.system(.headline, design: .rounded))
+
+                    Text(badge)
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(LinearGradient(colors: gradientColors, startPoint: .leading, endPoint: .trailing))
+                        .clipShape(Capsule())
                 }
                 
-                instructionRow(icon: "1.circle.fill", text: "Ensure both devices are on the same network.")
-                instructionRow(icon: "2.circle.fill", text: "Select a device from the list below.")
-                instructionRow(icon: "3.circle.fill", text: "Wait for the transfer to complete.")
-                instructionRow(icon: "4.circle.fill", text: "The backup will be applied on the receiving device.")
+                Text(subtitle)
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
             }
-            .padding(.vertical, 8)
-        } else {
-            VStack(alignment: .leading, spacing: 12) {
-                HStack(alignment: .top, spacing: 12) {
-                    Image(systemName: "info.circle.fill")
-                        .foregroundStyle(.blue)
-                    Text("Choose Receive on your other device and wait for the sender.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                
-                instructionRow(icon: "1.circle.fill", text: "Keep this screen open. DO NOT close Portal.")
-                instructionRow(icon: "2.circle.fill", text: "On the sending device, select this device.")
-                instructionRow(icon: "3.circle.fill", text: "Accept the connection when prompted.")
-                instructionRow(icon: "4.circle.fill", text: "Wait for the backup to transfer.")
+
+            Spacer()
+
+            if isActive {
+                Circle()
+                    .fill(Color.green)
+                    .frame(width: 8, height: 8)
+                    .shadow(color: .green.opacity(0.5), radius: 3)
             }
-            .padding(.vertical, 8)
+        }
+        .padding(.vertical, 10)
+    }
+
+    @ViewBuilder
+    private func deviceIcon(for name: String) -> some View {
+        ZStack {
+            Circle()
+                .fill(Color.blue.opacity(0.1))
+                .frame(width: 48, height: 48)
+
+            Image(systemName: name.contains("iPad") ? "ipad.gen2" : "iphone.gen2")
+                .font(.title3)
+                .foregroundStyle(.blue)
         }
     }
     
     @ViewBuilder
-    private func instructionRow(icon: String, text: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
+    private func statusRow(icon: String, label: String, value: String, valueColor: Color = .primary) -> some View {
+        HStack {
             Image(systemName: icon)
                 .foregroundStyle(.blue)
-                .font(.body)
-            Text(text)
-                .font(.subheadline)
+                .font(.system(size: 14))
+                .frame(width: 20)
+            Text(label)
+                .font(.system(.subheadline, design: .rounded))
                 .foregroundStyle(.secondary)
-                .fixedSize(horizontal: false, vertical: true)
+            Spacer()
+            Text(value)
+                .font(.system(.subheadline, design: .rounded, weight: .semibold))
+                .foregroundStyle(valueColor)
         }
     }
     
-    // MARK: - Actions
+    // MARK: - Logic
+
+    private func updateServiceMode() {
+        service.stop()
+        if selectedMode == .send {
+            service.startSendMode()
+        } else {
+            service.startReceiveMode()
+        }
+    }
     
     private func initiateBackupSend(to peer: MCPeerID) {
         selectedPeer = peer
-        
-        // Show preflight check first
         showPreflightCheck = true
     }
     
     private func startBackupSendAfterPreflight(to peer: MCPeerID) {
-        // First connect to the peer
         service.connect(to: peer)
-        
-        // Prepare the backup
         Task {
             if let backupDir = await prepareBackupForTransfer() {
-                // Send the backup
                 service.sendBackup(from: backupDir, to: peer)
             } else {
                 await MainActor.run {
@@ -455,11 +415,9 @@ struct PairingView: View {
     }
     
     private func prepareBackupForTransfer() async -> URL? {
-        // Reuse the backup preparation logic from BackupRestoreView
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("NearbyBackup_\(UUID().uuidString)")
         let fileManager = FileManager.default
         
-        // Default options - include everything
         let options = BackupOptions(
             includeCertificates: true,
             includeSignedApps: true,
@@ -471,9 +429,6 @@ struct PairingView: View {
         
         do {
             try fileManager.createDirectory(at: tempDir, withIntermediateDirectories: true)
-            
-            // Copy backup preparation logic from BackupRestoreView
-            // This is intentionally duplicated to reuse the exact same logic
             
             // 1. Certificates
             if options.includeCertificates {
@@ -636,40 +591,30 @@ struct PairingView: View {
     }
 
     private func performRestoreWithConflicts(backupDir: URL, resolvedConflicts: [ConflictItem]) {
-        // Apply conflict resolutions to the restore process
         Task {
             do {
-                // Process each conflict resolution
                 for conflict in resolvedConflicts {
                     let backupFilePath = backupDir.appendingPathComponent(conflict.path)
                     let destPath = URL.documentsDirectory.appendingPathComponent(conflict.path)
 
                     switch conflict.resolution {
                     case .keepLocal:
-                        // Keep existing data, skip restore for this item
                         continue
                     case .replace:
-                        // Replace with backup data
                         if FileManager.default.fileExists(atPath: backupFilePath.path) {
                             try? FileManager.default.removeItem(at: destPath)
                             try FileManager.default.copyItem(at: backupFilePath, to: destPath)
                         }
                     case .duplicate:
-                        // For duplicate, we'll prioritize backup data but preserve existing metadata
                         if FileManager.default.fileExists(atPath: backupFilePath.path) {
-                            // Copy backup file with a temporary name, then rename
                             let tempPath = destPath.appendingPathExtension("backup")
                             try FileManager.default.copyItem(at: backupFilePath, to: tempPath)
-                            // Move temp file to final destination (will replace if exists)
                             try? FileManager.default.removeItem(at: destPath)
                             try FileManager.default.moveItem(at: tempPath, to: destPath)
                         }
                     }
                 }
-
-                // Small delay to show progress
                 try await Task.sleep(nanoseconds: 500_000_000)
-
                 await MainActor.run {
                     showPostRestoreHealthCheck = true
                 }
@@ -685,7 +630,6 @@ struct PairingView: View {
     }
 
     private func showRestartCompletionScreen() {
-        // Show completion alert
         let alert = UIAlertController(
             title: .localized("Backup Applied"),
             message: .localized("Backup applied. Portal must restart to finalize changes."),
@@ -700,12 +644,11 @@ struct PairingView: View {
         })
 
         alert.addAction(UIAlertAction(title: .localized("Later"), style: .cancel))
-
         UIApplication.topViewController()?.present(alert, animated: true)
     }
 }
 
-// MARK: - Restore Options View
+// MARK: - Extension
 extension View {
     @ViewBuilder
     func ifAvailableiOS18SymbolPulse() -> some View {

@@ -7,33 +7,64 @@ struct ReceiverAnimationView: View {
     @State private var pulseAnimation = false
     @State private var rotationAngle: Double = 0
     @State private var scaleAmount: CGFloat = 1.0
-    @State private var wavePhase: CGFloat = 0
+    @State private var waveOffset: CGFloat = 0
     
     var body: some View {
         ZStack {
-            // Background gradient
+            // Background dynamic gradient
             LinearGradient(
                 colors: backgroundColors,
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
+            .animation(.easeInOut(duration: 1.0), value: state)
+
+            // Floating background blobs
+            if isAnimating {
+                ZStack {
+                    Circle()
+                        .fill(Color.white.opacity(0.1))
+                        .frame(width: 300)
+                        .offset(x: -100, y: -200 + waveOffset)
+
+                    Circle()
+                        .fill(Color.white.opacity(0.1))
+                        .frame(width: 250)
+                        .offset(x: 150, y: 100 - waveOffset)
+                }
+                .blur(radius: 60)
+            }
             
             VStack(spacing: 40) {
                 Spacer()
                 
                 // Main animation content
                 mainAnimationContent
+                    .transition(.scale.combined(with: .opacity))
                 
-                // Status text
-                statusText
+                // Status Information
+                VStack(spacing: 12) {
+                    Text(statusTitle)
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .shadow(radius: 10)
+
+                    Text(statusSubtitle)
+                        .font(.system(size: 17, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.85))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 20)
+                }
                 
                 // Progress details
                 progressDetails
+                    .padding(.top, 20)
                 
                 Spacer()
             }
-            .padding(.horizontal, 40)
+            .padding(.horizontal, 30)
         }
         .onAppear {
             startAnimations()
@@ -60,60 +91,57 @@ struct ReceiverAnimationView: View {
     
     private var receivingAnimation: some View {
         ZStack {
-            // Animated wave rings
-            ForEach(0..<3, id: \.self) { index in
+            // Pulse waves
+            ForEach(0..<4, id: \.self) { index in
                 Circle()
                     .stroke(
-                        LinearGradient(
-                            colors: [Color.white.opacity(0.4), Color.white.opacity(0.0)],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        ),
+                        LinearGradient(colors: [.white.opacity(0.5), .clear], startPoint: .top, endPoint: .bottom),
                         lineWidth: 3
                     )
-                    .frame(width: 180, height: 180)
-                    .scaleEffect(pulseAnimation ? 1.6 : 0.8)
-                    .opacity(pulseAnimation ? 0 : 1)
+                    .frame(width: 200, height: 200)
+                    .scaleEffect(pulseAnimation ? 1.8 : 0.8)
+                    .opacity(pulseAnimation ? 0 : 0.8)
                     .animation(
                         Animation
-                            .easeInOut(duration: 2.5)
+                            .easeInOut(duration: 3.0)
                             .repeatForever(autoreverses: false)
-                            .delay(Double(index) * 0.5),
+                            .delay(Double(index) * 0.7),
                         value: pulseAnimation
                     )
             }
             
-            // Center receiving icon with glow
+            // Core component
             ZStack {
-                // Pulsing glow
                 Circle()
                     .fill(
                         RadialGradient(
                             colors: [Color.white.opacity(0.4), Color.clear],
                             center: .center,
                             startRadius: 0,
-                            endRadius: 90
+                            endRadius: 110
                         )
                     )
-                    .frame(width: 180, height: 180)
+                    .frame(width: 200, height: 200)
                     .scaleEffect(scaleAmount)
                 
-                // Icon background with subtle rotation
                 Circle()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 120, height: 120)
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 130, height: 130)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                    )
                 
-                // Receiving icon
                 if #available(iOS 18.0, *) {
                     Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 60))
+                        .font(.system(size: 70))
                         .foregroundStyle(.white)
                         .symbolEffect(.bounce, options: .repeating)
                 } else {
                     Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 60))
+                        .font(.system(size: 70))
                         .foregroundStyle(.white)
-                        .offset(y: isAnimating ? 5 : -5)
+                        .offset(y: isAnimating ? 8 : -8)
                         .animation(
                             Animation
                                 .easeInOut(duration: 1.2)
@@ -123,45 +151,44 @@ struct ReceiverAnimationView: View {
                 }
             }
         }
-        .frame(width: 240, height: 240)
+        .frame(width: 260, height: 260)
     }
     
     // MARK: - Transferring Animation
     
     private func transferringAnimation(progress: Double) -> some View {
         ZStack {
-            // Background circle
+            // Outer track
             Circle()
-                .stroke(Color.white.opacity(0.2), lineWidth: 12)
-                .frame(width: 200, height: 200)
+                .stroke(Color.white.opacity(0.2), lineWidth: 16)
+                .frame(width: 210, height: 210)
             
-            // Progress circle with gradient
+            // Glowing progress bar
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
                     LinearGradient(
-                        colors: [Color.white, Color.white.opacity(0.7)],
+                        colors: [.white, .cyan, .white],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     ),
-                    style: StrokeStyle(lineWidth: 12, lineCap: .round)
+                    style: StrokeStyle(lineWidth: 16, lineCap: .round)
                 )
-                .frame(width: 200, height: 200)
+                .frame(width: 210, height: 210)
                 .rotationEffect(.degrees(-90))
-                .animation(.linear(duration: 0.3), value: progress)
+                .shadow(color: .cyan.opacity(0.4), radius: 10)
+                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: progress)
             
-            // Inner content
-            VStack(spacing: 12) {
-                // Download icon with animation
+            VStack(spacing: 8) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(width: 100, height: 100)
+                        .fill(.ultraThinMaterial)
+                        .frame(width: 110, height: 110)
                     
                     Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 50))
+                        .font(.system(size: 56))
                         .foregroundStyle(.white)
-                        .offset(y: isAnimating ? 5 : 0)
+                        .offset(y: isAnimating ? 6 : -6)
                         .animation(
                             Animation
                                 .easeInOut(duration: 0.8)
@@ -170,9 +197,8 @@ struct ReceiverAnimationView: View {
                         )
                 }
                 
-                // Percentage
                 Text("\(Int(progress * 100))%")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
             }
         }
@@ -182,48 +208,29 @@ struct ReceiverAnimationView: View {
     
     private var completedAnimation: some View {
         ZStack {
-            // Success ring with glow
             Circle()
-                .stroke(Color.white.opacity(0.3), lineWidth: 8)
-                .frame(width: 200, height: 200)
+                .stroke(Color.white.opacity(0.3), lineWidth: 10)
+                .frame(width: 210, height: 210)
             
-            Circle()
-                .trim(from: 0, to: 1)
-                .stroke(
-                    Color.white,
-                    style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                )
-                .frame(width: 200, height: 200)
-                .rotationEffect(.degrees(-90))
-            
-            // Checkmark with bounce
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 120, height: 120)
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 130, height: 130)
                 
                 Image(systemName: "checkmark")
-                    .font(.system(size: 60, weight: .bold))
+                    .font(.system(size: 64, weight: .bold))
                     .foregroundStyle(.white)
                     .scaleEffect(scaleAmount)
             }
             
-            // Success particles
-            if #available(iOS 17.0, *) {
-                ForEach(0..<12, id: \.self) { index in
-                    RoundedRectangle(cornerRadius: 2)
-                        .fill(Color.white.opacity(0.7))
-                        .frame(width: 6, height: 12)
-                        .offset(particleOffset(for: index))
-                        .rotationEffect(.degrees(Double(index) * 30))
-                        .opacity(isAnimating ? 0 : 1)
-                        .animation(
-                            Animation
-                                .easeOut(duration: 1.2)
-                                .delay(0.3),
-                            value: isAnimating
-                        )
-                }
+            // Confetti fall
+            ForEach(0..<15, id: \.self) { i in
+                Rectangle()
+                    .fill(Color.white.opacity(0.7))
+                    .frame(width: 8, height: 12)
+                    .offset(x: CGFloat.random(in: -150...150), y: isAnimating ? 400 : -400)
+                    .rotationEffect(.degrees(Double(i) * 24))
+                    .animation(.easeOut(duration: 2).delay(Double(i) * 0.1), value: isAnimating)
             }
         }
     }
@@ -232,39 +239,20 @@ struct ReceiverAnimationView: View {
     
     private var failedAnimation: some View {
         ZStack {
-            // Error ring
             Circle()
-                .stroke(Color.white.opacity(0.3), lineWidth: 8)
-                .frame(width: 200, height: 200)
+                .stroke(Color.white.opacity(0.3), lineWidth: 10)
+                .frame(width: 210, height: 210)
             
-            // X mark with shake effect
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 120, height: 120)
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 130, height: 130)
                 
                 Image(systemName: "xmark")
-                    .font(.system(size: 60, weight: .bold))
+                    .font(.system(size: 64, weight: .bold))
                     .foregroundStyle(.white)
                     .rotationEffect(.degrees(isAnimating ? -10 : 10))
             }
-        }
-    }
-    
-    // MARK: - Status Text
-    
-    @ViewBuilder
-    private var statusText: some View {
-        VStack(spacing: 8) {
-            Text(statusTitle)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
-                .multilineTextAlignment(.center)
-            
-            Text(statusSubtitle)
-                .font(.system(size: 16, design: .rounded))
-                .foregroundStyle(.white.opacity(0.8))
-                .multilineTextAlignment(.center)
         }
     }
     
@@ -273,39 +261,50 @@ struct ReceiverAnimationView: View {
     @ViewBuilder
     private var progressDetails: some View {
         if case .transferring(_, let bytesTransferred, let totalBytes, let speed) = state {
-            VStack(spacing: 12) {
+            VStack(spacing: 16) {
                 HStack {
-                    Text("Received:")
-                        .foregroundStyle(.white.opacity(0.7))
+                    progressInfoItem(icon: "arrow.down.to.line.compact", label: "Received", value: formatBytes(bytesTransferred))
                     Spacer()
-                    Text(formatBytes(bytesTransferred) + " / " + formatBytes(totalBytes))
-                        .foregroundStyle(.white)
+                    progressInfoItem(icon: "speedometer", label: "Speed", value: formatSpeed(speed))
                 }
                 
+                Divider()
+                    .background(Color.white.opacity(0.3))
+
                 HStack {
-                    Text("Speed:")
-                        .foregroundStyle(.white.opacity(0.7))
+                    progressInfoItem(icon: "doc.zipper", label: "Total Data", value: formatBytes(totalBytes))
                     Spacer()
-                    Text(formatSpeed(speed))
-                        .foregroundStyle(.white)
-                }
-                
-                if totalBytes > 0 && speed > 0 {
-                    let remaining = Double(totalBytes - bytesTransferred) / speed
-                    HStack {
-                        Text("Time Remaining:")
-                            .foregroundStyle(.white.opacity(0.7))
-                        Spacer()
-                        Text(formatTime(remaining))
-                            .foregroundStyle(.white)
+                    if totalBytes > 0 && speed > 0 {
+                        let remaining = Double(totalBytes - bytesTransferred) / speed
+                        progressInfoItem(icon: "clock.fill", label: "Remaining", value: formatTime(remaining))
                     }
                 }
             }
-            .font(.system(size: 14, design: .rounded))
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .background(Color.white.opacity(0.1))
-            .cornerRadius(16)
+            .padding(20)
+            .background(.ultraThinMaterial)
+            .cornerRadius(24)
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+            )
+        }
+    }
+
+    @ViewBuilder
+    private func progressInfoItem(icon: String, label: String, value: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundStyle(.white.opacity(0.7))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .textCase(.uppercase)
+                Text(value)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white)
+            }
         }
     }
     
@@ -314,45 +313,33 @@ struct ReceiverAnimationView: View {
     private var backgroundColors: [Color] {
         switch state {
         case .idle, .discovering, .connecting, .transferring:
-            return [Color.cyan.opacity(0.8), Color.indigo.opacity(0.8)]
+            return [Color(hex: "0891B2"), Color(hex: "4F46E5"), Color(hex: "7C3AED")]
         case .completed:
-            return [Color.green.opacity(0.8), Color.mint.opacity(0.8)]
+            return [Color(hex: "059669"), Color(hex: "10B981"), Color(hex: "34D399")]
         case .failed:
-            return [Color.red.opacity(0.8), Color.pink.opacity(0.8)]
+            return [Color(hex: "DC2626"), Color(hex: "EF4444"), Color(hex: "F87171")]
         }
     }
     
     private var statusTitle: String {
         switch state {
-        case .idle:
-            return "Ready To Receive"
-        case .discovering:
-            return "Waiting For Sender..."
-        case .connecting:
-            return "Connecting..."
-        case .transferring:
-            return "Receiving Backup"
-        case .completed:
-            return "Received Successfully!"
-        case .failed:
-            return "Receive Failed"
+        case .idle: return "Ready"
+        case .discovering: return "Discoverable"
+        case .connecting: return "Connecting"
+        case .transferring: return "Downloading"
+        case .completed: return "Success!"
+        case .failed: return "Error"
         }
     }
     
     private var statusSubtitle: String {
         switch state {
-        case .idle:
-            return "Waiting To Start Transfer"
-        case .discovering:
-            return "Listening For Sender Devices"
-        case .connecting:
-            return "Establishing Secure Connection"
-        case .transferring:
-            return "Downloading Your Backup Data"
-        case .completed:
-            return "Your Backup Has Been Received"
-        case .failed(let error):
-            return error.localizedDescription
+        case .idle: return "Waiting for sender device"
+        case .discovering: return "Visible to nearby devices"
+        case .connecting: return "Establishing secure link"
+        case .transferring: return "Receiving backup files"
+        case .completed: return "Restoration ready to begin"
+        case .failed(let error): return error.localizedDescription
         }
     }
     
@@ -364,52 +351,25 @@ struct ReceiverAnimationView: View {
             pulseAnimation = true
         }
         
-        // Scale animation for glow
-        withAnimation(
-            Animation
-                .easeInOut(duration: 1.8)
-                .repeatForever(autoreverses: true)
-        ) {
-            scaleAmount = 1.3
+        withAnimation(.easeInOut(duration: 2.2).repeatForever(autoreverses: true)) {
+            scaleAmount = 1.2
         }
         
-        // Wave animation
-        Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { _ in
-            withAnimation(.linear(duration: 0.05)) {
-                wavePhase += 0.1
-            }
+        withAnimation(.easeInOut(duration: 4.0).repeatForever(autoreverses: true)) {
+            waveOffset = 50
         }
         
-        // Completed state celebration
         if case .completed = state {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
-                    scaleAmount = 1.3
-                }
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.6)) {
+                scaleAmount = 1.3
             }
         }
         
-        // Failed state shake
         if case .failed = state {
-            withAnimation(
-                Animation
-                    .easeInOut(duration: 0.12)
-                    .repeatCount(5, autoreverses: true)
-            ) {
+            withAnimation(.easeInOut(duration: 0.12).repeatCount(6, autoreverses: true)) {
                 isAnimating = true
             }
         }
-    }
-    
-    // MARK: - Helper Functions
-    
-    private func particleOffset(for index: Int) -> CGSize {
-        let angle = Double(index) * 30.0 * .pi / 180.0
-        let distance: CGFloat = isAnimating ? 140 : 0
-        return CGSize(
-            width: distance * Foundation.cos(angle),
-            height: distance * Foundation.sin(angle)
-        )
     }
     
     private func formatBytes(_ bytes: Int64) -> String {
@@ -425,21 +385,9 @@ struct ReceiverAnimationView: View {
     }
     
     private func formatTime(_ seconds: Double) -> String {
-        if seconds < 60 {
-            return String(format: "%.0fs", seconds)
-        } else if seconds < 3600 {
-            let minutes = Int(seconds / 60)
-            let secs = Int(seconds.truncatingRemainder(dividingBy: 60))
-            return "\(minutes)m \(secs)s"
-        } else {
-            let hours = Int(seconds / 3600)
-            let minutes = Int((seconds.truncatingRemainder(dividingBy: 3600)) / 60)
-            return "\(hours)h \(minutes)m"
-        }
+        if seconds < 60 { return String(format: "%.0fs", seconds) }
+        let minutes = Int(seconds / 60)
+        let secs = Int(seconds.truncatingRemainder(dividingBy: 60))
+        return "\(minutes)m \(secs)s"
     }
-}
-
-// MARK: - Preview
-#Preview {
-    ReceiverAnimationView(state: .transferring(progress: 0.45, bytesTransferred: 450000000, totalBytes: 1000000000, speed: 4194304))
 }

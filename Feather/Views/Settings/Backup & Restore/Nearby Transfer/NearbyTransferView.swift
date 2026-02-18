@@ -11,63 +11,75 @@ struct NearbyTransferView: View {
             Section {
                 ZStack {
                     LinearGradient(
-                        colors: [Color.purple.opacity(0.1), Color.blue.opacity(0.1)],
+                        colors: [Color.indigo.opacity(0.15), Color.purple.opacity(0.1)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
-                    .cornerRadius(20)
+                    .cornerRadius(22)
                     
-                    VStack(spacing: 12) {
+                    VStack(spacing: 16) {
                         Image(systemName: "antenna.radiowaves.left.and.right")
-                            .font(.system(size: 40))
+                            .font(.system(size: 54))
                             .foregroundStyle(
                                 LinearGradient(
-                                    colors: [.purple, .blue],
+                                    colors: [.indigo, .purple, .blue],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )
                             )
+                            .ifAvailableiOS18SymbolPulse()
                         
-                        Text(.localized("Transfer backups wirelessly between devices using Nearby Transfer."))
-                            .font(.system(.subheadline, design: .rounded))
-                            .multilineTextAlignment(.center)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal)
+                        VStack(spacing: 8) {
+                            Text(.localized("Wireless Transfer"))
+                                .font(.system(.title2, design: .rounded, weight: .bold))
+
+                            Text(.localized("Move your backups between devices instantly using a secure, direct connection."))
+                                .font(.system(.subheadline, design: .rounded))
+                                .multilineTextAlignment(.center)
+                                .foregroundStyle(.secondary)
+                                .padding(.horizontal, 20)
+                        }
                     }
-                    .padding(.vertical, 30)
+                    .padding(.vertical, 40)
                 }
                 .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
+                .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
             }
             
             // Quick Start Section
             Section {
                 NavigationLink(destination: PairingView()) {
-                    HStack(spacing: 16) {
+                    HStack(spacing: 18) {
                         ZStack {
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color.blue.opacity(0.15))
-                                .frame(width: 50, height: 50)
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.blue.opacity(0.2), .blue.opacity(0.1)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 56, height: 56)
                             
-                            Image(systemName: "arrow.left.arrow.right.circle.fill")
+                            Image(systemName: "bolt.fill")
                                 .font(.title2)
                                 .foregroundStyle(.blue)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text(.localized("Start Transfer"))
-                                .font(.headline)
-                            Text(.localized("Send or receive a backup."))
-                                .font(.caption)
+                            Text(.localized("Start New Transfer"))
+                                .font(.system(.headline, design: .rounded))
+                            Text(.localized("Send or receive a backup securely."))
+                                .font(.system(.caption, design: .rounded))
                                 .foregroundStyle(.secondary)
                         }
                         
                         Spacer()
                     }
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 10)
                 }
             } header: {
-                AppearanceSectionHeader(title: String.localized("Quick Start"), icon: "bolt.fill")
+                AppearanceSectionHeader(title: String.localized("Actions"), icon: "play.fill")
             }
             
             // How It Works Section
@@ -75,66 +87,65 @@ struct NearbyTransferView: View {
                 featureCard(
                     icon: "lock.shield.fill",
                     iconColor: .green,
-                    title: .localized("Secure & Encrypted"),
-                    description: .localized("All transfers are fully private and never shared with anyone and run fully on both senders and receivers devices and in your network.")
+                    title: .localized("End-to-End Security"),
+                    description: .localized("All transfers are encrypted and happen directly between your devices. Your data never leaves your local network.")
                 )
                 
                 featureCard(
-                    icon: "wifi",
+                    icon: "wifi.router.fill",
                     iconColor: .blue,
-                    title: .localized("No Internet Required"),
-                    description: .localized("Transfer happens directly between devices using local Wi-Fi or Bluetooth.")
+                    title: .localized("Direct Connection"),
+                    description: .localized("Uses Multipeer Connectivity to establish a fast, direct link via Wi-Fi or Bluetooth without needing the internet.")
                 )
                 
                 featureCard(
                     icon: "speedometer",
                     iconColor: .orange,
-                    title: .localized("Fast & Reliable"),
-                    description: .localized("Direct device to device transfer with real time progress monitoring and speed reporting using Apple's Multipeer Connectivity framework.")
+                    title: .localized("Lightning Fast"),
+                    description: .localized("High-speed data transfer with real-time progress monitoring, speed reporting, and automatic error recovery.")
                 )
             } header: {
-                AppearanceSectionHeader(title: String.localized("Features"), icon: "star.fill")
+                AppearanceSectionHeader(title: String.localized("Why Nearby Transfer?"), icon: "sparkles")
             }
             
             // Requirements Section
             Section {
                 requirementRow(
                     icon: "network",
-                    text: "Both devices must be on the same Wi-Fi network or within Bluetooth range."
+                    text: .localized("Same Network: Both devices must be on the same Wi-Fi or within Bluetooth range.")
                 )
                 
                 requirementRow(
                     icon: "iphone.gen2",
-                    text: "Both devices must have the latest version of Portal installed. If not, it can cause compatibility issues."
+                    text: .localized("App Version: Both devices should have the latest Portal version for best compatibility.")
                 )
                 
                 requirementRow(
-                    icon: "battery.100",
-                    text: "Recommended to have sufficient battery or connect to power since both devices will be actively transferring data."
+                    icon: "battery.100.bolt",
+                    text: .localized("Power: Ensure sufficient battery or connect to power for large backup transfers.")
                 )
             } header: {
-                AppearanceSectionHeader(title: String.localized("Requirements"), icon: "checkmark.circle.fill")
+                AppearanceSectionHeader(title: String.localized("Requirements"), icon: "checklist")
             }
             
             // About Section
             Section {
-                VStack(alignment: .leading, spacing: 12) {
-                    Text(.localized("What Gets Transferred?"))
-                        .font(.headline)
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(.localized("Supported Data Types"))
+                        .font(.system(.headline, design: .rounded))
                     
-                    VStack(alignment: .leading, spacing: 8) {
-                        transferItemRow(icon: "checkmark.seal.fill", text: "Certificates & Profiles", color: .blue)
-                        transferItemRow(icon: "app.badge.fill", text: "Signed Apps", color: .green)
-                        transferItemRow(icon: "square.and.arrow.down.fill", text: "Imported Apps", color: .orange)
-                        transferItemRow(icon: "globe.fill", text: "Sources", color: .purple)
-                        transferItemRow(icon: "puzzlepiece.extension.fill", text: "Default Frameworks", color: .cyan)
-                        transferItemRow(icon: "archivebox.fill", text: "Archives", color: .indigo)
-                        transferItemRow(icon: "gearshape.fill", text: "Settings", color: .gray)
+                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                        transferItemRow(icon: "checkmark.seal.fill", text: .localized("Certificates"), color: .blue)
+                        transferItemRow(icon: "app.badge.fill", text: .localized("Signed Apps"), color: .green)
+                        transferItemRow(icon: "square.and.arrow.down.fill", text: .localized("Imported"), color: .orange)
+                        transferItemRow(icon: "globe.fill", text: .localized("Sources"), color: .purple)
+                        transferItemRow(icon: "puzzlepiece.extension.fill", text: .localized("Frameworks"), color: .cyan)
+                        transferItemRow(icon: "gearshape.fill", text: .localized("Settings"), color: .gray)
                     }
                 }
-                .padding(.vertical, 8)
+                .padding(.vertical, 12)
             } header: {
-                AppearanceSectionHeader(title: String.localized("About"), icon: "info.circle.fill")
+                AppearanceSectionHeader(title: String.localized("Details"), icon: "info.circle.fill")
             }
         }
         .navigationBarTitleDisplayMode(.inline)
@@ -144,18 +155,18 @@ struct NearbyTransferView: View {
     
     @ViewBuilder
     private func featureCard(icon: String, iconColor: Color, title: LocalizedStringKey, description: LocalizedStringKey) -> some View {
-        HStack(alignment: .top, spacing: 16) {
+        HStack(alignment: .top, spacing: 18) {
             ZStack {
-                Circle()
-                    .fill(iconColor.opacity(0.15))
-                    .frame(width: 44, height: 44)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(iconColor.opacity(0.12))
+                    .frame(width: 48, height: 48)
                 
                 Image(systemName: icon)
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 22, weight: .bold))
                     .foregroundStyle(iconColor)
             }
             
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(title)
                     .font(.system(.headline, design: .rounded))
                     .foregroundStyle(.primary)
@@ -164,38 +175,50 @@ struct NearbyTransferView: View {
                     .font(.system(.subheadline, design: .rounded))
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
+                    .lineSpacing(2)
             }
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
     }
     
     @ViewBuilder
-    private func requirementRow(icon: String, text: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
+    private func requirementRow(icon: String, text: LocalizedStringKey) -> some View {
+        HStack(alignment: .top, spacing: 14) {
             Image(systemName: icon)
                 .foregroundStyle(.blue)
-                .font(.body)
+                .font(.system(size: 18))
                 .frame(width: 24)
+                .padding(.top, 2)
             
             Text(text)
-                .font(.subheadline)
+                .font(.system(.subheadline, design: .rounded))
                 .foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
     
     @ViewBuilder
-    private func transferItemRow(icon: String, text: String, color: Color) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: icon)
-                .foregroundStyle(color)
-                .font(.caption)
-                .frame(width: 20)
+    private func transferItemRow(icon: String, text: LocalizedStringKey, color: Color) -> some View {
+        HStack(spacing: 10) {
+            ZStack {
+                Circle()
+                    .fill(color.opacity(0.1))
+                    .frame(width: 28, height: 28)
+
+                Image(systemName: icon)
+                    .foregroundStyle(color)
+                    .font(.system(size: 12, weight: .bold))
+            }
             
             Text(text)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                .font(.system(.caption, design: .rounded, weight: .medium))
+                .foregroundStyle(.primary.opacity(0.8))
+
+            Spacer()
         }
+        .padding(8)
+        .background(Color.secondary.opacity(0.05))
+        .cornerRadius(12)
     }
 }
