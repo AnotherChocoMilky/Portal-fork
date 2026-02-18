@@ -555,140 +555,155 @@ struct SourcesAddView: View {
 	
 	// MARK: - Export Selection Section
 	@ViewBuilder
+	private func _exportSectionHeader() -> some View {
+		VStack(alignment: .leading, spacing: 4) {
+			Text(.localized("Select Sources To Export"))
+				.font(.system(.title3, design: .rounded).bold())
+				.foregroundStyle(.primary)
+
+			Text(.localized("Choose the repositories you want to share"))
+				.font(.subheadline)
+				.foregroundStyle(.secondary)
+		}
+		.padding(.horizontal, 4)
+	}
+
+	@ViewBuilder
+	private func _exportSectionSelectButtons(sources: [AltSource]) -> some View {
+		HStack(spacing: 12) {
+			Button {
+				withAnimation(.spring(response: 0.3)) {
+					_selectedSourcesForExport = Set(sources.compactMap { $0.sourceURL?.absoluteString })
+				}
+				HapticsManager.shared.softImpact()
+			} label: {
+				Label(.localized("Select All"), systemImage: "checkmark.circle.fill")
+					.font(.system(size: 13, weight: .bold, design: .rounded))
+					.foregroundStyle(.blue)
+					.padding(.horizontal, 14)
+					.padding(.vertical, 8)
+					.background(Color.blue.opacity(0.08))
+					.clipShape(Capsule())
+			}
+
+			Button {
+				withAnimation(.spring(response: 0.3)) {
+					_selectedSourcesForExport.removeAll()
+				}
+				HapticsManager.shared.softImpact()
+			} label: {
+				Label(.localized("Deselect All"), systemImage: "circle")
+					.font(.system(size: 13, weight: .bold, design: .rounded))
+					.foregroundStyle(.gray)
+					.padding(.horizontal, 14)
+					.padding(.vertical, 8)
+					.background(Color.gray.opacity(0.08))
+					.clipShape(Capsule())
+			}
+		}
+		.padding(.horizontal, 4)
+	}
+
+	@ViewBuilder
+	private func _exportSectionSourceList(sources: [AltSource]) -> some View {
+		VStack(spacing: 0) {
+			ForEach(sources, id: \.sourceURL?.absoluteString) { source in
+				if let urlString = source.sourceURL?.absoluteString {
+					Button {
+						if _selectedSourcesForExport.contains(urlString) {
+							_selectedSourcesForExport.remove(urlString)
+						} else {
+							_selectedSourcesForExport.insert(urlString)
+						}
+						HapticsManager.shared.selectionChanged()
+					} label: {
+						HStack(spacing: 16) {
+							ZStack {
+								Circle()
+									.stroke(_selectedSourcesForExport.contains(urlString) ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: 2)
+									.frame(width: 24, height: 24)
+
+								if _selectedSourcesForExport.contains(urlString) {
+									Circle()
+										.fill(Color.accentColor)
+										.frame(width: 14, height: 14)
+								}
+							}
+
+							VStack(alignment: .leading, spacing: 2) {
+								Text(source.name ?? .localized("Unknown"))
+									.font(.system(.body, design: .rounded).bold())
+									.foregroundStyle(.primary)
+								Text(urlString)
+									.font(.system(.caption, design: .monospaced))
+									.foregroundStyle(.secondary)
+									.lineLimit(1)
+							}
+
+							Spacer()
+						}
+						.padding(.vertical, 12)
+						.padding(.horizontal, 16)
+					}
+					.buttonStyle(.plain)
+
+					if sources.last?.sourceURL?.absoluteString != urlString {
+						Divider()
+							.padding(.leading, 56)
+					}
+				}
+			}
+		}
+		.background(
+			RoundedRectangle(cornerRadius: 24, style: .continuous)
+				.fill(Color(UIColor.secondarySystemGroupedBackground))
+				.shadow(color: .black.opacity(0.03), radius: 15, x: 0, y: 5)
+		)
+		.overlay(
+			RoundedRectangle(cornerRadius: 24, style: .continuous)
+				.stroke(Color.primary.opacity(0.05), lineWidth: 1)
+		)
+	}
+
+	@ViewBuilder
+	private func _exportSectionPortalButton() -> some View {
+		Button {
+			_exportThroughPortal()
+		} label: {
+			HStack(spacing: 12) {
+				Image(systemName: "arrow.up.doc.fill")
+					.font(.system(size: 18, weight: .bold))
+				Text(.localized("Portal Transfer"))
+					.font(.system(.headline, design: .rounded).bold())
+			}
+			.foregroundStyle(.white)
+			.frame(maxWidth: .infinity)
+			.padding(.vertical, 18)
+			.background(
+				LinearGradient(
+					colors: [Color.purple, Color.indigo.opacity(0.9)],
+					startPoint: .leading,
+					endPoint: .trailing
+				)
+			)
+			.clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+			.shadow(color: Color.purple.opacity(0.3), radius: 12, x: 0, y: 6)
+		}
+		.disabled(_selectedSourcesForExport.isEmpty)
+		.opacity(_selectedSourcesForExport.isEmpty ? 0.5 : 1)
+		.scaleEffect(_selectedSourcesForExport.isEmpty ? 0.98 : 1.0)
+		.animation(.spring(), value: _selectedSourcesForExport.isEmpty)
+	}
+
+	@ViewBuilder
 	private func _exportSelectionSection() -> some View {
 		let sources = Storage.shared.getSources()
-		
+
 		VStack(alignment: .leading, spacing: 20) {
-			VStack(alignment: .leading, spacing: 4) {
-				Text(.localized("Select Sources To Export"))
-					.font(.system(.title3, design: .rounded).bold())
-					.foregroundStyle(.primary)
-
-				Text(.localized("Choose the repositories you want to share"))
-					.font(.subheadline)
-					.foregroundStyle(.secondary)
-			}
-			.padding(.horizontal, 4)
-			
-			// Select All / Deselect All buttons
-			HStack(spacing: 12) {
-				Button {
-					withAnimation(.spring(response: 0.3)) {
-						_selectedSourcesForExport = Set(sources.compactMap { $0.sourceURL?.absoluteString })
-					}
-					HapticsManager.shared.softImpact()
-				} label: {
-					Label(.localized("Select All"), systemImage: "checkmark.circle.fill")
-						.font(.system(size: 13, weight: .bold, design: .rounded))
-						.foregroundStyle(.blue)
-						.padding(.horizontal, 14)
-						.padding(.vertical, 8)
-						.background(Color.blue.opacity(0.08))
-						.clipShape(Capsule())
-				}
-				
-				Button {
-					withAnimation(.spring(response: 0.3)) {
-						_selectedSourcesForExport.removeAll()
-					}
-					HapticsManager.shared.softImpact()
-				} label: {
-					Label(.localized("Deselect All"), systemImage: "circle")
-						.font(.system(size: 13, weight: .bold, design: .rounded))
-						.foregroundStyle(.gray)
-						.padding(.horizontal, 14)
-						.padding(.vertical, 8)
-						.background(Color.gray.opacity(0.08))
-						.clipShape(Capsule())
-				}
-			}
-			.padding(.horizontal, 4)
-			
-			VStack(spacing: 0) {
-				ForEach(sources, id: \.sourceURL?.absoluteString) { source in
-					if let urlString = source.sourceURL?.absoluteString {
-						Button {
-							if _selectedSourcesForExport.contains(urlString) {
-								_selectedSourcesForExport.remove(urlString)
-							} else {
-								_selectedSourcesForExport.insert(urlString)
-							}
-							HapticsManager.shared.selectionChanged()
-						} label: {
-							HStack(spacing: 16) {
-								ZStack {
-									Circle()
-										.stroke(_selectedSourcesForExport.contains(urlString) ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: 2)
-										.frame(width: 24, height: 24)
-
-									if _selectedSourcesForExport.contains(urlString) {
-										Circle()
-											.fill(Color.accentColor)
-											.frame(width: 14, height: 14)
-									}
-								}
-
-								VStack(alignment: .leading, spacing: 2) {
-									Text(source.name ?? .localized("Unknown"))
-										.font(.system(.body, design: .rounded).bold())
-										.foregroundStyle(.primary)
-									Text(urlString)
-										.font(.system(.caption, design: .monospaced))
-										.foregroundStyle(.secondary)
-										.lineLimit(1)
-								}
-
-								Spacer()
-							}
-							.padding(.vertical, 12)
-							.padding(.horizontal, 16)
-						}
-						.buttonStyle(.plain)
-
-						if sources.last?.sourceURL?.absoluteString != urlString {
-							Divider()
-								.padding(.leading, 56)
-						}
-					}
-				}
-			}
-			.background(
-				RoundedRectangle(cornerRadius: 24, style: .continuous)
-					.fill(Color(UIColor.secondarySystemGroupedBackground))
-					.shadow(color: .black.opacity(0.03), radius: 15, x: 0, y: 5)
-			)
-			.overlay(
-				RoundedRectangle(cornerRadius: 24, style: .continuous)
-					.stroke(Color.primary.opacity(0.05), lineWidth: 1)
-			)
-
-			// Export through Portal button
-			Button {
-				_exportThroughPortal()
-			} label: {
-				HStack(spacing: 12) {
-					Image(systemName: "arrow.up.doc.fill")
-						.font(.system(size: 18, weight: .bold))
-					Text(.localized("Portal Transfer"))
-						.font(.system(.headline, design: .rounded).bold())
-				}
-				.foregroundStyle(.white)
-				.frame(maxWidth: .infinity)
-				.padding(.vertical, 18)
-				.background(
-					LinearGradient(
-						colors: [Color.purple, Color.indigo.opacity(0.9)],
-						startPoint: .leading,
-						endPoint: .trailing
-					)
-				)
-				.clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-				.shadow(color: Color.purple.opacity(0.3), radius: 12, x: 0, y: 6)
-			}
-			.disabled(_selectedSourcesForExport.isEmpty)
-			.opacity(_selectedSourcesForExport.isEmpty ? 0.5 : 1)
-			.scaleEffect(_selectedSourcesForExport.isEmpty ? 0.98 : 1.0)
-			.animation(.spring(), value: _selectedSourcesForExport.isEmpty)
+			_exportSectionHeader()
+			_exportSectionSelectButtons(sources: sources)
+			_exportSectionSourceList(sources: sources)
+			_exportSectionPortalButton()
 		}
 		.padding(.horizontal)
 	}
