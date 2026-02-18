@@ -5,6 +5,8 @@ import IDeviceSwift
 struct InstallProgressView: View {
     var app: AppInfoPresentable
     @ObservedObject var viewModel: InstallerStatusViewModel
+    @State private var _metalState: MetalAnimationState = .idle
+    @State private var _errorMessage: String? = nil
     
     var body: some View {
         HStack(spacing: 12) {
@@ -19,6 +21,13 @@ struct InstallProgressView: View {
             RoundedRectangle(cornerRadius: 20, style: .continuous)
                 .fill(Color(.secondarySystemGroupedBackground))
         )
+        .overlay {
+            FullScreenMetalStateView(state: $_metalState, errorMessage: _errorMessage)
+                .ignoresSafeArea()
+        }
+        .onChange(of: viewModel.status) { newStatus in
+            _handleStatusChange(newStatus)
+        }
     }
     
     // MARK: - Status Label
@@ -47,6 +56,22 @@ struct InstallProgressView: View {
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
+        }
+    }
+
+    private func _handleStatusChange(_ status: InstallerStatus) {
+        switch status {
+        case .none:
+            break
+        case .ready:
+            _metalState = .success
+        case .sendingManifest, .sendingPayload, .installing:
+            _metalState = .loading
+        case .completed:
+            _metalState = .success
+        case .broken:
+            _errorMessage = "Installation failed. Integrity could not be verified."
+            _metalState = .error
         }
     }
 }

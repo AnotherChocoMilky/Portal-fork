@@ -25,7 +25,6 @@ struct ModernSigningView: View {
     @State private var _isNameDialogPresenting = false
     @State private var _isIdentifierDialogPresenting = false
     @State private var _isVersionDialogPresenting = false
-    @State private var _isSigningProcessPresented = false
     @State private var _isAddingCertificatePresenting = false
     @State private var _selectedTab = 0
     @State private var _showAdvancedDebugSheet = false
@@ -33,6 +32,8 @@ struct ModernSigningView: View {
     @State private var _editingName = ""
     @State private var _editingBundleId = ""
     @State private var _editingVersion = ""
+    @State private var _metalState: MetalAnimationState = .idle
+    @State private var _errorMessage: String? = nil
     
     // Animation states
     @State private var _appearAnimation = false
@@ -105,7 +106,11 @@ struct ModernSigningView: View {
                     .offset(y: _buttonOffset)
                     .opacity(_contentOpacity)
                 }
+
+                FullScreenMetalStateView(state: $_metalState, errorMessage: _errorMessage)
+                    .ignoresSafeArea()
             }
+            .disabled(_metalState != .idle)
             .sheet(isPresented: $_isAltPickerPresenting) {
                 SigningAlternativeIconView(app: app, appIcon: $appIcon, isModifing: .constant(true))
             }
@@ -127,23 +132,6 @@ struct ModernSigningView: View {
                        let image = UIImage(data: data)?.resizeToSquare() {
                         appIcon = image
                     }
-                }
-            }
-            .fullScreenCover(isPresented: $_isSigningProcessPresented) {
-                if #available(iOS 17.0, *) {
-                    SigningProcessView(
-                        appName: _temporaryOptions.appName ?? app.name ?? "App",
-                        appIcon: appIcon
-                    )
-                } else {
-                    VStack(spacing: 20) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                        Text("Signing \(_temporaryOptions.appName ?? app.name ?? "App")...")
-                            .font(.headline)
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(UIColor.systemBackground))
                 }
             }
             .fullScreenCover(isPresented: $_isAddingCertificatePresenting) {
@@ -1112,7 +1100,7 @@ struct ModernSigningView: View {
         
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
             _isSigning = true
-            _isSigningProcessPresented = true
+            _metalState = .loading
         }
         
         if _serverMethod == 2 {
@@ -1124,38 +1112,37 @@ struct ModernSigningView: View {
             ) { result in
                 DispatchQueue.main.async {
                     _isSigning = false
-                    _isSigningProcessPresented = false
                     AppStateManager.shared.isSigning = false
                     
                     switch result {
                     case .success(let installLink):
+                        _metalState = .success
+
                         if UserDefaults.standard.bool(forKey: "Feather.notificationsEnabled") {
                             NotificationManager.shared.sendAppReadyNotification(appName: app.name ?? "App")
                         }
                         
-                        let install = UIAlertAction(title: .localized("Install"), style: .default) { _ in
-                            if let url = URL(string: installLink) {
-                                UIApplication.shared.open(url)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+                            let install = UIAlertAction(title: .localized("Install"), style: .default) { _ in
+                                if let url = URL(string: installLink) {
+                                    UIApplication.shared.open(url)
+                                }
                             }
+                            let copy = UIAlertAction(title: .localized("Copy Link"), style: .default) { _ in
+                                UIPasteboard.general.string = installLink
+                            }
+                            let cancel = UIAlertAction(title: .localized("Cancel"), style: .cancel)
+
+                            UIAlertController.showAlert(
+                                title: .localized("Signing Successful"),
+                                message: .localized("Your app is ready to install!"),
+                                actions: [install, copy, cancel]
+                            )
                         }
-                        let copy = UIAlertAction(title: .localized("Copy Link"), style: .default) { _ in
-                            UIPasteboard.general.string = installLink
-                        }
-                        let cancel = UIAlertAction(title: .localized("Cancel"), style: .cancel)
-                        
-                        UIAlertController.showAlert(
-                            title: .localized("Signing Successful"),
-                            message: .localized("Your app is ready to install!"),
-                            actions: [install, copy, cancel]
-                        )
                         
                     case .failure(let error):
-                        let ok = UIAlertAction(title: .localized("Dismiss"), style: .cancel)
-                        UIAlertController.showAlert(
-                            title: "Error",
-                            message: error.localizedDescription,
-                            actions: [ok]
-                        )
+                        _errorMessage = error.localizedDescription
+                        _metalState = .error
                     }
                 }
             }
@@ -1169,33 +1156,28 @@ struct ModernSigningView: View {
             ) { error in
                 DispatchQueue.main.async {
                     AppStateManager.shared.isSigning = false
-                }
-                if let error {
-                    _isSigningProcessPresented = false
-                    let ok = UIAlertAction(title: .localized("Dismiss"), style: .cancel) { _ in
-                        dismiss()
-                    }
                     
-                    UIAlertController.showAlert(
-                        title: "Error",
-                        message: error.localizedDescription,
-                        actions: [ok]
-                    )
-                } else {
-                    if _temporaryOptions.post_deleteAppAfterSigned, !app.isSigned {
-                        Storage.shared.deleteApp(for: app)
-                    }
-                    
-                    if UserDefaults.standard.bool(forKey: "Feather.notificationsEnabled") {
-                        NotificationManager.shared.sendAppReadyNotification(appName: app.name ?? "App")
-                    }
-                    
-                    if _temporaryOptions.post_installAppAfterSigned {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                            NotificationCenter.default.post(name: Notification.Name("Feather.installApp"), object: nil)
+                    if let error {
+                        _errorMessage = error.localizedDescription
+                        _metalState = .error
+                    } else {
+                        _metalState = .success
+
+                        if _temporaryOptions.post_deleteAppAfterSigned, !app.isSigned {
+                            Storage.shared.deleteApp(for: app)
+                        }
+
+                        if UserDefaults.standard.bool(forKey: "Feather.notificationsEnabled") {
+                            NotificationManager.shared.sendAppReadyNotification(appName: app.name ?? "App")
+                        }
+
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+                            if _temporaryOptions.post_installAppAfterSigned {
+                                NotificationCenter.default.post(name: Notification.Name("Feather.installApp"), object: nil)
+                            }
+                            dismiss()
                         }
                     }
-                    dismiss()
                 }
             }
         }
