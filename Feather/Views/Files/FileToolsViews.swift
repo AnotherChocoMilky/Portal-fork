@@ -699,12 +699,15 @@ struct AdvancedFileSearchView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(
-                        searchQuery.isEmpty
-                        ? AnyShapeStyle(Color.gray.opacity(0.5))
-                        : AnyShapeStyle(LinearGradient(colors: gradientColors, startPoint: .leading, endPoint: .trailing))
-                    )
+                Group {
+                    if searchQuery.isEmpty {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(Color.gray.opacity(0.5))
+                    } else {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(LinearGradient(colors: gradientColors, startPoint: .leading, endPoint: .trailing))
+                    }
+                }
             )
             .shadow(color: searchQuery.isEmpty ? .clear : .blue.opacity(0.3), radius: 10, x: 0, y: 5)
         }
@@ -1450,12 +1453,15 @@ struct Base64ToolView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(
-                                mode == modeOption
-                                ? AnyShapeStyle(LinearGradient(colors: [modeOption.color, modeOption.color.opacity(0.8)], startPoint: .leading, endPoint: .trailing))
-                                : AnyShapeStyle(Color(UIColor.tertiarySystemBackground))
-                            )
+                        Group {
+                            if mode == modeOption {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(LinearGradient(colors: [modeOption.color, modeOption.color.opacity(0.8)], startPoint: .leading, endPoint: .trailing))
+                            } else {
+                                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                                    .fill(Color(UIColor.tertiarySystemBackground))
+                            }
+                        }
                     )
                     .shadow(color: mode == modeOption ? modeOption.color.opacity(0.3) : .clear, radius: 8, x: 0, y: 4)
                 }
@@ -1572,12 +1578,15 @@ struct Base64ToolView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
             .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(
-                        inputText.isEmpty
-                        ? AnyShapeStyle(Color.gray.opacity(0.5))
-                        : AnyShapeStyle(LinearGradient(colors: gradientColors, startPoint: .leading, endPoint: .trailing))
-                    )
+                Group {
+                    if inputText.isEmpty {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(Color.gray.opacity(0.5))
+                    } else {
+                        RoundedRectangle(cornerRadius: 16, style: .continuous)
+                            .fill(LinearGradient(colors: gradientColors, startPoint: .leading, endPoint: .trailing))
+                    }
+                }
             )
             .shadow(color: inputText.isEmpty ? .clear : mode.color.opacity(0.3), radius: 10, x: 0, y: 5)
         }

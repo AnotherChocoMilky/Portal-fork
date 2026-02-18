@@ -8,18 +8,18 @@ struct IPAExplorerProvisionViewer: View {
         List {
             if let cert = certificate {
                 Section(.localized("Metadata")) {
-                    InfoRow(label: .localized("Name"), value: cert.Name)
-                    InfoRow(label: .localized("Team ID"), value: cert.TeamIdentifier.joined(separator: ", "))
-                    InfoRow(label: .localized("Team Name"), value: cert.TeamName)
-                    InfoRow(label: .localized("App ID Name"), value: cert.AppIDName)
-                    InfoRow(label: .localized("UUID"), value: cert.UUID)
-                    InfoRow(label: .localized("Created"), value: cert.CreationDate.formatted())
-                    InfoRow(label: .localized("Expires"), value: cert.ExpirationDate.formatted())
+                    ProvisionInfoRow(label: .localized("Name"), value: cert.Name)
+                    ProvisionInfoRow(label: .localized("Team ID"), value: cert.TeamIdentifier.joined(separator: ", "))
+                    ProvisionInfoRow(label: .localized("Team Name"), value: cert.TeamName)
+                    ProvisionInfoRow(label: .localized("App ID Name"), value: cert.AppIDName)
+                    ProvisionInfoRow(label: .localized("UUID"), value: cert.UUID)
+                    ProvisionInfoRow(label: .localized("Created"), value: cert.CreationDate.formatted())
+                    ProvisionInfoRow(label: .localized("Expires"), value: cert.ExpirationDate.formatted())
                 }
 
                 Section(.localized("Capabilities")) {
-                    InfoRow(label: .localized("Device Count"), value: cert.ProvisionsAllDevices == true ? "Unlimited" : "\(cert.ProvisionedDevices?.count ?? 0)")
-                    InfoRow(label: .localized("Platform"), value: cert.Platform.joined(separator: ", "))
+                    ProvisionInfoRow(label: .localized("Device Count"), value: cert.ProvisionsAllDevices == true ? "Unlimited" : "\(cert.ProvisionedDevices?.count ?? 0)")
+                    ProvisionInfoRow(label: .localized("Platform"), value: cert.Platform.joined(separator: ", "))
                 }
 
                 if let entitlements = cert.Entitlements {
@@ -51,7 +51,7 @@ struct IPAExplorerProvisionViewer: View {
     }
 }
 
-private struct InfoRow: View {
+private struct ProvisionInfoRow: View {
     let label: String
     let value: String
 

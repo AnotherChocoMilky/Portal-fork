@@ -338,10 +338,17 @@ struct AdvancedToolDetailView: View {
                 toolOptionsSection
                 
                 // Action Button
-                actionButton
+                if !isProcessing && !showOutput {
+                    actionButton
+                }
+
+                // Real Tool Views
+                if let url = selectedFile, showOutput {
+                    realToolView(for: url)
+                }
                 
-                // Output Section
-                if showOutput {
+                // Output Section (Fallback for tools without real view yet)
+                if showOutput && !hasRealView {
                     outputSection
                 }
             }
@@ -509,12 +516,52 @@ struct AdvancedToolDetailView: View {
         }
     }
     
+    private var hasRealView: Bool {
+        switch tool.name {
+        case "Mach-O Analyzer", "Architecture Analyzer": return true
+        case "Hash Calculator": return true
+        case "EXIF Viewer": return true
+        case "Plist Converter", "JSON/Plist Transformer": return true
+        case "Base64 Encoder/Decoder": return true
+        case "ZIP Inspector", "IPA Extractor": return true
+        case "Metadata Extractor": return true
+        case "Advanced Hex Editor": return true
+        default: return false
+        }
+    }
+
+    @ViewBuilder
+    private func realToolView(for url: URL) -> some View {
+        switch tool.name {
+        case "Mach-O Analyzer", "Architecture Analyzer":
+            BinaryAnalysisView(fileURL: url)
+        case "Hash Calculator":
+            HashVerifierView(fileURL: url)
+        case "EXIF Viewer":
+            EXIFViewerView(fileURL: url)
+        case "Plist Converter", "JSON/Plist Transformer":
+            DataConverterView(fileURL: url)
+        case "Base64 Encoder/Decoder":
+            TextTransformerView()
+        case "ZIP Inspector", "IPA Extractor":
+            ArchiveBrowserView(fileURL: url)
+        case "Metadata Extractor":
+            FileInfoView(file: FileItem(name: url.lastPathComponent, url: url, isDirectory: false, size: nil, sizeInBytes: nil, modificationDate: nil, customIcon: nil))
+        case "Advanced Hex Editor":
+            HexEditorAdvancedView(fileURL: url)
+        default:
+            EmptyView()
+        }
+    }
+
     // MARK: - Run Tool
     private func runTool() {
         isProcessing = true
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            outputText = generateSampleOutput()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            if !hasRealView {
+                outputText = generateSampleOutput()
+            }
             showOutput = true
             isProcessing = false
             HapticsManager.shared.success()
@@ -851,43 +898,30 @@ struct BinaryAnalysisView: View {
     }
     
     private func analyzeBinary() {
+        guard let url = fileURL else { return }
         isAnalyzing = true
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-            analysisResult = BinaryAnalysisResult(
-                magic: "0xFEEDFACF (64-bit)",
-                cpuType: "ARM64",
-                fileType: "EXECUTE",
-                architectures: ["arm64", "arm64e"],
-                segments: [
-                    ("__PAGEZERO", "4 GB"),
-                    ("__TEXT", "10 MB"),
-                    ("__DATA", "2 MB"),
-                    ("__LINKEDIT", "2 MB")
-                ],
-                loadCommands: [
-                    "LC_SEGMENT_64 __PAGEZERO",
-                    "LC_SEGMENT_64 __TEXT",
-                    "LC_SEGMENT_64 __DATA",
-                    "LC_SEGMENT_64 __LINKEDIT",
-                    "LC_DYLD_INFO_ONLY",
-                    "LC_SYMTAB",
-                    "LC_DYSYMTAB",
-                    "LC_LOAD_DYLINKER",
-                    "LC_UUID",
-                    "LC_BUILD_VERSION",
-                    "LC_SOURCE_VERSION",
-                    "LC_MAIN",
-                    "LC_ENCRYPTION_INFO_64",
-                    "LC_LOAD_DYLIB libSystem.B.dylib",
-                    "LC_LOAD_DYLIB Foundation",
-                    "LC_LOAD_DYLIB UIKit",
-                    "LC_CODE_SIGNATURE"
-                ],
-                isEncrypted: false,
-                hasCodeSignature: true
-            )
-            isAnalyzing = false
+        DispatchQueue.global(qos: .userInitiated).async {
+            let info = FileAnalysisEngine.analyzeMachOFile(at: url.path)
+
+            DispatchQueue.main.async {
+                if let info = info {
+                    analysisResult = BinaryAnalysisResult(
+                        magic: info.is64Bit ? "64-bit Mach-O" : "32-bit Mach-O",
+                        cpuType: "ARM",
+                        fileType: "Executable",
+                        architectures: info.architectures.components(separatedBy: ", "),
+                        segments: [
+                            ("__TEXT", "Unknown"),
+                            ("__DATA", "Unknown")
+                        ],
+                        loadCommands: (0..<info.numberOfLoadCommands).map { "Command \($0)" },
+                        isEncrypted: info.hasEncryption,
+                        hasCodeSignature: true
+                    )
+                }
+                isAnalyzing = false
+            }
         }
     }
 }
@@ -983,8 +1017,10 @@ struct HexEditorAdvancedView: View {
     }
     
     private func loadSampleData() {
-        // Generate sample hex data
-        hexData = (0..<512).map { _ in UInt8.random(in: 0...255) }
+        guard let url = fileURL else { return }
+        if let data = try? Data(contentsOf: url) {
+            hexData = Array(data.prefix(1024 * 10)) // Load first 10KB
+        }
     }
 }
 
@@ -1154,13 +1190,46 @@ struct EntropyAnalyzerView: View {
     }
     
     private func analyzeEntropy() {
+        guard let url = fileURL else { return }
         isAnalyzing = true
         
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            // Generate sample entropy data
-            entropyData = (0..<100).map { _ in Double.random(in: 4...7.5) }
-            overallEntropy = entropyData.reduce(0, +) / Double(entropyData.count)
-            isAnalyzing = false
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let data = try? Data(contentsOf: url) else { return }
+
+            let entropy = calculateRealEntropy(data: data)
+            let chunks = 100
+            let chunkSize = data.count / chunks
+            var distribution: [Double] = []
+
+            if chunkSize > 0 {
+                for i in 0..<chunks {
+                    let start = i * chunkSize
+                    let end = min(start + chunkSize, data.count)
+                    distribution.append(calculateRealEntropy(data: data.subdata(in: start..<end)))
+                }
+            }
+
+            DispatchQueue.main.async {
+                overallEntropy = entropy
+                entropyData = distribution
+                isAnalyzing = false
+            }
         }
+    }
+
+    private func calculateRealEntropy(data: Data) -> Double {
+        guard !data.isEmpty else { return 0 }
+        var frequencies = [UInt8: Int]()
+        for byte in data {
+            frequencies[byte, default: 0] += 1
+        }
+
+        var entropy: Double = 0
+        let count = Double(data.count)
+        for freq in frequencies.values {
+            let p = Double(freq) / count
+            entropy -= p * (log2(p))
+        }
+        return entropy
     }
 }
