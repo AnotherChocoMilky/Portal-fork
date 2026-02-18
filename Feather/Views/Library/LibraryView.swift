@@ -101,8 +101,10 @@ struct LibraryView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                LibraryDownloadHeaderView(downloadManager: downloadManager)
-                    .padding(.top, 10)
+                if !downloadManager.manualDownloads.isEmpty {
+                    LibraryDownloadHeaderView(downloadManager: downloadManager)
+                        .padding(.top, 10)
+                }
                 
                 if !hideManager.isHidden("library.filterChips") {
                     filterChips
@@ -197,19 +199,13 @@ struct LibraryView: View {
                     _searchText = ""
                 }
             }
+            .navigationTitle("Library")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar(content: {
-                ToolbarItem(placement: .principal) {
-                    Text("Library")
-                        .font(.headline)
-                        .onLongPressGesture(minimumDuration: 2.0) {
-                            ToastManager.shared.show("📚 Total Apps: \(totalAppCount)", type: .info)
-                            HapticsManager.shared.success()
-                        }
-                }
                 ToolbarItem(placement: .topBarTrailing) {
                     if !hideManager.isHidden("library.importButton") {
-                        Menu {
-                            _importActions()
+                        Button {
+                            _isImportingPresenting = true
                         } label: {
                             Image(systemName: "plus.circle.fill")
                                 .font(.system(size: 22))
