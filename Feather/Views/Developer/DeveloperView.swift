@@ -7620,59 +7620,64 @@ struct NearbyShareUITestingView: View {
         case conflictResolver = "Conflict Resolver"
     }
     
+    @ViewBuilder
+    private func renderSelectedView() -> some View {
+        switch selectedView {
+        case .loading:
+            NearbyTransferView()
+        case .error:
+            TransferProgressView(
+                service: {
+                    let s = MockNearbyTransferService()
+                    s.state = .failed(NSError(domain: "NearbyTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Connection Lost During Transfer"]))
+                    return s
+                }(),
+                onCancel: { selectedView = .loading },
+                onRetry: { selectedView = .transferProgress }
+            )
+        case .success:
+            TransferProgressView(
+                service: {
+                    let s = MockNearbyTransferService()
+                    s.state = .completed
+                    return s
+                }(),
+                onCancel: { selectedView = .loading },
+                onRetry: { selectedView = .transferProgress }
+            )
+        case .senderAnimation:
+            SenderAnimationView(state: .transferring(progress: 0.65, bytesTransferred: 650_000_000, totalBytes: 1_000_000_000, speed: 5_000_000))
+        case .receiverAnimation:
+            ReceiverAnimationView(state: .transferring(progress: 0.45, bytesTransferred: 450_000_000, totalBytes: 1_000_000_000, speed: 4_500_000))
+        case .nearbyPairingSender:
+            PairingView()
+        case .nearbyPairingReceiver:
+            PairingView()
+        case .remotePairing:
+            PairingThroughOTPView()
+        case .transferProgress:
+            TransferProgressView(
+                service: MockNearbyTransferService(),
+                onCancel: { selectedView = .loading },
+                onRetry: { selectedView = .transferProgress }
+            )
+        case .preflightCheck:
+            PreflightCheckView(onContinue: { selectedView = .transferProgress })
+        case .postRestoreHealthCheck:
+            PostRestoreHealthCheckView(onFinish: { selectedView = .success })
+        case .conflictResolver:
+            ConflictResolverView(
+                backupDirectory: FileManager.default.temporaryDirectory,
+                onResolve: { _ in selectedView = .postRestoreHealthCheck }
+            )
+        }
+    }
+
     var body: some View {
         ZStack {
             // Main content - the selected view
             Group {
-                switch selectedView {
-                case .loading:
-                    NearbyTransferView()
-                case .error:
-                    TransferProgressView(
-                        service: {
-                            let s = MockNearbyTransferService()
-                            s.state = .failed(NSError(domain: "NearbyTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Connection Lost During Transfer"]))
-                            return s
-                        }(),
-                        onCancel: { selectedView = .loading },
-                        onRetry: { selectedView = .transferProgress }
-                    )
-                case .success:
-                    TransferProgressView(
-                        service: {
-                            let s = MockNearbyTransferService()
-                            s.state = .completed
-                            return s
-                        }(),
-                        onCancel: { selectedView = .loading },
-                        onRetry: { selectedView = .transferProgress }
-                    )
-                case .senderAnimation:
-                    SenderAnimationView(state: .transferring(progress: 0.65, bytesTransferred: 650_000_000, totalBytes: 1_000_000_000, speed: 5_000_000))
-                case .receiverAnimation:
-                    ReceiverAnimationView(state: .transferring(progress: 0.45, bytesTransferred: 450_000_000, totalBytes: 1_000_000_000, speed: 4_500_000))
-                case .nearbyPairingSender:
-                    PairingView()
-                case .nearbyPairingReceiver:
-                    PairingView()
-                case .remotePairing:
-                    PairingThroughOTPView()
-                case .transferProgress:
-                    TransferProgressView(
-                        service: MockNearbyTransferService(),
-                        onCancel: { selectedView = .loading },
-                        onRetry: { selectedView = .transferProgress }
-                    )
-                case .preflightCheck:
-                    PreflightCheckView(onContinue: { selectedView = .transferProgress })
-                case .postRestoreHealthCheck:
-                    PostRestoreHealthCheckView(onFinish: { selectedView = .success })
-                case .conflictResolver:
-                    ConflictResolverView(
-                        backupDirectory: FileManager.default.temporaryDirectory,
-                        onResolve: { _ in selectedView = .postRestoreHealthCheck }
-                    )
-                }
+                renderSelectedView()
             }
             
             // Overlay controls
