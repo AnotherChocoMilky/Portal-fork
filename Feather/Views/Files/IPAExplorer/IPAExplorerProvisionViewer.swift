@@ -76,7 +76,7 @@ private struct ProvisionEntitlementRow: View {
             Text(key)
                 .font(.caption)
                 .foregroundStyle(.secondary)
-            Text("\(String(describing: value ?? ""))")
+            Text(value.map { String(describing: $0.value) } ?? "")
                 .font(.system(.body, design: .monospaced))
         }
     }
