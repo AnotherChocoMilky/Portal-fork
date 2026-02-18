@@ -7664,7 +7664,7 @@ struct NearbyShareUITestingView: View {
         case .preflightCheck:
             PreflightCheckView(onContinue: { selectedView = .transferProgress })
         case .postRestoreHealthCheck:
-            PostRestoreHealthCheckView(onFinish: { selectedView = .success })
+            PostRestoreHealthCheckView(onComplete: { selectedView = .success })
         case .conflictResolver:
             ConflictResolverView(
                 backupDirectory: FileManager.default.temporaryDirectory,
