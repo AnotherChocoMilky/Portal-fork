@@ -181,6 +181,20 @@ struct AppLogsView: View {
                         Label("Copy To Clipboard", systemImage: "doc.on.clipboard")
                     }
 
+                    Menu {
+                        Button(action: saveAsText) {
+                            Label("Plain Text (.txt)", systemImage: "doc.text")
+                        }
+                        Button(action: saveAsJSON) {
+                            Label("JSON Data (.json)", systemImage: "braces")
+                        }
+                        Button(action: saveAsCSV) {
+                            Label("CSV Spreadsheet (.csv)", systemImage: "tablecells")
+                        }
+                    } label: {
+                        Label("Export Logs", systemImage: "square.and.arrow.up")
+                    }
+
                     Divider()
 
                     Button(role: .destructive, action: {
@@ -212,7 +226,7 @@ struct AppLogsView: View {
     private func saveAsText() {
         let text = logManager.exportLogs()
         if let data = text.data(using: .utf8) {
-            logDocument = LogDocument(data: data, isJSON: false)
+            logDocument = LogDocument(data: data, contentType: .plainText)
             exportType = .plainText
             showExporter = true
         }
@@ -220,8 +234,17 @@ struct AppLogsView: View {
 
     private func saveAsJSON() {
         if let data = logManager.exportLogsAsJSON() {
-            logDocument = LogDocument(data: data, isJSON: true)
+            logDocument = LogDocument(data: data, contentType: .json)
             exportType = .json
+            showExporter = true
+        }
+    }
+
+    private func saveAsCSV() {
+        let csv = logManager.exportLogsAsCSV()
+        if let data = csv.data(using: .utf8) {
+            logDocument = LogDocument(data: data, contentType: .commaSeparatedText)
+            exportType = .commaSeparatedText
             showExporter = true
         }
     }
@@ -244,41 +267,47 @@ struct FilterPill: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: 8) {
                 if let icon = icon {
                     Text(icon)
                         .font(.system(size: 14))
                 }
                 Text(title)
-                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
 
                 Text("\(count)")
-                    .font(.system(size: 10, weight: .bold))
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(isSelected ? .white.opacity(0.2) : .secondary.opacity(0.1))
+                    .font(.system(size: 10, weight: .black, design: .monospaced))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(isSelected ? .white.opacity(0.25) : .primary.opacity(0.05))
                     .clipShape(Capsule())
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 8)
+            .padding(.vertical, 10)
             .background(
                 ZStack {
                     if isSelected {
-                        Color.accentColor
+                        LinearGradient(
+                            colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     } else {
                         Color(UIColor.secondarySystemGroupedBackground)
                     }
                 }
             )
-            .foregroundStyle(isSelected ? .white : .primary)
+            .foregroundStyle(isSelected ? .white : .primary.opacity(0.8))
             .clipShape(Capsule())
-            .shadow(color: isSelected ? Color.accentColor.opacity(0.3) : .clear, radius: 4, x: 0, y: 2)
+            .shadow(color: isSelected ? Color.accentColor.opacity(0.4) : .black.opacity(0.05), radius: 8, x: 0, y: 4)
             .overlay(
                 Capsule()
-                    .stroke(.white.opacity(colorScheme == .dark ? 0.05 : 0.2), lineWidth: 1)
+                    .stroke(.white.opacity(colorScheme == .dark ? 0.1 : 0.3), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
+        .scaleEffect(isSelected ? 1.02 : 1.0)
+        .animation(.spring(response: 0.3), value: isSelected)
     }
 }
 
@@ -398,20 +427,20 @@ struct DetailRow: View {
 // MARK: - Activity View Controller
 // MARK: - Log Document
 struct LogDocument: FileDocument {
-    static var readableContentTypes: [UTType] { [.json, .plainText] }
+    static var readableContentTypes: [UTType] { [.json, .plainText, .commaSeparatedText] }
 
     var data: Data
-    var isJSON: Bool
+    var contentType: UTType
 
-    init(data: Data, isJSON: Bool) {
+    init(data: Data, contentType: UTType) {
         self.data = data
-        self.isJSON = isJSON
+        self.contentType = contentType
     }
 
     init(configuration: ReadConfiguration) throws {
         if let data = configuration.file.regularFileContents {
             self.data = data
-            self.isJSON = configuration.contentType == .json
+            self.contentType = configuration.contentType
         } else {
             throw CocoaError(.fileReadCorruptFile)
         }

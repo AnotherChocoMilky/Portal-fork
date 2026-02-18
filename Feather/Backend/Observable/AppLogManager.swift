@@ -193,6 +193,21 @@ final class AppLogManager: ObservableObject {
     func exportLogsAsJSON() -> Data? {
         return try? JSONEncoder().encode(logs)
     }
+
+    func exportLogsAsCSV() -> String {
+        var csvString = "Timestamp,Level,Category,Message,File,Function,Line\n"
+        for log in logs {
+            let timestamp = log.formattedTimestamp
+            let level = log.level.rawValue
+            let category = log.category.replacingOccurrences(of: "\"", with: "\"\"")
+            let message = log.message.replacingOccurrences(of: "\"", with: "\"\"")
+            let file = log.file
+            let function = log.function
+            let line = log.line
+            csvString += "\"\(timestamp)\",\"\(level)\",\"\(category)\",\"\(message)\",\"\(file)\",\"\(function)\",\(line)\n"
+        }
+        return csvString
+    }
     
     // MARK: - Clear
     

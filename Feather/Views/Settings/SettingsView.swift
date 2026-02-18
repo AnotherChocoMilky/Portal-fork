@@ -183,7 +183,7 @@ struct SettingsView: View {
     private var saveDataSection: some View {
         Section {
             Toggle(isOn: $saveDataToDevice) {
-                SettingsRowContent(icon: "idcard.fill", title: String.localized("Save Data To Device"), color: .accentColor)
+                SettingsRowContent(icon: "person.text.rectangle.fill", title: String.localized("Save Data To Device"), color: .accentColor)
             }
             .onChange(of: saveDataToDevice) { newValue in
                 if newValue {

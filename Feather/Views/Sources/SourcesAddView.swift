@@ -88,10 +88,11 @@ struct SourcesAddView: View {
 	// MARK: - Main Content
 	@ViewBuilder
 	private var _mainContent: some View {
-		VStack(spacing: 24) {
+		VStack(spacing: 28) {
 			// Import Results Section (shown after bulk import)
 			if _showImportResults {
 				_importResultsSection()
+					.transition(.move(edge: .top).combined(with: .opacity))
 			}
 			
 			// Regular UI when not showing import results
@@ -106,9 +107,10 @@ struct SourcesAddView: View {
 			// Export mode UI
 			if _isExportMode {
 				_exportSelectionSection()
+					.transition(.move(edge: .bottom).combined(with: .opacity))
 			}
 		}
-		.padding(.bottom, 30)
+		.padding(.vertical, 20)
 	}
 	
 	// MARK: - Toolbar Content
@@ -214,50 +216,65 @@ struct SourcesAddView: View {
 	// MARK: - Source URL Section
 	@ViewBuilder
 	private var _sourceURLSection: some View {
-		VStack(alignment: .leading, spacing: 12) {
-			Text(.localized("Add Source"))
-				.font(.system(.title3, design: .rounded).bold())
-				.foregroundStyle(.primary)
-				.padding(.horizontal, 4)
+		VStack(alignment: .leading, spacing: 16) {
+			VStack(alignment: .leading, spacing: 4) {
+				Text(.localized("Add Source"))
+					.font(.system(.title2, design: .rounded).bold())
+					.foregroundStyle(.primary)
+
+				Text(.localized("Enter a repository URL to discover new apps"))
+					.font(.subheadline)
+					.foregroundStyle(.secondary)
+			}
+			.padding(.horizontal, 4)
 			
 			VStack(spacing: 16) {
 				HStack(spacing: 12) {
-					Image(systemName: "link")
-						.font(.system(size: 18, weight: .semibold))
-						.foregroundStyle(Color.accentColor)
-						.frame(width: 40, height: 40)
-						.background(Color.accentColor.opacity(0.1))
-						.clipShape(Circle())
+					ZStack {
+						Circle()
+							.fill(Color.accentColor.opacity(0.12))
+							.frame(width: 44, height: 44)
+
+						Image(systemName: "link")
+							.font(.system(size: 18, weight: .bold))
+							.foregroundStyle(Color.accentColor)
+					}
 					
 					TextField(.localized("Repository URL"), text: $_sourceURL)
 						.keyboardType(.URL)
 						.textInputAutocapitalization(.never)
-						.font(.system(.body, design: .rounded))
+						.font(.system(.body, design: .rounded, weight: .medium))
 					
 					if !_sourceURL.isEmpty {
 						Button {
 							_sourceURL = ""
 						} label: {
 							Image(systemName: "xmark.circle.fill")
-								.foregroundStyle(.secondary)
+								.foregroundStyle(.secondary.opacity(0.6))
+								.font(.system(size: 20))
 						}
 						.buttonStyle(.plain)
 					}
 				}
 				.padding(12)
-				.background(Color(UIColor.secondarySystemGroupedBackground))
-				.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-				.shadow(color: .black.opacity(0.03), radius: 8, x: 0, y: 4)
+				.background(
+					RoundedRectangle(cornerRadius: 20, style: .continuous)
+						.fill(Color(UIColor.secondarySystemGroupedBackground))
+						.shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
+				)
+				.overlay(
+					RoundedRectangle(cornerRadius: 20, style: .continuous)
+						.stroke(Color.accentColor.opacity(0.1), lineWidth: 1)
+				)
 			}
 			
-			VStack(alignment: .leading, spacing: 4) {
-				Label(.localized("Only AltStore repositories are supported."), systemImage: "info.circle")
-				Label(.localized("Supports KravaShit/MapleSign and ESign imports."), systemImage: "arrow.triangle.2.circlepath")
+			VStack(alignment: .leading, spacing: 6) {
+				Label(.localized("Only AltStore repositories are supported."), systemImage: "info.circle.fill")
+				Label(.localized("Supports AltStore, MapleSign, and ESign imports."), systemImage: "arrow.triangle.2.circlepath")
 			}
-			.font(.system(size: 11, weight: .medium, design: .rounded))
-			.foregroundStyle(.secondary)
+			.font(.system(size: 12, weight: .semibold, design: .rounded))
+			.foregroundStyle(.secondary.opacity(0.8))
 			.padding(.horizontal, 8)
-			.padding(.top, 4)
 		}
 		.padding(.horizontal)
 	}
@@ -377,16 +394,28 @@ struct SourcesAddView: View {
 					.padding(.vertical, 8)
 					.background(
 						Capsule()
-							.fill(Color.accentColor)
+							.fill(
+								LinearGradient(
+									colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
+									startPoint: .topLeading,
+									endPoint: .bottomTrailing
+								)
+							)
 					)
 					.shadow(color: Color.accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
 			}
 			.buttonStyle(.plain)
 		}
 		.padding(12)
-		.background(Color(UIColor.secondarySystemGroupedBackground))
-		.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-		.shadow(color: .black.opacity(0.02), radius: 8, x: 0, y: 4)
+		.background(
+			RoundedRectangle(cornerRadius: 20, style: .continuous)
+				.fill(Color(UIColor.secondarySystemGroupedBackground))
+				.shadow(color: .black.opacity(0.03), radius: 10, x: 0, y: 5)
+		)
+		.overlay(
+			RoundedRectangle(cornerRadius: 20, style: .continuous)
+				.stroke(Color.primary.opacity(0.05), lineWidth: 1)
+		)
 	}
 	
 	// MARK: - Import Results Section
@@ -529,120 +558,139 @@ struct SourcesAddView: View {
 	private func _exportSelectionSection() -> some View {
 		let sources = Storage.shared.getSources()
 		
-		VStack(alignment: .leading, spacing: 16) {
-			Text(.localized("Select Sources To Export"))
-				.font(.system(.headline, design: .rounded))
-				.foregroundStyle(.primary)
-				.padding(.horizontal, 4)
+		VStack(alignment: .leading, spacing: 20) {
+			VStack(alignment: .leading, spacing: 4) {
+				Text(.localized("Select Sources To Export"))
+					.font(.system(.title3, design: .rounded).bold())
+					.foregroundStyle(.primary)
+
+				Text(.localized("Choose the repositories you want to share"))
+					.font(.subheadline)
+					.foregroundStyle(.secondary)
+			}
+			.padding(.horizontal, 4)
 			
 			// Select All / Deselect All buttons
 			HStack(spacing: 12) {
 				Button {
-					withAnimation {
+					withAnimation(.spring(response: 0.3)) {
 						_selectedSourcesForExport = Set(sources.compactMap { $0.sourceURL?.absoluteString })
 					}
+					HapticsManager.shared.softImpact()
 				} label: {
 					Label(.localized("Select All"), systemImage: "checkmark.circle.fill")
-						.font(.subheadline.bold())
+						.font(.system(size: 13, weight: .bold, design: .rounded))
 						.foregroundStyle(.blue)
-						.padding(.horizontal, 16)
-						.padding(.vertical, 10)
-						.background(Color.blue.opacity(0.1))
+						.padding(.horizontal, 14)
+						.padding(.vertical, 8)
+						.background(Color.blue.opacity(0.08))
 						.clipShape(Capsule())
 				}
 				
 				Button {
-					withAnimation {
+					withAnimation(.spring(response: 0.3)) {
 						_selectedSourcesForExport.removeAll()
 					}
+					HapticsManager.shared.softImpact()
 				} label: {
 					Label(.localized("Deselect All"), systemImage: "circle")
-						.font(.subheadline.bold())
+						.font(.system(size: 13, weight: .bold, design: .rounded))
 						.foregroundStyle(.gray)
-						.padding(.horizontal, 16)
-						.padding(.vertical, 10)
-						.background(Color.gray.opacity(0.1))
+						.padding(.horizontal, 14)
+						.padding(.vertical, 8)
+						.background(Color.gray.opacity(0.08))
 						.clipShape(Capsule())
 				}
-				
-				Spacer()
 			}
-			.padding(.horizontal)
+			.padding(.horizontal, 4)
 			
-			GroupBox {
-				VStack(spacing: 0) {
-					ForEach(sources, id: \.sourceURL?.absoluteString) { source in
-						if let urlString = source.sourceURL?.absoluteString {
-							Button {
-								if _selectedSourcesForExport.contains(urlString) {
-									_selectedSourcesForExport.remove(urlString)
-								} else {
-									_selectedSourcesForExport.insert(urlString)
-								}
-							} label: {
-								HStack(spacing: 12) {
-									Image(systemName: _selectedSourcesForExport.contains(urlString) ? "checkmark.circle.fill" : "circle")
-										.font(.title3)
-										.foregroundStyle(_selectedSourcesForExport.contains(urlString) ? Color.accentColor : Color.secondary)
-										.symbolRenderingMode(.hierarchical)
+			VStack(spacing: 0) {
+				ForEach(sources, id: \.sourceURL?.absoluteString) { source in
+					if let urlString = source.sourceURL?.absoluteString {
+						Button {
+							if _selectedSourcesForExport.contains(urlString) {
+								_selectedSourcesForExport.remove(urlString)
+							} else {
+								_selectedSourcesForExport.insert(urlString)
+							}
+							HapticsManager.shared.selectionChanged()
+						} label: {
+							HStack(spacing: 16) {
+								ZStack {
+									Circle()
+										.stroke(_selectedSourcesForExport.contains(urlString) ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: 2)
+										.frame(width: 24, height: 24)
 
-									VStack(alignment: .leading, spacing: 2) {
-										Text(source.name ?? .localized("Unknown"))
-											.font(.system(.body, design: .rounded).bold())
-											.foregroundStyle(.primary)
-										Text(urlString)
-											.font(.system(.caption, design: .monospaced))
-											.foregroundStyle(.secondary)
-											.lineLimit(1)
+									if _selectedSourcesForExport.contains(urlString) {
+										Circle()
+											.fill(Color.accentColor)
+											.frame(width: 14, height: 14)
 									}
-
-									Spacer()
 								}
-								.padding(.vertical, 10)
-							}
-							.buttonStyle(.plain)
 
-							if sources.last?.sourceURL?.absoluteString != urlString {
-								Divider()
+								VStack(alignment: .leading, spacing: 2) {
+									Text(source.name ?? .localized("Unknown"))
+										.font(.system(.body, design: .rounded).bold())
+										.foregroundStyle(.primary)
+									Text(urlString)
+										.font(.system(.caption, design: .monospaced))
+										.foregroundStyle(.secondary)
+										.lineLimit(1)
+								}
+
+								Spacer()
 							}
+							.padding(.vertical, 12)
+							.padding(.horizontal, 16)
+						}
+						.buttonStyle(.plain)
+
+						if sources.last?.sourceURL?.absoluteString != urlString {
+							Divider()
+								.padding(.leading, 56)
 						}
 					}
 				}
-			} label: {
-				Label(.localized("Available Sources"), systemImage: "list.bullet.rectangle.stack.fill")
-					.font(.caption.bold())
-					.foregroundStyle(.secondary)
 			}
-			.groupBoxStyle(PlainGroupBoxStyle())
-			.padding(.horizontal)
+			.background(
+				RoundedRectangle(cornerRadius: 24, style: .continuous)
+					.fill(Color(UIColor.secondarySystemGroupedBackground))
+					.shadow(color: .black.opacity(0.03), radius: 15, x: 0, y: 5)
+			)
+			.overlay(
+				RoundedRectangle(cornerRadius: 24, style: .continuous)
+					.stroke(Color.primary.opacity(0.05), lineWidth: 1)
+			)
 
 			// Export through Portal button
 			Button {
 				_exportThroughPortal()
 			} label: {
-				HStack(spacing: 10) {
+				HStack(spacing: 12) {
 					Image(systemName: "arrow.up.doc.fill")
 						.font(.system(size: 18, weight: .bold))
 					Text(.localized("Portal Transfer"))
-						.font(.system(.subheadline, design: .rounded).bold())
+						.font(.system(.headline, design: .rounded).bold())
 				}
 				.foregroundStyle(.white)
 				.frame(maxWidth: .infinity)
-				.padding(.vertical, 16)
+				.padding(.vertical, 18)
 				.background(
 					LinearGradient(
-						colors: [Color.purple, Color.indigo.opacity(0.8)],
+						colors: [Color.purple, Color.indigo.opacity(0.9)],
 						startPoint: .leading,
 						endPoint: .trailing
 					)
 				)
-				.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-				.shadow(color: Color.purple.opacity(0.3), radius: 8, x: 0, y: 4)
+				.clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+				.shadow(color: Color.purple.opacity(0.3), radius: 12, x: 0, y: 6)
 			}
 			.disabled(_selectedSourcesForExport.isEmpty)
-			.opacity(_selectedSourcesForExport.isEmpty ? 0.6 : 1)
-			.padding(.horizontal)
+			.opacity(_selectedSourcesForExport.isEmpty ? 0.5 : 1)
+			.scaleEffect(_selectedSourcesForExport.isEmpty ? 0.98 : 1.0)
+			.animation(.spring(), value: _selectedSourcesForExport.isEmpty)
 		}
+		.padding(.horizontal)
 	}
 
 struct PlainGroupBoxStyle: GroupBoxStyle {

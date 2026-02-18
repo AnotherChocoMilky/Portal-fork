@@ -91,99 +91,75 @@ struct CheckForUpdatesView: View {
     
     // MARK: - Hero Section
     private var heroSection: some View {
-        VStack(spacing: 20) {
+        VStack(spacing: 24) {
             // App Icon with enhanced glow effect
             ZStack {
-                // Multiple glow layers for depth
+                // Dynamic Background Glow
                 Circle()
                     .fill(
-                        RadialGradient(
-                            colors: [Color.accentColor.opacity(0.4), Color.accentColor.opacity(0.1), Color.clear],
-                            center: .center,
-                            startRadius: 20,
-                            endRadius: 90
+                        AngularGradient(
+                            colors: [Color.accentColor.opacity(0.5), Color.purple.opacity(0.5), Color.blue.opacity(0.5), Color.accentColor.opacity(0.5)],
+                            center: .center
                         )
                     )
-                    .frame(width: 180, height: 180)
-                    .blur(radius: 15)
-                
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [Color.accentColor.opacity(0.2), Color.clear],
-                            center: .center,
-                            startRadius: 40,
-                            endRadius: 70
-                        )
-                    )
-                    .frame(width: 140, height: 140)
-                    .blur(radius: 8)
+                    .frame(width: 200, height: 200)
+                    .blur(radius: 30)
+                    .rotationEffect(.degrees(updateManager.isCheckingUpdates ? 360 : 0))
+                    .animation(updateManager.isCheckingUpdates ? .linear(duration: 4).repeatForever(autoreverses: false) : .default, value: updateManager.isCheckingUpdates)
                 
                 if let iconName = Bundle.main.iconFileName,
                    let icon = UIImage(named: iconName) {
                     Image(uiImage: icon)
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 100, height: 100)
-                        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                        .frame(width: 110, height: 110)
+                        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                        .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 8)
                         .overlay(
-                            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                .strokeBorder(
-                                    LinearGradient(
-                                        colors: [Color.white.opacity(0.4), Color.white.opacity(0.1)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ),
-                                    lineWidth: 1
-                                )
+                            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                .strokeBorder(.white.opacity(0.2), lineWidth: 1)
                         )
-                        .shadow(color: .accentColor.opacity(0.5), radius: 20, x: 0, y: 10)
-                        .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 5)
                 } else {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(LinearGradient(colors: [.accentColor, .accentColor.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing))
-                        .frame(width: 100, height: 100)
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.accentColor, Color.accentColor.opacity(0.7)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 110, height: 110)
                         .overlay(
                             Image(systemName: "app.badge.fill")
-                                .font(.system(size: 40))
+                                .font(.system(size: 44))
                                 .foregroundStyle(.white)
                         )
-                        .shadow(color: .accentColor.opacity(0.5), radius: 20, x: 0, y: 10)
-                        .shadow(color: .black.opacity(0.2), radius: 5, x: 0, y: 5)
+                        .shadow(color: .accentColor.opacity(0.3), radius: 15, x: 0, y: 8)
                 }
             }
-            .padding(.top, 20)
+            .padding(.top, 30)
             
             // App Name and Version
-            VStack(spacing: 8) {
+            VStack(spacing: 12) {
                 Text("Portal")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.primary, .primary.opacity(0.8)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                
-                // Modern version badge with enhanced styling
-                HStack(spacing: 10) {
-                    HStack(spacing: 6) {
-                        Image(systemName: "number.circle.fill")
-                            .font(.system(size: 12))
-                        Text("v\(currentVersion)")
-                            .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                    }
+                    .font(.system(size: 32, weight: .black, design: .rounded))
                     .foregroundStyle(.primary)
+                
+                HStack(spacing: 8) {
+                    HStack(spacing: 4) {
+                        Text("v\(currentVersion)")
+                            .font(.system(size: 13, weight: .bold, design: .monospaced))
+                    }
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(Capsule().fill(Color.primary.opacity(0.05)))
                     
-                    Divider()
-                        .frame(height: 14)
-                    
-                    HStack(spacing: 6) {
-                        Image(systemName: "hammer.circle.fill")
-                            .font(.system(size: 11))
+                    HStack(spacing: 4) {
+                        Image(systemName: "hammer.fill")
+                            .font(.system(size: 10))
                         Text(currentBuild)
-                            .font(.system(size: 12, weight: .medium))
+                            .font(.system(size: 11, weight: .bold))
                     }
                     .onTapGesture {
                         if UserDefaults.standard.bool(forKey: "Feather.devModeUnlocked") {
@@ -193,7 +169,6 @@ struct CheckForUpdatesView: View {
                                 hammerTapCount = 0
                                 HapticsManager.shared.success()
                                 ToastManager.shared.show("🚀 Developer Mode Enabled!", type: .success)
-                                // Reset the unlock flag
                                 UserDefaults.standard.set(false, forKey: "Feather.devModeUnlocked")
                             } else {
                                 HapticsManager.shared.softImpact()
@@ -202,62 +177,40 @@ struct CheckForUpdatesView: View {
                     }
                     .foregroundStyle(.white)
                     .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
+                    .padding(.vertical, 4)
                     .background(
                         Capsule()
-                            .fill(
-                                LinearGradient(
-                                    colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
+                            .fill(LinearGradient(colors: [Color.accentColor, Color.accentColor.opacity(0.8)], startPoint: .leading, endPoint: .trailing))
                     )
                 }
-                .padding(.horizontal, 18)
-                .padding(.vertical, 10)
-                .background(
-                    Capsule()
-                        .fill(Color(UIColor.tertiarySystemBackground))
-                        .overlay(
-                            Capsule()
-                                .strokeBorder(Color(UIColor.separator).opacity(0.3), lineWidth: 1)
-                        )
-                )
             }
             
-            // Check for Updates Button
+            // Modern Check for Updates Button
             Button {
                 updateManager.checkForUpdates()
             } label: {
                 HStack(spacing: 12) {
                     if updateManager.isCheckingUpdates {
-                        LoadingDotsView()
+                        ProgressView()
+                            .tint(.white)
+                            .controlSize(.small)
                     } else {
-                        Image(systemName: "arrow.triangle.2.circlepath")
-                            .font(.system(size: 16, weight: .semibold))
+                        Image(systemName: "arrow.clockwise.circle.fill")
+                            .font(.system(size: 18))
                     }
-                    Text(updateManager.isCheckingUpdates ? "Checking For Updates" : "Check For Updates")
-                        .font(.system(size: 16, weight: .semibold))
+                    Text(updateManager.isCheckingUpdates ? "Searching..." : "Check For Updates")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
                 }
                 .frame(maxWidth: horizontalSizeClass == .regular ? 320 : .infinity)
                 .padding(.vertical, 16)
                 .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                        .fill(updateManager.isCheckingUpdates ? Color.gray : Color.accentColor)
                 )
                 .foregroundStyle(.white)
-                .shadow(color: .accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
+                .shadow(color: (updateManager.isCheckingUpdates ? Color.clear : Color.accentColor.opacity(0.3)), radius: 10, x: 0, y: 5)
             }
             .disabled(updateManager.isCheckingUpdates)
-            .scaleEffect(updateManager.isCheckingUpdates ? 0.98 : 1.0)
-            .animation(.spring(response: 0.3, dampingFraction: 0.7), value: updateManager.isCheckingUpdates)
         }
         .padding(.vertical, 10)
     }
@@ -268,90 +221,69 @@ struct CheckForUpdatesView: View {
             if updateManager.hasChecked {
                 if updateManager.isUpdateAvailable, let release = updateManager.latestRelease {
                     // Update Available
-                    VStack(spacing: 16) {
+                    VStack(spacing: 20) {
                         HStack(spacing: 16) {
-                            // Animated icon
                             ZStack {
                                 Circle()
-                                    .fill(Color.green.opacity(0.15))
-                                    .frame(width: 56, height: 56)
+                                    .fill(Color.green.opacity(0.12))
+                                    .frame(width: 60, height: 60)
                                 
-                                if #available(iOS 17.0, *) {
-                                    Image(systemName: "arrow.down.circle.fill")
-                                        .font(.system(size: 28))
-                                        .foregroundStyle(.green)
-                                        .symbolEffect(.pulse, options: .repeating)
-                                } else {
-                                    Image(systemName: "arrow.down.circle.fill")
-                                        .font(.system(size: 28))
-                                        .foregroundStyle(.green)
-                                }
+                                Image(systemName: "arrow.down.circle.fill")
+                                    .font(.system(size: 30))
+                                    .foregroundStyle(.green)
                             }
                             
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("Update Available!")
-                                    .font(.headline)
-                                    .foregroundStyle(.primary)
+                                Text("New Version Found!")
+                                    .font(.system(.headline, design: .rounded))
                                 
                                 Text("Version \(release.tagName.replacingOccurrences(of: "v", with: ""))")
-                                    .font(.subheadline)
+                                    .font(.system(.subheadline, design: .monospaced))
                                     .foregroundStyle(.secondary)
                             }
                             
                             Spacer()
                             
-                            // New badge
-                            Text("New")
-                                .font(.system(size: 10, weight: .bold))
+                            Text("NEW")
+                                .font(.system(size: 10, weight: .black))
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 4)
-                                .background(
-                                    Capsule()
-                                        .fill(Color.green)
-                                )
+                                .background(Capsule().fill(Color.green))
                         }
                         
-                        // Download button
                         Button {
                             updateManager.downloadUpdate()
                         } label: {
-                            HStack(spacing: 10) {
+                            HStack(spacing: 12) {
                                 if updateManager.isDownloading {
-                                    ProgressView()
-                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                                        .scaleEffect(0.8)
+                                    ProgressView().tint(.white)
                                 } else {
-                                    Image(systemName: "arrow.down.to.line.compact")
-                                        .font(.system(size: 16, weight: .semibold))
+                                    Image(systemName: "arrow.down.to.line.circle.fill")
+                                        .font(.system(size: 18))
                                 }
                                 
-                                if updateManager.isDownloading {
-                                    Text("Downloading... \(Int(updateManager.downloadProgress * 100))%")
-                                        .font(.system(size: 15, weight: .semibold))
-                                } else {
-                                    Text("Download Update")
-                                        .font(.system(size: 15, weight: .semibold))
-                                }
+                                Text(updateManager.isDownloading ? "Downloading... \(Int(updateManager.downloadProgress * 100))%" : "Download & Install")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
                             }
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
+                            .padding(.vertical, 16)
                             .background(
-                                ZStack {
-                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                ZStack(alignment: .leading) {
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                                         .fill(Color.green)
                                     
-                                    // Progress overlay
                                     if updateManager.isDownloading {
                                         GeometryReader { geo in
-                                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                                .fill(Color.green.opacity(0.3))
+                                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                                .fill(.black.opacity(0.15))
                                                 .frame(width: geo.size.width * updateManager.downloadProgress)
                                         }
                                     }
                                 }
                             )
                             .foregroundStyle(.white)
+                            .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
                         }
                         .disabled(updateManager.isDownloading)
                     }
@@ -360,20 +292,19 @@ struct CheckForUpdatesView: View {
                     HStack(spacing: 16) {
                         ZStack {
                             Circle()
-                                .fill(Color.blue.opacity(0.15))
+                                .fill(Color.blue.opacity(0.1))
                                 .frame(width: 56, height: 56)
                             
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 28))
+                            Image(systemName: "checkmark.seal.fill")
+                                .font(.system(size: 26))
                                 .foregroundStyle(.blue)
                         }
                         
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("You're Up To Date")
-                                .font(.headline)
-                                .foregroundStyle(.primary)
+                            Text("Fully Updated")
+                                .font(.system(.headline, design: .rounded))
                             
-                            Text("Portal version \(currentVersion) is the latest and greatest version!")
+                            Text("You're running the latest version.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
@@ -382,24 +313,22 @@ struct CheckForUpdatesView: View {
                     }
                 }
             } else {
-                // Not checked yet
                 HStack(spacing: 16) {
                     ZStack {
                         Circle()
-                            .fill(Color.gray.opacity(0.15))
+                            .fill(Color.primary.opacity(0.05))
                             .frame(width: 56, height: 56)
                         
-                        Image(systemName: "questionmark.circle.fill")
-                            .font(.system(size: 28))
-                            .foregroundStyle(.gray)
+                        Image(systemName: "sparkles")
+                            .font(.system(size: 24))
+                            .foregroundStyle(.secondary)
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Check For Updates")
-                            .font(.headline)
-                            .foregroundStyle(.primary)
+                        Text("Search for Updates")
+                            .font(.system(.headline, design: .rounded))
                         
-                        Text("Tap the button above to check.")
+                        Text("Tap the button above to start.")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -410,106 +339,60 @@ struct CheckForUpdatesView: View {
         }
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(Color(UIColor.secondarySystemGroupedBackground))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .strokeBorder(
-                    updateManager.isUpdateAvailable ? Color.green.opacity(0.3) : Color.clear,
-                    lineWidth: 1
-                )
+                .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
         )
     }
     
     // MARK: - What's New Section
     private func whatsNewSection(_ release: GitHubRelease) -> some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Header
             HStack {
-                Text("What's New")
-                    .font(.title3.bold())
+                Label("What's New", systemImage: "sparkles")
+                    .font(.system(.title3, design: .rounded).bold())
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
-                // Modern build badge
-                HStack(spacing: 6) {
-                    Image(systemName: "tag.fill")
-                        .font(.system(size: 10))
-                    Text(release.tagName)
-                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                if let date = release.publishedAt {
+                    Text(date.formatted(date: .abbreviated, time: .omitted))
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundStyle(.secondary)
                 }
-                .foregroundStyle(.white)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.purple, Color.blue],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                )
             }
             
-            // Release date
-            if let date = release.publishedAt {
-                HStack(spacing: 6) {
-                    Image(systemName: "calendar")
-                        .font(.caption)
-                    Text("Released On \(date.formatted(date: .abbreviated, time: .omitted))")
-                        .font(.caption)
-                }
-                .foregroundStyle(.secondary)
-            }
-            
-            // Release notes preview
             if let body = release.body, !body.isEmpty {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(body)
-                        .font(.subheadline)
+                        .font(.system(.subheadline, design: .rounded))
                         .foregroundStyle(.secondary)
-                        .lineLimit(5)
+                        .lineLimit(6)
+                        .multilineTextAlignment(.leading)
                     
-                    // View More button
                     Button {
                         showFullReleaseNotes = true
                         HapticsManager.shared.softImpact()
                     } label: {
-                        HStack(spacing: 6) {
-                            Text("View More")
-                                .font(.subheadline.weight(.medium))
+                        HStack(spacing: 4) {
+                            Text("Read Release Notes")
+                                .font(.system(size: 14, weight: .bold, design: .rounded))
                             Image(systemName: "chevron.right")
-                                .font(.caption.weight(.semibold))
+                                .font(.system(size: 12, weight: .bold))
                         }
                         .foregroundStyle(Color.accentColor)
                     }
                 }
-            }
-            
-            // Prerelease badge if applicable
-            if release.prerelease {
-                HStack(spacing: 6) {
-                    Image(systemName: "testtube.2")
-                        .font(.caption)
-                    Text("Beta")
-                        .font(.caption.weight(.bold))
-                }
-                .foregroundStyle(.orange)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(Color.orange.opacity(0.15))
-                )
+                .padding(16)
+                .background(Color.primary.opacity(0.03))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             }
         }
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
         )
     }
     
