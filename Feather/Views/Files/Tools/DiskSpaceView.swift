@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 struct DiskSpaceView: View {
     @State private var totalSpace: Int64 = 0
@@ -36,9 +37,9 @@ struct DiskSpaceView: View {
     private func load() {
         let fileURL = URL(fileURLWithPath: NSHomeDirectory())
         do {
-            let values = try fileURL.volumeResourceValues(forKeys: [.volumeTotalCapacityKey, .volumeAvailableCapacityKey])
-            totalSpace = Int64(values.volumeTotalCapacity ?? 0)
-            freeSpace = Int64(values.volumeAvailableCapacity ?? 0)
+            let resourceValues = try fileURL.resourceValues(forKeys: [.volumeTotalCapacityKey, .volumeAvailableCapacityKey])
+            totalSpace = Int64(resourceValues.volumeTotalCapacity ?? 0)
+            freeSpace = Int64(resourceValues.volumeAvailableCapacity ?? 0)
             usedSpace = totalSpace - freeSpace
         } catch {
             print("Error: \(error)")
