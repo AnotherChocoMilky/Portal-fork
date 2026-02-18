@@ -41,6 +41,7 @@ struct AppLogsView: View {
                             Button(action: { searchText = "" }) {
                                 Image(systemName: "xmark.circle.fill")
                                     .foregroundStyle(.secondary)
+                                    .contentShape(Rectangle())
                             }
                         }
                     }
@@ -304,6 +305,7 @@ struct FilterPill: View {
                 Capsule()
                     .stroke(.white.opacity(colorScheme == .dark ? 0.1 : 0.3), lineWidth: 1)
             )
+            .contentShape(Capsule())
         }
         .buttonStyle(.plain)
         .scaleEffect(isSelected ? 1.02 : 1.0)
@@ -369,6 +371,7 @@ struct LogEntryRow: View {
                 }
                 .padding(.vertical, 12)
                 .padding(.horizontal, 16)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 

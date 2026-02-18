@@ -33,24 +33,33 @@ struct LibraryCellView: View {
     var body: some View {
         let isEditing = editMode?.wrappedValue == .active
         
-        HStack(spacing: 14) {
-            if isEditing {
-                selectionButton
+        HStack(spacing: 0) {
+            // Main row button
+            Button {
+                handleTap(isEditing: isEditing)
+            } label: {
+                HStack(spacing: 14) {
+                    if isEditing {
+                        selectionButton
+                    }
+
+                    FRAppIconView(app: app, size: 56)
+                        .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+
+                    appInfoStack
+
+                    Spacer()
+                }
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
             }
-            
-            FRAppIconView(app: app, size: 56)
-                .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
-            
-            appInfoStack
+            .buttonStyle(.plain)
             
             if !isEditing {
                 actionButton
+                    .padding(.vertical, 12)
+                    .padding(.trailing, 16)
             }
-        }
-        .padding(.vertical, 12)
-        .contentShape(Rectangle())
-        .onTapGesture {
-            handleTap(isEditing: isEditing)
         }
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             if !isEditing {

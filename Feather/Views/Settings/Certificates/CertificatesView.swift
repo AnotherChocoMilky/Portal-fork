@@ -276,6 +276,7 @@ struct CertificatesView: View {
 			}
 			.scaleEffect(isSelected ? 1.02 : 1.0)
 			.animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+			.contentShape(Rectangle())
 			.contextMenu {
 				_contextActions(for: cert)
 				if cert.isDefault != true {

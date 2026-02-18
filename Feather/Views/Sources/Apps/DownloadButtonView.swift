@@ -77,6 +77,7 @@ struct DownloadButtonView: View {
 						.scaleEffect(0.9)
 					}
 				}
+				.contentShape(Circle())
 				.onTapGesture {
 					if downloadProgress <= 0.75 {
 						downloadManager.cancelDownload(currentDownload)

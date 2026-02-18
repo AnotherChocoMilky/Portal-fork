@@ -285,6 +285,7 @@ struct AllAppsView: View {
                 .padding(8)
                 .background(Color.accentColor.opacity(0.1))
                 .clipShape(Circle())
+                .contentShape(Circle())
         }
     }
 
@@ -311,6 +312,7 @@ struct AllAppsView: View {
                         Image(systemName: "xmark.circle.fill")
                             .font(.system(size: 18))
                             .foregroundStyle(.tertiary)
+                            .contentShape(Rectangle())
                     }
                 }
             }
@@ -725,14 +727,40 @@ struct AllAppsRowView: View {
 	
 	var body: some View {
 		VStack(spacing: 0) {
-            Button(action: onTap) {
-                if useGrid {
-                    gridView
+            ZStack {
+                Button(action: onTap) {
+                    if useGrid {
+                        gridView(showButton: false)
+                    } else {
+                        rowView(showButton: false)
+                    }
+                }
+                .buttonStyle(AllAppsScaleButtonStyle())
+
+                if !useGrid {
+                    HStack {
+                        Spacer()
+                        actionButton
+                            .frame(width: 34, height: 34)
+                            .padding(.trailing, rowStyle == .minimal ? 8 : 18)
+                    }
                 } else {
-                    rowView
+                    // For grid, the button is positioned over the icon area
+                    VStack(spacing: 10) {
+                        ZStack(alignment: .bottomTrailing) {
+                            Color.clear
+                                .frame(width: iconSize * 1.2, height: iconSize * 1.2)
+
+                            actionButton
+                                .frame(width: 28, height: 28)
+                                .offset(x: 8, y: -8)
+                        }
+
+                        // Placeholder for the text area
+                        Color.clear
+                    }
                 }
             }
-			.buttonStyle(AllAppsScaleButtonStyle())
 
 			if !useGrid && showDividers && rowStyle == .minimal && !isLast {
 				Divider()
@@ -749,7 +777,7 @@ struct AllAppsRowView: View {
 	}
 
     @ViewBuilder
-    private var rowView: some View {
+    private func rowView(showButton: Bool = true) -> some View {
         VStack(spacing: 12) {
             HStack(spacing: 14) {
                 // App Icon
@@ -826,9 +854,14 @@ struct AllAppsRowView: View {
 
                 Spacer()
 
-                // Action button
-                actionButton
-                    .frame(width: 34, height: 34)
+                // Action button placeholder or actual
+                if showButton {
+                    actionButton
+                        .frame(width: 34, height: 34)
+                } else {
+                    Color.clear
+                        .frame(width: 34, height: 34)
+                }
             }
 
             // Progress bar when downloading
@@ -861,7 +894,7 @@ struct AllAppsRowView: View {
     }
 
     @ViewBuilder
-    private var gridView: some View {
+    private func gridView(showButton: Bool = true) -> some View {
         VStack(spacing: 10) {
             ZStack(alignment: .bottomTrailing) {
                 appIcon
@@ -882,9 +915,15 @@ struct AllAppsRowView: View {
                     }
                 }
 
-                actionButton
-                    .frame(width: 28, height: 28)
-                    .offset(x: 8, y: -8)
+                if showButton {
+                    actionButton
+                        .frame(width: 28, height: 28)
+                        .offset(x: 8, y: -8)
+                } else {
+                    Color.clear
+                        .frame(width: 28, height: 28)
+                        .offset(x: 8, y: -8)
+                }
             }
 
             VStack(spacing: 2) {

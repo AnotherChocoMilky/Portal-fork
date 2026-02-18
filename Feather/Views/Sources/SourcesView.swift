@@ -205,6 +205,7 @@ struct SourcesView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundStyle(color)
         }
+        .contentShape(Circle())
     }
     
     // MARK: - All Apps Card

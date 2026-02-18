@@ -625,6 +625,7 @@ struct ModernSigningView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -1847,6 +1848,7 @@ struct DoubleTapToSign: View {
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
                     .stroke(isCompleted ? Color.green.opacity(0.3) : Color.accentColor.opacity(0.3), lineWidth: 1)
             )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .gesture(
