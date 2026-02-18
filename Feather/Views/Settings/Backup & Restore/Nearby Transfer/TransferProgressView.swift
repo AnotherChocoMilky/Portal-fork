@@ -9,199 +9,161 @@ struct TransferProgressView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 32) {
-                // Status Icon
-                statusIcon
+                // Main Status Visualization
+                mainStatusView
+                    .padding(.top, 20)
                 
-                // Progress Information
-                switch service.state {
-                case .idle:
-                    modernStatusCard(
-                        icon: "antenna.radiowaves.left.and.right",
-                        title: "Ready!",
-                        subtitle: "Waiting To Begin Transfer",
-                        color: .blue
-                    )
-                
-                case .discovering:
-                    modernStatusCard(
-                        icon: "magnifyingglass",
-                        title: "Discovering Devices",
-                        subtitle: "Searching For Nearby Devices",
-                        color: .purple,
-                        showProgress: true
-                    )
-                
-                case .connecting:
-                    modernStatusCard(
-                        icon: "wifi",
-                        title: "Connecting",
-                        subtitle: service.currentItem.isEmpty ? "Establishing Connection" : service.currentItem,
-                        color: .orange,
-                        showProgress: true
-                    )
-                
-                case .transferring(let progress, let bytesTransferred, let totalBytes, let speed):
-                    modernTransferView(
+                // Detailed Info Section
+                if case .transferring(let progress, let bytesTransferred, let totalBytes, let speed) = service.state {
+                    modernTransferDetails(
                         progress: progress,
                         bytesTransferred: bytesTransferred,
                         totalBytes: totalBytes,
                         speed: speed
                     )
-                
-                case .completed:
-                    modernStatusCard(
-                        icon: "checkmark.circle.fill",
-                        title: "Transfer Complete",
-                        subtitle: service.currentItem.isEmpty ? "All Files Transferred Successfully" : service.currentItem,
-                        color: .green
-                    )
-                
-                case .failed(let error):
-                    modernStatusCard(
-                        icon: "xmark.circle.fill",
-                        title: "Transfer Failed",
-                        subtitle: error.localizedDescription,
-                        color: .red
-                    )
+                } else {
+                    staticStatusInfo
                 }
                 
                 // Action Buttons
                 actionButtons
+                    .padding(.bottom, 30)
             }
             .padding(24)
         }
+        .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
     }
     
-    // MARK: - Modern Transfer View
+    // MARK: - Main Status View
     @ViewBuilder
-    private func modernTransferView(progress: Double, bytesTransferred: Int64, totalBytes: Int64, speed: Double) -> some View {
-        VStack(spacing: 24) {
-            // Large Progress Circle with Gradient
-            ZStack {
-                // Background circle
-                Circle()
-                    .stroke(Color.gray.opacity(0.15), lineWidth: 12)
-                    .frame(width: 180, height: 180)
-                
-                // Progress circle with gradient
-                Circle()
-                    .trim(from: 0, to: progress)
-                    .stroke(
-                        AngularGradient(
-                            colors: [.blue, .purple, .pink, .blue],
-                            center: .center,
-                            startAngle: .degrees(0),
-                            endAngle: .degrees(360)
-                        ),
-                        style: StrokeStyle(lineWidth: 12, lineCap: .round)
-                    )
-                    .frame(width: 180, height: 180)
-                    .rotationEffect(.degrees(-90))
-                    .animation(.linear(duration: 0.3), value: progress)
-                
-                // Center content
-                VStack(spacing: 6) {
-                    Text("\(Int(progress * 100))%")
-                        .font(.system(size: 42, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary)
-                    
-                    Text(formatBytes(bytesTransferred))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            .padding(.vertical, 12)
+    private var mainStatusView: some View {
+        switch service.state {
+        case .idle:
+            modernStatusCard(icon: "antenna.radiowaves.left.and.right", title: "Ready", subtitle: "Establishing connection...", color: .blue)
+        case .discovering:
+            modernStatusCard(icon: "magnifyingglass", title: "Searching", subtitle: "Finding nearby devices...", color: .purple, isSearching: true)
+        case .connecting:
+            modernStatusCard(icon: "wifi", title: "Connecting", subtitle: service.currentItem.isEmpty ? "Securing link..." : service.currentItem, color: .orange, isConnecting: true)
+        case .transferring(let progress, _, _, _):
+            modernProgressCircle(progress: progress)
+        case .completed:
+            modernStatusCard(icon: "checkmark.seal.fill", title: "Success", subtitle: "Data transferred successfully!", color: .green)
+        case .failed(let error):
+            modernStatusCard(icon: "exclamationmark.triangle.fill", title: "Error", subtitle: error.localizedDescription, color: .red)
+        }
+    }
+
+    // MARK: - Modern Progress Circle
+    @ViewBuilder
+    private func modernProgressCircle(progress: Double) -> some View {
+        ZStack {
+            Circle()
+                .stroke(Color.secondary.opacity(0.1), lineWidth: 16)
+                .frame(width: 200, height: 200)
             
-            // Modern Info Cards
-            VStack(spacing: 12) {
-                infoCard(
-                    icon: "arrow.up.arrow.down",
-                    label: "Progress",
-                    value: "\(formatBytes(bytesTransferred)) / \(formatBytes(totalBytes))",
-                    color: .blue
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(
+                    LinearGradient(
+                        colors: [.blue, .purple, .pink],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    style: StrokeStyle(lineWidth: 16, lineCap: .round)
                 )
-                
-                infoCard(
-                    icon: "speedometer",
-                    label: "Speed",
-                    value: formatSpeed(speed),
-                    color: .green
-                )
-                
-                if !service.currentItem.isEmpty {
-                    infoCard(
-                        icon: "doc.fill",
-                        label: "Current File",
-                        value: service.currentItem,
-                        color: .purple
-                    )
-                }
-                
+                .frame(width: 200, height: 200)
+                .rotationEffect(.degrees(-90))
+                .shadow(color: .blue.opacity(0.3), radius: 10)
+                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: progress)
+
+            VStack(spacing: 4) {
+                Text("\(Int(progress * 100))%")
+                    .font(.system(size: 48, weight: .bold, design: .rounded))
+                Text("Complete")
+                    .font(.system(.caption, design: .rounded, weight: .semibold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+            }
+        }
+        .padding(.vertical, 20)
+    }
+
+    // MARK: - Modern Transfer Details
+    @ViewBuilder
+    private func modernTransferDetails(progress: Double, bytesTransferred: Int64, totalBytes: Int64, speed: Double) -> some View {
+        VStack(spacing: 16) {
+            HStack(spacing: 16) {
+                infoCard(icon: "arrow.up.arrow.down", label: "Progress", value: "\(formatBytes(bytesTransferred)) / \(formatBytes(totalBytes))", color: .blue)
+                infoCard(icon: "speedometer", label: "Speed", value: formatSpeed(speed), color: .green)
+            }
+
+            HStack(spacing: 16) {
                 if totalBytes > 0 && speed > 0 {
                     let remaining = Double(totalBytes - bytesTransferred) / speed
-                    infoCard(
-                        icon: "clock.fill",
-                        label: "Time Remaining",
-                        value: formatTime(remaining),
-                        color: .orange
-                    )
+                    infoCard(icon: "clock.fill", label: "Remaining", value: formatTime(remaining), color: .orange)
+                }
+
+                if !service.currentItem.isEmpty {
+                    infoCard(icon: "doc.fill", label: "Current", value: service.currentItem, color: .purple)
                 }
             }
         }
     }
     
+    @ViewBuilder
+    private var staticStatusInfo: some View {
+        if !service.currentItem.isEmpty {
+            infoCard(icon: "info.circle.fill", label: "Status", value: service.currentItem, color: .blue)
+                .padding(.horizontal, 4)
+        }
+    }
+
     // MARK: - Modern Status Card
     @ViewBuilder
-    private func modernStatusCard(icon: String, title: String, subtitle: String, color: Color, showProgress: Bool = false) -> some View {
-        VStack(spacing: 20) {
+    private func modernStatusCard(icon: String, title: String, subtitle: String, color: Color, isSearching: Bool = false, isConnecting: Bool = false) -> some View {
+        VStack(spacing: 24) {
             ZStack {
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [color.opacity(0.2), color.opacity(0.05)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 100, height: 100)
+                    .fill(color.opacity(0.12))
+                    .frame(width: 110, height: 110)
                 
                 Image(systemName: icon)
-                    .font(.system(size: 44))
+                    .font(.system(size: 48))
                     .foregroundStyle(color)
+                    .ifAvailableiOS18SymbolPulse()
             }
             
             VStack(spacing: 8) {
                 Text(title)
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(.primary)
-                
+                    .font(.system(.title3, design: .rounded, weight: .bold))
                 Text(subtitle)
-                    .font(.subheadline)
+                    .font(.system(.subheadline, design: .rounded))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                    .lineLimit(3)
+                    .padding(.horizontal, 20)
             }
             
-            if showProgress {
+            if isSearching || isConnecting {
                 ProgressView()
                     .scaleEffect(1.2)
-                    .padding(.top, 8)
+                    .padding(.top, 4)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 24)
+        .padding(.vertical, 36)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .shadow(color: Color.black.opacity(0.05), radius: 15, x: 0, y: 5)
         )
     }
     
     // MARK: - Info Card
     @ViewBuilder
     private func infoCard(icon: String, label: String, value: String, color: Color) -> some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 14) {
             ZStack {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(color.opacity(0.15))
                     .frame(width: 44, height: 44)
                 
@@ -210,92 +172,57 @@ struct TransferProgressView: View {
                     .foregroundStyle(color)
             }
             
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 2) {
                 Text(label)
-                    .font(.caption)
+                    .font(.system(.caption2, design: .rounded, weight: .bold))
                     .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
                 
                 Text(value)
-                    .font(.subheadline.weight(.medium))
+                    .font(.system(.subheadline, design: .rounded, weight: .semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
-                    .truncationMode(.middle)
             }
             
             Spacer()
         }
-        .frame(maxWidth: .infinity)
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.tertiarySystemGroupedBackground))
+            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 2)
         )
     }
     
     // MARK: - Action Buttons
     @ViewBuilder
     private var actionButtons: some View {
-        HStack(spacing: 12) {
+        VStack(spacing: 12) {
             if case .transferring = service.state {
-                Button(action: onCancel) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "xmark")
-                        Text("Cancel Transfer")
-                    }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        LinearGradient(
-                            colors: [Color.red.opacity(0.15), Color.red.opacity(0.1)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .foregroundStyle(.red)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                }
+                actionButton(title: "Cancel Transfer", icon: "xmark", color: .red, action: onCancel)
             } else if service.canRetry {
-                Button(action: onRetry) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "arrow.clockwise")
-                        Text("Try Again")
-                    }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        LinearGradient(
-                            colors: [Color.blue.opacity(0.15), Color.blue.opacity(0.1)],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .foregroundStyle(.blue)
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                }
+                actionButton(title: "Retry Transfer", icon: "arrow.clockwise", color: .blue, action: onRetry)
             }
         }
     }
     
     @ViewBuilder
-    private var statusIcon: some View {
-        switch service.state {
-        case .idle:
-            EmptyView()
-        case .discovering, .connecting:
-            EmptyView()
-        case .transferring:
-            EmptyView()
-        case .completed:
-            EmptyView()
-        case .failed:
-            EmptyView()
+    private func actionButton(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: icon)
+                Text(title)
+            }
+            .font(.system(.headline, design: .rounded))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 18)
+            .background(color.opacity(0.1))
+            .foregroundStyle(color)
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
     }
     
     // MARK: - Helpers
-    
     private func formatBytes(_ bytes: Int64) -> String {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
@@ -309,16 +236,9 @@ struct TransferProgressView: View {
     }
     
     private func formatTime(_ seconds: Double) -> String {
-        if seconds < 60 {
-            return String(format: "%.0fs", seconds)
-        } else if seconds < 3600 {
-            let minutes = Int(seconds / 60)
-            let secs = Int(seconds.truncatingRemainder(dividingBy: 60))
-            return "\(minutes)m \(secs)s"
-        } else {
-            let hours = Int(seconds / 3600)
-            let minutes = Int((seconds.truncatingRemainder(dividingBy: 3600)) / 60)
-            return "\(hours)h \(minutes)m"
-        }
+        if seconds < 60 { return String(format: "%.0fs", seconds) }
+        let minutes = Int(seconds / 60)
+        let secs = Int(seconds.truncatingRemainder(dividingBy: 60))
+        return "\(minutes)m \(secs)s"
     }
 }

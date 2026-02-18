@@ -16,6 +16,7 @@ struct PreflightItem: Identifiable {
 struct PreflightCheckView: View {
     @Environment(\.dismiss) var dismiss
     @StateObject private var viewModel = PreflightCheckViewModel()
+    @State private var scanPhase: CGFloat = 0
     
     var onContinue: () -> Void
     
@@ -23,31 +24,17 @@ struct PreflightCheckView: View {
         NBList(.localized("Preflight Check")) {
             // Summary Section
             Section {
-                VStack(spacing: 16) {
+                VStack(spacing: 24) {
                     if viewModel.isScanning {
-                        ProgressView()
-                            .padding()
-                        Text("Scanning Backup Data")
-                            .foregroundStyle(.secondary)
+                        radarScanView
                     } else {
-                        Image(systemName: viewModel.hasIssues ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
-                            .font(.system(size: 50))
-                            .foregroundStyle(viewModel.hasIssues ? .orange : .green)
-                        
-                        VStack(spacing: 8) {
-                            Text(viewModel.summaryTitle)
-                                .font(.headline)
-                            Text(viewModel.summaryMessage)
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
+                        statusHeaderView
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-            } header: {
-                AppearanceSectionHeader(title: String.localized("Scan Results"), icon: "doc.text.magnifyingglass")
+                .padding(.vertical, 30)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
             }
             
             // Items Breakdown
@@ -57,33 +44,41 @@ struct PreflightCheckView: View {
                         PreflightItemRow(item: item)
                     }
                 } header: {
-                    AppearanceSectionHeader(title: String.localized("Backup Contents"), icon: "list.bullet")
+                    AppearanceSectionHeader(title: String.localized("Backup Contents"), icon: "list.bullet.rectangle")
                 } footer: {
-                    Text("Total Size: \(viewModel.totalSize)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    HStack {
+                        Text("Total Estimated Size:")
+                        Spacer()
+                        Text(viewModel.totalSize)
+                            .fontWeight(.bold)
+                    }
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .padding(.top, 4)
                 }
                 
                 // Issues Section
                 if viewModel.hasIssues {
                     Section {
                         ForEach(viewModel.allIssues, id: \.self) { issue in
-                            HStack(alignment: .top, spacing: 12) {
+                            HStack(alignment: .top, spacing: 14) {
                                 Image(systemName: "exclamationmark.triangle.fill")
                                     .foregroundStyle(.orange)
-                                    .font(.caption)
+                                    .font(.system(size: 14))
                                     .padding(.top, 2)
+
                                 Text(issue)
-                                    .font(.caption)
+                                    .font(.system(.subheadline, design: .rounded))
                                     .foregroundStyle(.secondary)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
+                            .padding(.vertical, 4)
                         }
                     } header: {
-                        AppearanceSectionHeader(title: String.localized("Detected Issues"), icon: "exclamationmark.triangle")
+                        AppearanceSectionHeader(title: String.localized("Detected Warnings"), icon: "exclamationmark.triangle")
                     } footer: {
-                        Text("These issues will not prevent the transfer, but may require attention after restoration so fix them before you continue.")
-                            .font(.caption)
+                        Text("These issues won't block the transfer, but they should be reviewed to ensure a successful restoration.")
+                            .font(.system(.caption, design: .rounded))
                             .foregroundStyle(.secondary)
                     }
                 }
@@ -93,18 +88,22 @@ struct PreflightCheckView: View {
                     Button {
                         onContinue()
                     } label: {
-                        HStack {
+                        HStack(spacing: 12) {
                             Image(systemName: "arrow.right.circle.fill")
-                            Text("Continue Transfer")
+                            Text("Prepare & Send Backup")
                         }
                         .frame(maxWidth: .infinity)
-                        .font(.headline)
+                        .font(.system(.headline, design: .rounded))
+                        .padding(.vertical, 14)
                     }
                     .buttonStyle(.borderedProminent)
+                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 } footer: {
-                    Text("This will prepare your backup and begin the transfer process.")
-                        .font(.caption)
+                    Text("Ready to transfer? Ensure the receiving device is still waiting.")
+                        .font(.system(.caption, design: .rounded))
                         .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 8)
                 }
             }
         }
@@ -119,6 +118,74 @@ struct PreflightCheckView: View {
         }
         .onAppear {
             viewModel.performScan()
+            withAnimation(.linear(duration: 2).repeatForever(autoreverses: false)) {
+                scanPhase = 360
+            }
+        }
+    }
+
+    // MARK: - Subviews
+
+    @ViewBuilder
+    private var radarScanView: some View {
+        VStack(spacing: 20) {
+            ZStack {
+                Circle()
+                    .stroke(Color.blue.opacity(0.1), lineWidth: 1)
+                    .frame(width: 150, height: 150)
+
+                Circle()
+                    .stroke(Color.blue.opacity(0.1), lineWidth: 1)
+                    .frame(width: 100, height: 100)
+
+                Circle()
+                    .stroke(Color.blue.opacity(0.1), lineWidth: 1)
+                    .frame(width: 50, height: 50)
+
+                // Scanning beam
+                Circle()
+                    .trim(from: 0, to: 0.2)
+                    .stroke(
+                        AngularGradient(colors: [.blue, .clear], center: .center),
+                        style: StrokeStyle(lineWidth: 4, lineCap: .round)
+                    )
+                    .frame(width: 150, height: 150)
+                    .rotationEffect(.degrees(scanPhase))
+            }
+
+            VStack(spacing: 8) {
+                Text("Analyzing Data")
+                    .font(.system(.headline, design: .rounded))
+                Text("Scanning your local database and files...")
+                    .font(.system(.caption, design: .rounded))
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var statusHeaderView: some View {
+        VStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .fill(viewModel.hasIssues ? Color.orange.opacity(0.1) : Color.green.opacity(0.1) )
+                    .frame(width: 100, height: 100)
+
+                Image(systemName: viewModel.hasIssues ? "exclamationmark.shield.fill" : "checkmark.shield.fill")
+                    .font(.system(size: 50))
+                    .foregroundStyle(viewModel.hasIssues ? .orange : .green)
+                    .ifAvailableiOS18SymbolPulse()
+            }
+
+            VStack(spacing: 6) {
+                Text(viewModel.summaryTitle)
+                    .font(.system(.title3, design: .rounded, weight: .bold))
+                Text(viewModel.summaryMessage)
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            }
         }
     }
 }
@@ -128,46 +195,43 @@ struct PreflightItemRow: View {
     let item: PreflightItem
     
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: item.icon)
-                .font(.title2)
-                .foregroundStyle(.blue)
-                .frame(width: 40)
+        HStack(spacing: 16) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color.blue.opacity(0.1))
+                    .frame(width: 48, height: 48)
+
+                Image(systemName: item.icon)
+                    .font(.system(size: 20))
+                    .foregroundStyle(.blue)
+            }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(item.category)
-                    .font(.headline)
+                    .font(.system(.headline, design: .rounded))
                 
-                HStack {
+                HStack(spacing: 8) {
                     Text("\(item.count) Items")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    
                     Text("•")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    
                     Text(item.size)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
+                .font(.system(.caption, design: .rounded))
+                .foregroundStyle(.secondary)
                 
                 if !item.issues.isEmpty {
-                    HStack {
+                    HStack(spacing: 4) {
                         Image(systemName: "exclamationmark.triangle.fill")
-                            .font(.caption2)
-                            .foregroundStyle(.orange)
                         Text("\(item.issues.count) Issue\(item.issues.count == 1 ? "" : "s")")
-                            .font(.caption2)
-                            .foregroundStyle(.orange)
                     }
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.orange)
                     .padding(.top, 2)
                 }
             }
             
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 6)
     }
 }
 
@@ -180,28 +244,19 @@ class PreflightCheckViewModel: ObservableObject {
     @Published var allIssues: [String] = []
     
     var summaryTitle: String {
-        if hasIssues {
-            return "Ready With Warnings"
-        } else {
-            return "Ready To Transfer"
-        }
+        hasIssues ? "Check Complete (Warnings)" : "Ready for Transfer"
     }
     
     var summaryMessage: String {
-        if hasIssues {
-            return "Some issues detected. You can continue, but review after restoration."
-        } else {
-            return "All checks passed. Your backup is ready for transfer."
-        }
+        hasIssues
+            ? "We found some minor issues. You can proceed, but please review the warnings."
+            : "Everything looks great! Your backup is ready to be sent securely."
     }
     
     func performScan() {
         isScanning = true
-        
         Task {
-            // Simulate scanning with delay
-            try? await Task.sleep(nanoseconds: 1_500_000_000) // 1.5 seconds
-            
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
             await MainActor.run {
                 scanBackupContents()
                 isScanning = false
@@ -214,134 +269,43 @@ class PreflightCheckViewModel: ObservableObject {
         var totalBytes: Int64 = 0
         var issuesList: [String] = []
         
-        // 1. Certificates
         let certificates = Storage.shared.getAllCertificates()
-        var certIssues: [String] = []
         var expiredCount = 0
-        
         for cert in certificates {
-            // Check for expired certificates
-            if let provisionData = Storage.shared.getProvisionFileDecoded(for: cert) {
-                let expirationDate = provisionData.ExpirationDate
-                if expirationDate < Date() {
-                    expiredCount += 1
-                }
+            if let provisionData = Storage.shared.getProvisionFileDecoded(for: cert), provisionData.ExpirationDate < Date() {
+                expiredCount += 1
             }
-        }
-        
-        if expiredCount > 0 {
-            certIssues.append("\(expiredCount) Expired Certificate\(expiredCount == 1 ? "" : "s")")
         }
         
         let certSize = calculateDirectorySize(FileManager.default.certificates)
         totalBytes += certSize
+        itemsList.append(PreflightItem(category: "Certificates", count: certificates.count, size: formatBytes(certSize), icon: "doc.text.fill", issues: expiredCount > 0 ? ["\(expiredCount) Expired Certificates"] : []))
         
-        itemsList.append(PreflightItem(
-            category: "Certificates",
-            count: certificates.count,
-            size: formatBytes(certSize),
-            icon: "doc.text.fill",
-            issues: certIssues
-        ))
-        
-        // 2. Provisioning Profiles (included in certificates)
-        let profileCount = certificates.filter { cert in
-            Storage.shared.getProvisionFileDecoded(for: cert) != nil
-        }.count
-        
-        itemsList.append(PreflightItem(
-            category: "Provisioning Profiles",
-            count: profileCount,
-            size: "Included",
-            icon: "doc.badge.gearshape",
-            issues: []
-        ))
-        
-        // 3. Signed Apps
         let signedApps = (try? Storage.shared.context.fetch(Signed.fetchRequest())) ?? []
         let signedSize = calculateDirectorySize(FileManager.default.signed)
         totalBytes += signedSize
+        itemsList.append(PreflightItem(category: "Signed Apps", count: signedApps.count, size: formatBytes(signedSize), icon: "checkmark.seal.fill", issues: []))
         
-        itemsList.append(PreflightItem(
-            category: "Signed Apps",
-            count: signedApps.count,
-            size: formatBytes(signedSize),
-            icon: "checkmark.seal.fill",
-            issues: []
-        ))
-        
-        // 4. Imported Apps
         let importedApps = (try? Storage.shared.context.fetch(Imported.fetchRequest())) ?? []
         let importedSize = calculateDirectorySize(FileManager.default.unsigned)
         totalBytes += importedSize
+        itemsList.append(PreflightItem(category: "Imported Apps", count: importedApps.count, size: formatBytes(importedSize), icon: "square.and.arrow.down.fill", issues: []))
         
-        itemsList.append(PreflightItem(
-            category: "Imported Apps",
-            count: importedApps.count,
-            size: formatBytes(importedSize),
-            icon: "square.and.arrow.down.fill",
-            issues: []
-        ))
-        
-        // 5. Sources
         let sources = Storage.shared.getSources()
-        itemsList.append(PreflightItem(
-            category: "Sources",
-            count: sources.count,
-            size: formatBytes(Int64(sources.count * 1024)), // Approximate
-            icon: "link.circle.fill",
-            issues: []
-        ))
+        itemsList.append(PreflightItem(category: "Sources", count: sources.count, size: formatBytes(Int64(sources.count * 1024)), icon: "link.circle.fill", issues: []))
         
-        // 6. Default Frameworks
         let frameworksDir = Storage.shared.documentsURL.appendingPathComponent("DefaultFrameworks")
         let frameworksSize = calculateDirectorySize(frameworksDir)
-        let frameworksCount = (try? FileManager.default.contentsOfDirectory(at: frameworksDir, includingPropertiesForKeys: nil).count) ?? 0
         totalBytes += frameworksSize
+        itemsList.append(PreflightItem(category: "Default Frameworks", count: (try? FileManager.default.contentsOfDirectory(at: frameworksDir, includingPropertiesForKeys: nil).count) ?? 0, size: formatBytes(frameworksSize), icon: "cube.box.fill", issues: []))
         
-        itemsList.append(PreflightItem(
-            category: "Default Frameworks",
-            count: frameworksCount,
-            size: formatBytes(frameworksSize),
-            icon: "cube.box.fill",
-            issues: []
-        ))
-        
-        // 7. Archives
         let archivesSize = calculateDirectorySize(FileManager.default.archives)
-        let archivesCount = (try? FileManager.default.contentsOfDirectory(at: FileManager.default.archives, includingPropertiesForKeys: nil).count) ?? 0
         totalBytes += archivesSize
+        itemsList.append(PreflightItem(category: "Archives", count: (try? FileManager.default.contentsOfDirectory(at: FileManager.default.archives, includingPropertiesForKeys: nil).count) ?? 0, size: formatBytes(archivesSize), icon: "archivebox.fill", issues: []))
         
-        itemsList.append(PreflightItem(
-            category: "Archives",
-            count: archivesCount,
-            size: formatBytes(archivesSize),
-            icon: "archivebox.fill",
-            issues: []
-        ))
+        itemsList.append(PreflightItem(category: "Settings", count: 1, size: "Included", icon: "gearshape.fill", issues: []))
         
-        // 8. Settings
-        itemsList.append(PreflightItem(
-            category: "Settings & Preferences",
-            count: 1,
-            size: "Included",
-            icon: "gearshape.fill",
-            issues: []
-        ))
-        
-        // 9. History & Entitlements
-        itemsList.append(PreflightItem(
-            category: "History & Entitlements",
-            count: 1,
-            size: "Included",
-            icon: "clock.arrow.circlepath",
-            issues: []
-        ))
-        
-        // Collect all issues
-        for item in itemsList {
-            issuesList.append(contentsOf: item.issues)
-        }
+        for item in itemsList { issuesList.append(contentsOf: item.issues) }
         
         self.items = itemsList
         self.totalSize = formatBytes(totalBytes)
@@ -350,21 +314,15 @@ class PreflightCheckViewModel: ObservableObject {
     }
     
     private func calculateDirectorySize(_ directory: URL) -> Int64 {
-        guard FileManager.default.fileExists(atPath: directory.path) else {
-            return 0
-        }
-        
+        guard FileManager.default.fileExists(atPath: directory.path) else { return 0 }
         var totalSize: Int64 = 0
-        
         if let enumerator = FileManager.default.enumerator(at: directory, includingPropertiesForKeys: [.fileSizeKey]) {
             for case let fileURL as URL in enumerator {
-                if let resourceValues = try? fileURL.resourceValues(forKeys: [.fileSizeKey]),
-                   let fileSize = resourceValues.fileSize {
+                if let resourceValues = try? fileURL.resourceValues(forKeys: [.fileSizeKey]), let fileSize = resourceValues.fileSize {
                     totalSize += Int64(fileSize)
                 }
             }
         }
-        
         return totalSize
     }
     

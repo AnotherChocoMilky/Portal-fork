@@ -7,32 +7,65 @@ struct SenderAnimationView: View {
     @State private var pulseAnimation = false
     @State private var rotationAngle: Double = 0
     @State private var scaleAmount: CGFloat = 1.0
+    @State private var waveOffset: CGFloat = 0
     
     var body: some View {
         ZStack {
-            // Background gradient
+            // Background dynamic gradient
             LinearGradient(
                 colors: backgroundColors,
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
             )
             .ignoresSafeArea()
+            .animation(.easeInOut(duration: 1.0), value: state)
+
+            // Dynamic particle background
+            if isAnimating {
+                GeometryReader { geo in
+                    ForEach(0..<15, id: \.self) { i in
+                        Circle()
+                            .fill(Color.white.opacity(0.15))
+                            .frame(width: CGFloat.random(in: 10...30))
+                            .position(
+                                x: CGFloat.random(in: 0...geo.size.width),
+                                y: CGFloat.random(in: 0...geo.size.height)
+                            )
+                            .offset(y: waveOffset * (1 + CGFloat(i) * 0.1))
+                    }
+                }
+                .ignoresSafeArea()
+            }
             
             VStack(spacing: 40) {
                 Spacer()
                 
                 // Main animation content
                 mainAnimationContent
+                    .transition(.scale.combined(with: .opacity))
                 
-                // Status text
-                statusText
+                // Status Information
+                VStack(spacing: 12) {
+                    Text(statusTitle)
+                        .font(.system(size: 32, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .shadow(radius: 10)
+
+                    Text(statusSubtitle)
+                        .font(.system(size: 17, weight: .medium, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.85))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 20)
+                }
                 
                 // Progress details
                 progressDetails
+                    .padding(.top, 20)
                 
                 Spacer()
             }
-            .padding(.horizontal, 40)
+            .padding(.horizontal, 30)
         }
         .onAppear {
             startAnimations()
@@ -59,97 +92,111 @@ struct SenderAnimationView: View {
     
     private var sendingAnimation: some View {
         ZStack {
-            // Outer expanding rings
-            ForEach(0..<3, id: \.self) { index in
+            // Sophisticated outer layers
+            ForEach(0..<4, id: \.self) { index in
                 Circle()
-                    .stroke(Color.white.opacity(0.3), lineWidth: 2)
-                    .frame(width: 200, height: 200)
-                    .scaleEffect(pulseAnimation ? 1.5 : 1.0)
-                    .opacity(pulseAnimation ? 0 : 0.8)
+                    .stroke(
+                        LinearGradient(colors: [.white.opacity(0.4), .clear], startPoint: .top, endPoint: .bottom),
+                        lineWidth: 2
+                    )
+                    .frame(width: 220, height: 220)
+                    .scaleEffect(pulseAnimation ? 1.6 : 0.9)
+                    .opacity(pulseAnimation ? 0 : 0.7)
                     .animation(
                         Animation
-                            .easeOut(duration: 2.0)
+                            .easeOut(duration: 2.5)
                             .repeatForever(autoreverses: false)
-                            .delay(Double(index) * 0.4),
+                            .delay(Double(index) * 0.6),
                         value: pulseAnimation
                     )
             }
             
-            // Center icon with glow
+            // Core with glow and icon
             ZStack {
-                // Glow effect
                 Circle()
                     .fill(
                         RadialGradient(
-                            colors: [Color.white.opacity(0.3), Color.clear],
+                            colors: [Color.white.opacity(0.4), Color.clear],
                             center: .center,
                             startRadius: 0,
-                            endRadius: 80
+                            endRadius: 100
                         )
                     )
-                    .frame(width: 160, height: 160)
+                    .frame(width: 180, height: 180)
                     .scaleEffect(scaleAmount)
                 
-                // Icon background
                 Circle()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 120, height: 120)
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 130, height: 130)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.3), lineWidth: 1)
+                    )
                 
-                // Icon
                 if #available(iOS 18.0, *) {
                     Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 60))
+                        .font(.system(size: 70))
                         .foregroundStyle(.white)
                         .symbolEffect(.pulse, options: .repeating)
                 } else {
                     Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 60))
+                        .font(.system(size: 70))
                         .foregroundStyle(.white)
-                        .scaleEffect(isAnimating ? 1.1 : 1.0)
+                        .offset(y: isAnimating ? -8 : 8)
                         .animation(
                             Animation
-                                .easeInOut(duration: 1.0)
+                                .easeInOut(duration: 1.2)
                                 .repeatForever(autoreverses: true),
                             value: isAnimating
                         )
                 }
             }
         }
-        .frame(width: 240, height: 240)
+        .frame(width: 260, height: 260)
     }
     
     // MARK: - Transferring Animation
     
     private func transferringAnimation(progress: Double) -> some View {
         ZStack {
-            // Background circle
+            // Background shadow ring
             Circle()
-                .stroke(Color.white.opacity(0.2), lineWidth: 12)
-                .frame(width: 200, height: 200)
+                .stroke(Color.black.opacity(0.1), lineWidth: 16)
+                .frame(width: 210, height: 210)
+
+            // Background track
+            Circle()
+                .stroke(Color.white.opacity(0.2), lineWidth: 16)
+                .frame(width: 210, height: 210)
             
-            // Progress circle
+            // Animated progress ring
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
-                    Color.white,
-                    style: StrokeStyle(lineWidth: 12, lineCap: .round)
+                    AngularGradient(
+                        colors: [.white, .white.opacity(0.6), .white],
+                        center: .center,
+                        startAngle: .degrees(0),
+                        endAngle: .degrees(360)
+                    ),
+                    style: StrokeStyle(lineWidth: 16, lineCap: .round)
                 )
-                .frame(width: 200, height: 200)
+                .frame(width: 210, height: 210)
                 .rotationEffect(.degrees(-90))
-                .animation(.linear(duration: 0.3), value: progress)
+                .shadow(color: .white.opacity(0.3), radius: 10)
+                .animation(.spring(response: 0.6, dampingFraction: 0.8), value: progress)
             
-            // Inner content
-            VStack(spacing: 12) {
-                // Upload icon with animation
+            // Inner content card
+            VStack(spacing: 8) {
                 ZStack {
                     Circle()
-                        .fill(Color.white.opacity(0.2))
-                        .frame(width: 100, height: 100)
+                        .fill(.ultraThinMaterial)
+                        .frame(width: 110, height: 110)
                     
                     Image(systemName: "arrow.up.circle.fill")
-                        .font(.system(size: 50))
+                        .font(.system(size: 56))
                         .foregroundStyle(.white)
-                        .offset(y: isAnimating ? -5 : 0)
+                        .offset(y: isAnimating ? -6 : 6)
                         .animation(
                             Animation
                                 .easeInOut(duration: 0.8)
@@ -158,10 +205,10 @@ struct SenderAnimationView: View {
                         )
                 }
                 
-                // Percentage
                 Text("\(Int(progress * 100))%")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
+                    .font(.system(size: 40, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
+                    .contentTransition(.numericText())
             }
         }
     }
@@ -170,47 +217,34 @@ struct SenderAnimationView: View {
     
     private var completedAnimation: some View {
         ZStack {
-            // Success ring
             Circle()
-                .stroke(Color.white.opacity(0.3), lineWidth: 8)
-                .frame(width: 200, height: 200)
+                .stroke(Color.white.opacity(0.3), lineWidth: 10)
+                .frame(width: 210, height: 210)
             
             Circle()
                 .trim(from: 0, to: 1)
-                .stroke(
-                    Color.white,
-                    style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                )
-                .frame(width: 200, height: 200)
+                .stroke(Color.white, style: StrokeStyle(lineWidth: 10, lineCap: .round))
+                .frame(width: 210, height: 210)
                 .rotationEffect(.degrees(-90))
             
-            // Checkmark with scale animation
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 120, height: 120)
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 130, height: 130)
                 
                 Image(systemName: "checkmark")
-                    .font(.system(size: 60, weight: .bold))
+                    .font(.system(size: 64, weight: .bold))
                     .foregroundStyle(.white)
                     .scaleEffect(scaleAmount)
             }
             
-            // Confetti-like particles
-            if #available(iOS 17.0, *) {
-                ForEach(0..<8, id: \.self) { index in
-                    Circle()
-                        .fill(Color.white.opacity(0.6))
-                        .frame(width: 8, height: 8)
-                        .offset(particleOffset(for: index))
-                        .opacity(isAnimating ? 0 : 1)
-                        .animation(
-                            Animation
-                                .easeOut(duration: 1.0)
-                                .delay(0.2),
-                            value: isAnimating
-                        )
-                }
+            // Particle explosion
+            ForEach(0..<20, id: \.self) { i in
+                Circle()
+                    .fill(Color.white)
+                    .frame(width: 6, height: 6)
+                    .offset(particleOffset(for: i, active: isAnimating))
+                    .opacity(isAnimating ? 0 : 1)
             }
         }
     }
@@ -219,39 +253,20 @@ struct SenderAnimationView: View {
     
     private var failedAnimation: some View {
         ZStack {
-            // Error ring
             Circle()
-                .stroke(Color.white.opacity(0.3), lineWidth: 8)
-                .frame(width: 200, height: 200)
+                .stroke(Color.white.opacity(0.3), lineWidth: 10)
+                .frame(width: 210, height: 210)
             
-            // X mark with shake effect
             ZStack {
                 Circle()
-                    .fill(Color.white.opacity(0.2))
-                    .frame(width: 120, height: 120)
+                    .fill(.ultraThinMaterial)
+                    .frame(width: 130, height: 130)
                 
                 Image(systemName: "xmark")
-                    .font(.system(size: 60, weight: .bold))
+                    .font(.system(size: 64, weight: .bold))
                     .foregroundStyle(.white)
-                    .offset(x: isAnimating ? -5 : 5)
+                    .offset(x: isAnimating ? -8 : 8)
             }
-        }
-    }
-    
-    // MARK: - Status Text
-    
-    @ViewBuilder
-    private var statusText: some View {
-        VStack(spacing: 8) {
-            Text(statusTitle)
-                .font(.system(size: 28, weight: .bold, design: .rounded))
-                .foregroundStyle(.white)
-                .multilineTextAlignment(.center)
-            
-            Text(statusSubtitle)
-                .font(.system(size: 16, design: .rounded))
-                .foregroundStyle(.white.opacity(0.8))
-                .multilineTextAlignment(.center)
         }
     }
     
@@ -260,90 +275,87 @@ struct SenderAnimationView: View {
     @ViewBuilder
     private var progressDetails: some View {
         if case .transferring(_, let bytesTransferred, let totalBytes, let speed) = state {
-            VStack(spacing: 12) {
+            VStack(spacing: 16) {
                 HStack {
-                    Text("Sent:")
-                        .foregroundStyle(.white.opacity(0.7))
+                    progressInfoItem(icon: "doc.fill", label: "Uploaded", value: formatBytes(bytesTransferred))
                     Spacer()
-                    Text(formatBytes(bytesTransferred) + " / " + formatBytes(totalBytes))
-                        .foregroundStyle(.white)
+                    progressInfoItem(icon: "speedometer", label: "Speed", value: formatSpeed(speed))
                 }
                 
+                Divider()
+                    .background(Color.white.opacity(0.3))
+
                 HStack {
-                    Text("Speed:")
-                        .foregroundStyle(.white.opacity(0.7))
+                    progressInfoItem(icon: "archivebox.fill", label: "Total Size", value: formatBytes(totalBytes))
                     Spacer()
-                    Text(formatSpeed(speed))
-                        .foregroundStyle(.white)
-                }
-                
-                if totalBytes > 0 && speed > 0 {
-                    let remaining = Double(totalBytes - bytesTransferred) / speed
-                    HStack {
-                        Text("Time Remaining:")
-                            .foregroundStyle(.white.opacity(0.7))
-                        Spacer()
-                        Text(formatTime(remaining))
-                            .foregroundStyle(.white)
+                    if totalBytes > 0 && speed > 0 {
+                        let remaining = Double(totalBytes - bytesTransferred) / speed
+                        progressInfoItem(icon: "clock.fill", label: "ETA", value: formatTime(remaining))
                     }
                 }
             }
-            .font(.system(size: 14, design: .rounded))
-            .padding(.horizontal, 20)
-            .padding(.vertical, 16)
-            .background(Color.white.opacity(0.1))
-            .cornerRadius(16)
+            .padding(20)
+            .background(.ultraThinMaterial)
+            .cornerRadius(24)
+            .overlay(
+                RoundedRectangle(cornerRadius: 24)
+                    .stroke(Color.white.opacity(0.2), lineWidth: 1)
+            )
+        }
+    }
+
+    @ViewBuilder
+    private func progressInfoItem(icon: String, label: String, value: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundStyle(.white.opacity(0.7))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.system(size: 10, weight: .bold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .textCase(.uppercase)
+                Text(value)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white)
+            }
         }
     }
     
-    // MARK: - Computed Properties
+    // MARK: - Helpers & Animations
     
     private var backgroundColors: [Color] {
         switch state {
         case .idle, .discovering, .connecting, .transferring:
-            return [Color.blue.opacity(0.8), Color.purple.opacity(0.8)]
+            return [Color(hex: "4F46E5"), Color(hex: "7C3AED"), Color(hex: "DB2777")]
         case .completed:
-            return [Color.green.opacity(0.8), Color.teal.opacity(0.8)]
+            return [Color(hex: "059669"), Color(hex: "10B981"), Color(hex: "34D399")]
         case .failed:
-            return [Color.red.opacity(0.8), Color.orange.opacity(0.8)]
+            return [Color(hex: "DC2626"), Color(hex: "EF4444"), Color(hex: "F87171")]
         }
     }
     
     private var statusTitle: String {
         switch state {
-        case .idle:
-            return "Ready To Send!"
-        case .discovering:
-            return "Finding Receiver..."
-        case .connecting:
-            return "Connecting..."
-        case .transferring:
-            return "Sending Backup"
-        case .completed:
-            return "Sent Successfully!"
-        case .failed:
-            return "Send Failed"
+        case .idle: return "Ready to Go"
+        case .discovering: return "Searching..."
+        case .connecting: return "Handshaking"
+        case .transferring: return "Sending Data"
+        case .completed: return "All Done!"
+        case .failed: return "Failed"
         }
     }
     
     private var statusSubtitle: String {
         switch state {
-        case .idle:
-            return "Waiting To Start Transfer"
-        case .discovering:
-            return "Searching For Devices Nearby"
-        case .connecting:
-            return "Establishing Secure Connection"
-        case .transferring:
-            return "Transferring Your Backup Data"
-        case .completed:
-            return "Your Backup Has Been Sent"
-        case .failed(let error):
-            return error.localizedDescription
+        case .idle: return "Establish connection to begin"
+        case .discovering: return "Looking for nearby receivers"
+        case .connecting: return "Establishing secure channel"
+        case .transferring: return "Transmitting encrypted backup"
+        case .completed: return "Backup transferred successfully"
+        case .failed(let error): return error.localizedDescription
         }
     }
-    
-    // MARK: - Animations
     
     private func startAnimations() {
         withAnimation {
@@ -351,41 +363,30 @@ struct SenderAnimationView: View {
             pulseAnimation = true
         }
         
-        // Scale animation for glow
-        withAnimation(
-            Animation
-                .easeInOut(duration: 1.5)
-                .repeatForever(autoreverses: true)
-        ) {
-            scaleAmount = 1.2
+        withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+            scaleAmount = 1.15
+        }
+
+        withAnimation(.linear(duration: 10).repeatForever(autoreverses: false)) {
+            waveOffset = -100
         }
         
-        // Completed state celebration
         if case .completed = state {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-                    scaleAmount = 1.2
-                }
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.5)) {
+                scaleAmount = 1.3
             }
         }
         
-        // Failed state shake
         if case .failed = state {
-            withAnimation(
-                Animation
-                    .easeInOut(duration: 0.1)
-                    .repeatCount(6, autoreverses: true)
-            ) {
+            withAnimation(.easeInOut(duration: 0.1).repeatCount(8, autoreverses: true)) {
                 isAnimating = true
             }
         }
     }
     
-    // MARK: - Helper Functions
-    
-    private func particleOffset(for index: Int) -> CGSize {
-        let angle = Double(index) * 45.0 * .pi / 180.0
-        let distance: CGFloat = isAnimating ? 120 : 0
+    private func particleOffset(for index: Int, active: Bool) -> CGSize {
+        let angle = Double(index) * (360.0 / 20.0) * .pi / 180.0
+        let distance: CGFloat = active ? 160 : 0
         return CGSize(
             width: distance * Foundation.cos(angle),
             height: distance * Foundation.sin(angle)
@@ -405,21 +406,36 @@ struct SenderAnimationView: View {
     }
     
     private func formatTime(_ seconds: Double) -> String {
-        if seconds < 60 {
-            return String(format: "%.0fs", seconds)
-        } else if seconds < 3600 {
-            let minutes = Int(seconds / 60)
-            let secs = Int(seconds.truncatingRemainder(dividingBy: 60))
-            return "\(minutes)m \(secs)s"
-        } else {
-            let hours = Int(seconds / 3600)
-            let minutes = Int((seconds.truncatingRemainder(dividingBy: 3600)) / 60)
-            return "\(hours)h \(minutes)m"
-        }
+        if seconds < 60 { return String(format: "%.0fs", seconds) }
+        let minutes = Int(seconds / 60)
+        let secs = Int(seconds.truncatingRemainder(dividingBy: 60))
+        return "\(minutes)m \(secs)s"
     }
 }
 
-// MARK: - Preview
-#Preview {
-    SenderAnimationView(state: .transferring(progress: 0.65, bytesTransferred: 650000000, totalBytes: 1000000000, speed: 5242880))
+// MARK: - Color Extension
+extension Color {
+    init(hex: String) {
+        let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)
+        var int: UInt64 = 0
+        Scanner(string: hex).scanHexInt64(&int)
+        let a, r, g, b: UInt64
+        switch hex.count {
+        case 3: // RGB (12-bit)
+            (a, r, g, b) = (255, (int >> 8) * 17, (int >> 4 & 0xF) * 17, (int & 0xF) * 17)
+        case 6: // RGB (24-bit)
+            (a, r, g, b) = (255, int >> 16, int >> 8 & 0xFF, int & 0xFF)
+        case 8: // ARGB (32-bit)
+            (a, r, g, b) = (int >> 24, int >> 16 & 0xFF, int >> 8 & 0xFF, int & 0xFF)
+        default:
+            (a, r, g, b) = (1, 1, 1, 0)
+        }
+        self.init(
+            .sRGB,
+            red: Double(r) / 255,
+            green: Double(g) / 255,
+            blue: Double(b) / 255,
+            opacity: Double(a) / 255
+        )
+    }
 }
