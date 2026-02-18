@@ -385,51 +385,42 @@ class FileAnalysisEngine {
         
         var isValid = true
         var is64Bit = false
-        var architectures = "unknown"
+        var archs: [String] = []
         var architectureCount = 1
         
         switch magic {
         case 0xFEEDFACE, 0xCEFAEDFE: // MH_MAGIC, MH_CIGAM (32-bit)
             is64Bit = false
-            architectures = "arm"
+            archs = ["armv7"]
             
         case 0xFEEDFACF, 0xCFFAEDFE: // MH_MAGIC_64, MH_CIGAM_64 (64-bit)
             is64Bit = true
-            architectures = "arm64"
+            archs = [detectSingleArch(at: path)]
             
         case 0xCAFEBABE, 0xBEBAFECA: // FAT_MAGIC, FAT_CIGAM (fat binary)
-            architectures = "universal"
-            is64Bit = true // Assume 64-bit for universal binaries
-            
-            // Try to read fat header
-            guard let fatHandle = try? FileHandle(forReadingFrom: url),
-                  let fatHeaderData = try? fatHandle.read(upToCount: 8) else {
-                try? fileHandle.close()
-                return nil
-            }
-            
-            try? fatHandle.close()
-            
-            if fatHeaderData.count >= 8 {
-                let nfatArch = fatHeaderData[4..<8].withUnsafeBytes { 
-                    UInt32(bigEndian: $0.load(as: UInt32.self))
-                }
-                architectureCount = Int(nfatArch)
-            }
+            let fatArchs = detectFatArchs(at: path)
+            archs = fatArchs
+            architectureCount = fatArchs.count
+            is64Bit = fatArchs.contains { $0.contains("64") }
             
         case 0xCAFEBABF, 0xBFBAFECA: // FAT_MAGIC_64, FAT_CIGAM_64
-            architectures = "universal"
+            let fatArchs = detectFatArchs(at: path)
+            archs = fatArchs
+            architectureCount = fatArchs.count
             is64Bit = true
             
         default:
             isValid = false
         }
         
-        // Use otool to get more detailed information
+        let architectures = archs.joined(separator: ", ")
+        let isArm64e = archs.contains("arm64e")
+
+        // On iOS we can't easily use otool, but we can read some load commands manually if needed.
+        // For now, let's keep the existing logic for macOS and stub for iOS.
         let hasEncryption = checkMachOEncryption(at: path)
         let isPIE = checkMachOPIE(at: path)
         let loadCommands = getMachOLoadCommandCount(at: path)
-        let isArm64e = architectures.contains("arm64") && checkIfArm64e(at: path)
         
         return MachOInformation(
             isValid: isValid,
@@ -441,6 +432,59 @@ class FileAnalysisEngine {
             isPIE: isPIE,
             numberOfLoadCommands: loadCommands
         )
+    }
+
+    private static func detectSingleArch(at path: String) -> String {
+        guard let fileHandle = try? FileHandle(forReadingFrom: URL(fileURLWithPath: path)),
+              let headerData = try? fileHandle.read(upToCount: 32) else {
+            return "arm64"
+        }
+        try? fileHandle.close()
+
+        guard headerData.count >= 12 else { return "arm64" }
+
+        let cpuType = headerData[4..<8].withUnsafeBytes { $0.load(as: Int32.self) }
+        let cpuSubtype = headerData[8..<12].withUnsafeBytes { $0.load(as: Int32.self) }
+
+        return cpuTypeToString(cputype: cpuType, cpusubtype: cpuSubtype)
+    }
+
+    private static func detectFatArchs(at path: String) -> [String] {
+        guard let fileHandle = try? FileHandle(forReadingFrom: URL(fileURLWithPath: path)),
+              let headerData = try? fileHandle.read(upToCount: 8) else {
+            return ["universal"]
+        }
+
+        let nfatArch = headerData[4..<8].withUnsafeBytes {
+            UInt32(bigEndian: $0.load(as: UInt32.self))
+        }
+
+        var archs: [String] = []
+        for i in 0..<Int(nfatArch) {
+            let offset = 8 + (i * 20) // fat_arch is 20 bytes
+            try? fileHandle.seek(toOffset: UInt64(offset))
+            guard let archData = try? fileHandle.read(upToCount: 8) else { continue }
+
+            let cpuType = archData[0..<4].withUnsafeBytes { Int32(bigEndian: $0.load(as: Int32.self)) }
+            let cpuSubtype = archData[4..<8].withUnsafeBytes { Int32(bigEndian: $0.load(as: Int32.self)) }
+
+            archs.append(cpuTypeToString(cputype: cpuType, cpusubtype: cpuSubtype))
+        }
+
+        try? fileHandle.close()
+        return archs.isEmpty ? ["universal"] : archs
+    }
+
+    private static func cpuTypeToString(cputype: Int32, cpusubtype: Int32) -> String {
+        if cputype == 12 { // CPU_TYPE_ARM
+            return "armv7"
+        } else if cputype == 0x0100000c { // CPU_TYPE_ARM64
+            if (cpusubtype & 0x00FFFFFF) == 2 { // CPU_SUBTYPE_ARM64E
+                return "arm64e"
+            }
+            return "arm64"
+        }
+        return "unknown(\(cputype))"
     }
     
     private static func checkMachOEncryption(at path: String) -> Bool {
@@ -466,8 +510,15 @@ class FileAnalysisEngine {
         
         return false
         #else
-        // Mach-O encryption check not supported on non-macOS platforms
-        return false
+        // Manual check for iOS
+        guard let fileHandle = try? FileHandle(forReadingFrom: URL(fileURLWithPath: path)),
+              let data = try? fileHandle.read(upToCount: 1024 * 64) else { return false }
+        try? fileHandle.close()
+
+        // LC_ENCRYPTION_INFO = 0x21, LC_ENCRYPTION_INFO_64 = 0x2C
+        // This is a very rough check, but better than nothing
+        return data.range(of: Data([0x21, 0x00, 0x00, 0x00])) != nil ||
+               data.range(of: Data([0x2C, 0x00, 0x00, 0x00])) != nil
         #endif
     }
     
@@ -494,8 +545,14 @@ class FileAnalysisEngine {
         
         return false
         #else
-        // Mach-O PIE check not supported on non-macOS platforms
-        return false
+        // MH_PIE = 0x00200000
+        guard let fileHandle = try? FileHandle(forReadingFrom: URL(fileURLWithPath: path)),
+              let headerData = try? fileHandle.read(upToCount: 32) else { return false }
+        try? fileHandle.close()
+
+        guard headerData.count >= 28 else { return false }
+        let flags = headerData[24..<28].withUnsafeBytes { $0.load(as: UInt32.self) }
+        return (flags & 0x00200000) != 0
         #endif
     }
     
@@ -524,8 +581,13 @@ class FileAnalysisEngine {
         
         return 0
         #else
-        // Mach-O load command counting not supported on non-macOS platforms
-        return 0
+        guard let fileHandle = try? FileHandle(forReadingFrom: URL(fileURLWithPath: path)),
+              let headerData = try? fileHandle.read(upToCount: 20) else { return 0 }
+        try? fileHandle.close()
+
+        guard headerData.count >= 20 else { return 0 }
+        let ncmds = headerData[16..<20].withUnsafeBytes { $0.load(as: UInt32.self) }
+        return Int(ncmds)
         #endif
     }
     
@@ -552,8 +614,7 @@ class FileAnalysisEngine {
         
         return false
         #else
-        // arm64e detection not supported on non-macOS platforms
-        return false
+        return detectSingleArch(at: path) == "arm64e"
         #endif
     }
     
