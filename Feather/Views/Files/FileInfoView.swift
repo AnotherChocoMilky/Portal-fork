@@ -75,21 +75,21 @@ struct FileInfoView: View {
                     }
                     
                     Section {
-                        InfoRow(label: .localized("Name"), value: file.name, icon: "tag.fill")
+                        FileInfoRow(label: .localized("Name"), value: file.name, icon: "tag.fill")
                         if !file.isDirectory {
-                            InfoRow(label: .localized("Type"), value: file.url.pathExtension.uppercased(), icon: "doc.fill")
+                            FileInfoRow(label: .localized("Type"), value: file.url.pathExtension.uppercased(), icon: "doc.fill")
                         }
                         if let size = file.size {
-                            InfoRow(label: .localized("Size"), value: size, icon: "externaldrive.fill")
+                            FileInfoRow(label: .localized("Size"), value: size, icon: "externaldrive.fill")
                         }
                     } header: {
                         Label(.localized("General"), systemImage: "info.circle.fill")
                     }
                     
                     Section {
-                        InfoRow(label: .localized("Path"), value: file.url.path, icon: "folder.fill", copyable: true)
+                        FileInfoRow(label: .localized("Path"), value: file.url.path, icon: "folder.fill", copyable: true)
                         if let modDate = file.modificationDate {
-                            InfoRow(label: .localized("Modified"), value: formatDate(modDate), icon: "clock.fill")
+                            FileInfoRow(label: .localized("Modified"), value: formatDate(modDate), icon: "clock.fill")
                         }
                     } header: {
                         Label(.localized("Details"), systemImage: "list.bullet.rectangle")
@@ -136,7 +136,7 @@ struct FileInfoView: View {
 }
 
 // MARK: - InfoRow
-struct InfoRow: View {
+struct FileInfoRow: View {
     let label: String
     let value: String
     var icon: String? = nil

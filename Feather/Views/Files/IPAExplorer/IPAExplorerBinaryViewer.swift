@@ -8,18 +8,18 @@ struct IPAExplorerBinaryViewer: View {
     var body: some View {
         List {
             Section(.localized("File Info")) {
-                InfoRow(label: .localized("Name"), value: fileURL.lastPathComponent)
-                InfoRow(label: .localized("Size"), value: ByteCountFormatter.string(fromByteCount: fileSize, countStyle: .file))
+                BinaryInfoRow(label: .localized("Name"), value: fileURL.lastPathComponent)
+                BinaryInfoRow(label: .localized("Size"), value: ByteCountFormatter.string(fromByteCount: fileSize, countStyle: .file))
             }
 
             if let info = machoInfo {
                 Section(.localized("Mach-O Info")) {
-                    InfoRow(label: .localized("Architectures"), value: info.architectures)
-                    InfoRow(label: .localized("64-bit"), value: info.is64Bit ? .localized("Yes") : .localized("No"))
-                    InfoRow(label: .localized("ARM64e"), value: info.isArm64e ? .localized("Yes") : .localized("No"))
-                    InfoRow(label: .localized("PIE"), value: info.isPIE ? .localized("Yes") : .localized("No"))
-                    InfoRow(label: .localized("Encrypted"), value: info.hasEncryption ? .localized("Yes") : .localized("No"))
-                    InfoRow(label: .localized("Load Commands"), value: "\(info.numberOfLoadCommands)")
+                    BinaryInfoRow(label: .localized("Architectures"), value: info.architectures)
+                    BinaryInfoRow(label: .localized("64-bit"), value: info.is64Bit ? .localized("Yes") : .localized("No"))
+                    BinaryInfoRow(label: .localized("ARM64e"), value: info.isArm64e ? .localized("Yes") : .localized("No"))
+                    BinaryInfoRow(label: .localized("PIE"), value: info.isPIE ? .localized("Yes") : .localized("No"))
+                    BinaryInfoRow(label: .localized("Encrypted"), value: info.hasEncryption ? .localized("Yes") : .localized("No"))
+                    BinaryInfoRow(label: .localized("Load Commands"), value: "\(info.numberOfLoadCommands)")
                 }
             } else {
                 Text(.localized("Analyzing..."))
@@ -38,7 +38,7 @@ struct IPAExplorerBinaryViewer: View {
     }
 }
 
-private struct InfoRow: View {
+private struct BinaryInfoRow: View {
     let label: String
     let value: String
 

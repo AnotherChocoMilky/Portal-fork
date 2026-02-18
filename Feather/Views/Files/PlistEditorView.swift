@@ -22,8 +22,12 @@ struct PlistEditorView: View {
     enum ViewMode {
         case raw
         case formatted
+        case tree
     }
     
+    @State private var viewMode: ViewMode = .raw
+    @State private var plistObject: Any?
+
     var body: some View {
         NBNavigationView(.localized("Plist Editor"), displayMode: .inline) {
             ZStack {
@@ -79,6 +83,13 @@ struct PlistEditorView: View {
                                 plistKeyboardToolbar
                             }
                         }
+                    } else if viewMode == .tree {
+                        if let plist = plistObject {
+                            PlistTreeView(plist: plist)
+                        } else {
+                            Text(.localized("Unable to parse plist for tree view"))
+                                .foregroundStyle(.secondary)
+                        }
                     } else {
                         ScrollView {
                             Text(plistContent)
@@ -108,6 +119,14 @@ struct PlistEditorView: View {
                             .foregroundStyle(.secondary)
                     }
                     
+                    Picker("View Mode", selection: $viewMode) {
+                        Image(systemName: "text.alignleft").tag(ViewMode.raw)
+                        Image(systemName: "list.bullet.indent").tag(ViewMode.tree)
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 80)
+                    .disabled(isEditing)
+
                     Menu {
                         Button {
                             showFormatPicker = true
@@ -192,6 +211,7 @@ struct PlistEditorView: View {
             
             // Try to detect format
             if let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) {
+                plistObject = plist
                 // Successfully parsed, now determine format
                 var format: PropertyListSerialization.PropertyListFormat = .xml
                 _ = try? PropertyListSerialization.propertyList(from: data, options: [], format: &format)
@@ -379,5 +399,75 @@ struct PlistEditorView: View {
         // Insert at current cursor position or at end
         plistContent.append("\n" + template)
         HapticsManager.shared.impact()
+    }
+}
+
+struct PlistTreeView: View {
+    let plist: Any
+
+    var body: some View {
+        List {
+            PlistNodeView(key: "Root", value: plist)
+        }
+        .listStyle(.insetGrouped)
+    }
+}
+
+struct PlistNodeView: View {
+    let key: String
+    let value: Any
+    @State private var isExpanded = false
+
+    var body: some View {
+        if let dict = value as? [String: Any] {
+            DisclosureGroup(isExpanded: $isExpanded) {
+                ForEach(dict.keys.sorted(), id: \.self) { subKey in
+                    PlistNodeView(key: subKey, value: dict[subKey]!)
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "folder.fill").foregroundStyle(.blue)
+                    Text(key).fontWeight(.medium)
+                    Spacer()
+                    Text("\(dict.count) items").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        } else if let array = value as? [Any] {
+            DisclosureGroup(isExpanded: $isExpanded) {
+                ForEach(0..<array.count, id: \.self) { index in
+                    PlistNodeView(key: "Item \(index)", value: array[index])
+                }
+            } label: {
+                HStack {
+                    Image(systemName: "list.bullet").foregroundStyle(.orange)
+                    Text(key).fontWeight(.medium)
+                    Spacer()
+                    Text("\(array.count) items").font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        } else {
+            HStack {
+                VStack(alignment: .leading) {
+                    Text(key).font(.caption).foregroundStyle(.secondary)
+                    Text(String(describing: value))
+                }
+                Spacer()
+                Text(typeString(for: value))
+                    .font(.caption2.monospaced())
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 2)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(4)
+            }
+        }
+    }
+
+    private func typeString(for value: Any) -> String {
+        if value is String { return "String" }
+        if value is Int || value is Double { return "Number" }
+        if value is Bool { return "Boolean" }
+        if value is Data { return "Data" }
+        if value is Date { return "Date" }
+        return "Unknown"
     }
 }

@@ -58,7 +58,32 @@ struct FilesView: View {
     @State private var showSymlinkCreator = false
     @State private var showIPAExplorer = false
     @State private var ipaToExplore: URL?
+    @State private var showNativeViewer = false
+    @State private var urlToView: URL?
     
+    // Tool states for new tools
+    @State private var showImageConverter = false
+    @State private var showEXIFViewer = false
+    @State private var showXMLEditor = false
+    @State private var showJSONFormatter = false
+    @State private var showCSVBrowser = false
+    @State private var showMarkdownPreview = false
+    @State private var showDataConverter = false
+    @State private var showTimestampConverter = false
+    @State private var showUUIDGenerator = false
+    @State private var showHashVerifier = false
+    @State private var showTextTransformer = false
+    @State private var showGrepTool = false
+    @State private var showArchiveBrowser = false
+    @State private var showAdvancedPermissions = false
+    @State private var showDuplicateFinder = false
+    @State private var showLargeFileFinder = false
+    @State private var showSymlinkEditor = false
+    @State private var showDiskSpace = false
+    @State private var showFontBrowser = false
+    @State private var showSQLiteBrowser = false
+    @State private var showGoToPath = false
+
     // Constants for Open in Signer
     private let importPollingIntervalSeconds: Double = 0.5
     private let importMaxWaitTimeSeconds: Double = 10.0
@@ -413,6 +438,76 @@ struct FilesView: View {
                     IPAExplorerView(viewModel: IPAExplorerViewModel(ipaURL: url))
                 }
             }
+            .sheet(isPresented: $showNativeViewer) {
+                if let url = urlToView {
+                    NativeFileViewer(fileURL: url)
+                }
+            }
+            .sheet(isPresented: $showImageConverter) {
+                if let url = urlToView { ImageConverterView(fileURL: url) }
+            }
+            .sheet(isPresented: $showEXIFViewer) {
+                if let url = urlToView { EXIFViewerView(fileURL: url) }
+            }
+            .sheet(isPresented: $showXMLEditor) {
+                if let url = urlToView { XMLEditorView(fileURL: url) }
+            }
+            .sheet(isPresented: $showJSONFormatter) {
+                JSONFormatterView()
+            }
+            .sheet(isPresented: $showCSVBrowser) {
+                if let url = urlToView { CSVBrowserView(fileURL: url) }
+            }
+            .sheet(isPresented: $showMarkdownPreview) {
+                if let url = urlToView { MarkdownPreviewView(fileURL: url) }
+            }
+            .sheet(isPresented: $showDataConverter) {
+                if let url = urlToView { DataConverterView(fileURL: url) }
+            }
+            .sheet(isPresented: $showTimestampConverter) {
+                TimestampConverterView()
+            }
+            .sheet(isPresented: $showUUIDGenerator) {
+                UUIDGeneratorView()
+            }
+            .sheet(isPresented: $showHashVerifier) {
+                if let url = urlToView { HashVerifierView(fileURL: url) }
+            }
+            .sheet(isPresented: $showTextTransformer) {
+                TextTransformerView()
+            }
+            .sheet(isPresented: $showGrepTool) {
+                GrepToolView(baseDirectory: fileManager.baseDirectory)
+            }
+            .sheet(isPresented: $showArchiveBrowser) {
+                if let url = urlToView { ArchiveBrowserView(fileURL: url) }
+            }
+            .sheet(isPresented: $showAdvancedPermissions) {
+                if let url = urlToView { AdvancedPermissionsView(fileURL: url) }
+            }
+            .sheet(isPresented: $showDuplicateFinder) {
+                DuplicateFinderView(baseDirectory: fileManager.baseDirectory)
+            }
+            .sheet(isPresented: $showLargeFileFinder) {
+                LargeFileFinderView(baseDirectory: fileManager.baseDirectory)
+            }
+            .sheet(isPresented: $showSymlinkEditor) {
+                if let url = urlToView { SymlinkEditorView(fileURL: url) }
+            }
+            .sheet(isPresented: $showDiskSpace) {
+                DiskSpaceView()
+            }
+            .sheet(isPresented: $showFontBrowser) {
+                if let url = urlToView { FontBrowserView(fileURL: url) }
+            }
+            .sheet(isPresented: $showSQLiteBrowser) {
+                if let url = urlToView { SQLiteBrowserView(fileURL: url) }
+            }
+            .sheet(isPresented: $showGoToPath) {
+                GoToPathView { url in
+                    fileManager.navigateToDirectory(url)
+                }
+            }
             .alert(.localized("Rename File"), isPresented: $showRenameAlert) {
                 TextField(.localized("New Name"), text: $renameText)
                 Button(.localized("Cancel"), role: .cancel) { }
@@ -758,7 +853,8 @@ struct FilesView: View {
             if file.isDirectory {
                 fileManager.navigateToDirectory(file.url)
             } else {
-                selectedFile = file
+                urlToView = file.url
+                showNativeViewer = true
             }
         }
     }
@@ -891,41 +987,93 @@ struct FilesView: View {
         Divider()
         
         Menu {
-            Button {
-                HapticsManager.shared.impact()
-                showTerminal = true
-            } label: {
-                Label(.localized("Terminal"), systemImage: "terminal")
+            Group {
+                Button {
+                    HapticsManager.shared.impact()
+                    showTerminal = true
+                } label: {
+                    Label(.localized("Terminal"), systemImage: "terminal")
+                }
+
+                Button {
+                    HapticsManager.shared.impact()
+                    showFileSearch = true
+                } label: {
+                    Label(.localized("Advanced Search"), systemImage: "magnifyingglass")
+                }
+
+                Button {
+                    HapticsManager.shared.impact()
+                    showGrepTool = true
+                } label: {
+                    Label(.localized("Content Search (Grep)"), systemImage: "text.magnifyingglass")
+                }
+
+                Button {
+                    HapticsManager.shared.impact()
+                    showDiskUsage = true
+                } label: {
+                    Label(.localized("Disk Usage"), systemImage: "chart.pie")
+                }
+
+                Button {
+                    showDiskSpace = true
+                } label: {
+                    Label(.localized("Disk Space info"), systemImage: "internaldrive")
+                }
+            }
+
+            Group {
+                Button {
+                    showDuplicateFinder = true
+                } label: {
+                    Label(.localized("Duplicate Finder"), systemImage: "doc.on.doc")
+                }
+
+                Button {
+                    showLargeFileFinder = true
+                } label: {
+                    Label(.localized("Large File Finder"), systemImage: "exclamationmark.circle")
+                }
+
+                Button {
+                    HapticsManager.shared.impact()
+                    showFileHasher = true
+                } label: {
+                    Label(.localized("Hash Calculator"), systemImage: "number.circle")
+                }
+
+                Button {
+                    showJSONFormatter = true
+                } label: {
+                    Label(.localized("JSON Formatter"), systemImage: "curlybraces")
+                }
+
+                Button {
+                    showTimestampConverter = true
+                } label: {
+                    Label(.localized("Timestamp Converter"), systemImage: "clock")
+                }
+
+                Button {
+                    showUUIDGenerator = true
+                } label: {
+                    Label(.localized("UUID Generator"), systemImage: "plus.square")
+                }
+
+                Button {
+                    showTextTransformer = true
+                } label: {
+                    Label(.localized("Text Transformer"), systemImage: "textformat")
+                }
             }
             
             Button {
-                HapticsManager.shared.impact()
-                showFileSearch = true
+                showGoToPath = true
             } label: {
-                Label(.localized("Advanced Search"), systemImage: "magnifyingglass")
+                Label(.localized("Go To Path"), systemImage: "folder.badge.gearshape")
             }
-            
-            Button {
-                HapticsManager.shared.impact()
-                showDiskUsage = true
-            } label: {
-                Label(.localized("Disk Usage"), systemImage: "chart.pie")
-            }
-            
-            Button {
-                HapticsManager.shared.impact()
-                showFileHasher = true
-            } label: {
-                Label(.localized("Hash Calculator"), systemImage: "number.circle")
-            }
-            
-            Button {
-                HapticsManager.shared.impact()
-                showBase64Tool = true
-            } label: {
-                Label(.localized("Base64 Encoder"), systemImage: "textformat.abc")
-            }
-            
+
             Button {
                 HapticsManager.shared.impact()
                 showSymlinkCreator = true
@@ -961,13 +1109,126 @@ struct FilesView: View {
             } label: {
                 Label(.localized("Edit Plist"), systemImage: "doc.text.fill")
             }
+        } else if file.url.pathExtension.lowercased() == "xml" {
+            Button {
+                urlToView = file.url
+                showXMLEditor = true
+            } label: {
+                Label(.localized("Edit XML"), systemImage: "chevron.left.forwardslash.chevron.right")
+            }
         } else {
+            Button {
+                urlToView = file.url
+                showNativeViewer = true
+            } label: {
+                Label(.localized("Native Viewer"), systemImage: "eye")
+            }
+
             Button {
                 HapticsManager.shared.impact()
                 selectedFile = file
             } label: {
-                Label(.localized("View/Edit"), systemImage: "doc.text")
+                Label(.localized("Legacy Editor"), systemImage: "doc.text")
             }
+        }
+
+        Menu {
+            let ext = file.url.pathExtension.lowercased()
+            if ["png", "jpg", "jpeg", "heic"].contains(ext) {
+                Button {
+                    urlToView = file.url
+                    showImageConverter = true
+                } label: {
+                    Label(.localized("Image Converter"), systemImage: "photo.on.rectangle")
+                }
+                Button {
+                    urlToView = file.url
+                    showEXIFViewer = true
+                } label: {
+                    Label(.localized("EXIF Viewer"), systemImage: "info.circle")
+                }
+            }
+
+            if ext == "csv" {
+                Button {
+                    urlToView = file.url
+                    showCSVBrowser = true
+                } label: {
+                    Label(.localized("CSV Browser"), systemImage: "tablecells")
+                }
+            }
+
+            if ext == "md" {
+                Button {
+                    urlToView = file.url
+                    showMarkdownPreview = true
+                } label: {
+                    Label(.localized("Markdown Preview"), systemImage: "text.justify")
+                }
+            }
+
+            if ["plist", "json"].contains(ext) {
+                Button {
+                    urlToView = file.url
+                    showDataConverter = true
+                } label: {
+                    Label(.localized("Data Converter"), systemImage: "arrow.triangle.2.circlepath")
+                }
+            }
+
+            if ["zip", "ipa"].contains(ext) {
+                Button {
+                    urlToView = file.url
+                    showArchiveBrowser = true
+                } label: {
+                    Label(.localized("Archive Browser"), systemImage: "archivebox")
+                }
+            }
+
+            if ["ttf", "otf"].contains(ext) {
+                Button {
+                    urlToView = file.url
+                    showFontBrowser = true
+                } label: {
+                    Label(.localized("Font Browser"), systemImage: "textformat.size")
+                }
+            }
+
+            if ["sqlite", "db"].contains(ext) {
+                Button {
+                    urlToView = file.url
+                    showSQLiteBrowser = true
+                } label: {
+                    Label(.localized("SQLite Browser"), systemImage: "cylinder.split.1x2")
+                }
+            }
+
+            Button {
+                urlToView = file.url
+                showHashVerifier = true
+            } label: {
+                Label(.localized("Hash Verifier"), systemImage: "checkmark.seal")
+            }
+
+            Button {
+                urlToView = file.url
+                showAdvancedPermissions = true
+            } label: {
+                Label(.localized("Advanced Permissions"), systemImage: "lock.shield")
+            }
+
+            // Check if it's a symlink
+            if (try? file.url.resourceValues(forKeys: [.isSymbolicLinkKey]).isSymbolicLink) == true {
+                Button {
+                    urlToView = file.url
+                    showSymlinkEditor = true
+                } label: {
+                    Label(.localized("Edit Symlink"), systemImage: "link")
+                }
+            }
+
+        } label: {
+            Label(.localized("Special Tools"), systemImage: "wrench.and.screwdriver")
         }
         
         Divider()
