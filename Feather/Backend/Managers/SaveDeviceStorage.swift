@@ -22,14 +22,21 @@ final class SaveDeviceStorage: ObservableObject {
         }
     }
 
-    /// Ensures that a unique device ID exists in the system-level Keychain
+    /// Ensures that a unique device ID exists in the system-level storage
     func ensureDeviceID() {
-        if !KeychainManager.shared.exists(for: .portalDeviceID) {
+        if getDeviceID() == nil {
             // Use hardware ID if possible, otherwise persistent UUID
             let newID = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+
+            // Save to App Group UserDefaults for "system level" persistence
+            if let groupDefaults = UserDefaults(suiteName: Storage.appGroupID) {
+                groupDefaults.set(newID, forKey: "portal_device_id")
+                AppLogManager.shared.success("Generated and saved new Portal Device ID to App Group: \(newID)", category: "Storage")
+            }
+
+            // Also try to save to Keychain as a backup
             do {
                 try KeychainManager.shared.save(newID, for: .portalDeviceID)
-                AppLogManager.shared.success("Generated and saved new Portal Device ID: \(newID)", category: "Storage")
             } catch {
                 AppLogManager.shared.error("Failed to save Portal Device ID to Keychain: \(error.localizedDescription)", category: "Storage")
             }
@@ -94,8 +101,15 @@ final class SaveDeviceStorage: ObservableObject {
         }
     }
 
-    /// Retrieves the unique device ID from the Keychain
+    /// Retrieves the unique device ID from the storage
     func getDeviceID() -> String? {
+        // Try App Group UserDefaults first
+        if let groupDefaults = UserDefaults(suiteName: Storage.appGroupID),
+           let id = groupDefaults.string(forKey: "portal_device_id") {
+            return id
+        }
+
+        // Fallback to Keychain
         do {
             return try KeychainManager.shared.retrieve(for: .portalDeviceID)
         } catch {

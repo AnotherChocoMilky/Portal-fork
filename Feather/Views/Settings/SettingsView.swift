@@ -37,6 +37,7 @@ struct SettingsView: View {
                 preferencesSection
                 signingSection
                 dataSection
+                saveDataSection
                 resourcesSection
                 if !isEnterprise { appSection }
                 if isDeveloperModeEnabled { developerSection }
@@ -155,25 +156,6 @@ struct SettingsView: View {
                 SettingsRow(icon: "externaldrive.fill.badge.person.crop", title: String.localized("Storage"), color: .accentColor, destination: ManageStorageView())
             }
 
-            VStack(alignment: .leading, spacing: 4) {
-                Toggle(isOn: $saveDataToDevice) {
-                    SettingsRowContent(icon: "idcard.fill", title: String.localized("Save Data To Device"), color: .accentColor)
-                }
-                .onChange(of: saveDataToDevice) { newValue in
-                    if newValue {
-                        ToastManager.shared.show("💾 Your data is now safe with me...", type: .success)
-                    }
-                }
-            }
-            .padding(.vertical, 4)
-
-            Text(.localized("Generates a unique ID on your device to recover your saved data even if you change the app's Bundle ID."))
-                .font(.system(size: 11))
-                .foregroundStyle(.secondary)
-                .listRowSeparator(.hidden)
-                .padding(.top, -8)
-            .padding(.vertical, 4)
-
             if !hideManager.isHidden("settings.backupRestore") {
                 SettingsRow(icon: "externaldrive.fill.badge.timemachine", title: String.localized("Backup & Restore"), color: .accentColor, destination: BackupRestoreView())
             }
@@ -198,6 +180,21 @@ struct SettingsView: View {
         }
     }
     
+    private var saveDataSection: some View {
+        Section {
+            Toggle(isOn: $saveDataToDevice) {
+                SettingsRowContent(icon: "idcard.fill", title: String.localized("Save Data To Device"), color: .accentColor)
+            }
+            .onChange(of: saveDataToDevice) { newValue in
+                if newValue {
+                    ToastManager.shared.show("💾 Your data is now safe with me...", type: .success)
+                }
+            }
+        } footer: {
+            Text(.localized("Generates a unique ID on your device to recover your saved data even if you change the app's Bundle ID."))
+        }
+    }
+
     private var resourcesSection: some View {
         Section {
             if !hideManager.isHidden("settings.guides") {
