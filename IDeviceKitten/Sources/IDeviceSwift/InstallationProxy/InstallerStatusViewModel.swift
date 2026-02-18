@@ -8,7 +8,7 @@
 import Combine
 
 extension InstallerStatusViewModel {
-	public enum InstallerStatus {
+	public enum InstallerStatus: Equatable {
 		case none
 		case ready
 		case sendingManifest
@@ -16,6 +16,30 @@ extension InstallerStatusViewModel {
 		case installing
 		case completed(Result<Void, Error>)
 		case broken(Error)
+
+		public static func == (lhs: InstallerStatus, rhs: InstallerStatus) -> Bool {
+			switch (lhs, rhs) {
+			case (.none, .none),
+				 (.ready, .ready),
+				 (.sendingManifest, .sendingManifest),
+				 (.sendingPayload, .sendingPayload),
+				 (.installing, .installing):
+				return true
+			case (.completed(let lhsResult), .completed(let rhsResult)):
+				switch (lhsResult, rhsResult) {
+				case (.success, .success):
+					return true
+				case (.failure(let lhsError), .failure(let rhsError)):
+					return "\(lhsError)" == "\(rhsError)"
+				default:
+					return false
+				}
+			case (.broken(let lhsError), .broken(let rhsError)):
+				return "\(lhsError)" == "\(rhsError)"
+			default:
+				return false
+			}
+		}
 	}
 }
 
