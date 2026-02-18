@@ -640,7 +640,6 @@ struct ModernSigningView: View {
                 Image(systemName: icon)
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(color)
-                    .modifier(BounceEffectModifier(trigger: isOn.wrappedValue))
             }
             
             Text(title)
