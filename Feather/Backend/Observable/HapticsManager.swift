@@ -108,4 +108,11 @@ class HapticsManager: ObservableObject {
         generator.prepare()
         generator.selectionChanged()
     }
+
+    func selectionChanged() {
+        guard isEnabled else { return }
+        let generator = UISelectionFeedbackGenerator()
+        generator.prepare()
+        generator.selectionChanged()
+    }
 }
