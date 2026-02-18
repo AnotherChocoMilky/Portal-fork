@@ -72,11 +72,13 @@ struct CertificatesView: View {
 					}
 
 					Button {
+						HapticsManager.shared.softImpact()
 						_isAddingPresenting = true
 					} label: {
 						Image(systemName: "plus.circle.fill")
 							.font(.system(size: 22, weight: .medium))
 							.foregroundStyle(Color.accentColor)
+							.symbolRenderingMode(.hierarchical)
 					}
 				}
 			}
@@ -161,6 +163,7 @@ struct CertificatesView: View {
 			}
 			
 			Button {
+				HapticsManager.shared.softImpact()
 				_isAddingPresenting = true
 			} label: {
 				HStack(spacing: 8) {

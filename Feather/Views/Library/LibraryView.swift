@@ -204,8 +204,8 @@ struct LibraryView: View {
             .toolbar(content: {
                 ToolbarItem(placement: .topBarTrailing) {
                     if !hideManager.isHidden("library.importButton") {
-                        Button {
-                            _isImportingPresenting = true
+                        Menu {
+                            _importActions()
                         } label: {
                             Image(systemName: "plus.circle.fill")
                                 .font(.system(size: 22))
