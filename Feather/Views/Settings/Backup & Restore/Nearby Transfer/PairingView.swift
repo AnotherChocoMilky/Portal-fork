@@ -63,21 +63,24 @@ struct PairingView: View {
                         Image(systemName: "antenna.radiowaves.left.and.right")
                             .font(.title2)
                             .foregroundStyle(.blue)
+                                .ifAvailableiOS18SymbolPulse()
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 6) {
                             Text("Nearby Pairing")
-                                .font(.headline)
+                                .font(.system(.headline, design: .rounded))
                             
                             // Active indicator
                             Text("Active")
-                                .font(.caption2.weight(.semibold))
+                                .font(.system(size: 8, weight: .bold))
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 2)
-                                .background(Color.blue)
-                                .clipShape(Capsule())
+                                .background(
+                                    Capsule()
+                                        .fill(LinearGradient(colors: [.blue, .cyan], startPoint: .leading, endPoint: .trailing))
+                                )
                         }
                         
                         Text("Devices on the same WiFi network. Instant connection.")

@@ -177,7 +177,6 @@ struct LibraryView: View {
                         .background(.ultraThinMaterial)
                 }
             }
-            .navigationTitle("Library")
             .searchable(text: $_searchText)
             .onChange(of: _searchText) { newValue in
                 if newValue.uppercased() == "FEATHER" {
@@ -662,11 +661,6 @@ struct LibraryAppRow: View {
         }
         .padding(.vertical, 10)
         .padding(.horizontal, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.03), radius: 6, x: 0, y: 3)
-        )
         .contentShape(Rectangle())
         .onTapGesture {
             if isEditing {

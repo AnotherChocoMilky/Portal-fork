@@ -200,7 +200,7 @@ class KeyboardCustomizeManager: ObservableObject {
             self.isKeyboardVisible = isActuallyVisible && height > 0
         }
 
-        if self.isKeyboardVisible {
+        if self.isKeyboardVisible && height > 0 {
             updateWindow(height: height, duration: duration)
         } else {
             hideWindow(duration: duration)
@@ -229,6 +229,14 @@ class KeyboardCustomizeManager: ObservableObject {
 
     private func hideWindow(duration: Double = 0.25) {
         guard let window = backdropWindow else { return }
+
+        if duration == 0 {
+            window.alpha = 0
+            let screenSize = UIScreen.main.bounds.size
+            window.frame.origin.y = screenSize.height
+            window.isHidden = true
+            return
+        }
 
         UIView.animate(withDuration: duration, delay: 0, options: [.beginFromCurrentState, .curveEaseIn], animations: {
             window.alpha = 0

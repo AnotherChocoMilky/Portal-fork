@@ -83,7 +83,6 @@ struct SettingsView: View {
         Section {
             VStack(spacing: 8) {
                 CoreSignHeaderView(hideAboutButton: true)
-                    .onTapGesture { handleDeveloperModeTap() }
 
                 Text("Portal \(Bundle.main.bundleIdentifier ?? "ayon1xw.PortalDev")")
                     .font(.system(size: 10, weight: .medium, design: .monospaced))
@@ -252,22 +251,6 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Developer Mode
-    
-    private func handleDeveloperModeTap() {
-        let now = Date()
-        if let lastTap = lastTapTime, now.timeIntervalSince(lastTap) > 3.0 {
-            developerTapCount = 0
-        }
-        lastTapTime = now
-        developerTapCount += 1
-        if developerTapCount >= 7 && developerTapCount < 15 {
-            HapticsManager.shared.softImpact()
-        }
-        if developerTapCount >= 15 {
-            showDeveloperConfirmation = true
-        }
-    }
 }
 
 // MARK: - Settings Row Components

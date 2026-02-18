@@ -5,6 +5,8 @@ import SwiftUI
 struct CheckForUpdatesView: View {
     @StateObject private var updateManager = UpdateManager()
     @State private var showFullReleaseNotes = false
+    @State private var hammerTapCount = 0
+    @AppStorage("isDeveloperModeEnabled") private var isDeveloperModeEnabled = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.colorScheme) private var colorScheme
     
@@ -182,6 +184,21 @@ struct CheckForUpdatesView: View {
                             .font(.system(size: 11))
                         Text(currentBuild)
                             .font(.system(size: 12, weight: .medium))
+                    }
+                    .onTapGesture {
+                        if UserDefaults.standard.bool(forKey: "Feather.devModeUnlocked") {
+                            hammerTapCount += 1
+                            if hammerTapCount >= 5 {
+                                isDeveloperModeEnabled = true
+                                hammerTapCount = 0
+                                HapticsManager.shared.success()
+                                ToastManager.shared.show("🚀 Developer Mode Enabled!", type: .success)
+                                // Reset the unlock flag
+                                UserDefaults.standard.set(false, forKey: "Feather.devModeUnlocked")
+                            } else {
+                                HapticsManager.shared.softImpact()
+                            }
+                        }
                     }
                     .foregroundStyle(.white)
                     .padding(.horizontal, 10)
