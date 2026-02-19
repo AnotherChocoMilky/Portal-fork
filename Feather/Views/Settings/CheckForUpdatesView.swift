@@ -1242,7 +1242,6 @@ struct UpdateFinishedView: View {
                     successAnimation = true
                 }
             }
-        }
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
         .presentationBackground {
