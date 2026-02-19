@@ -389,7 +389,7 @@ struct ServerView: View {
 		let urlString: String
 		if _serverMethod == 2 {
 			urlString = _customSigningAPI.isEmpty ? "https://google.com" : _customSigningAPI //lmaoo google
-		} else if _serverMethod == 1 {
+		} else if _serverMethod == 1 || _serverMethod == 3 {
 			urlString = "http://localhost:4000" // Default local server port
 		} else {
 			urlString = "https://backloop.dev"

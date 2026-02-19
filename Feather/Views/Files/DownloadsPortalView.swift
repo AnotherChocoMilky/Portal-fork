@@ -197,21 +197,26 @@ class DownloadsPortalService: ObservableObject {
 struct DownloadsPortalView: View {
     @StateObject private var service = DownloadsPortalService()
     @Environment(\.dismiss) var dismiss
+    @State private var _searchText = ""
+    @State private var _selectedCategory = "All"
+    @Namespace private var _animation
+
+    let categories = ["All", "App", "Cert", "Tweak", "Other"]
+
+    var filteredItems: [DownloadsPortalItem] {
+        service.items.filter { item in
+            let matchesSearch = _searchText.isEmpty ||
+                               item.name.localizedCaseInsensitiveContains(_searchText) ||
+                               (item.description?.localizedCaseInsensitiveContains(_searchText) ?? false)
+            let matchesCategory = _selectedCategory == "All" || item.category == _selectedCategory
+            return matchesSearch && matchesCategory
+        }
+    }
     
     var body: some View {
         NBNavigationView(.localized("Downloads"), displayMode: .inline) {
             ZStack {
-                // Gradient background
-                LinearGradient(
-                    colors: [
-                        Color.accentColor.opacity(0.1),
-                        Color.accentColor.opacity(0.05),
-                        Color.clear
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                modernBackground
                 
                 if service.isLoading {
                     loadingView
@@ -223,10 +228,15 @@ struct DownloadsPortalView: View {
                     contentView
                 }
             }
+            .searchable(text: $_searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: .localized("Search Downloads"))
             .toolbar(content: {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button(.localized("Close")) {
+                    Button {
                         dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
                     }
                 }
             })
@@ -236,10 +246,31 @@ struct DownloadsPortalView: View {
         }
     }
     
+    private var modernBackground: some View {
+        ZStack {
+            Color(UIColor.systemBackground).ignoresSafeArea()
+
+            GeometryReader { geo in
+                Circle()
+                    .fill(Color.accentColor.opacity(0.1))
+                    .frame(width: 400, height: 400)
+                    .blur(radius: 80)
+                    .position(x: geo.size.width * 0.9, y: geo.size.height * 0.1)
+
+                Circle()
+                    .fill(Color.purple.opacity(0.05))
+                    .frame(width: 300, height: 300)
+                    .blur(radius: 60)
+                    .position(x: geo.size.width * 0.1, y: geo.size.height * 0.8)
+            }
+            .ignoresSafeArea()
+        }
+    }
+
     private var loadingView: some View {
         VStack(spacing: 20) {
             ProgressView()
-                .scaleEffect(1.5)
+                .controlSize(.large)
             
             Text(.localized("Loading Downloads"))
                 .font(.headline)
@@ -302,83 +333,145 @@ struct DownloadsPortalView: View {
     
     private var contentView: some View {
         ScrollView {
-            LazyVStack(spacing: 16) {
+            VStack(spacing: 24) {
+                // Header
+                headerSection
+
+                // Categories
+                categorySection
+
+                // Download Queue
                 if !service.downloadQueue.isEmpty {
-                    Section {
-                        ForEach(service.downloadQueue) { queueItem in
-                            HStack {
-                                Image(systemName: "doc.fill")
-                                    .foregroundStyle(.blue)
-                                VStack(alignment: .leading) {
-                                    Text(queueItem.item.name)
-                                        .font(.caption.bold())
-                                    ProgressView(value: queueItem.progress)
-                                        .progressViewStyle(.linear)
-                                }
-                                Text(queueItem.status == .downloading ? "\(Int(queueItem.progress * 100))%" : "Waiting")
-                                    .font(.caption2)
-                            }
-                            .padding()
-                            .background(.ultraThinMaterial)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-                    } header: {
-                        HStack {
-                            Text("Downloads Queue")
-                                .font(.caption2.bold())
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                        }
-                        .padding(.horizontal)
-                    }
+                    queueSection
                 }
 
-                // Header
-                VStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [
-                                        Color.accentColor.opacity(0.15),
-                                        Color.accentColor.opacity(0.05)
-                                    ],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 80, height: 80)
-                        
-                        Image(systemName: "square.and.arrow.down.fill")
-                            .font(.system(size: 40))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [Color.accentColor, Color.accentColor.opacity(0.7)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                    }
-                    
-                    Text(.localized("Downloads"))
-                        .font(.title)
-                        .fontWeight(.bold)
-                    
-                    Text(.localized("Download useful resources like public certificates, other signers, or .dylibs"))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
-                }
-                .padding(.top, 20)
-                .padding(.bottom, 10)
-                
                 // Download items
-                ForEach(service.items) { item in
-                    DownloadItemCard(item: item, service: service)
+                if filteredItems.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 40))
+                            .foregroundStyle(.quaternary)
+                        Text(.localized("No items match your search"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.top, 40)
+                } else {
+                    LazyVStack(spacing: 16) {
+                        ForEach(filteredItems) { item in
+                            DownloadItemCard(item: item, service: service)
+                                .transition(.move(edge: .bottom).combined(with: .opacity))
+                        }
+                    }
                 }
             }
-            .padding()
+            .padding(.horizontal, 20)
+            .padding(.bottom, 30)
+        }
+    }
+
+    private var headerSection: some View {
+        VStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(Color.accentColor.opacity(0.12))
+                    .frame(width: 80, height: 80)
+
+                Image(systemName: "square.and.arrow.down.fill")
+                    .font(.system(size: 34, weight: .bold))
+                    .foregroundStyle(Color.accentColor)
+                    .symbolRenderingMode(.hierarchical)
+            }
+
+            Text(.localized("Portal Downloads"))
+                .font(.system(size: 28, weight: .black, design: .rounded))
+
+            Text(.localized("Explore and download exclusive resources directly to your device."))
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 20)
+        }
+        .padding(.top, 10)
+    }
+
+    private var categorySection: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 10) {
+                ForEach(categories, id: \.self) { category in
+                    let isSelected = _selectedCategory == category
+                    Button {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                            _selectedCategory = category
+                        }
+                        HapticsManager.shared.softImpact()
+                    } label: {
+                        Text(category)
+                            .font(.system(size: 14, weight: isSelected ? .bold : .medium))
+                            .foregroundStyle(isSelected ? .white : .secondary)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background {
+                                if isSelected {
+                                    Capsule()
+                                        .fill(Color.accentColor)
+                                        .matchedGeometryEffect(id: "cat", in: _animation)
+                                } else {
+                                    Capsule()
+                                        .fill(Color(UIColor.secondarySystemFill).opacity(0.5))
+                                }
+                            }
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 4)
+        }
+    }
+
+    private var queueSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Active Downloads")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                Spacer()
+            }
+            .padding(.leading, 4)
+
+            ForEach(service.downloadQueue) { queueItem in
+                HStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Color.blue.opacity(0.1))
+                            .frame(width: 40, height: 40)
+                        Image(systemName: "doc.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(.blue)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(queueItem.item.name)
+                            .font(.system(size: 14, weight: .bold))
+                            .lineLimit(1)
+
+                        ProgressView(value: queueItem.progress)
+                            .progressViewStyle(.linear)
+                            .tint(.blue)
+                    }
+                    
+                    Text(queueItem.status == .downloading ? "\(Int(queueItem.progress * 100))%" : "Waiting")
+                        .font(.system(size: 12, weight: .bold, design: .monospaced))
+                        .foregroundStyle(.secondary)
+                        .frame(width: 45)
+                }
+                .padding(12)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.6))
+                )
+            }
         }
     }
 }
@@ -386,124 +479,143 @@ struct DownloadsPortalView: View {
 // MARK: - Download Item Card
 struct DownloadItemCard: View {
     let item: DownloadsPortalItem
-    @ObservedObject var service: DownloadsPortalService // Pass service to manage queue
+    @ObservedObject var service: DownloadsPortalService
     @State private var isDownloading = false
     @State private var downloadProgress: Double = 0
     @State private var showFileExporter = false
     @State private var tempFileURL: URL?
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 16) {
                 // Icon
                 ZStack {
-                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    RoundedRectangle(cornerRadius: 18, style: .continuous)
                         .fill(
                             LinearGradient(
                                 colors: [
                                     Color.accentColor.opacity(0.15),
-                                    Color.accentColor.opacity(0.08)
+                                    Color.accentColor.opacity(0.05)
                                 ],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )
                         )
-                        .frame(width: 50, height: 50)
+                        .frame(width: 60, height: 60)
                     
                     Image(systemName: item.icon ?? "doc.fill")
-                        .font(.title2)
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Color.accentColor, Color.accentColor.opacity(0.7)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .font(.system(size: 24))
+                        .foregroundStyle(Color.accentColor)
+                        .symbolRenderingMode(.hierarchical)
                 }
                 
                 // Text content
                 VStack(alignment: .leading, spacing: 4) {
                     Text(item.name)
-                        .font(.headline)
+                        .font(.system(size: 17, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
                     
                     if let description = item.description {
                         Text(description)
-                            .font(.caption)
+                            .font(.system(size: 13))
                             .foregroundStyle(.secondary)
                             .lineLimit(2)
-                    }
-                    
-                    if let category = item.category {
-                        Text(category)
-                            .font(.caption2)
-                            .foregroundStyle(.blue)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 2)
-                            .background(Color.blue.opacity(0.1))
-                            .clipShape(Capsule())
                     }
                 }
                 
                 Spacer()
             }
             
-            // Download button
-            Button {
-                addToQueueAndDownload()
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .font(.body)
-                    Text(.localized("Download"))
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
+            HStack {
+                if let category = item.category {
+                    HStack(spacing: 4) {
+                        Image(systemName: "tag.fill")
+                            .font(.system(size: 10))
+                        Text(category)
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    .foregroundStyle(.blue)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color.blue.opacity(0.1))
+                    .clipShape(Capsule())
                 }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 10)
-                .background(
-                    LinearGradient(
-                        colors: [Color.accentColor, Color.accentColor.opacity(0.85)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                if let size = item.size {
+                    HStack(spacing: 4) {
+                        Image(systemName: "sdcard.fill")
+                            .font(.system(size: 10))
+                        Text(size)
+                            .font(.system(size: 11, weight: .bold))
+                    }
+                    .foregroundStyle(.secondary)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(Color(UIColor.tertiarySystemFill))
+                    .clipShape(Capsule())
+                }
+
+                Spacer()
+
+                // Download button
+                Button {
+                    addToQueueAndDownload()
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "arrow.down.circle.fill")
+                            .font(.system(size: 14, weight: .bold))
+                        Text(.localized("Get"))
+                            .font(.system(size: 14, weight: .black))
+                    }
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.accentColor)
+                    .clipShape(Capsule())
+                    .shadow(color: Color.accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
+                }
+                .disabled(isDownloading)
             }
-            .disabled(isDownloading)
         }
         .padding(16)
         .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(Color.primary.opacity(0.05), lineWidth: 1)
         )
         .overlay {
             if isDownloading {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
                         .fill(.ultraThinMaterial)
 
                     VStack(spacing: 12) {
-                        Circle()
-                            .trim(from: 0, to: downloadProgress)
-                            .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
-                            .frame(width: 50, height: 50)
-                            .rotationEffect(.degrees(-90))
-                            .overlay {
-                                Text("\(Int(downloadProgress * 100))%")
-                                    .font(.caption2.bold())
-                            }
+                        ZStack {
+                            Circle()
+                                .stroke(Color.accentColor.opacity(0.2), lineWidth: 4)
+                                .frame(width: 50, height: 50)
+
+                            Circle()
+                                .trim(from: 0, to: downloadProgress)
+                                .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                                .frame(width: 50, height: 50)
+                                .rotationEffect(.degrees(-90))
+
+                            Text("\(Int(downloadProgress * 100))%")
+                                .font(.system(size: 10, weight: .bold, design: .monospaced))
+                        }
 
                         Text("Downloading...")
-                            .font(.caption.bold())
+                            .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(.secondary)
                     }
                 }
-                .transition(AnyTransition.opacity)
+                .transition(.opacity)
             }
         }
-        .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
         .fileExporter(isPresented: $showFileExporter, document: DataDocument(url: tempFileURL), contentType: .data) { result in
             switch result {
             case .success(let url):

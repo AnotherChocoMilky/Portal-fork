@@ -34,6 +34,7 @@ struct InstallPreviewView: View {
     
     var body: some View {
         VStack(spacing: 0) {
+            Spacer()
             HStack(spacing: 12) {
                 // Compact Icon
                 FRAppIconView(app: app, size: 44)
@@ -94,9 +95,9 @@ struct InstallPreviewView: View {
                     .stroke(Color.primary.opacity(0.1), lineWidth: 1)
             )
             .shadow(color: .black.opacity(0.15), radius: 15, x: 0, y: 10)
+            Spacer()
         }
         .padding(.horizontal, 16)
-        .padding(.bottom, 20)
         .opacity(appearAnimation ? 1 : 0)
         .offset(y: appearAnimation ? 0 : 20)
         .onAppear {
@@ -118,8 +119,10 @@ struct InstallPreviewView: View {
         .onReceive(viewModel.$status) { newStatus in
             if _installationMethod == 0 {
                 if case .ready = newStatus {
-                    if _serverMethod == 0 || _serverMethod == 3 {
+                    if _serverMethod == 0 {
                         UIApplication.shared.open(URL(string: installer.iTunesLink)!)
+                    } else if _serverMethod == 3 {
+                        UIApplication.shared.open(URL(string: installer.iTunesLinkExternal)!)
                     } else if _serverMethod == 1 || _serverMethod == 2 {
                         _isWebviewPresenting = true
                     }
