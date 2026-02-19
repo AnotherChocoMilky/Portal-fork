@@ -10,7 +10,9 @@ struct InstallProgressView: View {
     @State private var appearAnimation = false
 
     var body: some View {
-        HStack(spacing: 12) {
+        VStack(spacing: 0) {
+            Spacer()
+            HStack(spacing: 12) {
             // Compact App icon
             FRAppIconView(app: app, size: 40)
                 .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
@@ -63,6 +65,8 @@ struct InstallProgressView: View {
         )
         .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
         .padding(.horizontal, 16)
+        Spacer()
+        }
         .opacity(appearAnimation ? 1 : 0)
         .offset(y: appearAnimation ? 0 : 10)
         .onAppear {
