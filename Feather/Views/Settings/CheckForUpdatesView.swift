@@ -4,7 +4,7 @@ import SwiftUI
 
 struct CheckForUpdatesView: View {
     @StateObject private var updateManager = UpdateManager()
-    @State private var showFullReleaseNotes = false
+    @State private var selectedReleaseForNotes: GitHubRelease? = nil
     @State private var hammerTapCount = 0
     @AppStorage("isDeveloperModeEnabled") private var isDeveloperModeEnabled = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -23,59 +23,53 @@ struct CheckForUpdatesView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Optimized Custom Header
-            customHeader
+        ZStack {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Hero Section
+                    heroSection
 
-            ZStack {
-                ScrollView {
-                    VStack(spacing: 24) {
-                        // Hero Section
-                        heroSection
+                    // Update Status Card
+                    updateStatusCard
 
-                        // Update Status Card
-                        updateStatusCard
-
-                        // What's New Section (if update available)
-                        if updateManager.isUpdateAvailable, let release = updateManager.latestRelease {
-                            whatsNewSection(release)
-                        }
-
-                        // Previous Releases
-                        if updateManager.allReleases.count > 1 {
-                            previousReleasesSection
-                        }
-
-                        // Error Section
-                        if let error = updateManager.errorMessage {
-                            errorSection(error)
-                        }
+                    // What's New Section (if update available)
+                    if updateManager.isUpdateAvailable, let release = updateManager.latestRelease {
+                        whatsNewSection(release)
                     }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 30)
+
+                    // Previous Releases
+                    if updateManager.allReleases.count > 1 {
+                        previousReleasesSection
+                    }
+
+                    // Error Section
+                    if let error = updateManager.errorMessage {
+                        errorSection(error)
+                    }
                 }
-                .background(Color(UIColor.systemGroupedBackground))
-
-                // Dynamic Metal Loading Screen
-                FullScreenMetalStateView(
-                    state: $updateManager.metalState,
-                    errorMessage: updateManager.errorMessage,
-                    onDismissError: {
-                        updateManager.errorMessage = nil
-                    }
-                )
+                .padding(.horizontal, 20)
+                .padding(.bottom, 30)
             }
+            .background(Color(UIColor.systemGroupedBackground))
+
+            // Dynamic Metal Loading Screen
+            FullScreenMetalStateView(
+                state: $updateManager.metalState,
+                errorMessage: updateManager.errorMessage,
+                onDismissError: {
+                    updateManager.errorMessage = nil
+                }
+            )
         }
-        .navigationBarHidden(true)
+        .navigationTitle("Updates")
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if !updateManager.hasChecked {
                 updateManager.checkForUpdates()
             }
         }
-        .sheet(isPresented: $showFullReleaseNotes) {
-            if let release = updateManager.latestRelease {
-                FullReleaseNotesView(release: release)
-            }
+        .sheet(item: $selectedReleaseForNotes) { release in
+            FullReleaseNotesView(release: release)
         }
         .sheet(isPresented: $updateManager.showUpdateFinished) {
             if let ipaURL = updateManager.downloadedIPAURL {
@@ -90,53 +84,6 @@ struct CheckForUpdatesView: View {
         }
     }
     
-    // MARK: - Custom Header
-    private var customHeader: some View {
-        HStack {
-            Button {
-                dismiss()
-                HapticsManager.shared.softImpact()
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 16, weight: .bold))
-                    Text("Back")
-                        .font(.system(size: 17, weight: .medium))
-                }
-                .foregroundStyle(Color.accentColor)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 12)
-                .background(Capsule().fill(Color.accentColor.opacity(0.1)))
-            }
-
-            Spacer()
-
-            Text("Updates")
-                .font(.system(size: 20, weight: .bold, design: .rounded))
-
-            Spacer()
-
-            // Status Indicator or Action
-            ZStack {
-                if updateManager.isCheckingUpdates {
-                    ProgressView()
-                        .controlSize(.small)
-                } else {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 16, weight: .bold))
-                        .foregroundStyle(Color.accentColor)
-                        .pulseEffect(true)
-                }
-            }
-            .frame(width: 40, height: 40)
-            .background(Circle().fill(Color.accentColor.opacity(0.1)))
-        }
-        .padding(.horizontal, 16)
-        .padding(.top, 10)
-        .padding(.bottom, 12)
-        .background(Color(UIColor.systemGroupedBackground))
-    }
-
     // MARK: - Hero Section
     private var heroSection: some View {
         VStack(spacing: 24) {
@@ -265,7 +212,9 @@ struct CheckForUpdatesView: View {
     
     // MARK: - Update Status Card
     private var updateStatusCard: some View {
-        VStack(spacing: 0) {
+        let isUpToDate = updateManager.hasChecked && !updateManager.isUpdateAvailable
+
+        return VStack(spacing: 0) {
             if updateManager.hasChecked {
                 if updateManager.isUpdateAvailable, let release = updateManager.latestRelease {
                     // Update Available
@@ -392,6 +341,7 @@ struct CheckForUpdatesView: View {
                         
                         Spacer()
                     }
+                    .ifAvailableIOS26Glass()
                 }
             } else {
                 HStack(spacing: 16) {
@@ -418,12 +368,23 @@ struct CheckForUpdatesView: View {
                 }
             }
         }
-        .padding(20)
-        .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
-                .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
-        )
+        .padding(isUpToDate && isAvailableIOS26() ? 0 : 20)
+        .background {
+            if isUpToDate && isAvailableIOS26() {
+                Color.clear
+            } else {
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
+            }
+        }
+    }
+
+    private func isAvailableIOS26() -> Bool {
+        if #available(iOS 26.0, *) {
+            return true
+        }
+        return false
     }
     
     // MARK: - What's New Section
@@ -452,7 +413,7 @@ struct CheckForUpdatesView: View {
                         .multilineTextAlignment(.leading)
                     
                     Button {
-                        showFullReleaseNotes = true
+                        selectedReleaseForNotes = release
                         HapticsManager.shared.softImpact()
                     } label: {
                         HStack(spacing: 4) {
@@ -530,14 +491,44 @@ struct CheckForUpdatesView: View {
                 
                 Spacer()
 
-                Button {
-                    updateManager.downloadRelease(release)
-                    HapticsManager.shared.softImpact()
-                } label: {
-                    Image(systemName: "arrow.down.circle.fill")
-                        .font(.system(size: 28))
-                        .foregroundStyle(Color.accentColor)
-                        .symbolRenderingMode(.hierarchical)
+                HStack(spacing: 12) {
+                    // GitHub Button
+                    Button {
+                        if let url = URL(string: release.htmlUrl) {
+                            UIApplication.shared.open(url)
+                        }
+                        HapticsManager.shared.softImpact()
+                    } label: {
+                        Image(systemName: "safari.fill")
+                            .font(.system(size: 20))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    // Release Notes Button
+                    Button {
+                        selectedReleaseForNotes = release
+                        HapticsManager.shared.softImpact()
+                    } label: {
+                        Image(systemName: "doc.text.fill")
+                            .font(.system(size: 20))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    // Download Button / Animation
+                    Button {
+                        updateManager.downloadRelease(release)
+                        HapticsManager.shared.softImpact()
+                    } label: {
+                        if updateManager.downloadingReleaseID == release.id && updateManager.isDownloading {
+                            CircularProgressView(progress: updateManager.downloadProgress, color: Color.accentColor, size: 28, lineWidth: 3)
+                        } else {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .font(.system(size: 28))
+                                .foregroundStyle(Color.accentColor)
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                    }
+                    .disabled(updateManager.isDownloading)
                 }
             }
             
@@ -834,6 +825,7 @@ class UpdateManager: ObservableObject {
     @Published var isCheckingUpdates = false
     @Published var isDownloading = false
     @Published var downloadProgress: Double = 0.0
+    @Published var downloadingReleaseID: Int? = nil
     @Published var latestRelease: GitHubRelease?
     @Published var allReleases: [GitHubRelease] = []
     @Published var errorMessage: String?
@@ -984,6 +976,7 @@ class UpdateManager: ObservableObject {
         let ipaAsset = release.assets.first { $0.name.hasSuffix(".ipa") }
         
         if let asset = ipaAsset {
+            downloadingReleaseID = release.id
             downloadAsset(asset, fileName: asset.name)
         } else {
             // Fallback to opening GitHub page if no IPA found
@@ -1744,6 +1737,49 @@ enum MarkdownElement {
         case .paragraph: return 8
         case .bulletList: return 12
         case .codeBlock: return 12
+        }
+    }
+}
+
+// MARK: - iOS 26 Liquid Glass Extension
+extension View {
+    @ViewBuilder
+    func ifAvailableIOS26Glass() -> some View {
+        if #available(iOS 26.0, *) {
+            self
+                .padding(20)
+                .background(
+                    ZStack {
+                        // Liquid Glass Base
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .fill(.ultraThinMaterial)
+
+                        // Inner Glow
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .fill(
+                                RadialGradient(
+                                    colors: [.white.opacity(0.2), .clear],
+                                    center: .topLeading,
+                                    startRadius: 0,
+                                    endRadius: 100
+                                )
+                            )
+
+                        // Liquid Border
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [.white.opacity(0.5), .clear, .black.opacity(0.1)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 1
+                            )
+                    }
+                )
+                .shadow(color: Color.accentColor.opacity(0.1), radius: 20, x: 0, y: 10)
+        } else {
+            self
         }
     }
 }

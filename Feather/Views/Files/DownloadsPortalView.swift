@@ -198,18 +198,12 @@ struct DownloadsPortalView: View {
     @StateObject private var service = DownloadsPortalService()
     @Environment(\.dismiss) var dismiss
     @State private var _searchText = ""
-    @State private var _selectedCategory = "All"
-    @Namespace private var _animation
-
-    let categories = ["All", "App", "Cert", "Tweak", "Other"]
 
     var filteredItems: [DownloadsPortalItem] {
         service.items.filter { item in
-            let matchesSearch = _searchText.isEmpty ||
-                               item.name.localizedCaseInsensitiveContains(_searchText) ||
-                               (item.description?.localizedCaseInsensitiveContains(_searchText) ?? false)
-            let matchesCategory = _selectedCategory == "All" || item.category == _selectedCategory
-            return matchesSearch && matchesCategory
+            _searchText.isEmpty ||
+            item.name.localizedCaseInsensitiveContains(_searchText) ||
+            (item.description?.localizedCaseInsensitiveContains(_searchText) ?? false)
         }
     }
     
@@ -251,17 +245,33 @@ struct DownloadsPortalView: View {
             Color(UIColor.systemBackground).ignoresSafeArea()
 
             GeometryReader { geo in
+                // Original accent orb
                 Circle()
-                    .fill(Color.accentColor.opacity(0.1))
+                    .fill(Color.accentColor.opacity(0.12))
                     .frame(width: 400, height: 400)
                     .blur(radius: 80)
                     .position(x: geo.size.width * 0.9, y: geo.size.height * 0.1)
 
+                // Original purple orb
                 Circle()
-                    .fill(Color.purple.opacity(0.05))
+                    .fill(Color.purple.opacity(0.08))
                     .frame(width: 300, height: 300)
                     .blur(radius: 60)
                     .position(x: geo.size.width * 0.1, y: geo.size.height * 0.8)
+
+                // New pink orb
+                Circle()
+                    .fill(Color.pink.opacity(0.06))
+                    .frame(width: 350, height: 350)
+                    .blur(radius: 90)
+                    .position(x: geo.size.width * 0.5, y: geo.size.height * 0.4)
+
+                // New blue orb
+                Circle()
+                    .fill(Color.blue.opacity(0.05))
+                    .frame(width: 250, height: 250)
+                    .blur(radius: 70)
+                    .position(x: geo.size.width * 0.8, y: geo.size.height * 0.9)
             }
             .ignoresSafeArea()
         }
@@ -337,9 +347,6 @@ struct DownloadsPortalView: View {
                 // Header
                 headerSection
 
-                // Categories
-                categorySection
-
                 // Download Queue
                 if !service.downloadQueue.isEmpty {
                     queueSection
@@ -393,40 +400,6 @@ struct DownloadsPortalView: View {
                 .padding(.horizontal, 20)
         }
         .padding(.top, 10)
-    }
-
-    private var categorySection: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
-                ForEach(categories, id: \.self) { category in
-                    let isSelected = _selectedCategory == category
-                    Button {
-                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            _selectedCategory = category
-                        }
-                        HapticsManager.shared.softImpact()
-                    } label: {
-                        Text(category)
-                            .font(.system(size: 14, weight: isSelected ? .bold : .medium))
-                            .foregroundStyle(isSelected ? .white : .secondary)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 8)
-                            .background {
-                                if isSelected {
-                                    Capsule()
-                                        .fill(Color.accentColor)
-                                        .matchedGeometryEffect(id: "cat", in: _animation)
-                                } else {
-                                    Capsule()
-                                        .fill(Color(UIColor.secondarySystemFill).opacity(0.5))
-                                }
-                            }
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(.horizontal, 4)
-        }
     }
 
     private var queueSection: some View {
@@ -570,21 +543,24 @@ struct DownloadItemCard: View {
                     .foregroundStyle(.white)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 8)
-                    .background(Color.accentColor)
+                    .background {
+                        ZStack {
+                            Capsule().fill(Color.accentColor)
+                            Capsule().fill(.ultraThinMaterial).opacity(0.3)
+                        }
+                    }
                     .clipShape(Capsule())
-                    .shadow(color: Color.accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
+                    .shadow(color: Color.accentColor.opacity(0.3), radius: 8, x: 0, y: 4)
                 }
                 .disabled(isDownloading)
             }
         }
         .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
-        )
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .stroke(Color.primary.opacity(0.05), lineWidth: 1)
+                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
         )
         .overlay {
             if isDownloading {
