@@ -229,7 +229,7 @@ struct DownloadsPortalView: View {
                 }
             }
             .searchable(text: $_searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: .localized("Search Downloads"))
-            .toolbar(content: {
+            .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button {
                         dismiss()
@@ -239,7 +239,7 @@ struct DownloadsPortalView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-            })
+            }
             .task {
                 await service.fetchDownloads()
             }

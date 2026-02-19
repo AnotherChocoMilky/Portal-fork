@@ -202,7 +202,7 @@ struct LibraryView: View {
             }
             .navigationTitle("Library")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(content: {
+            .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if !hideManager.isHidden("library.importButton") {
                         Button {
@@ -216,7 +216,7 @@ struct LibraryView: View {
                         }
                     }
                 }
-            })
+            }
                         .sheet(item: $_selectedInfoAppPresenting) { app in
                                 LibraryInfoView(app: app.base)
                         }

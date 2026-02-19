@@ -102,7 +102,7 @@ struct PlistEditorView: View {
                     }
                 }
             }
-            .toolbar(content: {
+            .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(.localized("Close")) {
                         if hasUnsavedChanges && validationError == nil {
@@ -153,7 +153,7 @@ struct PlistEditorView: View {
                     }
                     .disabled(isEditing && validationError != nil)
                 }
-            })
+            }
             .sheet(isPresented: $showFormatPicker) {
                 formatConversionSheet
             }
@@ -195,13 +195,13 @@ struct PlistEditorView: View {
                     }
                 }
             }
-            .toolbar(content: {
+            .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(.localized("Cancel")) {
                         showFormatPicker = false
                     }
                 }
-            })
+            }
         }
     }
     

@@ -168,7 +168,7 @@ struct AppLogsView: View {
                 ToastManager.shared.show("🛠️ Developer Mode Phase 1 Complete!", type: .success)
             }
         }
-        .toolbar(content: {
+        .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 // Auto-scroll toggle
                 Button(action: { autoScroll.toggle() }) {
@@ -208,7 +208,7 @@ struct AppLogsView: View {
                     Image(systemName: "ellipsis.circle")
                 }
             }
-        })
+        }
         .fileExporter(
             isPresented: $showExporter,
             document: logDocument,

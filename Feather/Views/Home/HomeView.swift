@@ -2324,13 +2324,13 @@ struct SignAndInstallPickerView: View {
             }
             .navigationTitle("Sign & Install")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(content: {
+            .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Cancel") {
                         dismiss()
                     }
                 }
-            })
+            }
             .sheet(isPresented: $_showFilePicker) {
                 FileImporterRepresentableView(
                     allowedContentTypes: [.ipa, .tipa],
@@ -2536,13 +2536,13 @@ struct AppUpdatesListSheet: View {
             }
             .navigationTitle("App Updates")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(content: {
+            .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
                 }
-            })
+            }
         }
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)

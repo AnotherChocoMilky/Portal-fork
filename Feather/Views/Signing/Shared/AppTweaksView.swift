@@ -40,7 +40,7 @@ struct AppTweaksView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(content: { toolbarContent })
+            .toolbar { toolbarContent }
             .onAppear {
                 loadData()
                 withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {

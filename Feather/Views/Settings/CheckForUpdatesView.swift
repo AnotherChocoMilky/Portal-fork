@@ -744,14 +744,14 @@ struct FullReleaseNotesView: View {
             }
             .navigationTitle("Release Notes")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(content: {
+            .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") {
                         dismiss()
                     }
                     .fontWeight(.semibold)
                 }
-            })
+            }
         }
     }
     
@@ -1148,7 +1148,7 @@ struct UpdateFinishedView: View {
             }
             .navigationTitle("Portal Update")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar(content: {
+            .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         onDismiss()
@@ -1159,7 +1159,7 @@ struct UpdateFinishedView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-            })
+            }
             .sheet(isPresented: $showShareSheet) {
                 ShareSheet(urls: [ipaURL])
             }
