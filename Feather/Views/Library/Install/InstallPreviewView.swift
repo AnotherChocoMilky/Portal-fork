@@ -34,9 +34,14 @@ struct InstallPreviewView: View {
     
     var body: some View {
         ZStack {
-            // Modern glass background
+            // Modern glass background with integrated Metal
             RoundedRectangle(cornerRadius: 28, style: .continuous)
                 .fill(.ultraThinMaterial)
+                .overlay(
+                    MetalIntegratedStateView(state: $_metalState)
+                        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                        .opacity(0.4)
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
                         .stroke(Color.primary.opacity(0.12), lineWidth: 1)
@@ -48,23 +53,20 @@ struct InstallPreviewView: View {
                     .scaleEffect(appearAnimation ? 1 : 0.9)
                     .opacity(appearAnimation ? 1 : 0)
                 
-                statusLabel
-                    .offset(y: appearAnimation ? 0 : 10)
-                    .opacity(appearAnimation ? 1 : 0)
+                if _errorMessage == nil {
+                    statusLabel
+                        .offset(y: appearAnimation ? 0 : 10)
+                        .opacity(appearAnimation ? 1 : 0)
+                } else {
+                    errorLabel
+                }
                 
                 actionButtons
                     .offset(y: appearAnimation ? 0 : 15)
                     .opacity(appearAnimation ? 1 : 0)
             }
             .padding(20)
-            .opacity(_contentOpacity)
         }
-        .overlay {
-            FullScreenMetalStateView(state: $_metalState, errorMessage: _errorMessage)
-                .ignoresSafeArea()
-                .zIndex(100)
-        }
-        .disabled(_metalState != .idle)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .padding(24)
         .onAppear {
@@ -104,6 +106,35 @@ struct InstallPreviewView: View {
         }
     }
     
+    // MARK: - Error Label
+    @ViewBuilder
+    private var errorLabel: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(.white)
+
+            Text(_errorMessage ?? "Unknown Error")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(
+            Capsule()
+                .fill(Color.red)
+        )
+        .transition(.scale.combined(with: .opacity))
+        .onTapGesture {
+            withAnimation {
+                _errorMessage = nil
+                _metalState = .idle
+            }
+        }
+    }
+
     // MARK: - Status Label
     @ViewBuilder
     private var statusLabel: some View {
@@ -238,7 +269,6 @@ struct InstallPreviewView: View {
         Task.detached {
             await MainActor.run {
                 withAnimation(.easeOut(duration: 0.4)) {
-                    _contentOpacity = 0
                     _metalState = .loading
                 }
             }
