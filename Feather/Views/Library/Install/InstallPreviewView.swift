@@ -12,6 +12,7 @@ struct InstallPreviewView: View {
     @AppStorage("Feather.serverMethod") private var _serverMethod: Int = 0
     @State private var _isWebviewPresenting = false
     @State private var appearAnimation = false
+    @State private var _contentOpacity: Double = 1.0
     @State private var _metalState: MetalAnimationState = .idle
     @State private var _errorMessage: String? = nil
     
@@ -38,8 +39,9 @@ struct InstallPreviewView: View {
                 .fill(.ultraThinMaterial)
                 .overlay(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                        .stroke(Color.primary.opacity(0.12), lineWidth: 1)
                 )
+                .shadow(color: .black.opacity(0.1), radius: 20, x: 0, y: 10)
             
             VStack(spacing: 16) {
                 InstallProgressView(app: app, viewModel: viewModel)
@@ -55,9 +57,12 @@ struct InstallPreviewView: View {
                     .opacity(appearAnimation ? 1 : 0)
             }
             .padding(20)
-
+            .opacity(_contentOpacity)
+        }
+        .overlay {
             FullScreenMetalStateView(state: $_metalState, errorMessage: _errorMessage)
                 .ignoresSafeArea()
+                .zIndex(100)
         }
         .disabled(_metalState != .idle)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
@@ -74,6 +79,9 @@ struct InstallPreviewView: View {
         }
         .sheet(isPresented: $_isWebviewPresenting) {
             SafariRepresentableView(url: installer.pageEndpoint).ignoresSafeArea()
+        }
+        .onChange(of: viewModel.status) { newStatus in
+            _handleStatusChange(newStatus)
         }
         .onReceive(viewModel.$status) { newStatus in
             if _installationMethod == 0 {
@@ -228,7 +236,12 @@ struct InstallPreviewView: View {
         }
         
         Task.detached {
-            await MainActor.run { _metalState = .loading }
+            await MainActor.run {
+                withAnimation(.easeOut(duration: 0.4)) {
+                    _contentOpacity = 0
+                    _metalState = .loading
+                }
+            }
 
             do {
                 let handler = await ArchiveHandler(app: app, viewModel: viewModel)
@@ -254,7 +267,7 @@ struct InstallPreviewView: View {
                     if await !_useShareSheet {
                         await MainActor.run {
                             _metalState = .success
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                                 dismiss()
                             }
                         }
@@ -262,7 +275,7 @@ struct InstallPreviewView: View {
                         if let package {
                             await MainActor.run {
                                 _metalState = .success
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                                     dismiss()
                                     UIActivityViewController.show(activityItems: [package])
                                 }
@@ -276,6 +289,25 @@ struct InstallPreviewView: View {
                     _metalState = .error
                 }
             }
+        }
+    }
+
+    private func _handleStatusChange(_ status: InstallerStatusViewModel.InstallerStatus) {
+        switch status {
+        case .none:
+            break
+        case .ready:
+            _metalState = .success
+        case .sendingManifest, .sendingPayload, .installing:
+            _metalState = .loading
+        case .completed(_):
+            _metalState = .success
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                dismiss()
+            }
+        case .broken(let error):
+            _errorMessage = error.localizedDescription
+            _metalState = .error
         }
     }
 }

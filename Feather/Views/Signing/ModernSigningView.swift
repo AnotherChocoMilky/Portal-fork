@@ -1095,12 +1095,12 @@ struct ModernSigningView: View {
         HapticsManager.shared.impact()
         AppStateManager.shared.isSigning = true
         
+        _metalState = .loading
         // Animate out before showing signing process
         withAnimation(.easeOut(duration: 0.4)) {
             _headerScale = 0.85
             _contentOpacity = 0
             _isSigning = true
-            _metalState = .loading
         }
         
         if _serverMethod == 2 {
