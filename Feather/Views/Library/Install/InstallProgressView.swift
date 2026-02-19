@@ -6,6 +6,8 @@ struct InstallProgressView: View {
     var app: AppInfoPresentable
     @ObservedObject var viewModel: InstallerStatusViewModel
     
+    @State private var _metalState: MetalAnimationState = .idle
+
     var body: some View {
         HStack(spacing: 12) {
             // App icon - simple, no effects
@@ -16,9 +18,34 @@ struct InstallProgressView: View {
         }
         .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground).opacity(0.4))
+            ZStack {
+                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    .fill(Color(.secondarySystemGroupedBackground).opacity(0.4))
+
+                MetalIntegratedStateView(state: $_metalState)
+                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                    .opacity(0.2)
+            }
         )
+        .onChange(of: viewModel.status) { newStatus in
+            _updateMetalState(newStatus)
+        }
+        .onAppear {
+            _updateMetalState(viewModel.status)
+        }
+    }
+
+    private func _updateMetalState(_ status: InstallerStatusViewModel.InstallerStatus) {
+        switch status {
+        case .none:
+            _metalState = .idle
+        case .sendingManifest, .sendingPayload, .installing:
+            _metalState = .loading
+        case .ready, .completed(_):
+            _metalState = .success
+        case .broken(_):
+            _metalState = .error
+        }
     }
     
     // MARK: - Status Label
@@ -40,8 +67,7 @@ struct InstallProgressView: View {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(.red)
             } else {
-                ProgressView()
-                    .scaleEffect(0.8)
+                MetalLoadingIndicator(size: 20)
                 Text(viewModel.statusLabel)
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(.secondary)

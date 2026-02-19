@@ -7,48 +7,7 @@ struct VariedTabbarView: View {
     @State private var cornerSequence: [Int] = []
 
     var body: some View {
-        ZStack {
-            _mainTabContent
-
-            // Invisible Corner Tap Buttons
-            GeometryReader { geo in
-                ZStack {
-                    // Top Left (0)
-                    cornerButton(index: 0, rect: CGRect(x: 0, y: 0, width: 50, height: 50))
-                    // Top Right (1)
-                    cornerButton(index: 1, rect: CGRect(x: geo.size.width - 50, y: 0, width: 50, height: 50))
-                    // Bottom Right (2)
-                    cornerButton(index: 2, rect: CGRect(x: geo.size.width - 50, y: geo.size.height - 100, width: 50, height: 50))
-                    // Bottom Left (3)
-                    cornerButton(index: 3, rect: CGRect(x: 0, y: geo.size.height - 100, width: 50, height: 50))
-                }
-            }
-            .allowsHitTesting(true)
-        }
-    }
-
-    @ViewBuilder
-    private func cornerButton(index: Int, rect: CGRect) -> some View {
-        Color.white.opacity(0.001)
-            .frame(width: rect.width, height: rect.height)
-            .position(x: rect.midX, y: rect.midY)
-            .onTapGesture {
-                handleCornerTap(index)
-            }
-    }
-
-    private func handleCornerTap(_ index: Int) {
-        cornerSequence.append(index)
-        if cornerSequence.count > 4 {
-            cornerSequence.removeFirst()
-        }
-
-        if cornerSequence == [0, 1, 2, 3] { // TL, TR, BR, BL
-            EasterEggManager.shared.neonTheme.toggle()
-            ToastManager.shared.show(EasterEggManager.shared.neonTheme ? "🌈 Neon Theme Activated!" : "🌑 Neon Theme Deactivated!", type: .success)
-            HapticsManager.shared.success()
-            cornerSequence.removeAll()
-        }
+        _mainTabContent
     }
 
     @ViewBuilder
