@@ -20,7 +20,7 @@ class IPAExplorerViewModel: ObservableObject {
     @Published var summary: IPASummary?
     @Published var isModified: Bool = false
 
-    private let ipaURL: URL
+    let ipaURL: URL
     private let fileManager = FileManager.default
     private var initialHashes: [URL: String] = [:]
 
