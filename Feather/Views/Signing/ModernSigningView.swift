@@ -427,7 +427,7 @@ struct ModernSigningView: View {
                             .appIconStyle(size: 80)
                     } else {
                         FRAppIconView(app: app, size: 80)
-                            .modifier(BounceEffectModifier(trigger: _appearAnimation))
+                            .modifier(BounceEffectModifier(value: _appearAnimation))
                     }
                     
                     // Simple edit indicator
@@ -456,7 +456,7 @@ struct ModernSigningView: View {
                         Label(version, systemImage: "number.circle.fill")
                             .font(.caption.weight(.medium))
                             .foregroundStyle(.secondary)
-                            .modifier(BounceEffectModifier(trigger: _appearAnimation))
+                            .modifier(BounceEffectModifier(value: _appearAnimation))
                     }
                 }
                 
