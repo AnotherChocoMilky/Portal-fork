@@ -1186,6 +1186,33 @@ struct UpdateFinishedView: View {
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
+        if #available(iOS 16.4, *) {
+            mainContent
+                .presentationBackground {
+                    if #available(iOS 26.0, *) {
+                        ZStack {
+                            Rectangle()
+                                .fill(.ultraThinMaterial)
+
+                            LinearGradient(
+                                colors: [Color.accentColor.opacity(0.1), Color.purple.opacity(0.05), Color.clear],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        }
+                    } else {
+                        Rectangle()
+                            .fill(.ultraThinMaterial)
+                    }
+                }
+                .presentationCornerRadius(32)
+        } else {
+            mainContent
+        }
+    }
+
+    @ViewBuilder
+    private var mainContent: some View {
         VStack(spacing: 24) {
             // New Optimized Custom Header
             HStack {
@@ -1234,38 +1261,16 @@ struct UpdateFinishedView: View {
                 Color(UIColor.systemGroupedBackground)
             }
         }
-            .sheet(isPresented: $showShareSheet) {
-                ShareSheet(urls: [ipaURL])
-            }
-            .onAppear {
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.1)) {
-                    successAnimation = true
-                }
-            }
-        .presentationDetents([.medium])
-        .presentationDragIndicator(.visible)
-        .presentationBackground {
-            if #available(iOS 26.0, *) {
-                ZStack {
-                    Rectangle()
-                        .fill(.ultraThinMaterial)
-
-                    LinearGradient(
-                        colors: [Color.accentColor.opacity(0.1), Color.purple.opacity(0.05), Color.clear],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                }
-            } else {
-                if #available(iOS 16.4, *) {
-                    Rectangle()
-                        .fill(.ultraThinMaterial)
-                } else {
-                    Color(UIColor.systemGroupedBackground)
-                }
+        .sheet(isPresented: $showShareSheet) {
+            ShareSheet(urls: [ipaURL])
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.1)) {
+                successAnimation = true
             }
         }
-        .presentationCornerRadius(32)
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
     }
     
     // MARK: - Success Header
