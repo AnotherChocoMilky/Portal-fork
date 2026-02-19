@@ -17,6 +17,9 @@ class MetalStateRenderer: NSObject, MTKViewDelegate {
         var state: Int32
         var stateTime: Float
         var resolution: SIMD2<Float>
+        var pitch: Float
+        var roll: Float
+        var yaw: Float
     }
 
     override init() {
@@ -25,6 +28,11 @@ class MetalStateRenderer: NSObject, MTKViewDelegate {
         self.commandQueue = device?.makeCommandQueue()
         self.startTime = CACurrentMediaTime()
         setupPipeline()
+        MotionManager.shared.start()
+    }
+
+    deinit {
+        MotionManager.shared.stop()
     }
 
     private func setupPipeline() {
@@ -87,7 +95,10 @@ class MetalStateRenderer: NSObject, MTKViewDelegate {
             time: time,
             state: Int32(currentState.rawValue),
             stateTime: stateTime,
-            resolution: resolution
+            resolution: resolution,
+            pitch: Float(MotionManager.shared.pitch),
+            roll: Float(MotionManager.shared.roll),
+            yaw: Float(MotionManager.shared.yaw)
         )
 
         let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderPassDescriptor)

@@ -841,39 +841,48 @@ struct ImportSelectionSheet: View {
     let onImportFiles: () -> Void
     let onImportURL: () -> Void
     @Environment(\.colorScheme) var colorScheme
+    @State private var _metalState: MetalAnimationState = .loading
 
     var body: some View {
-        VStack(spacing: 20) {
-            VStack(spacing: 8) {
-                Text(String.localized("Import App"))
-                    .font(.system(.title3, design: .rounded).bold())
+        ZStack {
+            MetalIntegratedStateView(state: $_metalState)
+                .ignoresSafeArea()
+                .opacity(0.6)
 
-                Text(String.localized("Choose a method to import your application"))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+            VStack(spacing: 24) {
+                VStack(spacing: 8) {
+                    Text(String.localized("Import App"))
+                        .font(.system(size: 28, weight: .black, design: .rounded))
+                        .foregroundStyle(.primary)
+
+                    Text(String.localized("Choose a method to import your application"))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
+                .padding(.top, 20)
+
+                HStack(spacing: 20) {
+                    ImportOptionButton(
+                        title: String.localized("From Files"),
+                        icon: "folder.fill.badge.plus",
+                        color: .blue,
+                        action: onImportFiles
+                    )
+
+                    ImportOptionButton(
+                        title: String.localized("From URL"),
+                        icon: "link.badge.plus",
+                        color: .purple,
+                        action: onImportURL
+                    )
+                }
+
+                Spacer()
             }
-            .padding(.top, 10)
-
-            HStack(spacing: 16) {
-                ImportOptionButton(
-                    title: String.localized("From Files"),
-                    icon: "folder.fill.badge.plus",
-                    color: .blue,
-                    action: onImportFiles
-                )
-
-                ImportOptionButton(
-                    title: String.localized("From URL"),
-                    icon: "link.badge.plus",
-                    color: .purple,
-                    action: onImportURL
-                )
-            }
+            .padding(30)
         }
-        .padding(24)
-        .frame(maxWidth: .infinity)
-        .background(Color(UIColor.systemBackground))
+        .background(.ultraThinMaterial)
     }
 }
 

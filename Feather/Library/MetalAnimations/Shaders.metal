@@ -23,7 +23,24 @@ struct Uniforms {
     int state;
     float stateTime;
     float2 resolution;
+    float pitch;
+    float roll;
+    float yaw;
 };
+
+// Helper functions for complex noise and shapes
+float hash(float n) { return fract(sin(n) * 43758.5453123); }
+
+float noise(float3 x) {
+    float3 p = floor(x);
+    float3 f = fract(x);
+    f = f * f * (3.0 - 2.0 * f);
+    float n = p.x + p.y * 57.0 + 113.0 * p.z;
+    return mix(mix(mix(hash(n + 0.0), hash(n + 1.0), f.x),
+                   mix(hash(n + 57.0), hash(n + 58.0), f.x), f.y),
+               mix(mix(hash(n + 113.0), hash(n + 114.0), f.x),
+                   mix(hash(n + 170.0), hash(n + 171.0), f.x), f.y), f.z);
+}
 
 float circle(float2 p, float2 center, float radius, float feather) {
     return 1.0 - smoothstep(radius - feather, radius + feather, length(p - center));
@@ -34,66 +51,102 @@ float ring(float2 p, float2 center, float radius, float width, float feather) {
     return smoothstep(radius - width - feather, radius - width, d) * (1.0 - smoothstep(radius - feather, radius + feather, d));
 }
 
+float3 palette(float t) {
+    float3 a = float3(0.5, 0.5, 0.5);
+    float3 b = float3(0.5, 0.5, 0.5);
+    float3 c = float3(1.0, 1.0, 1.0);
+    float3 d = float3(0.263, 0.416, 0.557);
+    return a + b * cos(6.28318 * (c * t + d));
+}
+
 fragment float4 fragment_main(float4 position [[stage_in]],
                              constant Uniforms &uniforms [[buffer(0)]]) {
     float2 uv = position.xy / uniforms.resolution;
     float2 p = (position.xy * 2.0 - uniforms.resolution) / min(uniforms.resolution.x, uniforms.resolution.y);
 
+    // Apply motion offset
+    float2 motionOffset = float2(uniforms.roll, -uniforms.pitch) * 0.2;
+    p += motionOffset;
+
     float4 color = float4(0.0);
 
-    if (uniforms.state == 1) { // Loading
-        // Dark background with slight motion
-        float bg = 0.05 + 0.02 * sin(uniforms.time * 0.5 + uv.x * 2.0 + uv.y * 2.0);
-        color = float4(bg, bg, bg, 0.85);
+    if (uniforms.state == 1) { // Loading: Complex plasma-like effect
+        float2 p0 = p;
+        float3 finalColor = float3(0.0);
 
-        // Rotating ring
-        float angle = atan2(p.y, p.x) + uniforms.time * 3.0;
-        float r = length(p);
-        float ring_val = ring(p, float2(0.0), 0.3, 0.02, 0.01);
-
-        // Add some "gap" to the ring to make it look like it's rotating
-        float mask = smoothstep(-0.5, 0.5, sin(angle * 1.0));
-        color += float4(0.5, 0.5, 0.5, 1.0) * ring_val * mask;
-
-        // Central pulse
-        float pulse = 0.05 * sin(uniforms.time * 4.0);
-        color += float4(0.3, 0.3, 0.3, 1.0) * circle(p, float2(0.0), 0.05 + pulse, 0.01);
-
-    } else if (uniforms.state == 2) { // Success
-        float t = uniforms.stateTime;
-        // Expanding wave
-        float wave_radius = t * 2.5;
-        float wave = ring(p, float2(0.0), wave_radius, 0.1, 0.05);
-
-        // Background transition to green
-        float bg_fade = smoothstep(0.0, 0.5, t);
-        float4 bg_color = float4(0.0, 0.2 * bg_fade, 0.0, 0.6 * bg_fade);
-
-        color = mix(float4(0.0, 0.0, 0.0, 0.85), bg_color, bg_fade);
-        color += float4(0.0, 1.0, 0.2, 1.0) * wave * (1.0 - smoothstep(1.0, 1.5, t));
-
-        // Final glow
-        if (t > 0.5) {
-            float glow = circle(p, float2(0.0), 0.2, 0.5) * (1.0 - smoothstep(1.0, 1.5, t));
-            color += float4(0.0, 0.8, 0.3, 1.0) * glow * 0.3;
+        for (float i = 0.0; i < 3.0; i++) {
+            p = fract(p * 1.5) - 0.5;
+            float d = length(p) * exp(-length(p0));
+            float3 col = palette(length(p0) + i * 0.4 + uniforms.time * 0.4);
+            d = sin(d * 8.0 + uniforms.time) / 8.0;
+            d = abs(d);
+            d = pow(0.01 / d, 1.2);
+            finalColor += col * d;
         }
 
-    } else if (uniforms.state == 3) { // Error
+        // Add a central rotating geometric shape
+        float r = length(p0);
+        float angle = atan2(p0.y, p0.x) + uniforms.time * 2.0;
+        float shape = smoothstep(0.4, 0.41, abs(sin(angle * 3.0)) * 0.1 + r);
+        finalColor *= (1.0 - (1.0 - shape) * 0.5);
+
+        color = float4(finalColor * 0.6, 0.9);
+
+    } else if (uniforms.state == 2) { // Success: Radiant energy burst
         float t = uniforms.stateTime;
-        // Red pulse background
-        float pulse = 0.1 * sin(uniforms.time * 5.0);
-        float bg_pulse = 0.3 + pulse;
-        color = float4(bg_pulse, 0.0, 0.0, 0.85);
+        float2 p0 = p;
 
-        // Vignette
-        float vignette = 1.0 - smoothstep(0.5, 1.5, length(p));
-        color *= vignette;
+        // Expanding rings with motion
+        float burst = 0.0;
+        for(float i = 0.0; i < 5.0; i++) {
+            float radius = t * (1.0 + i * 0.5);
+            burst += ring(p, float2(0.0), radius, 0.02, 0.05) * (1.0 - smoothstep(0.0, 2.0, t));
+        }
 
-        // Distortion effect
-        float dist = sin(p.y * 10.0 + uniforms.time * 10.0) * 0.01;
-        float dist_circle = circle(p + float2(dist, 0.0), float2(0.0), 0.3, 0.05);
-        color += float4(1.0, 0.1, 0.1, 1.0) * dist_circle * 0.2;
+        // Background color shift to green
+        float3 successCol = float3(0.0, 0.8, 0.4);
+        float bgFade = smoothstep(0.0, 0.8, t) * (1.0 - smoothstep(1.5, 2.0, t));
+
+        float3 finalColor = successCol * burst + successCol * bgFade * 0.2;
+
+        // Add particles
+        float particles = 0.0;
+        for(float i = 0.0; i < 10.0; i++) {
+            float2 pos = float2(sin(i * 123.4 + uniforms.time), cos(i * 567.8 + uniforms.time)) * t * 0.8;
+            particles += circle(p, pos, 0.02 * (1.0 - t/2.0), 0.01);
+        }
+        finalColor += float3(1.0) * particles * (1.0 - t/2.0);
+
+        color = float4(finalColor, 0.85);
+
+    } else if (uniforms.state == 3) { // Error: Glitchy red distortion
+        float t = uniforms.stateTime;
+        float2 p0 = p;
+
+        // Glitch offset
+        float glitch = step(0.95, hash(uniforms.time)) * (hash(uniforms.time * 1.1) - 0.5) * 0.2;
+        p.x += glitch;
+
+        // Red noise background
+        float n = noise(float3(p * 4.0, uniforms.time * 2.0));
+        float3 errorCol = float3(0.8, 0.1, 0.1) * (0.5 + 0.5 * n);
+
+        // Vignette with motion
+        float vignette = 1.0 - smoothstep(0.3, 1.2, length(p0 - motionOffset * 2.0));
+        errorCol *= vignette;
+
+        // Sharp X shape or similar
+        float cross = smoothstep(0.01, 0.0, abs(p.x - p.y) - 0.01) + smoothstep(0.01, 0.0, abs(p.x + p.y) - 0.01);
+        errorCol += float3(1.0, 0.5, 0.5) * cross * 0.3 * (0.8 + 0.2 * sin(uniforms.time * 20.0));
+
+        color = float4(errorCol, 0.9);
     }
 
-    return color;
+    // Rounded corners mask
+    float2 cornerDist = abs(uv - 0.5) * uniforms.resolution;
+    float2 cornerLimit = uniforms.resolution * 0.5 - 28.0; // 28 is corner radius
+    float d = length(max(cornerDist - cornerLimit, 0.0)) - 28.0;
+    float cornerMask = 1.0 - smoothstep(-1.0, 1.0, d);
+
+    return color * cornerMask;
 }
