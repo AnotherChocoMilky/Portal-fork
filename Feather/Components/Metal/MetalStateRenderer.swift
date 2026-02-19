@@ -71,7 +71,7 @@ class MetalStateRenderer: NSObject, MTKViewDelegate {
         let stateTime = Float(currentTime - stateStartTime)
 
         // Handle auto-dismiss
-        if currentState == .success && stateTime > 1.4 {
+        if currentState == .success && stateTime > 2.0 {
             onAnimationComplete?()
             return
         }
