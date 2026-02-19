@@ -139,7 +139,7 @@ struct InstallPreviewView: View {
     private var statusBadge: some View {
         HStack(spacing: 6) {
             Image(systemName: viewModel.statusImage)
-                .symbolEffect(.bounce, value: viewModel.status)
+                .bounceEffect(viewModel.status)
             Text(viewModel.statusLabel)
                 .font(.system(size: 14, weight: .semibold))
         }

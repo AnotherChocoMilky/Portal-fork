@@ -188,7 +188,7 @@ struct SigningProcessView: View {
                         Image(systemName: isFinished ? "checkmark.seal.fill" : "signature")
                             .font(.system(size: 36, weight: .semibold))
                             .foregroundStyle(.white)
-                            .symbolEffect(.bounce, value: isFinished)
+                            .bounceEffect(isFinished)
                     }
                     .overlay(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -347,7 +347,7 @@ struct SigningProcessView: View {
             Image(systemName: iconName)
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(.white)
-                .symbolEffect(.pulse, options: .repeating, value: currentStepIndex)
+                .pulseEffect(currentStepIndex)
         } else {
             Text("\(index + 1)")
                 .font(.system(size: 11, weight: .semibold))
@@ -401,7 +401,7 @@ struct SigningProcessView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 20, weight: .semibold))
-                        .symbolEffect(.bounce, value: isFinished)
+                        .bounceEffect(isFinished)
                     Text("Done")
                         .font(.headline.weight(.bold))
                 }

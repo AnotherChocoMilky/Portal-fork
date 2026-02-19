@@ -880,7 +880,7 @@ struct DemoButton: View {
                     Image(systemName: action.icon)
                         .font(.system(size: 28, weight: .semibold))
                         .foregroundColor(.blue)
-                        .symbolEffect(.bounce, value: isAnimating)
+                        .bounceEffect(isAnimating)
                 }
                 
                 Text(action.rawValue)

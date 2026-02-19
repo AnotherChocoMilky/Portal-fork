@@ -108,7 +108,7 @@ struct InstallProgressView: View {
 
                 Text("In Progress")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
             }
         }
     }
