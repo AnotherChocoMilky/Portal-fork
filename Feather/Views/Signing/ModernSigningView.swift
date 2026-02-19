@@ -107,8 +107,6 @@ struct ModernSigningView: View {
                     .opacity(_contentOpacity)
                 }
 
-                FullScreenMetalStateView(state: $_metalState, errorMessage: _errorMessage)
-                    .ignoresSafeArea()
             }
             .disabled(_metalState != .idle)
             .sheet(isPresented: $_isAltPickerPresenting) {
@@ -209,6 +207,11 @@ struct ModernSigningView: View {
                 .presentationDetents([.height(240)])
                 .presentationDragIndicator(.visible)
             }
+        }
+        .overlay {
+            FullScreenMetalStateView(state: $_metalState, errorMessage: _errorMessage)
+                .ignoresSafeArea()
+                .zIndex(100)
         }
         .handleStatusBarHiding()
     }
@@ -1093,12 +1096,9 @@ struct ModernSigningView: View {
         AppStateManager.shared.isSigning = true
         
         // Animate out before showing signing process
-        withAnimation(.easeOut(duration: 0.2)) {
-            _headerScale = 0.95
-            _contentOpacity = 0.5
-        }
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+        withAnimation(.easeOut(duration: 0.4)) {
+            _headerScale = 0.85
+            _contentOpacity = 0
             _isSigning = true
             _metalState = .loading
         }
@@ -1122,7 +1122,7 @@ struct ModernSigningView: View {
                             NotificationManager.shared.sendAppReadyNotification(appName: app.name ?? "App")
                         }
                         
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                             let install = UIAlertAction(title: .localized("Install"), style: .default) { _ in
                                 if let url = URL(string: installLink) {
                                     UIApplication.shared.open(url)
@@ -1171,11 +1171,11 @@ struct ModernSigningView: View {
                             NotificationManager.shared.sendAppReadyNotification(appName: app.name ?? "App")
                         }
 
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.8) {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                             if _temporaryOptions.post_installAppAfterSigned {
                                 NotificationCenter.default.post(name: Notification.Name("Feather.installApp"), object: nil)
                             }
-                            dismiss()
+                            dismissWithAnimation()
                         }
                     }
                 }
