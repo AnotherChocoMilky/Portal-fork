@@ -241,16 +241,10 @@ struct BatchSigningView: View {
                                     .frame(width: 80, height: 80)
                                     .blur(radius: 8)
                                 
-                                if #available(iOS 17.0, *) {
-                                    Image(systemName: currentPhase == .signing ? "signature" : "arrow.down.circle.fill")
-                                        .font(.system(size: 32, weight: .semibold))
-                                        .foregroundStyle(.white)
-                                        .symbolEffect(.pulse, options: .repeating)
-                                } else {
-                                    Image(systemName: currentPhase == .signing ? "signature" : "arrow.down.circle.fill")
-                                        .font(.system(size: 32, weight: .semibold))
-                                        .foregroundStyle(.white)
-                                }
+                                Image(systemName: currentPhase == .signing ? "signature" : "arrow.down.circle.fill")
+                                    .font(.system(size: 32, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .pulseEffect(true)
                             }
 
                             VStack(spacing: 12) {

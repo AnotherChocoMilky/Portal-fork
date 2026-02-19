@@ -935,16 +935,10 @@ struct PortalExportView: View {
 	
 	private var headerSection: some View {
 		VStack(spacing: 12) {
-			if #available(iOS 17.0, *) {
 				Image(systemName: isImportMode ? "arrow.down.doc.fill" : "arrow.up.doc.fill")
 					.font(.system(size: 48))
 					.foregroundStyle(isImportMode ? .cyan : .purple)
-					.symbolEffect(.bounce, value: isImportMode)
-			} else {
-				Image(systemName: isImportMode ? "arrow.down.doc.fill" : "arrow.up.doc.fill")
-					.font(.system(size: 48))
-					.foregroundStyle(isImportMode ? .cyan : .purple)
-			}
+					.bounceEffect(isImportMode)
 			
 			Text(isImportMode ? .localized("Import Sources") : .localized("Export Sources"))
 				.font(.title2.bold())
