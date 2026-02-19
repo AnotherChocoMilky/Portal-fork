@@ -22,50 +22,46 @@ struct CheckForUpdatesView: View {
     }
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // Hero Section
-                heroSection
-                
-                // Update Status Card
-                updateStatusCard
-                
-                // What's New Section (if update available)
-                if updateManager.isUpdateAvailable, let release = updateManager.latestRelease {
-                    whatsNewSection(release)
-                }
-                
-                // Previous Releases
-                if updateManager.allReleases.count > 1 {
-                    previousReleasesSection
-                }
-                
-                // Error Section
-                if let error = updateManager.errorMessage {
-                    errorSection(error)
-                }
-            }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 30)
-        }
-        .background(Color(UIColor.systemGroupedBackground))
-        .navigationTitle("Check For Updates")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar(content: {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    updateManager.checkForUpdates()
-                } label: {
-                    if updateManager.isCheckingUpdates {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                    } else {
-                        Image(systemName: "arrow.clockwise")
+        ZStack {
+            ScrollView {
+                VStack(spacing: 24) {
+                    // Hero Section
+                    heroSection
+
+                    // Update Status Card
+                    updateStatusCard
+
+                    // What's New Section (if update available)
+                    if updateManager.isUpdateAvailable, let release = updateManager.latestRelease {
+                        whatsNewSection(release)
+                    }
+
+                    // Previous Releases
+                    if updateManager.allReleases.count > 1 {
+                        previousReleasesSection
+                    }
+
+                    // Error Section
+                    if let error = updateManager.errorMessage {
+                        errorSection(error)
                     }
                 }
-                .disabled(updateManager.isCheckingUpdates)
+                .padding(.horizontal, 20)
+                .padding(.bottom, 30)
             }
-        })
+            .background(Color(UIColor.systemGroupedBackground))
+
+            // Dynamic Metal Loading Screen
+            FullScreenMetalStateView(
+                state: $updateManager.metalState,
+                errorMessage: updateManager.errorMessage,
+                onDismissError: {
+                    updateManager.errorMessage = nil
+                }
+            )
+        }
+        .navigationTitle("Check For Updates")
+        .navigationBarTitleDisplayMode(.inline)
         .onAppear {
             if !updateManager.hasChecked {
                 updateManager.checkForUpdates()
@@ -257,33 +253,66 @@ struct CheckForUpdatesView: View {
                         } label: {
                             HStack(spacing: 12) {
                                 if updateManager.isDownloading {
-                                    ProgressView().tint(.white)
+                                    ZStack {
+                                        Image(systemName: "arrow.down.circle.fill")
+                                            .font(.system(size: 20))
+                                            .rotationEffect(.degrees(updateManager.isDownloading ? 360 : 0))
+                                            .animation(.linear(duration: 2).repeatForever(autoreverses: false), value: updateManager.isDownloading)
+
+                                        CircularProgressView(progress: updateManager.downloadProgress, color: .white, size: 24, lineWidth: 3)
+                                    }
                                 } else {
                                     Image(systemName: "arrow.down.to.line.circle.fill")
-                                        .font(.system(size: 18))
+                                        .font(.system(size: 20))
                                 }
                                 
-                                Text(updateManager.isDownloading ? "Downloading... \(Int(updateManager.downloadProgress * 100))%" : "Download & Install")
-                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(updateManager.isDownloading ? "Downloading Update..." : "Download & Install")
+                                        .font(.system(size: 16, weight: .bold, design: .rounded))
+
+                                    if updateManager.isDownloading {
+                                        Text("\(Int(updateManager.downloadProgress * 100))% Complete")
+                                            .font(.system(size: 10, weight: .black, design: .monospaced))
+                                            .opacity(0.8)
+                                    }
+                                }
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
                             .background(
                                 ZStack(alignment: .leading) {
-                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                        .fill(Color.green)
+                                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [Color.green, Color(hex: "#27AE60")],
+                                                startPoint: .leading,
+                                                endPoint: .trailing
+                                            )
+                                        )
                                     
                                     if updateManager.isDownloading {
                                         GeometryReader { geo in
-                                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                                .fill(.black.opacity(0.15))
-                                                .frame(width: geo.size.width * updateManager.downloadProgress)
+                                            ZStack(alignment: .leading) {
+                                                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                                    .fill(.black.opacity(0.15))
+                                                    .frame(width: geo.size.width * updateManager.downloadProgress)
+
+                                                // Glass shimmer effect
+                                                LinearGradient(
+                                                    colors: [.clear, .white.opacity(0.2), .clear],
+                                                    startPoint: .leading,
+                                                    endPoint: .trailing
+                                                )
+                                                .frame(width: 100)
+                                                .offset(x: -100 + (geo.size.width + 200) * updateManager.downloadProgress)
+                                            }
                                         }
+                                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                                     }
                                 }
                             )
                             .foregroundStyle(.white)
-                            .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
+                            .shadow(color: Color.green.opacity(0.3), radius: 10, x: 0, y: 5)
                         }
                         .disabled(updateManager.isDownloading)
                     }
@@ -410,65 +439,75 @@ struct CheckForUpdatesView: View {
     private var previousReleasesListContent: some View {
         let releases = Array(updateManager.allReleases.dropFirst().prefix(5))
         
-        return VStack(spacing: 0) {
+        return VStack(spacing: 12) {
             ForEach(Array(releases.enumerated()), id: \.element.id) { index, release in
                 previousReleaseRow(release: release, index: index, totalCount: releases.count)
             }
             
             viewAllReleasesButton
         }
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
-        )
     }
     
     private func previousReleaseRow(release: GitHubRelease, index: Int, totalCount: Int) -> some View {
-        VStack(spacing: 0) {
-            Button {
-                if let url = URL(string: release.htmlUrl) {
-                    UIApplication.shared.open(url)
-                }
-                HapticsManager.shared.softImpact()
-            } label: {
-                releaseRowContent(release: release)
-            }
-            
-            if index < totalCount - 1 {
-                Divider()
-                    .padding(.leading, 16)
-            }
-        }
-    }
-    
-    private func releaseRowContent(release: GitHubRelease) -> some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 8) {
-                    Text(release.tagName)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 8) {
+                        Text(release.tagName)
+                            .font(.system(.headline, design: .rounded).bold())
+                            .foregroundStyle(.primary)
+
+                        if release.prerelease {
+                            betaBadge
+                        }
+                    }
                     
-                    if release.prerelease {
-                        betaBadge
+                    if let date = release.publishedAt {
+                        Text("Released on \(date.formatted(date: .long, time: .omitted))")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    if let ipaAsset = release.assets.first(where: { $0.name.hasSuffix(".ipa") }) {
+                        Text(formatFileSize(ipaAsset.size))
+                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 2)
                     }
                 }
                 
-                if let date = release.publishedAt {
-                    Text(date.formatted(date: .abbreviated, time: .omitted))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                Spacer()
+
+                Button {
+                    updateManager.downloadRelease(release)
+                    HapticsManager.shared.softImpact()
+                } label: {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .font(.system(size: 28))
+                        .foregroundStyle(Color.accentColor)
+                        .symbolRenderingMode(.hierarchical)
                 }
             }
             
-            Spacer()
-            
-            Image(systemName: "chevron.right")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+            if let body = release.body, !body.isEmpty {
+                Text(body)
+                    .font(.system(size: 13, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+            }
         }
-        .padding(.vertical, 14)
-        .padding(.horizontal, 16)
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .shadow(color: .black.opacity(0.03), radius: 10, x: 0, y: 5)
+        )
+    }
+
+    private func formatFileSize(_ bytes: Int) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        return formatter.string(fromByteCount: Int64(bytes))
     }
     
     private var betaBadge: some View {
@@ -537,6 +576,28 @@ struct CheckForUpdatesView: View {
     }
 }
 
+// MARK: - Circular Progress View
+struct CircularProgressView: View {
+    let progress: Double
+    let color: Color
+    var size: CGFloat = 20
+    var lineWidth: CGFloat = 2
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .stroke(color.opacity(0.2), lineWidth: lineWidth)
+
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(color, style: StrokeStyle(lineWidth: lineWidth, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+                .animation(.linear, value: progress)
+        }
+        .frame(width: size, height: size)
+    }
+}
+
 // MARK: - Loading Dots Animation View
 struct LoadingDotsView: View {
     @State private var animationPhase = 0
@@ -572,23 +633,23 @@ struct FullReleaseNotesView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     // Header
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 16) {
                         HStack(spacing: 12) {
                             // Version badge
                             HStack(spacing: 6) {
                                 Image(systemName: "tag.fill")
-                                    .font(.system(size: 12))
+                                    .font(.system(size: 11))
                                 Text(release.tagName)
-                                    .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                    .font(.system(size: 13, weight: .bold, design: .monospaced))
                             }
                             .foregroundStyle(.white)
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
                             .background(
                                 Capsule()
                                     .fill(
                                         LinearGradient(
-                                            colors: [Color.purple, Color.blue],
+                                            colors: [Color.accentColor, Color.purple],
                                             startPoint: .leading,
                                             endPoint: .trailing
                                         )
@@ -597,26 +658,30 @@ struct FullReleaseNotesView: View {
                             
                             if release.prerelease {
                                 Text("BETA")
-                                    .font(.system(size: 11, weight: .bold))
+                                    .font(.system(size: 10, weight: .black))
                                     .foregroundStyle(.orange)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 6)
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
                                     .background(
                                         Capsule()
-                                            .fill(Color.orange.opacity(0.15))
+                                            .fill(Color.orange.opacity(0.12))
+                                    )
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(Color.orange.opacity(0.3), lineWidth: 1)
                                     )
                             }
                         }
                         
                         Text(release.name)
-                            .font(.title2.bold())
+                            .font(.system(.title2, design: .rounded).bold())
                         
                         if let date = release.publishedAt {
                             HStack(spacing: 6) {
                                 Image(systemName: "calendar")
                                 Text("Released On \(date.formatted(date: .long, time: .omitted))")
                             }
-                            .font(.subheadline)
+                            .font(.system(.subheadline, design: .rounded))
                             .foregroundStyle(.secondary)
                         }
                     }
@@ -710,6 +775,7 @@ class UpdateManager: ObservableObject {
     @Published var showUpdateFinished = false
     @Published var downloadedIPAURL: URL?
     @Published var downloadedFileName: String = ""
+    @Published var metalState: MetalAnimationState = .idle
     
     private let repoOwner = "dylans2010"
     private let repoName = "Portal"
@@ -722,6 +788,7 @@ class UpdateManager: ObservableObject {
     
     func checkForUpdates() {
         isCheckingUpdates = true
+        metalState = .loading
         errorMessage = nil
         HapticsManager.shared.softImpact()
         
@@ -751,6 +818,7 @@ class UpdateManager: ObservableObject {
                 
                 if let error = error {
                     self.errorMessage = error.localizedDescription
+                    self.metalState = .error
                     HapticsManager.shared.error()
                     return
                 }
@@ -777,11 +845,14 @@ class UpdateManager: ObservableObject {
                     
                     if self.isUpdateAvailable {
                         HapticsManager.shared.success()
+                        self.metalState = .success
                     } else {
                         HapticsManager.shared.softImpact()
+                        self.metalState = .idle
                     }
                 } catch {
                     self.errorMessage = "Failed to parse releases"
+                    self.metalState = .error
                     HapticsManager.shared.error()
                 }
             }
@@ -838,7 +909,10 @@ class UpdateManager: ObservableObject {
     
     func downloadUpdate() {
         guard let release = latestRelease else { return }
-        
+        downloadRelease(release)
+    }
+
+    func downloadRelease(_ release: GitHubRelease) {
         // Find IPA asset
         let ipaAsset = release.assets.first { $0.name.hasSuffix(".ipa") }
         
@@ -846,7 +920,7 @@ class UpdateManager: ObservableObject {
             downloadAsset(asset, fileName: asset.name)
         } else {
             // Fallback to opening GitHub page if no IPA found
-            errorMessage = "No IPA file found in release assets"
+            errorMessage = "No IPA file found for this release"
             if let url = URL(string: release.htmlUrl) {
                 UIApplication.shared.open(url)
             }
@@ -1046,7 +1120,7 @@ struct UpdateFinishedView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 20) {
+            VStack(spacing: 24) {
                 // Compact Success Header
                 successHeader
                 
@@ -1063,9 +1137,15 @@ struct UpdateFinishedView: View {
                 
                 Spacer()
             }
-            .padding(.horizontal, 20)
-            .padding(.top, 8)
-            .background(Color(UIColor.systemGroupedBackground))
+            .padding(.horizontal, 24)
+            .padding(.top, 12)
+            .background {
+                if #available(iOS 26.0, *) {
+                    Color.clear
+                } else {
+                    Color(UIColor.systemGroupedBackground)
+                }
+            }
             .navigationTitle("Portal Update")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar(content: {
@@ -1091,6 +1171,28 @@ struct UpdateFinishedView: View {
         }
         .presentationDetents([.medium])
         .presentationDragIndicator(.visible)
+        .presentationBackground {
+            if #available(iOS 26.0, *) {
+                ZStack {
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+
+                    LinearGradient(
+                        colors: [Color.accentColor.opacity(0.1), Color.purple.opacity(0.05), Color.clear],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                }
+            } else {
+                if #available(iOS 16.4, *) {
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                } else {
+                    Color(UIColor.systemGroupedBackground)
+                }
+            }
+        }
+        .presentationCornerRadius(32)
     }
     
     // MARK: - Success Header
@@ -1415,38 +1517,39 @@ struct ModernMarkdownView: View {
         switch element {
         case .header1(let text):
             Text(processInlineMarkdown(text))
-                .font(.title.bold())
+                .font(.system(.title, design: .rounded).bold())
                 .foregroundStyle(.primary)
                 .padding(.top, 8)
                 
         case .header2(let text):
             Text(processInlineMarkdown(text))
-                .font(.title2.bold())
+                .font(.system(.title2, design: .rounded).bold())
                 .foregroundStyle(.primary)
                 .padding(.top, 6)
                 
         case .header3(let text):
             Text(processInlineMarkdown(text))
-                .font(.title3.bold())
+                .font(.system(.title3, design: .rounded).bold())
                 .foregroundStyle(.primary)
                 .padding(.top, 4)
                 
         case .paragraph(let text):
             Text(processInlineMarkdown(text))
-                .font(.body)
+                .font(.system(.body, design: .rounded))
                 .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
                 
         case .bulletList(let items):
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 10) {
                 ForEach(Array(items.enumerated()), id: \.offset) { _, item in
-                    HStack(alignment: .top, spacing: 8) {
-                        Text("•")
-                            .font(.body.bold())
-                            .foregroundStyle(Color.accentColor)
-                            .frame(width: 12)
+                    HStack(alignment: .top, spacing: 10) {
+                        Circle()
+                            .fill(Color.accentColor)
+                            .frame(width: 6, height: 6)
+                            .padding(.top, 8)
+
                         Text(processInlineMarkdown(item))
-                            .font(.body)
+                            .font(.system(.body, design: .rounded))
                             .foregroundStyle(.primary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
