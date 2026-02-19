@@ -42,12 +42,14 @@ extension ServerView {
 		case fullyLocal = 0
 		case semiLocal = 1
 		case custom = 2
+		case semiLocalBackground = 3
 		
 		var name: String {
 			switch self {
 			case .fullyLocal: return .localized("On Device")
 			case .semiLocal: return .localized("Server")
 			case .custom: return .localized("Custom")
+			case .semiLocalBackground: return .localized("Server 2")
 			}
 		}
 		
@@ -56,6 +58,7 @@ extension ServerView {
 			case .fullyLocal: return .localized("Fully signs and installs apps on device.")
 			case .semiLocal: return .localized("Signs locally but uses a local server for installation via Wi-Fi.")
 			case .custom: return .localized("Use your own custom API endpoint for remote signing and installation.")
+			case .semiLocalBackground: return .localized("Signs locally but uses a local server in the background for installation.")
 			}
 		}
 		
@@ -64,6 +67,7 @@ extension ServerView {
 			case .fullyLocal: return "iphone"
 			case .semiLocal: return "cloud"
 			case .custom: return "link"
+			case .semiLocalBackground: return "cloud.fill"
 			}
 		}
 		
@@ -72,6 +76,7 @@ extension ServerView {
 			case .fullyLocal: return .blue
 			case .semiLocal: return .green
 			case .custom: return .purple
+			case .semiLocalBackground: return .teal
 			}
 		}
 	}
@@ -200,7 +205,7 @@ struct ServerView: View {
 			}
 			.padding(.vertical, 4)
 			
-			if _serverMethod == 1 {
+			if _serverMethod == 1 || _serverMethod == 3 {
 				Toggle(isOn: $_ipFix) {
 					HStack(spacing: 12) {
 						ZStack {
