@@ -75,22 +75,6 @@ struct VariedTabbarView: View {
                         }
                     }
             )
-            .simultaneousGesture(
-                TapGesture(count: 2)
-                    .onEnded {
-                        EasterEggManager.shared.handleKonamiKey(.b)
-                    }
-            )
-            .simultaneousGesture(
-                TapGesture(count: 3)
-                    .onEnded {
-                        EasterEggManager.shared.handleKonamiKey(.a)
-                    }
-            )
-            .onAppear {
-                // Konami code is hard to do with just swipes.
-                // Let's also support it via a notification or similar.
-            }
             .withEasterEggs()
     }
 
