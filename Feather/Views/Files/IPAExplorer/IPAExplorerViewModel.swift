@@ -51,6 +51,9 @@ class IPAExplorerViewModel: ObservableObject {
 
     @MainActor
     private func performExploration() async {
+        let isSecurityScoped = ipaURL.startAccessingSecurityScopedResource()
+        defer { if isSecurityScoped { ipaURL.stopAccessingSecurityScopedResource() } }
+
         do {
             // 1. Hashing
             state = .hashing
@@ -63,12 +66,17 @@ class IPAExplorerViewModel: ObservableObject {
             try fileManager.createDirectory(at: uniqueDir, withIntermediateDirectories: true)
             extractionURL = uniqueDir
 
+            // Copy to temp to ensure stability during unzip
+            let tempIPA = uniqueDir.appendingPathComponent("temp.ipa")
+            try fileManager.copyItem(at: ipaURL, to: tempIPA)
+
             try await Task.detached(priority: .userInitiated) {
-                try Zip.unzipFile(self.ipaURL, destination: uniqueDir, overwrite: true, password: nil, progress: { p in
+                try Zip.unzipFile(tempIPA, destination: uniqueDir, overwrite: true, password: nil, progress: { p in
                     Task { @MainActor in
                         self.progress = p
                     }
                 })
+                try? FileManager.default.removeItem(at: tempIPA)
             }.value
 
             // 3. Indexing & Analysis

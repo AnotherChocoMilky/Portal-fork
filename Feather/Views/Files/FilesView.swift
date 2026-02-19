@@ -416,7 +416,7 @@ struct FilesView: View {
                 ClipboardImportView(directoryURL: fileManager.currentDirectory)
             }
             .sheet(isPresented: $showTerminal) {
-                FileTerminalView(currentDirectory: fileManager.currentDirectory)
+                FileToolsTerminalView(currentDirectory: fileManager.currentDirectory)
             }
             .sheet(isPresented: $showFileSearch) {
                 AdvancedFileSearchView(baseDirectory: fileManager.baseDirectory)
@@ -1080,6 +1080,15 @@ struct FilesView: View {
             } label: {
                 Label(.localized("Create Symlink"), systemImage: "link")
             }
+
+            if let firstIPA = fileManager.currentFiles.first(where: { $0.url.pathExtension.lowercased() == "ipa" }) {
+                Button {
+                    HapticsManager.shared.impact()
+                    UIActivityViewController.show(activityItems: [firstIPA.url])
+                } label: {
+                    Label(.localized("Export IPA"), systemImage: "square.and.arrow.up")
+                }
+            }
         } label: {
             Label(.localized("Tools"), systemImage: "wrench.and.screwdriver")
         }
@@ -1256,6 +1265,13 @@ struct FilesView: View {
                 showIPAExplorer = true
             } label: {
                 Label(.localized("Explore IPA"), systemImage: "folder.magnifyingglass")
+            }
+
+            Button {
+                HapticsManager.shared.impact()
+                UIActivityViewController.show(activityItems: [file.url])
+            } label: {
+                Label(.localized("Export IPA"), systemImage: "square.and.arrow.up")
             }
         }
         

@@ -88,6 +88,15 @@ struct IPAExplorerView: View {
                 }
             }
 
+            Section(.localized("Tools")) {
+                Button {
+                    exportIPA()
+                } label: {
+                    Label(.localized("Export IPA"), systemImage: "square.and.arrow.up")
+                }
+                .foregroundStyle(.blue)
+            }
+
             Section(.localized("Hash")) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("SHA-256")
@@ -99,6 +108,14 @@ struct IPAExplorerView: View {
                 }
             }
         }
+    }
+
+    private func exportIPA() {
+        guard let appBundleURL = viewModel.appBundleURL else { return }
+        // For exploration mode, we can export the original IPA URL
+        // In a real scenario, we might want to repackage if modified, but for now we export the source
+        UIActivityViewController.show(activityItems: [viewModel.ipaURL])
+        HapticsManager.shared.success()
     }
 
     private func errorView(_ message: String) -> some View {
