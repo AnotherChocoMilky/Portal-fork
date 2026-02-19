@@ -72,9 +72,9 @@ struct SourcesAddView: View {
 				_mainContent
 			}
 			.background(Color(.systemGroupedBackground))
-			.toolbar(content: {
+			.toolbar {
 				_toolbarContent
-			})
+			}
 			.animation(.default, value: _filteredRecommendedSourcesData.map { $0.data.id ?? "" })
 			.task {
 				await _fetchRecommendedRepositories()

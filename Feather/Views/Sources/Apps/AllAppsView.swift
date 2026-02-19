@@ -110,13 +110,13 @@ struct AllAppsView: View {
                     }
                     .navigationTitle("Apps")
                     .navigationBarTitleDisplayMode(.inline)
-                    .toolbar(content: {
+                    .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
                             if _showSorting && !_isLoading {
                                 _sortingMenu
                             }
                         }
-                    })
+                    }
             } else {
                 mainContent
             }
