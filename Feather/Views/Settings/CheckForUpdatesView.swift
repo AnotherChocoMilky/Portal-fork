@@ -9,6 +9,7 @@ struct CheckForUpdatesView: View {
     @AppStorage("isDeveloperModeEnabled") private var isDeveloperModeEnabled = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dismiss) private var dismiss
     
     private let repoOwner = "dylans2010"
     private let repoName = "Portal"
@@ -22,46 +23,50 @@ struct CheckForUpdatesView: View {
     }
     
     var body: some View {
-        ZStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Hero Section
-                    heroSection
+        VStack(spacing: 0) {
+            // Optimized Custom Header
+            customHeader
 
-                    // Update Status Card
-                    updateStatusCard
+            ZStack {
+                ScrollView {
+                    VStack(spacing: 24) {
+                        // Hero Section
+                        heroSection
 
-                    // What's New Section (if update available)
-                    if updateManager.isUpdateAvailable, let release = updateManager.latestRelease {
-                        whatsNewSection(release)
+                        // Update Status Card
+                        updateStatusCard
+
+                        // What's New Section (if update available)
+                        if updateManager.isUpdateAvailable, let release = updateManager.latestRelease {
+                            whatsNewSection(release)
+                        }
+
+                        // Previous Releases
+                        if updateManager.allReleases.count > 1 {
+                            previousReleasesSection
+                        }
+
+                        // Error Section
+                        if let error = updateManager.errorMessage {
+                            errorSection(error)
+                        }
                     }
-
-                    // Previous Releases
-                    if updateManager.allReleases.count > 1 {
-                        previousReleasesSection
-                    }
-
-                    // Error Section
-                    if let error = updateManager.errorMessage {
-                        errorSection(error)
-                    }
+                    .padding(.horizontal, 20)
+                    .padding(.bottom, 30)
                 }
-                .padding(.horizontal, 20)
-                .padding(.bottom, 30)
+                .background(Color(UIColor.systemGroupedBackground))
+
+                // Dynamic Metal Loading Screen
+                FullScreenMetalStateView(
+                    state: $updateManager.metalState,
+                    errorMessage: updateManager.errorMessage,
+                    onDismissError: {
+                        updateManager.errorMessage = nil
+                    }
+                )
             }
-            .background(Color(UIColor.systemGroupedBackground))
-
-            // Dynamic Metal Loading Screen
-            FullScreenMetalStateView(
-                state: $updateManager.metalState,
-                errorMessage: updateManager.errorMessage,
-                onDismissError: {
-                    updateManager.errorMessage = nil
-                }
-            )
         }
-        .navigationTitle("Check For Updates")
-        .navigationBarTitleDisplayMode(.inline)
+        .navigationBarHidden(true)
         .onAppear {
             if !updateManager.hasChecked {
                 updateManager.checkForUpdates()
@@ -85,6 +90,53 @@ struct CheckForUpdatesView: View {
         }
     }
     
+    // MARK: - Custom Header
+    private var customHeader: some View {
+        HStack {
+            Button {
+                dismiss()
+                HapticsManager.shared.softImpact()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 16, weight: .bold))
+                    Text("Back")
+                        .font(.system(size: 17, weight: .medium))
+                }
+                .foregroundStyle(Color.accentColor)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .background(Capsule().fill(Color.accentColor.opacity(0.1)))
+            }
+
+            Spacer()
+
+            Text("Updates")
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+
+            Spacer()
+
+            // Status Indicator or Action
+            ZStack {
+                if updateManager.isCheckingUpdates {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(Color.accentColor)
+                        .pulseEffect(true)
+                }
+            }
+            .frame(width: 40, height: 40)
+            .background(Circle().fill(Color.accentColor.opacity(0.1)))
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .padding(.bottom, 12)
+        .background(Color(UIColor.systemGroupedBackground))
+    }
+
     // MARK: - Hero Section
     private var heroSection: some View {
         VStack(spacing: 24) {
@@ -629,7 +681,32 @@ struct FullReleaseNotesView: View {
     @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            // Optimized Custom Header
+            HStack {
+                Text("Release Notes")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+
+                Spacer()
+
+                Button {
+                    dismiss()
+                    HapticsManager.shared.softImpact()
+                } label: {
+                    Text("Done")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.accentColor))
+                        .shadow(color: Color.accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
+                }
+            }
+            .padding(.horizontal, 20)
+            .padding(.vertical, 16)
+            .background(Color(UIColor.systemBackground))
+            .overlay(Divider(), alignment: .bottom)
+
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     // Header
@@ -741,16 +818,6 @@ struct FullReleaseNotesView: View {
                     }
                 }
                 .padding(20)
-            }
-            .navigationTitle("Release Notes")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .fontWeight(.semibold)
-                }
             }
         }
     }
@@ -1119,7 +1186,28 @@ struct UpdateFinishedView: View {
     @Environment(\.colorScheme) private var colorScheme
     
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 24) {
+            // New Optimized Custom Header
+            HStack {
+                Text("Portal Update")
+                    .font(.system(size: 20, weight: .bold, design: .rounded))
+
+                Spacer()
+
+                Button {
+                    onDismiss()
+                    dismiss()
+                    HapticsManager.shared.softImpact()
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                        .symbolRenderingMode(.hierarchical)
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 20)
+
             VStack(spacing: 24) {
                 // Compact Success Header
                 successHeader
@@ -1138,28 +1226,14 @@ struct UpdateFinishedView: View {
                 Spacer()
             }
             .padding(.horizontal, 24)
-            .padding(.top, 12)
-            .background {
-                if #available(iOS 26.0, *) {
-                    Color.clear
-                } else {
-                    Color(UIColor.systemGroupedBackground)
-                }
+        }
+        .background {
+            if #available(iOS 26.0, *) {
+                Color.clear
+            } else {
+                Color(UIColor.systemGroupedBackground)
             }
-            .navigationTitle("Portal Update")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        onDismiss()
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.title2)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
+        }
             .sheet(isPresented: $showShareSheet) {
                 ShareSheet(urls: [ipaURL])
             }
