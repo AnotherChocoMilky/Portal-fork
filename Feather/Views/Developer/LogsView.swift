@@ -16,7 +16,7 @@ struct AppLogsView: View {
     @Environment(\.colorScheme) var colorScheme
 
     var filteredLogs: [LogEntry] {
-        logManager.filteredLogs(searchText: searchText, level: selectedLevel, category: selectedCategory)
+        logManager.filteredLogs(searchText: searchText, level: selectedLevel, category: selectedCategory).reversed()
     }
 
     var body: some View {
@@ -213,7 +213,7 @@ struct AppLogsView: View {
             isPresented: $showExporter,
             document: logDocument,
             contentType: exportType,
-            defaultFilename: "Portal_Logs_\(Date().formatted(date: .numeric, time: .omitted))"
+            defaultFilename: "Portal_Logs_\(Date().formatted(.iso8601.year().month().day().timeSeparator(.omitted)))"
         ) { result in
             switch result {
             case .success(let url):
@@ -372,6 +372,21 @@ struct LogEntryRow: View {
                 .padding(.vertical, 12)
                 .padding(.horizontal, 16)
                 .contentShape(Rectangle())
+            }
+            .contextMenu {
+                Button {
+                    UIPasteboard.general.string = entry.message
+                    HapticsManager.shared.success()
+                } label: {
+                    Label("Copy Message", systemImage: "doc.on.doc")
+                }
+
+                Button {
+                    UIPasteboard.general.string = entry.detailedMessage
+                    HapticsManager.shared.success()
+                } label: {
+                    Label("Copy Detailed Log", systemImage: "doc.text.below.ecg")
+                }
             }
 
 

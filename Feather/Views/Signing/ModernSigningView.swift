@@ -108,7 +108,7 @@ struct ModernSigningView: View {
                 }
 
             }
-            .disabled(_metalState != .idle)
+            .disabled(_metalState == .loading)
             .sheet(isPresented: $_isAltPickerPresenting) {
                 SigningAlternativeIconView(app: app, appIcon: $appIcon, isModifing: .constant(true))
             }

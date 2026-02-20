@@ -25,6 +25,7 @@ struct SettingsView: View {
     @AppStorage("forceShowGuides") private var forceShowGuides = false
     @AppStorage("Feather.saveDataToDevice") private var saveDataToDevice = false
     @AppStorage("Feather.greetingsName") private var greetingsName: String = ""
+    @AppStorage("Feather.tabBar.dashboard") private var showDashboard = true
     @StateObject private var hideManager = SettingsHideManager.shared
     @Environment(\.navigateToUpdates) private var navigateToUpdates
     
@@ -96,7 +97,7 @@ struct SettingsView: View {
     
     private var preferencesSection: some View {
         Section {
-            if !hideManager.isHidden("settings.home") {
+            if showDashboard && !hideManager.isHidden("settings.home") {
                 SettingsRow(icon: "house.fill", title: String.localized("Home"), color: .accentColor, destination: HomeSettingsView())
             }
             if !hideManager.isHidden("settings.appearance") {

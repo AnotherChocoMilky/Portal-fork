@@ -251,15 +251,12 @@ struct LibraryView: View {
                                                         _importStatus = .processing
                                                         _importErrorMessage = ""
 
-                                                        ToastManager.shared.show("\(String.localized("Processing")) \(_importedAppName)...", type: .info)
-                                                        
                                                         // Start the import - completion will be handled via notifications
                                                         do {
                                                                 try downloadManager.handlePachageFile(url: url, dl: dl)
                                                         } catch {
                                                                 // This catch is for synchronous errors only (rare)
                                                                 _importErrorMessage = error.localizedDescription
-                                                                ToastManager.shared.show("\(String.localized("Import Failed")): \(_importErrorMessage)", type: .error)
                                                         }
                                                 }
                                         }
@@ -295,8 +292,6 @@ struct LibraryView: View {
                                         _importStatus = .downloading
                                         _importErrorMessage = ""
                                         
-                                        ToastManager.shared.show("\(String.localized("Downloading")) \(_importedAppName)...", type: .info)
-                                        
                                         // Start the download - progress and completion handled via notifications
                                         _ = downloadManager.startDownload(from: url, id: downloadId)
                                 }
@@ -327,8 +322,6 @@ struct LibraryView: View {
                                           let downloadId = userInfo["downloadId"] as? String,
                                           downloadId == _currentDownloadId else { return }
                                 
-                                ToastManager.shared.show("\(String.localized("Import Successful!")): \(_importedAppName)", type: .success)
-                                
                                 // Auto-sign logic
                                 if _shouldAutoSignNext {
                                     _shouldAutoSignNext = false
@@ -354,7 +347,6 @@ struct LibraryView: View {
                                           downloadId == _currentDownloadId else { return }
                                 
                                 _importErrorMessage = userInfo["error"] as? String ?? "Unknown Error"
-                                ToastManager.shared.show("\(String.localized("Import Failed")): \(_importErrorMessage)", type: .error)
                                 _currentDownloadId = ""
                         }
                         // Listen for download failure notifications
@@ -364,7 +356,6 @@ struct LibraryView: View {
                                           downloadId == _currentDownloadId else { return }
                                 
                                 _importErrorMessage = userInfo["error"] as? String ?? "Download Failed"
-                                ToastManager.shared.show("\(String.localized("Download Failed")): \(_importErrorMessage)", type: .error)
                                 _currentDownloadId = ""
                         }
                         // Listen for download progress notifications
@@ -379,7 +370,6 @@ struct LibraryView: View {
                                 // Switch to processing status when download is complete (progress >= 0.99)
                                 if progress >= 0.99 && _importStatus == .downloading {
                                         _importStatus = .processing
-                                        ToastManager.shared.show("\(String.localized("Processing")) \(_importedAppName)...", type: .info)
                                 }
                         }
                         .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.installApp"))) { _ in
@@ -392,7 +382,6 @@ struct LibraryView: View {
                                         _selectedSigningAppPresenting = AnyApp(base: app)
                                 }
                         }
-            .withToast()
                 }
         }
 }
@@ -713,11 +702,6 @@ struct LibraryDownloadHeaderView: View {
                 }
             }
             .padding(14)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
-                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 4)
-            )
             .padding(.horizontal, 20)
             .padding(.bottom, 8)
             .transition(.move(edge: .top).combined(with: .opacity))
@@ -844,45 +828,39 @@ struct ImportSelectionSheet: View {
     @State private var _metalState: MetalAnimationState = .loading
 
     var body: some View {
-        ZStack {
-            MetalIntegratedStateView(state: $_metalState)
-                .ignoresSafeArea()
-                .opacity(0.6)
+        VStack(spacing: 24) {
+            VStack(spacing: 8) {
+                Text(String.localized("Import App"))
+                    .font(.system(size: 28, weight: .black, design: .rounded))
+                    .foregroundStyle(.primary)
 
-            VStack(spacing: 24) {
-                VStack(spacing: 8) {
-                    Text(String.localized("Import App"))
-                        .font(.system(size: 28, weight: .black, design: .rounded))
-                        .foregroundStyle(.primary)
-
-                    Text(String.localized("Choose a method to import your application"))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.top, 20)
-
-                HStack(spacing: 20) {
-                    ImportOptionButton(
-                        title: String.localized("From Files"),
-                        icon: "folder.fill.badge.plus",
-                        color: .blue,
-                        action: onImportFiles
-                    )
-
-                    ImportOptionButton(
-                        title: String.localized("From URL"),
-                        icon: "link.badge.plus",
-                        color: .purple,
-                        action: onImportURL
-                    )
-                }
-
-                Spacer()
+                Text(String.localized("Choose a method to import your application"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
             }
-            .padding(30)
+            .padding(.top, 40)
+
+            HStack(spacing: 20) {
+                ImportOptionButton(
+                    title: String.localized("From Files"),
+                    icon: "folder.fill.badge.plus",
+                    color: .blue,
+                    action: onImportFiles
+                )
+
+                ImportOptionButton(
+                    title: String.localized("From URL"),
+                    icon: "link.badge.plus",
+                    color: .purple,
+                    action: onImportURL
+                )
+            }
+
+            Spacer()
         }
-        .background(.ultraThinMaterial)
+        .padding(30)
+        .background(Color(UIColor.secondarySystemGroupedBackground))
     }
 }
 
