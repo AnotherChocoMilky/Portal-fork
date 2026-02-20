@@ -51,7 +51,7 @@ struct CertificatesView: View {
 			}
 			.padding(20)
 		}
-		.background(Color(UIColor.systemGroupedBackground))
+		.background(Color.clear)
 		.navigationTitle(.localized("Certificates"))
 		.overlay {
 			if _certificates.isEmpty {

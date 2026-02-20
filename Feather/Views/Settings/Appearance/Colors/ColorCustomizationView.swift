@@ -26,7 +26,9 @@ struct ColorTheme: Identifiable, Codable, Equatable {
 }
 
 struct ColorCustomizationView: View {
-    @ObservedObject private var backgroundManager = ColorBackgroundManager.shared
+    @EnvironmentObject private var backgroundManager: ColorBackgroundManager
+    @AppStorage("Feather.animateBackground") private var animateBackground: Bool = false
+
     @AppStorage(UserDefaults.Keys.uiElement) private var uiElementColorHex: String = Color.defaultUIElement
     @AppStorage(UserDefaults.Keys.text) private var textColorHex: String = Color.defaultText
     @AppStorage(UserDefaults.Keys.secondaryText) private var secondaryTextColorHex: String = "#8E8E93"
@@ -48,7 +50,6 @@ struct ColorCustomizationView: View {
     @AppStorage("Feather.userTintColor") private var tintColorHex: String = "#0077BE"
     @AppStorage("Feather.userThemes") private var userThemesData: Data = Data()
 
-    @State private var bgColor: Color = .white
     @State private var uiElementColor: Color = .blue
     @State private var textColor: Color = .black
     @State private var secondaryTextColor: Color = .gray
@@ -90,7 +91,7 @@ struct ColorCustomizationView: View {
             guard let themes = try? JSONDecoder().decode([ColorTheme].self, from: userThemesData) else { return [] }
             return themes
         }
-        nonmutating set {
+        set {
             if let encoded = try? JSONEncoder().encode(newValue) {
                 userThemesData = encoded
             }
@@ -125,7 +126,6 @@ struct ColorCustomizationView: View {
             }
             .padding(.vertical)
         }
-        .background(Color(UIColor.systemGroupedBackground))
         .navigationTitle("Appearance")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -158,7 +158,6 @@ struct ColorCustomizationView: View {
         } message: {
             Text("This will restore all colors to their original system defaults. Your saved custom themes will not be deleted.")
         }
-        .onChange(of: bgColor) { newValue in backgroundManager.bgColorHex = newValue.toHex() ?? Color.defaultBackground }
         .onChange(of: uiElementColor) { newValue in uiElementColorHex = newValue.toHex() ?? Color.defaultUIElement }
         .onChange(of: textColor) { newValue in textColorHex = newValue.toHex() ?? Color.defaultText }
         .onChange(of: secondaryTextColor) { newValue in secondaryTextColorHex = newValue.toHex() ?? "#8E8E93" }
@@ -184,7 +183,7 @@ struct ColorCustomizationView: View {
 
             ZStack {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(bgColor)
+                    .fill(backgroundManager.baseColor)
                     .shadow(color: .black.opacity(shadowIntensity / 100.0), radius: shadowIntensity, x: 0, y: shadowIntensity / 2.0)
 
                 VStack(spacing: 0) {
@@ -287,7 +286,7 @@ struct ColorCustomizationView: View {
                 .padding(.leading, 8)
 
             VStack(spacing: 0) {
-                colorPickerRow(title: "Background", color: $bgColor, icon: "square.fill")
+                colorPickerRow(title: "Background", color: $backgroundManager.baseColor, icon: "square.fill")
                 Divider().padding(.leading, 44)
                 colorPickerRow(title: "UI Elements", color: $uiElementColor, icon: "app.fill")
                 Divider().padding(.leading, 44)
@@ -461,7 +460,7 @@ struct ColorCustomizationView: View {
 
                 Divider()
 
-                Toggle(isOn: $backgroundManager.animateBackground) {
+                Toggle(isOn: $animateBackground) {
                     Label("Animate Background", systemImage: "sparkles")
                 }
             }
@@ -483,7 +482,6 @@ struct ColorCustomizationView: View {
     // MARK: - Helper Methods
 
     private func loadColors() {
-        bgColor = Color(hex: backgroundManager.bgColorHex)
         uiElementColor = Color(hex: uiElementColorHex)
 
         // Handle dark mode default text color specifically in UI
@@ -506,7 +504,7 @@ struct ColorCustomizationView: View {
     }
 
     private func applyTheme(_ theme: ColorTheme) {
-        backgroundManager.bgColorHex = theme.bg
+        backgroundManager.baseColor = Color(hex: theme.bg)
         uiElementColorHex = theme.ui
         textColorHex = theme.text
         tintColorHex = theme.tint
@@ -533,7 +531,7 @@ struct ColorCustomizationView: View {
     private func saveStyle() {
         let newTheme = ColorTheme(
             name: themeName.isEmpty ? "My Theme \(userThemes.count + 1)" : themeName,
-            bg: bgColor.toHex() ?? Color.defaultBackground,
+            bg: backgroundManager.baseColor.toHex() ?? Color.defaultBackground,
             ui: uiElementColor.toHex() ?? Color.defaultUIElement,
             text: textColor.toHex() ?? Color.defaultText,
             tint: tintColor.toHex() ?? "#0077BE",
@@ -558,7 +556,7 @@ struct ColorCustomizationView: View {
     }
 
     private func resetToDefaults() {
-        backgroundManager.bgColorHex = Color.defaultBackground
+        backgroundManager.baseColor = Color(hex: Color.defaultBackground)
         uiElementColorHex = Color.defaultUIElement
         textColorHex = Color.defaultText
         secondaryTextColorHex = "#8E8E93"
