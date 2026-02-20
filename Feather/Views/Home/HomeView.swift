@@ -144,7 +144,7 @@ struct HomeView: View {
                         }
                 }
             }
-            .background(Color(.systemBackground))
+            .background(Color.clear)
             .navigationBarHidden(true)
             .sheet(isPresented: $_showAddCertificate) {
                 CertificatesAddView()

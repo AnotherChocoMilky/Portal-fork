@@ -82,7 +82,7 @@ struct SourcesView: View {
         NavigationStack {
             ZStack {
                 // Simple background
-                Color(.systemBackground)
+                Color.clear
                     .ignoresSafeArea()
                 
                 ScrollView {

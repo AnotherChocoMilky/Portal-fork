@@ -860,7 +860,7 @@ struct ImportSelectionSheet: View {
             Spacer()
         }
         .padding(30)
-        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .background(Color.clear)
     }
 }
 

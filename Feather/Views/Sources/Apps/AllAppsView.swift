@@ -141,7 +141,7 @@ struct AllAppsView: View {
     private var mainContent: some View {
         ZStack(alignment: .bottom) {
             // Background
-            Color(uiColor: .systemGroupedBackground)
+            Color.clear
                 .ignoresSafeArea()
 
             if _isSearching {

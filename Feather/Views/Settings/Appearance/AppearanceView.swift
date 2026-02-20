@@ -150,7 +150,7 @@ struct AppearanceView: View {
             .padding(20)
             .padding(.bottom, 30)
         }
-        .background(Color(UIColor.systemGroupedBackground))
+        .background(Color.clear)
         .navigationTitle("Appearance")
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: userInterfaceStyle) { value in

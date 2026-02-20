@@ -89,7 +89,6 @@ struct FeatherApp: App {
 						}
 						
 						VariedTabbarView()
-							.applyGlobalTheme()
 							.environment(\.managedObjectContext, storage.context)
 							.environment(\.navigateToUpdates, $navigateToUpdates)
 							.onOpenURL(perform: _handleURL)
@@ -174,6 +173,8 @@ struct FeatherApp: App {
 					.overlay(StatusBarOverlay())
 				}
 			}
+			.applyGlobalTheme()
+			.environmentObject(ColorBackgroundManager.shared)
 			.handleStatusBarHiding()
 			.onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
 				_handlePendingWidgetAction()

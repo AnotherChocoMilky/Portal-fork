@@ -2,7 +2,9 @@ import SwiftUI
 import NimbleViews
 
 struct GlobalThemeModifier: ViewModifier {
-    @ObservedObject private var backgroundManager = ColorBackgroundManager.shared
+    @EnvironmentObject private var backgroundManager: ColorBackgroundManager
+    @AppStorage("Feather.animateBackground") private var animateBackground: Bool = false
+
     @AppStorage(UserDefaults.Keys.uiElement) private var uiElementColorHex: String = Color.defaultUIElement
     @AppStorage(UserDefaults.Keys.text) private var textColorHex: String = Color.defaultText
     @AppStorage(UserDefaults.Keys.secondaryText) private var secondaryTextColorHex: String = "#8E8E93"
@@ -35,9 +37,6 @@ struct GlobalThemeModifier: ViewModifier {
     func body(content: Content) -> some View {
         let isLight = colorScheme == .light
 
-        // Background logic: Use custom color from backgroundManager for both light and dark modes
-        let bgColor = Color(hex: backgroundManager.bgColorHex)
-
         // UI Elements logic
         let uiColor: Color = if appState.isSigning {
             Color(hex: uiElementColorHex)
@@ -60,28 +59,31 @@ struct GlobalThemeModifier: ViewModifier {
         let tabBarColor = Color(hex: tabBarColorHex)
         let sheetColor = Color(hex: sheetBackgroundColorHex)
 
-        return content
-            .foregroundStyle(textColor)
-            .background {
-                if backgroundManager.animateBackground {
-                    AnimatedBackgroundView()
-                }
+        return ZStack {
+            backgroundManager.resolvedColor(for: colorScheme)
+                .ignoresSafeArea()
+
+            if animateBackground {
+                AnimatedBackgroundView()
             }
-            .tint(uiColor)
-            .accentColor(uiColor)
-            .applyFontDesign(selectedFontDesign)
-            .background(bgColor.opacity(blurOpacity).ignoresSafeArea())
-            .toolbarColorScheme(isLight ? .light : .dark, for: .navigationBar)
-            .applyToolbarBackground(navBarColor, for: .navigationBar)
-            .applyToolbarBackground(tabBarColor, for: .tabBar)
-            .environment(\.dividerColor, Color(hex: dividerColorHex))
-            .environment(\.successColor, Color(hex: successColorHex))
-            .environment(\.warningColor, Color(hex: warningColorHex))
-            .environment(\.errorColor, Color(hex: errorColorHex))
-            .environment(\.glowIntensity, glowIntensity)
-            .environment(\.borderWidth, borderWidth)
-            .environment(\.cardOpacity, cardOpacity)
-            .sheetBackgroundColorModifier(sheetColor)
+
+            content
+                .foregroundStyle(textColor)
+                .tint(uiColor)
+                .accentColor(uiColor)
+                .applyFontDesign(selectedFontDesign)
+                .toolbarColorScheme(isLight ? .light : .dark, for: .navigationBar)
+                .applyToolbarBackground(navBarColor, for: .navigationBar)
+                .applyToolbarBackground(tabBarColor, for: .tabBar)
+                .environment(\.dividerColor, Color(hex: dividerColorHex))
+                .environment(\.successColor, Color(hex: successColorHex))
+                .environment(\.warningColor, Color(hex: warningColorHex))
+                .environment(\.errorColor, Color(hex: errorColorHex))
+                .environment(\.glowIntensity, glowIntensity)
+                .environment(\.borderWidth, borderWidth)
+                .environment(\.cardOpacity, cardOpacity)
+                .sheetBackgroundColorModifier(sheetColor)
+        }
     }
 }
 

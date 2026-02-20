@@ -51,21 +51,8 @@ struct ModernImportURLView: View {
 
     @ViewBuilder
     private var backgroundView: some View {
-        if _useGradients {
-            LinearGradient(
-                colors: [
-                    Color.accentColor.opacity(0.15),
-                    Color.accentColor.opacity(0.08),
-                    Color.clear
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
+        Color.clear
             .ignoresSafeArea()
-        } else {
-            Color(uiColor: .systemGroupedBackground)
-                .ignoresSafeArea()
-        }
     }
 
     @ViewBuilder
