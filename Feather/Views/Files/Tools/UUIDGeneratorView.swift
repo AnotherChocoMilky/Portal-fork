@@ -38,6 +38,7 @@ struct UUIDGeneratorView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("UUID Generator"))
             .navigationBarTitleDisplayMode(.inline)
         }

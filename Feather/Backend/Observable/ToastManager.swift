@@ -109,8 +109,8 @@ struct ToastView: View {
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color(UIColor.secondarySystemBackground),
-                            Color(UIColor.tertiarySystemBackground)
+                            Color.clear,
+                            Color.clear
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing

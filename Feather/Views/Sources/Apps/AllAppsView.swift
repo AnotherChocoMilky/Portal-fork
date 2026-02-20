@@ -156,7 +156,7 @@ struct AllAppsView: View {
                     Spacer()
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(uiColor: .systemGroupedBackground).opacity(0.8))
+                .background(Color.clear.opacity(0.8))
                 .transition(.opacity)
                 .zIndex(10)
             }
@@ -334,7 +334,7 @@ struct AllAppsView: View {
                                 .fill(.ultraThinMaterial)
                         } else {
                             RoundedRectangle(cornerRadius: _searchBarStyle == 1 ? 20 : 14, style: .continuous)
-                                .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                                .fill(Color.clear)
                         }
                     }
                     .overlay(
@@ -501,7 +501,7 @@ struct AllAppsView: View {
 				.padding(.bottom, 40)
 			}
 			.padding(30)
-			.background(.ultraThinMaterial)
+			.background(Color.clear)
 			.cornerRadius(20)
 			.padding(20)
 		}
@@ -783,8 +783,8 @@ struct AllAppsRowView: View {
                                         .aspectRatio(contentMode: .fit)
                                         .frame(width: iconSize * 0.35, height: iconSize * 0.35)
                                         .clipShape(Circle())
-                                        .background(Circle().fill(Color(uiColor: .secondarySystemBackground)))
-                                        .overlay(Circle().stroke(Color(uiColor: .systemBackground), lineWidth: 1.5))
+                                        .background(Circle().fill(Color.clear))
+                                        .overlay(Circle().stroke(Color.clear, lineWidth: 1.5))
                                         .offset(x: iconSize * 0.75, y: iconSize * 0.05)
                                 }
                             }
@@ -868,7 +868,7 @@ struct AllAppsRowView: View {
                     if useGlassEffects {
                         Rectangle().fill(.ultraThinMaterial)
                     } else {
-                        Color(uiColor: .secondarySystemGroupedBackground)
+                        Color.clear
                     }
                 } else {
                     Color.clear
@@ -899,8 +899,8 @@ struct AllAppsRowView: View {
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: iconSize * 0.4, height: iconSize * 0.4)
                                 .clipShape(Circle())
-                                .background(Circle().fill(Color(uiColor: .secondarySystemBackground)))
-                                .overlay(Circle().stroke(Color(uiColor: .systemBackground), lineWidth: 1.5))
+                                .background(Circle().fill(Color.clear))
+                                .overlay(Circle().stroke(Color.clear, lineWidth: 1.5))
                                 .offset(x: 4, y: 4)
                         }
                     }
@@ -942,7 +942,7 @@ struct AllAppsRowView: View {
                 if useGlassEffects {
                     Rectangle().fill(.ultraThinMaterial)
                 } else {
-                    Color(uiColor: .secondarySystemGroupedBackground)
+                    Color.clear
                 }
             }
             .opacity(cardBackgroundOpacity)

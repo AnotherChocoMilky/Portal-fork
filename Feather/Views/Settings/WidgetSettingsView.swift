@@ -77,6 +77,7 @@ struct WidgetSettingsView: View {
                 Text(.localized("Force an immediate refresh of all Portal widgets on your Home Screen and Lock Screen."))
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle(.localized("Widgets"))
         .navigationBarTitleDisplayMode(.inline)
     }

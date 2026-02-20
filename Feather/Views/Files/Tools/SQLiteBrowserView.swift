@@ -67,6 +67,7 @@ struct SQLiteBrowserView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(fileURL.lastPathComponent)
             .onAppear {
                 loadTables()

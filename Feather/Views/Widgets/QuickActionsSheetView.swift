@@ -96,7 +96,7 @@ struct QuickActionsSheetView: View {
                 .padding(20)
                 .padding(.bottom, 30)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.clear)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -163,7 +163,7 @@ private struct QuickActionRow: View {
                     .foregroundStyle(.tertiary)
             }
             .padding(12)
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         }
         .buttonStyle(.plain)

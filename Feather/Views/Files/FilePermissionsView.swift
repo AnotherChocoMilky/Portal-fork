@@ -114,6 +114,7 @@ struct FilePermissionsView: View {
                     Text(.localized("Dates"))
                 }
             }
+            .scrollContentBackground(.hidden)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(.localized("Done")) {

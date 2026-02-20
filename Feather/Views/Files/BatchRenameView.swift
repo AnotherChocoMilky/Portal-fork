@@ -100,6 +100,7 @@ struct BatchRenameView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(.localized("Cancel")) {

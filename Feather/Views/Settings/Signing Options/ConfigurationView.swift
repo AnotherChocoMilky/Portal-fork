@@ -49,6 +49,7 @@ struct InstallationOptionsSplashView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle("Installation")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -113,6 +114,7 @@ struct ConfigurationView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Signing Options")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

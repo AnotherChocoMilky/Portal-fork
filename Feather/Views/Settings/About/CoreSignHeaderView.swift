@@ -108,7 +108,7 @@ struct CoreSignHeaderView: View {
         .padding(.horizontal, 14)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
                 .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 3)
         )
         .overlay(

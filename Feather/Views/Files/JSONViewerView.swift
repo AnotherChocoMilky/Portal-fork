@@ -16,7 +16,7 @@ struct JSONViewerView: View {
     var body: some View {
         NBNavigationView(.localized("JSON Viewer"), displayMode: .inline) {
             ZStack {
-                Color(UIColor.systemGroupedBackground)
+                Color.clear
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
@@ -90,7 +90,7 @@ struct JSONViewerView: View {
                                 .padding(.horizontal)
                                 .padding(.vertical, 12)
                             }
-                            .background(Color(UIColor.secondarySystemGroupedBackground))
+                            .background(Color.clear)
                         }
                         
                         // Content

@@ -23,6 +23,7 @@ struct GoToPathView: View {
                     .disabled(path.isEmpty)
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Go To Path"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

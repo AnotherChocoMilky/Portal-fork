@@ -37,7 +37,7 @@ struct QuickActionCard: View {
             .padding(12)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
         }
         .buttonStyle(.plain)

@@ -176,6 +176,7 @@ struct ExtendedTabbarView: View {
 					}
 				}
 			}
+            .scrollContentBackground(.hidden)
 			.navigationTitle(.localized("Sources"))
 			.toolbar {
 				ToolbarItem(placement: .primaryAction) {

@@ -122,7 +122,7 @@ struct TextViewerView: View {
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 10)
-                                .background(Color(UIColor.secondarySystemGroupedBackground))
+                                .background(Color.clear)
                             }
                         }
                         
@@ -146,7 +146,7 @@ struct TextViewerView: View {
                                     .padding(.vertical, 12)
                                     .textSelection(.enabled)
                             }
-                            .background(Color(UIColor.systemGroupedBackground))
+                            .background(Color.clear)
                         }
                     }
                 }
@@ -243,6 +243,7 @@ struct TextViewerView: View {
                     Text(.localized("Choose the character encoding for this file"))
                 }
             }
+            .scrollContentBackground(.hidden)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(.localized("Cancel")) {

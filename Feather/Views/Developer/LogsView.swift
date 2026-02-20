@@ -22,7 +22,7 @@ struct AppLogsView: View {
     var body: some View {
         ZStack {
             // Modern Background
-            Color(UIColor.systemGroupedBackground)
+            Color.clear
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -47,7 +47,7 @@ struct AppLogsView: View {
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
-                    .background(Color(UIColor.secondarySystemGroupedBackground))
+                    .background(Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -87,7 +87,7 @@ struct AppLogsView: View {
                     }
                 }
                 .padding()
-                .background(Color(UIColor.systemGroupedBackground))
+                .background(Color.clear)
 
                 Divider()
 
@@ -294,7 +294,7 @@ struct FilterPill: View {
                             endPoint: .bottomTrailing
                         )
                     } else {
-                        Color(UIColor.secondarySystemGroupedBackground)
+                        Color.clear
                     }
                 }
             )
@@ -405,7 +405,7 @@ struct LogEntryRow: View {
                 .transition(.opacity)
             }
         }
-        .background(Color(UIColor.secondarySystemGroupedBackground).opacity(isExpanded ? 0.5 : 0))
+        .background(Color.clear.opacity(isExpanded ? 0.5 : 0))
     }
 
     private func levelColor(_ level: LogEntry.LogLevel) -> Color {

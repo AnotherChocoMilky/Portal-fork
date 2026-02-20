@@ -1245,6 +1245,7 @@ struct RestoreSelectionView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
     }
 }
 
@@ -1320,6 +1321,7 @@ struct ModernRestoreSelectionView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
     }
 }
 
@@ -1406,5 +1408,6 @@ struct LegacyRestoreSelectionView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
     }
 }

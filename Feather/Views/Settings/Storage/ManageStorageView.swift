@@ -86,7 +86,7 @@ struct ManageStorageView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
             }
-            .background(Color(UIColor.systemGroupedBackground))
+            .background(Color.clear)
             .onAppear {
                 calculateStorageData()
                 withAnimation(.easeInOut(duration: 1.0).delay(0.3)) {
@@ -236,7 +236,7 @@ struct ManageStorageView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
     
@@ -400,7 +400,7 @@ struct ManageStorageView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
     
@@ -473,7 +473,7 @@ struct ManageStorageView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
         }
     }
@@ -546,7 +546,7 @@ struct ManageStorageView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -790,7 +790,7 @@ struct ManageStorageView: View {
                                 .foregroundStyle(.secondary)
                         }
                         .padding(12)
-                        .background(Color(uiColor: .tertiarySystemGroupedBackground))
+                        .background(Color.clear)
                         .cornerRadius(8)
                     }
                 }
@@ -1466,7 +1466,7 @@ struct StorageCategoryRow: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
 }
@@ -1607,6 +1607,7 @@ struct StorageAnalyzerView: View {
                             }
                         }
                     }
+            .scrollContentBackground(.hidden)
                 }
             }
             .navigationTitle(.localized("Storage Analyzer"))
@@ -1706,6 +1707,7 @@ struct StorageDuplicateFinderView: View {
                             }
                         }
                     }
+            .scrollContentBackground(.hidden)
                 }
             }
             .navigationTitle(.localized("Duplicate Finder"))
@@ -1799,6 +1801,7 @@ struct LargeFilesFinderView: View {
                             largeFiles.remove(atOffsets: indexSet)
                         }
                     }
+            .scrollContentBackground(.hidden)
                 }
             }
             .navigationTitle(.localized("Large Files"))

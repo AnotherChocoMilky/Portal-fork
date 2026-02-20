@@ -322,7 +322,7 @@ struct GuideDetailView: View {
                 )
             )
         }
-        .background(Color(.secondarySystemGroupedBackground))
+        .background(Color.clear)
         .cornerRadius(16)
         .overlay(
             RoundedRectangle(cornerRadius: 16)
@@ -972,7 +972,7 @@ struct AIActionsSheet: View {
                 }
                 .padding(.bottom, 24)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.clear)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -1043,7 +1043,7 @@ struct AIActionButton: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .padding(.horizontal, 12)
-            .background(Color(.secondarySystemGroupedBackground))
+            .background(Color.clear)
             .cornerRadius(20)
             .overlay(
                 RoundedRectangle(cornerRadius: 20)
@@ -1107,7 +1107,7 @@ struct CustomPromptSheet: View {
                     TextEditor(text: $instruction)
                         .frame(minHeight: 120)
                         .padding(12)
-                        .background(Color(.secondarySystemGroupedBackground))
+                        .background(Color.clear)
                         .cornerRadius(12)
                         .focused($isFocused)
                 }
@@ -1222,7 +1222,7 @@ struct AIErrorSheet: View {
                             }
                         }
                         .padding()
-                        .background(Color(.secondarySystemGroupedBackground))
+                        .background(Color.clear)
                         .cornerRadius(12)
                         .padding(.horizontal)
                     }
@@ -1368,7 +1368,7 @@ struct TranslateSheet: View {
                                     .foregroundStyle(.secondary)
                             }
                             .padding()
-                            .background(Color(.secondarySystemGroupedBackground))
+                            .background(Color.clear)
                             .cornerRadius(12)
                         }
                         .buttonStyle(.plain)
@@ -1395,7 +1395,7 @@ struct TranslateSheet: View {
                                 }
                             }
                             .padding()
-                            .background(Color(.secondarySystemGroupedBackground))
+                            .background(Color.clear)
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
@@ -1433,7 +1433,7 @@ struct TranslateSheet: View {
                 }
                 .padding(.bottom, 24)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.clear)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -1474,7 +1474,7 @@ struct LanguageButton: View {
                 }
             }
             .padding()
-            .background(isSelected ? Color.green.opacity(0.15) : Color(.secondarySystemGroupedBackground))
+            .background(isSelected ? Color.green.opacity(0.15) : Color.clear)
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
@@ -1569,7 +1569,7 @@ struct GlassmorphicAIActionsSheet: View {
                     }
                     .padding()
                     .frame(maxWidth: .infinity)
-                    .background(.ultraThinMaterial)
+                    .background(Color.clear)
                     .cornerRadius(12)
                     .padding(.horizontal, 20)
                     .padding(.top, 12)
@@ -1631,7 +1631,7 @@ struct GlassmorphicActionButton: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
             .padding(.horizontal, 8)
-            .background(.ultraThinMaterial)
+            .background(Color.clear)
             .cornerRadius(16)
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
@@ -1693,7 +1693,7 @@ struct GlassmorphicCustomPromptSheet: View {
             TextField("What would you like the AI to do?", text: $instruction, axis: .vertical)
                 .textFieldStyle(.plain)
                 .padding()
-                .background(.ultraThinMaterial)
+                .background(Color.clear)
                 .cornerRadius(16)
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
@@ -1836,7 +1836,7 @@ struct GlassmorphicTranslateSheet: View {
                             .foregroundStyle(.secondary)
                     }
                     .padding()
-                    .background(.ultraThinMaterial)
+                    .background(Color.clear)
                     .cornerRadius(12)
                 }
                 .buttonStyle(.plain)
@@ -1847,7 +1847,7 @@ struct GlassmorphicTranslateSheet: View {
                     TextField("Enter Language Name", text: $customLanguage)
                         .textFieldStyle(.plain)
                         .padding()
-                        .background(.ultraThinMaterial)
+                        .background(Color.clear)
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
@@ -1927,9 +1927,9 @@ struct GlassmorphicLanguageButton: View {
                     Color.green.opacity(0.15)
                 } else {
                     if #available(iOS 15.0, *) {
-                        Color.clear.background(.ultraThinMaterial)
+                        Color.clear.background(Color.clear)
                     } else {
-                        Color(.systemBackground)
+                        Color.clear
                     }
                 }
             }

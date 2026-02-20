@@ -37,6 +37,7 @@ struct FolderCustomizationView: View {
                     Text(.localized("Icon"))
                 }
             }
+            .scrollContentBackground(.hidden)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(.localized("Done")) {

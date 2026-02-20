@@ -115,7 +115,7 @@ struct CertificatesInfoView: View {
                 }
                 .padding(16)
             }
-            .background(Color(UIColor.systemGroupedBackground))
+            .background(Color.clear)
             .navigationTitle("Certificate Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -601,8 +601,8 @@ struct CertificatesInfoView: View {
     // MARK: - Helpers
     private var cardBackground: some View {
         RoundedRectangle(cornerRadius: 28, style: .continuous)
-            .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.7))
-            .background(.ultraThinMaterial)
+            .fill(Color.clear.opacity(0.7))
+            .background(Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)

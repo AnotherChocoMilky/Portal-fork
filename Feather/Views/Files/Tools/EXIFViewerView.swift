@@ -42,6 +42,7 @@ struct EXIFViewerView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("EXIF Viewer"))
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {

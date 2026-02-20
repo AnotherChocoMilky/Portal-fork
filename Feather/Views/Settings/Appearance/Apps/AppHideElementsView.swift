@@ -31,6 +31,7 @@ struct AppHideElementsView: View {
                 managerSection(title: "Guides", manager: guidesManager)
                 managerSection(title: "Settings", manager: settingsManager)
             }
+            .scrollContentBackground(.hidden)
             .listStyle(.insetGrouped)
             .searchable(text: $searchText, prompt: "Search Items")
         }

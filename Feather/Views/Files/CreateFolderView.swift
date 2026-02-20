@@ -38,6 +38,7 @@ struct CreateFolderView: View {
                     Text(.localized("Enter a name for the new folder."))
                 }
             }
+            .scrollContentBackground(.hidden)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(.localized("Cancel")) {

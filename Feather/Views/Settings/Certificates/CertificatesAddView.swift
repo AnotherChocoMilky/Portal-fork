@@ -70,7 +70,7 @@ struct CertificatesAddView: View {
                 }
                 .padding(20)
             }
-            .background(Color(UIColor.systemGroupedBackground))
+            .background(Color.clear)
             .navigationTitle("Add Certificate")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -116,7 +116,7 @@ struct CertificatesAddView: View {
                     _isImportingMobileProvisionPresenting = true
                 }
             }
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(Color.clear)
             .cornerRadius(12)
         }
     }
@@ -133,7 +133,7 @@ struct CertificatesAddView: View {
                 fileRow(title: "Import .portalcert", subtitle: _p12URL != nil ? "Certificate Loaded" : nil, icon: "shippingbox.fill") {
                     _isImportingPortalCertPresenting = true
                 }
-                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .background(Color.clear)
                 .cornerRadius(12)
             } else {
                 VStack(spacing: 8) {
@@ -151,7 +151,7 @@ struct CertificatesAddView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 30)
-                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .background(Color.clear)
                 .cornerRadius(12)
             }
         }
@@ -168,7 +168,7 @@ struct CertificatesAddView: View {
             fileRow(title: "Import ZIP", subtitle: _p12URL != nil ? "Certificate Loaded" : nil, icon: "doc.zipper") {
                 _isImportingZipPresenting = true
             }
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(Color.clear)
             .cornerRadius(12)
         }
     }
@@ -186,7 +186,7 @@ struct CertificatesAddView: View {
 
             SecureField("Leave blank if no password required.", text: $_p12Password)
                 .padding()
-                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .background(Color.clear)
                 .cornerRadius(12)
         }
     }
@@ -204,7 +204,7 @@ struct CertificatesAddView: View {
 
             TextField("Nickname (Optional)", text: $_certificateName)
                 .padding()
-                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .background(Color.clear)
                 .cornerRadius(12)
         }
     }
@@ -221,7 +221,7 @@ struct CertificatesAddView: View {
                     .labelsHidden()
             }
             .padding()
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(Color.clear)
             .cornerRadius(12)
 
             Text("Default certificate will be automatically selected when signing apps")

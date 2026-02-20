@@ -83,7 +83,7 @@ struct SigningProcessView: View {
                     dominantColor.opacity(0.25),
                     dominantColor.opacity(0.1),
                     secondaryColor.opacity(0.08),
-                    Color(UIColor.systemBackground)
+                    Color.clear
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing

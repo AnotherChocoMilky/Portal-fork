@@ -143,6 +143,7 @@ struct GuidesView: View {
                         Text("Read helpful tips, guides, and more.")
                     }
                 }
+            .scrollContentBackground(.hidden)
                 .refreshable {
                     await fetchGuides()
                 }

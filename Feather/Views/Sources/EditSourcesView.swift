@@ -22,6 +22,7 @@ struct EditSourcesView: View {
                 .onDelete(perform: deleteSource)
                 .onMove(perform: moveSource)
             }
+            .scrollContentBackground(.hidden)
             .listStyle(.insetGrouped)
             .navigationTitle("Edit Sources")
             .navigationBarTitleDisplayMode(.inline)

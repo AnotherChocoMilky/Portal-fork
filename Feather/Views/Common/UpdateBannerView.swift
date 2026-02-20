@@ -42,7 +42,7 @@ struct UpdateBannerView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
-            .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .background(Color.clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .padding(.horizontal, 16)
             .padding(.top, 8)
             .transition(AnyTransition.move(edge: .top).combined(with: .opacity))
@@ -136,7 +136,7 @@ struct AppUpdateBannerView: View {
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
                     .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
             )
             .overlay(
@@ -214,7 +214,7 @@ struct MultipleAppUpdatesBannerView: View {
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
                     .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 4)
             )
             .overlay(
@@ -285,7 +285,7 @@ struct UpdateAvailableView: View {
                 }
             }
             .padding(12)
-            .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .background(Color.clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .padding(.horizontal, 16)
             .padding(.top, 8)
             .transition(AnyTransition.move(edge: .top).combined(with: .opacity))
@@ -314,7 +314,7 @@ struct UpdateBannerView_Previews: PreviewProvider {
             
             Spacer()
         }
-        .background(Color(UIColor.systemBackground))
+        .background(Color.clear)
     }
 }
 #endif

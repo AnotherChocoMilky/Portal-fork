@@ -108,7 +108,7 @@ struct PermissionsView: View {
                         .padding(.vertical, 32)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color(.secondarySystemBackground))
+                                .fill(Color.clear)
                         )
                     }
                 }
@@ -219,14 +219,14 @@ struct PermissionsView: View {
                         .padding(.vertical, 32)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color(.secondarySystemBackground))
+                                .fill(Color.clear)
                         )
                     }
                 }
             }
             .padding()
         }
-        .background(Color(UIColor.systemGroupedBackground))
+        .background(Color.clear)
         .navigationTitle(.localized("Permissions"))
         .navigationBarTitleDisplayMode(.large)
     }

@@ -362,6 +362,7 @@ struct SavedStylesView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle("Saved Styles")
             .navigationBarTitleDisplayMode(.inline)
             .alert("Save Style", isPresented: $showSaveDialog) {

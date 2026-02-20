@@ -82,6 +82,7 @@ struct CertificateQuickAddView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(.localized("Cancel")) {

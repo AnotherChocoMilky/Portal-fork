@@ -38,6 +38,7 @@ struct TimestampConverterView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Timestamp Converter"))
             .navigationBarTitleDisplayMode(.inline)
         }

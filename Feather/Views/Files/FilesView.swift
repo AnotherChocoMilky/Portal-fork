@@ -617,7 +617,7 @@ struct FilesView: View {
         .padding(.vertical, 10)
         .background(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -703,7 +703,7 @@ struct FilesView: View {
         List(selection: isSelectionMode ? $selectedFiles : .constant(Set<UUID>())) {
             ForEach(filteredFiles) { file in
                 FileRowView(file: file, isSelected: selectedFiles.contains(file.id))
-                    .listRowBackground(Color(UIColor.secondarySystemGroupedBackground))
+                    .listRowBackground(Color.clear)
                     .contentShape(Rectangle())
                     .onTapGesture {
                         handleFileTap(file)
@@ -1631,7 +1631,7 @@ struct FileGridItemView: View {
         .padding(10)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
         .shadow(color: .black.opacity(0.06), radius: 6, x: 0, y: 3)
         .contentShape(Rectangle())

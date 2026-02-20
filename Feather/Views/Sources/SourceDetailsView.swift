@@ -47,7 +47,7 @@ struct SourceDetailsView: View {
                 colors: [
                     dominantColor.opacity(0.2),
                     dominantColor.opacity(0.1),
-                    Color(.systemGroupedBackground)
+                    Color.clear
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -280,7 +280,7 @@ struct SourceDetailsView: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
+                .fill(Color.clear)
                 .overlay(
                     RoundedRectangle(cornerRadius: 20, style: .continuous)
                         .stroke(Color.primary.opacity(0.06), lineWidth: 1)
@@ -664,7 +664,7 @@ struct SourceAppsListView: View {
                         .padding(.vertical, 12)
                         .background(
                             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color(.secondarySystemGroupedBackground))
+                                .fill(Color.clear)
                         )
                         
                         if searchFieldFocused {
@@ -682,12 +682,12 @@ struct SourceAppsListView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
                     .padding(.bottom, geometry.safeAreaInsets.bottom > 0 ? 0 : 8)
-                    .background(.ultraThinMaterial)
+                    .background(Color.clear)
                 }
                 .animation(.spring(response: 0.3, dampingFraction: 0.8), value: searchFieldFocused)
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.clear)
         .navigationTitle("All Apps")
         .navigationBarTitleDisplayMode(.inline)
         .navigationDestinationIfAvailable(item: $_selectedRoute) { route in

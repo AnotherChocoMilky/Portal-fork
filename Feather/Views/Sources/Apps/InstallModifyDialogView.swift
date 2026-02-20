@@ -12,7 +12,7 @@ struct InstallModifyDialogView: View {
     
     var body: some View {
         ZStack {
-            Color(UIColor.systemBackground)
+            Color.clear
                 .ignoresSafeArea()
             
             VStack(spacing: 0) {

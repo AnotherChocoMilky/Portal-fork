@@ -323,7 +323,7 @@ struct ModernSigningView: View {
     private var modernBackground: some View {
         ZStack {
             // Subtle system-appropriate background
-            Color(UIColor.systemBackground)
+            Color.clear
                 .ignoresSafeArea()
 
             if #available(iOS 17.0, *) {
@@ -359,7 +359,7 @@ struct ModernSigningView: View {
                 LinearGradient(
                     colors: [
                         Color.accentColor.opacity(colorScheme == .dark ? 0.05 : 0.08),
-                        Color(UIColor.systemGroupedBackground)
+                        Color.clear
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -552,7 +552,7 @@ struct ModernSigningView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                        .fill(Color.clear.opacity(0.4))
                 )
             }
             .padding(.horizontal, 20)
@@ -588,7 +588,7 @@ struct ModernSigningView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                        .fill(Color.clear.opacity(0.4))
                 )
             }
             
@@ -643,7 +643,7 @@ struct ModernSigningView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                        .fill(Color.clear.opacity(0.4))
                 )
             }
             
@@ -763,7 +763,7 @@ struct ModernSigningView: View {
                 .padding(14)
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                        .fill(Color.clear.opacity(0.4))
                 )
             }
         } else {
@@ -794,7 +794,7 @@ struct ModernSigningView: View {
                 .padding(14)
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                        .fill(Color.clear.opacity(0.4))
                 )
             }
             .buttonStyle(.plain)
@@ -898,7 +898,7 @@ struct ModernSigningView: View {
                         .padding(16)
                         .background(
                             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                                .fill(Color.clear.opacity(0.4))
                         )
                     }
                 } else {
@@ -958,7 +958,7 @@ struct ModernSigningView: View {
                     .padding(24)
                     .background(
                         RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                            .fill(Color.clear.opacity(0.4))
                     )
                 }
             }
@@ -1005,7 +1005,7 @@ struct ModernSigningView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                        .fill(Color.clear.opacity(0.4))
                 )
                 
                 // Entitlements Section
@@ -1027,7 +1027,7 @@ struct ModernSigningView: View {
                 }
                 .background(
                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                        .fill(Color.clear.opacity(0.4))
                 )
             }
             .padding(.horizontal, 16)
@@ -1492,7 +1492,7 @@ struct ModernSigningOptionsView: View {
     @ViewBuilder
     private var modernOptionsBackground: some View {
         ZStack {
-            Color(UIColor.systemGroupedBackground)
+            Color.clear
                 .ignoresSafeArea()
             
             GeometryReader { geo in
@@ -1571,7 +1571,7 @@ struct ModernSigningOptionsView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                    .fill(Color.clear.opacity(0.4))
             )
         }
     }
@@ -1674,7 +1674,7 @@ struct SwipeToSign: View {
             ZStack(alignment: .leading) {
                 // Track with waiting animation
                 Capsule()
-                    .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                    .fill(Color.clear.opacity(0.4))
                     .frame(height: 60)
                     .overlay(
                         ZStack {
@@ -1799,7 +1799,7 @@ struct HoldToSign: View {
     var body: some View {
         ZStack {
             Capsule()
-                .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                .fill(Color.clear.opacity(0.4))
                 .frame(height: 60)
 
             // Progress Fill
@@ -1872,7 +1872,7 @@ struct SlideToConfirm: View {
             let width = geo.size.width
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
                     .frame(height: 60)
                     .shadow(color: .black.opacity(0.05), radius: 5)
 
@@ -1974,7 +1974,7 @@ struct DoubleTapToSign: View {
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
             .frame(height: 64)
-            .background(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+            .background(Color.clear.opacity(0.4))
             .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
@@ -2027,7 +2027,7 @@ struct ModernEditSheet: View {
                 // Modern gradient background
                 LinearGradient(
                     colors: [
-                        Color(UIColor.systemGroupedBackground),
+                        Color.clear,
                         iconColor.opacity(0.05)
                     ],
                     startPoint: .topLeading,
@@ -2106,7 +2106,7 @@ struct ModernEditSheet: View {
                             .background(
                                 ZStack {
                                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                                        .fill(Color.clear.opacity(0.4))
                                     
                                     RoundedRectangle(cornerRadius: 28, style: .continuous)
                                         .fill(
@@ -2145,7 +2145,7 @@ struct ModernEditSheet: View {
                                 .padding(.vertical, 12)
                                 .background(
                                     RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                                        .fill(Color.clear.opacity(0.4))
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 28, style: .continuous)

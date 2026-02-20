@@ -44,7 +44,7 @@ struct AllAppsTabView: View {
                         Spacer()
                     }
                     .padding()
-                    .background(Color(UIColor.systemGroupedBackground))
+                    .background(Color.clear)
                 }
             }
         }

@@ -88,7 +88,7 @@ struct InstallPreviewView: View {
                 }
             }
             .padding(16)
-            .background(.ultraThinMaterial)
+            .background(Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)

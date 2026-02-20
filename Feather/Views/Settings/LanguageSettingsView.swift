@@ -44,6 +44,7 @@ struct LanguageSettingsView: View {
                 }
                 
             }
+            .scrollContentBackground(.hidden)
             .listStyle(.insetGrouped)
         }
         .alert(.localized("Restart Required"), isPresented: $showRestartAlert) {

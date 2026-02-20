@@ -31,7 +31,7 @@ struct TransferProgressView: View {
             }
             .padding(24)
         }
-        .background(Color(UIColor.systemGroupedBackground).ignoresSafeArea())
+        .background(Color.clear.ignoresSafeArea())
     }
     
     // MARK: - Main Status View
@@ -153,7 +153,7 @@ struct TransferProgressView: View {
         .padding(.vertical, 36)
         .background(
             RoundedRectangle(cornerRadius: 28, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
                 .shadow(color: Color.black.opacity(0.05), radius: 15, x: 0, y: 5)
         )
     }
@@ -189,7 +189,7 @@ struct TransferProgressView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
                 .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 2)
         )
     }

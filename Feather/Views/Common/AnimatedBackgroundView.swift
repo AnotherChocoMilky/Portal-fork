@@ -2,11 +2,11 @@ import SwiftUI
 
 struct AnimatedBackgroundView: View {
     @ObservedObject private var motion = MotionManager.shared
-    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         GeometryReader { geo in
             ZStack {
+                Color.clear
                 // Background is now handled by GlobalThemeModifier's resolvedColor
 
                 // Animated orbs

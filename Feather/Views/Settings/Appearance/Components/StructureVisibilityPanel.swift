@@ -187,6 +187,7 @@ struct StructureVisibilityPanel: View {
                 Label("System", systemImage: "gearshape")
             }
         }
+            .scrollContentBackground(.hidden)
         .listStyle(.insetGrouped)
         .sheet(isPresented: $showConfigureLayouts) {
             ConfigureLayoutsView(viewModel: viewModel)

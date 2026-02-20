@@ -18,14 +18,14 @@ struct StatusBarCustomizationView: View {
                     // Left Panel: Structure & Visibility
                     StructureVisibilityPanel(viewModel: viewModel)
                         .frame(width: geometry.size.width * 0.5)
-                        .background(Color(uiColor: .systemBackground))
+                        .background(Color.clear)
                     
                     Divider()
                     
                     // Right Panel: Appearance & Content
                     AppearanceContentPanel(viewModel: viewModel)
                         .frame(width: geometry.size.width * 0.5)
-                        .background(Color(uiColor: .systemBackground))
+                        .background(Color.clear)
                 }
             } else {
                 // iPhone: Tabbed layout
@@ -68,7 +68,7 @@ struct StatusBarCustomizationView: View {
                     }
                     .padding(.horizontal)
                     .padding(.top, 8)
-                    .background(Color(uiColor: .systemBackground))
+                    .background(Color.clear)
                     
                     Divider()
                     
@@ -137,6 +137,7 @@ Circle()
 .padding(.vertical, 8)
 }
 }
+            .scrollContentBackground(.hidden)
 .navigationTitle(.localized("Choose Color"))
 .navigationBarTitleDisplayMode(.inline)
 .toolbar {

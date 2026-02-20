@@ -26,6 +26,7 @@ struct IPAExplorerPlistViewer: View {
                     }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle(fileURL.lastPathComponent)
         .onAppear {
             loadPlist()

@@ -26,6 +26,7 @@ struct CreateTextFileView: View {
                     Text(.localized("Content"))
                 }
             }
+            .scrollContentBackground(.hidden)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(.localized("Cancel")) {

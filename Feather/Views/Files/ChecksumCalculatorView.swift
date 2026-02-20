@@ -64,6 +64,7 @@ struct ChecksumCalculatorView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button(.localized("Done")) {

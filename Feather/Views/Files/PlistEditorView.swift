@@ -98,7 +98,7 @@ struct PlistEditorView: View {
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
                         }
-                        .background(Color(UIColor.systemGroupedBackground))
+                        .background(Color.clear)
                     }
                 }
             }
@@ -195,6 +195,7 @@ struct PlistEditorView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(.localized("Cancel")) {
@@ -409,6 +410,7 @@ struct PlistTreeView: View {
         List {
             PlistNodeView(key: "Root", value: plist)
         }
+            .scrollContentBackground(.hidden)
         .listStyle(.insetGrouped)
     }
 }

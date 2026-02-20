@@ -224,7 +224,7 @@ struct CertificatesView: View {
 				if isSelected {
 					ZStack {
 						Color.accentColor.opacity(0.08)
-						.background(.ultraThinMaterial)
+						.background(Color.clear)
 
 						RoundedRectangle(cornerRadius: 24, style: .continuous)
 							.stroke(
@@ -241,9 +241,9 @@ struct CertificatesView: View {
 							)
 					}
 				} else {
-					Color(UIColor.secondarySystemGroupedBackground)
+					Color.clear
 						.opacity(0.6)
-						.background(.ultraThinMaterial)
+						.background(Color.clear)
 				}
 			}
 			.clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))

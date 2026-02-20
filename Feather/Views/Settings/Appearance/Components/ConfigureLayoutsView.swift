@@ -70,7 +70,7 @@ struct ConfigureLayoutsView: View {
                 }
                 .padding(16)
             }
-            .background(Color(UIColor.systemGroupedBackground))
+            .background(Color.clear)
             .navigationTitle("Configure Layouts")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -111,7 +111,7 @@ struct ConfigureLayoutsView: View {
             VStack(spacing: 8) {
                 ZStack {
                     Circle()
-                        .fill(isSelected ? layout.color : Color(UIColor.tertiarySystemGroupedBackground))
+                        .fill(isSelected ? layout.color : Color.clear)
                         .frame(width: 44, height: 44)
                     
                     Image(systemName: layout.icon)
@@ -205,7 +205,7 @@ struct ConfigureLayoutsView: View {
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(isSelected ? selectedLayout.color : Color(UIColor.tertiarySystemGroupedBackground))
+                    .fill(isSelected ? selectedLayout.color : Color.clear)
             )
         }
         .buttonStyle(.plain)
@@ -246,7 +246,7 @@ struct ConfigureLayoutsView: View {
     
     private var cardBackground: some View {
         RoundedRectangle(cornerRadius: 16, style: .continuous)
-            .fill(Color(UIColor.secondarySystemGroupedBackground))
+            .fill(Color.clear)
     }
     
     // MARK: - Padding Bindings

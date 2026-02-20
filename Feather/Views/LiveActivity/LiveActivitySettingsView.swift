@@ -26,6 +26,7 @@ struct LiveActivitySettingsView: View {
                 detailsSection
                 infoSection
             }
+            .scrollContentBackground(.hidden)
             .listStyle(.insetGrouped)
         }
         .onAppear {
@@ -578,6 +579,7 @@ struct ColorPickerView: View {
                     Text("Preview")
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -292,7 +292,7 @@ struct BackupRestoreView: View {
                         .foregroundStyle(.white)
                 }
                 .padding(24)
-                .background(.ultraThinMaterial)
+                .background(Color.clear)
                 .cornerRadius(16)
             }
         }
@@ -307,7 +307,7 @@ struct BackupRestoreView: View {
                         .foregroundStyle(.white)
                 }
                 .padding(24)
-                .background(.ultraThinMaterial)
+                .background(Color.clear)
                 .cornerRadius(16)
             }
         }
@@ -322,7 +322,7 @@ struct BackupRestoreView: View {
                         .foregroundStyle(.white)
                 }
                 .padding(24)
-                .background(.ultraThinMaterial)
+                .background(Color.clear)
                 .cornerRadius(16)
             }
         }

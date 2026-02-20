@@ -108,6 +108,7 @@ struct IPAExplorerView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
     }
 
     private func exportIPA() {

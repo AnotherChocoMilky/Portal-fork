@@ -13,6 +13,7 @@ struct HapticsView: View {
                 intensitySection
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle(.localized("Haptics"))
         .navigationBarTitleDisplayMode(.large)
     }

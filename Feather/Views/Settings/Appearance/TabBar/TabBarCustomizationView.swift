@@ -55,7 +55,7 @@ struct TabBarCustomizationView: View {
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
                     }
-                    .background(.ultraThinMaterial)
+                    .background(Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .padding(.horizontal, 16)
 
@@ -106,6 +106,7 @@ struct TabBarCustomizationView: View {
                                 .listRowBackground(Color.clear)
                                 .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
                             }
+            .scrollContentBackground(.hidden)
                             .listStyle(.plain)
                             .frame(height: CGFloat(orderedTabs.count * 44))
                             .environment(\.editMode, .constant(.active))
@@ -130,7 +131,7 @@ struct TabBarCustomizationView: View {
                             .padding(.vertical, 12)
                         }
                     }
-                    .background(.ultraThinMaterial)
+                    .background(Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .padding(.horizontal, 16)
 
@@ -159,7 +160,7 @@ struct TabBarCustomizationView: View {
                             }
                         }
                     }
-                    .background(.ultraThinMaterial)
+                    .background(Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .padding(.horizontal, 16)
 
@@ -171,7 +172,7 @@ struct TabBarCustomizationView: View {
             }
             .padding(.vertical, 20)
         }
-        .background(Color(UIColor.systemGroupedBackground))
+        .background(Color.clear)
         .navigationTitle(.localized("Tab Bar"))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

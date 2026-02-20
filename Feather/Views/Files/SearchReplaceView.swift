@@ -82,6 +82,7 @@ struct SearchReplaceView: View {
                     .disabled(searchText.isEmpty || matchCount == 0)
                 }
             }
+            .scrollContentBackground(.hidden)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(.localized("Cancel")) {

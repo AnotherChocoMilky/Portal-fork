@@ -215,7 +215,7 @@ class WritingToolsViewController: UIViewController {
     }
     
     private func setupUI() {
-        view.backgroundColor = .systemBackground
+        view.backgroundColor = .clear
         
         // Navigation bar
         title = "Apple Intelligence"

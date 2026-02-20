@@ -219,6 +219,7 @@ struct BatchSigningView: View {
                         }
                     }
                 }
+            .scrollContentBackground(.hidden)
                 
                 // Progress Overlay
                 if isSigningBatch {
@@ -286,7 +287,7 @@ struct BatchSigningView: View {
                             }
                         }
                         .padding(40)
-                        .background(.ultraThinMaterial)
+                        .background(Color.clear)
                         .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
                         .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 15)
                         .transition(AnyTransition.scale.combined(with: .opacity))
@@ -808,6 +809,7 @@ struct BatchAppEditSheet: View {
                     .listRowInsets(EdgeInsets())
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationBarHidden(true)
             .onAppear {
                 // Initialize with current values

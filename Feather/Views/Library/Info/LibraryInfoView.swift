@@ -260,7 +260,7 @@ struct LibraryInfoView: View {
 			}
 			.background(
 				RoundedRectangle(cornerRadius: 14, style: .continuous)
-					.fill(Color(UIColor.tertiarySystemGroupedBackground))
+					.fill(Color.clear)
 			)
 		}
 		.padding(18)
@@ -321,7 +321,7 @@ struct LibraryInfoView: View {
 				.padding(14)
 				.background(
 					RoundedRectangle(cornerRadius: 14, style: .continuous)
-						.fill(Color(UIColor.tertiarySystemGroupedBackground))
+						.fill(Color.clear)
 				)
 		}
 		.padding(18)
@@ -369,7 +369,7 @@ struct LibraryInfoView: View {
 			}
 			.background(
 				RoundedRectangle(cornerRadius: 14, style: .continuous)
-					.fill(Color(UIColor.tertiarySystemGroupedBackground))
+					.fill(Color.clear)
 			)
 		}
 		.padding(18)
@@ -562,7 +562,7 @@ struct MeshGradientBackground: View {
 	
 	var body: some View {
 		ZStack {
-			Color(UIColor.systemGroupedBackground)
+			Color.clear
 			
 			// Animated gradient blobs
 			ForEach(0..<3, id: \.self) { index in

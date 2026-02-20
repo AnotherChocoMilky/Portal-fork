@@ -783,6 +783,7 @@ struct AppUpdateTrackingSettingsView: View {
                     availableUpdatesSection
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle("Tracked Apps")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -1131,7 +1132,7 @@ struct SelectAppToTrackView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(Color.clear)
     }
     
     private var appListSection: some View {
@@ -1144,6 +1145,7 @@ struct SelectAppToTrackView: View {
                 availableAppsSection
             }
         }
+            .scrollContentBackground(.hidden)
         .searchable(text: $searchText, prompt: "Search Apps")
     }
     
@@ -1311,7 +1313,7 @@ private struct FilterChipButton: View {
                 .padding(.vertical, 8)
                 .background(
                     Capsule()
-                        .fill(isSelected ? Color.accentColor : Color(UIColor.tertiarySystemBackground))
+                        .fill(isSelected ? Color.accentColor : Color.clear)
                 )
         }
         .buttonStyle(.plain)

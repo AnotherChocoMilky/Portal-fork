@@ -67,6 +67,7 @@ struct HashVerifierView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Hash Verifier"))
             .navigationBarTitleDisplayMode(.inline)
         }

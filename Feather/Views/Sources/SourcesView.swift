@@ -410,7 +410,7 @@ struct SourcesView: View {
             }
         }
         .padding(16)
-        .background(Color(uiColor: .secondarySystemGroupedBackground))
+        .background(Color.clear)
         .cornerRadius(12)
     }
     
@@ -729,7 +729,7 @@ private struct AllAppsCardView: View {
 	
 	private var cardBackground: some View {
 		RoundedRectangle(cornerRadius: 14, style: .continuous)
-			.fill(Color(uiColor: .secondarySystemGroupedBackground))
+			.fill(Color.clear)
 	}
 	
 	private var cardStroke: some View {

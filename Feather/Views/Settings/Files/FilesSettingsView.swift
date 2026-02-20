@@ -110,6 +110,7 @@ struct FilesSettingsView: View {
                     Text(.localized("Reset all Files settings to their default values."))
                 }
             }
+            .scrollContentBackground(.hidden)
         }
     }
     

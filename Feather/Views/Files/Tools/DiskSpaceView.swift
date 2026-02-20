@@ -26,6 +26,7 @@ struct DiskSpaceView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Disk Space"))
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {

@@ -35,6 +35,7 @@ struct DataConverterView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Data Converter"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

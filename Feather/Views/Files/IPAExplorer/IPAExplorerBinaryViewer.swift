@@ -25,6 +25,7 @@ struct IPAExplorerBinaryViewer: View {
                 Text(.localized("Analyzing..."))
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle(.localized("Binary Info"))
         .onAppear {
             analyze()

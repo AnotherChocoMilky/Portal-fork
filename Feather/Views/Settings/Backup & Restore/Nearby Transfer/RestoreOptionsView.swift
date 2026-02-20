@@ -92,7 +92,7 @@ struct RestoreOptionsView: View {
                                 .foregroundStyle(.white)
                         }
                         .padding(30)
-                        .background(.ultraThinMaterial)
+                        .background(Color.clear)
                         .cornerRadius(24)
                     }
                     .transition(.opacity)

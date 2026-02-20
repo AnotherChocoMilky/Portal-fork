@@ -23,8 +23,6 @@ struct GlobalThemeModifier: ViewModifier {
 
     @ObservedObject private var appState = AppStateManager.shared
 
-    @Environment(\.colorScheme) var colorScheme
-
     private var selectedFontDesign: Font.Design {
         switch fontDesign {
         case "rounded": return .rounded
@@ -35,32 +33,18 @@ struct GlobalThemeModifier: ViewModifier {
     }
 
     func body(content: Content) -> some View {
-        let isLight = colorScheme == .light
-
         // UI Elements logic
-        let uiColor: Color = if appState.isSigning {
-            Color(hex: uiElementColorHex)
-        } else {
-            isLight ? .accentColor : Color(hex: uiElementColorHex)
-        }
+        let uiColor = Color(hex: uiElementColorHex)
 
-        // Text color logic: Dark mode defaults to white if textColorHex is black
-        let textColor: Color = if appState.isSigning {
-            Color(hex: textColorHex)
-        } else {
-            if isLight {
-                .primary
-            } else {
-                (textColorHex == Color.defaultText || textColorHex == "#000000") ? .white : Color(hex: textColorHex)
-            }
-        }
+        // Text color logic: removed ColorScheme dependency
+        let textColor = Color(hex: textColorHex)
 
         let navBarColor = Color(hex: navBarColorHex)
         let tabBarColor = Color(hex: tabBarColorHex)
         let sheetColor = Color(hex: sheetBackgroundColorHex)
 
         return ZStack {
-            backgroundManager.resolvedColor(for: colorScheme)
+            backgroundManager.resolvedColor
                 .ignoresSafeArea()
 
             if animateBackground {
@@ -72,7 +56,6 @@ struct GlobalThemeModifier: ViewModifier {
                 .tint(uiColor)
                 .accentColor(uiColor)
                 .applyFontDesign(selectedFontDesign)
-                .toolbarColorScheme(isLight ? .light : .dark, for: .navigationBar)
                 .applyToolbarBackground(navBarColor, for: .navigationBar)
                 .applyToolbarBackground(tabBarColor, for: .tabBar)
                 .environment(\.dividerColor, Color(hex: dividerColorHex))

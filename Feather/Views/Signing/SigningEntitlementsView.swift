@@ -66,7 +66,7 @@ struct SigningEntitlementsView: View {
     @ViewBuilder
     private var modernBackground: some View {
         ZStack {
-            Color(UIColor.systemGroupedBackground)
+            Color.clear
                 .ignoresSafeArea()
             
             GeometryReader { geo in
@@ -272,7 +272,7 @@ struct SigningEntitlementsView: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
         }
     }

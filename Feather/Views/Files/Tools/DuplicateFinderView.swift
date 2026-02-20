@@ -38,6 +38,7 @@ struct DuplicateFinderView: View {
                             }
                         }
                     }
+            .scrollContentBackground(.hidden)
                 }
             }
             .navigationTitle(.localized("Duplicate Finder"))

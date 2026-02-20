@@ -22,12 +22,12 @@ struct ExperimentalUITheme {
         static let accentSecondary = Color(hex: "#06B6D4") // Cyan
         
         // Background colors
-        static let backgroundPrimary = Color(.systemBackground)
-        static let backgroundSecondary = Color(.secondarySystemBackground)
-        static let backgroundTertiary = Color(.tertiarySystemBackground)
+        static let backgroundPrimary = Color.clear
+        static let backgroundSecondary = Color.clear
+        static let backgroundTertiary = Color.clear
         
         // Card colors
-        static let cardBackground = Color(.systemBackground)
+        static let cardBackground = Color.clear
         static let cardBorder = Color.gray.opacity(0.2)
         
         // Text colors
