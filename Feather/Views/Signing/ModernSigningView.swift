@@ -1384,20 +1384,37 @@ struct ModernSigningOptionsView: View {
                     
                     // URL Schemes Section
                     modernOptionSection(title: "URL Schemes", icon: "link", color: .blue) {
+                        Text("This app will respond to the schemes you add here.")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 14)
+                            .padding(.top, 10)
+                            .padding(.bottom, 4)
+
                         ForEach(options.customURLSchemes, id: \.self) { scheme in
                             HStack {
-                                Label(scheme + "://", systemImage: "link")
-                                    .font(.subheadline)
+                                Image(systemName: "link")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(.secondary)
+                                    .frame(width: 20)
+
+                                Text(scheme + "://")
+                                    .font(.system(size: 13, weight: .medium, design: .monospaced))
+
                                 Spacer()
+
                                 Button {
-                                    options.customURLSchemes.removeAll(where: { $0 == scheme })
+                                    withAnimation {
+                                        options.customURLSchemes.removeAll(where: { $0 == scheme })
+                                    }
                                 } label: {
                                     Image(systemName: "minus.circle.fill")
-                                        .foregroundStyle(.red)
+                                        .foregroundStyle(.red.opacity(0.8))
                                 }
                             }
                             .padding(.horizontal, 14)
-                            .padding(.vertical, 8)
+                            .padding(.vertical, 6)
 
                             Divider().padding(.leading, 44)
                         }
@@ -1405,7 +1422,7 @@ struct ModernSigningOptionsView: View {
                         HStack {
                             TextField("Enter Scheme (e.g. test)", text: $newURLScheme)
                                 .textFieldStyle(.plain)
-                                .font(.subheadline)
+                                .font(.system(size: 14))
                                 .autocorrectionDisabled()
                                 .textInputAutocapitalization(.never)
 
@@ -1413,22 +1430,24 @@ struct ModernSigningOptionsView: View {
                                 if !newURLScheme.isEmpty {
                                     let cleanScheme = newURLScheme.replacingOccurrences(of: "://", with: "")
                                     if !options.customURLSchemes.contains(cleanScheme) {
-                                        options.customURLSchemes.append(cleanScheme)
+                                        withAnimation {
+                                            options.customURLSchemes.append(cleanScheme)
+                                        }
                                     }
                                     newURLScheme = ""
                                 }
                             } label: {
                                 Text("Add")
-                                    .font(.subheadline.bold())
+                                    .font(.system(size: 12, weight: .bold))
                                     .padding(.horizontal, 12)
                                     .padding(.vertical, 6)
                                     .background(Color.accentColor)
                                     .foregroundStyle(.white)
-                                    .cornerRadius(8)
+                                    .cornerRadius(12)
                             }
                         }
                         .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
+                        .padding(.vertical, 8)
                     }
 
                     // Localization Section
