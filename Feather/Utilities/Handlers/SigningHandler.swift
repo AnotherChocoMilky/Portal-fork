@@ -456,7 +456,44 @@ extension SigningHandler {
 		if options.proMotion { infoDictionary.setObject(true, forKey: "CADisableMinimumFrameDurationOnPhone" as NSCopying) }
 		if options.gameMode { infoDictionary.setObject(true, forKey: "GCSupportsGameMode" as NSCopying)}
 		if options.ipadFullscreen { infoDictionary.setObject(true, forKey: "UIRequiresFullScreen" as NSCopying) }
-		if options.removeURLScheme { infoDictionary.removeObject(forKey: "CFBundleURLTypes") }
+		if options.removeURLScheme {
+			infoDictionary.removeObject(forKey: "CFBundleURLTypes")
+		} else if !options.customURLSchemes.isEmpty {
+			var urlTypes = (infoDictionary["CFBundleURLTypes"] as? [[String: Any]]) ?? []
+
+			if urlTypes.isEmpty {
+				urlTypes.append([
+					"CFBundleURLName": options.appIdentifier ?? "Custom Schemes",
+					"CFBundleURLSchemes": options.customURLSchemes
+				])
+			} else {
+				// Add to the first one or create new one? Usually adding to first one is fine
+				var firstType = urlTypes[0]
+				var schemes = (firstType["CFBundleURLSchemes"] as? [String]) ?? []
+				for newScheme in options.customURLSchemes {
+					if !schemes.contains(newScheme) {
+						schemes.append(newScheme)
+					}
+				}
+				firstType["CFBundleURLSchemes"] = schemes
+				urlTypes[0] = firstType
+			}
+
+			infoDictionary["CFBundleURLTypes"] = urlTypes
+		}
+
+		if !options.removedCapabilities.isEmpty {
+			if let capabilities = infoDictionary["UIRequiredDeviceCapabilities"] as? [String] {
+				let filtered = capabilities.filter { !options.removedCapabilities.contains($0) }
+				infoDictionary["UIRequiredDeviceCapabilities"] = filtered
+			} else if let capabilities = infoDictionary["UIRequiredDeviceCapabilities"] as? [String: Bool] {
+				let mutableCapabilities = NSMutableDictionary(dictionary: capabilities)
+				for key in options.removedCapabilities {
+					mutableCapabilities.removeObject(forKey: key)
+				}
+				infoDictionary["UIRequiredDeviceCapabilities"] = mutableCapabilities
+			}
+		}
 		
 		if options.appAppearance != .default {
 			infoDictionary.setObject(options.appAppearance.rawValue, forKey: "UIUserInterfaceStyle" as NSCopying)

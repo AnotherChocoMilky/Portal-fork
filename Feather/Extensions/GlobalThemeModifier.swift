@@ -2,7 +2,7 @@ import SwiftUI
 import NimbleViews
 
 struct GlobalThemeModifier: ViewModifier {
-    @AppStorage(UserDefaults.Keys.background) private var bgColorHex: String = Color.defaultBackground
+    @ObservedObject private var backgroundManager = ColorBackgroundManager.shared
     @AppStorage(UserDefaults.Keys.uiElement) private var uiElementColorHex: String = Color.defaultUIElement
     @AppStorage(UserDefaults.Keys.text) private var textColorHex: String = Color.defaultText
     @AppStorage(UserDefaults.Keys.secondaryText) private var secondaryTextColorHex: String = "#8E8E93"
@@ -35,12 +35,8 @@ struct GlobalThemeModifier: ViewModifier {
     func body(content: Content) -> some View {
         let isLight = colorScheme == .light
 
-        // Background logic: Light mode gets system background, Dark mode gets custom or default dark
-        let bgColor: Color = if appState.isSigning {
-            Color(hex: bgColorHex)
-        } else {
-            isLight ? Color(UIColor.systemGroupedBackground) : Color(hex: bgColorHex)
-        }
+        // Background logic: Use custom color from backgroundManager for both light and dark modes
+        let bgColor = Color(hex: backgroundManager.bgColorHex)
 
         // UI Elements logic
         let uiColor: Color = if appState.isSigning {
@@ -66,6 +62,11 @@ struct GlobalThemeModifier: ViewModifier {
 
         return content
             .foregroundStyle(textColor)
+            .background {
+                if backgroundManager.animateBackground {
+                    AnimatedBackgroundView()
+                }
+            }
             .tint(uiColor)
             .accentColor(uiColor)
             .applyFontDesign(selectedFontDesign)

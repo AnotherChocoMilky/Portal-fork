@@ -126,6 +126,10 @@ struct Options: Codable, Equatable {
 	var customInfoPlistEntries: [String: AnyCodable]
 	/// URL to custom Info.plist file to import
 	var customInfoPlistFile: URL?
+	/// App capabilities to remove
+	var removedCapabilities: [String]
+	/// Custom URL schemes to add
+	var customURLSchemes: [String]
 	
 	// MARK: Experiments
 	
@@ -171,6 +175,8 @@ struct Options: Codable, Equatable {
 		changeLanguageFilesForCustomDisplayName: false,
 		customInfoPlistEntries: [:],
 		customInfoPlistFile: nil,
+		removedCapabilities: [],
+		customURLSchemes: [],
 		
 		// MARK: Experiments
 		

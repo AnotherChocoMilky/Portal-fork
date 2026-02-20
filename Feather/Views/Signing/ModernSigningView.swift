@@ -32,6 +32,7 @@ struct ModernSigningView: View {
     @State private var _editingName = ""
     @State private var _editingBundleId = ""
     @State private var _editingVersion = ""
+    @State private var _capabilities: [String] = []
     @State private var _metalState: MetalAnimationState = .idle
     @State private var _errorMessage: String? = nil
     
@@ -226,6 +227,9 @@ struct ModernSigningView: View {
                 
                 unifiedContentSection
                     .opacity(_contentOpacity)
+
+                capabilitiesSection
+                    .opacity(_contentOpacity)
             }
             .padding(.bottom, 100)
         }
@@ -257,7 +261,20 @@ struct ModernSigningView: View {
     }
 
 
+    private func _loadCapabilities() {
+        guard let appURL = Storage.shared.getAppDirectory(for: app) else { return }
+        let infoPlistURL = appURL.appendingPathComponent("Info.plist")
+        guard let infoDict = NSDictionary(contentsOf: infoPlistURL) else { return }
+
+        if let caps = infoDict["UIRequiredDeviceCapabilities"] as? [String] {
+            _capabilities = caps
+        } else if let caps = infoDict["UIRequiredDeviceCapabilities"] as? [String: Bool] {
+            _capabilities = caps.keys.sorted()
+        }
+    }
+
     private func _onAppearAction() {
+                _loadCapabilities()
                 // Apply global installation trigger setting if not already set
                 if installTrigger == 1 {
                     _temporaryOptions.post_installAppAfterSigned = true
@@ -481,6 +498,70 @@ struct ModernSigningView: View {
     }
     
     // MARK: - Unified Content Section (Clean Modern Design)
+    // MARK: - Capabilities Section
+    @ViewBuilder
+    private var capabilitiesSection: some View {
+        let displayCapabilities = _capabilities.filter { !_temporaryOptions.removedCapabilities.contains($0) }
+
+        if !displayCapabilities.isEmpty {
+            VStack(alignment: .leading, spacing: 12) {
+                cleanSectionHeader(title: "Capabilities", icon: "cpu.fill")
+
+                VStack(spacing: 0) {
+                    ForEach(displayCapabilities, id: \.self) { cap in
+                        let info = CapabilityMapper.getInfo(for: cap)
+                        HStack(spacing: 14) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .fill(Color.accentColor.opacity(0.12))
+                                    .frame(width: 32, height: 32)
+                                Image(systemName: info.icon)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Color.accentColor)
+                            }
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(info.name)
+                                    .font(.system(size: 15, weight: .medium))
+                                    .foregroundStyle(.primary)
+                                Text(cap)
+                                    .font(.system(size: 10, weight: .regular, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            Button {
+                                withAnimation {
+                                    _temporaryOptions.removedCapabilities.append(cap)
+                                }
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .font(.system(size: 20))
+                                    .foregroundStyle(.secondary.opacity(0.5))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+
+                        if cap != displayCapabilities.last {
+                            Divider().padding(.leading, 52)
+                        }
+                    }
+                }
+                .background(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .fill(Color(UIColor.secondarySystemGroupedBackground).opacity(0.4))
+                )
+            }
+            .padding(.horizontal, 20)
+            .padding(.top, 8)
+        } else {
+            EmptyView()
+        }
+    }
+
     @ViewBuilder
     private var unifiedContentSection: some View {
         VStack(spacing: 24) {
@@ -1189,6 +1270,7 @@ struct ModernSigningOptionsView: View {
     @Binding var options: Options
     @State private var showPPQInfo = false
     @State private var floatingAnimation = false
+    @State private var newURLScheme = ""
     @AppStorage("Feather.certificateExperience") private var certificateExperience: String = "Developer"
     
     private var hasCertificateWithPPQCheck: Bool {
@@ -1300,6 +1382,55 @@ struct ModernSigningOptionsView: View {
                         modernOptionToggle(title: "Remove Provisioning", subtitle: "Exclude .mobileprovision.", icon: "doc.badge.minus", color: .orange, isOn: $options.removeProvisioning)
                     }
                     
+                    // URL Schemes Section
+                    modernOptionSection(title: "URL Schemes", icon: "link", color: .blue) {
+                        ForEach(options.customURLSchemes, id: \.self) { scheme in
+                            HStack {
+                                Label(scheme + "://", systemImage: "link")
+                                    .font(.subheadline)
+                                Spacer()
+                                Button {
+                                    options.customURLSchemes.removeAll(where: { $0 == scheme })
+                                } label: {
+                                    Image(systemName: "minus.circle.fill")
+                                        .foregroundStyle(.red)
+                                }
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+
+                            Divider().padding(.leading, 44)
+                        }
+
+                        HStack {
+                            TextField("Enter Scheme (e.g. test)", text: $newURLScheme)
+                                .textFieldStyle(.plain)
+                                .font(.subheadline)
+                                .autocorrectionDisabled()
+                                .textInputAutocapitalization(.never)
+
+                            Button {
+                                if !newURLScheme.isEmpty {
+                                    let cleanScheme = newURLScheme.replacingOccurrences(of: "://", with: "")
+                                    if !options.customURLSchemes.contains(cleanScheme) {
+                                        options.customURLSchemes.append(cleanScheme)
+                                    }
+                                    newURLScheme = ""
+                                }
+                            } label: {
+                                Text("Add")
+                                    .font(.subheadline.bold())
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color.accentColor)
+                                    .foregroundStyle(.white)
+                                    .cornerRadius(8)
+                            }
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                    }
+
                     // Localization Section
                     modernOptionSection(title: "Localization", icon: "globe.badge.chevron.backward", color: .green) {
                         modernOptionToggle(title: "Force Localize", subtitle: "Override Localized Titles.", icon: "character.bubble.fill", color: .green, isOn: $options.changeLanguageFilesForCustomDisplayName)
