@@ -59,10 +59,6 @@ struct AppearanceView: View {
                             .padding(.horizontal, 16)
                             .padding(.vertical, 12)
                         Divider().padding(.leading, 52)
-                        AppearanceToggle(icon: "rectangle.grid.1x2", title: "New Apps View", isOn: $useNewAllAppsView, color: .purple)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                        Divider().padding(.leading, 52)
                         AppearanceToggle(icon: "newspaper", title: "Show News", isOn: $showNews, color: .orange)
                             .padding(.horizontal, 16)
                             .padding(.vertical, 12)
@@ -126,6 +122,8 @@ struct AppearanceView: View {
                 // MARK: - Customization
                 appearanceCard(title: "Customization", icon: "slider.horizontal.3") {
                     VStack(spacing: 0) {
+                        AppearanceNavRow(icon: "square.grid.2x2.fill", title: "All Apps", color: .blue, destination: AllAppsCustomizationView())
+                        Divider().padding(.leading, 52)
                         AppearanceNavRow(icon: "eye.slash.fill", title: "Hide UI Elements", color: .red, destination: AppHideElementsView())
                         Divider().padding(.leading, 52)
                         AppearanceNavRow(icon: "rectangle.topthird.inset.filled", title: "Status Bar", color: .cyan, destination: StatusBarCustomizationView())
