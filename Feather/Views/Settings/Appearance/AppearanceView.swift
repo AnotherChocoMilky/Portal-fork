@@ -128,8 +128,6 @@ struct AppearanceView: View {
                     VStack(spacing: 0) {
                         AppearanceNavRow(icon: "eye.slash.fill", title: "Hide UI Elements", color: .red, destination: AppHideElementsView())
                         Divider().padding(.leading, 52)
-                        AppearanceNavRow(icon: "rectangle.stack.fill", title: "All Apps", color: .blue, destination: AllAppsCustomizationView())
-                        Divider().padding(.leading, 52)
                         AppearanceNavRow(icon: "rectangle.topthird.inset.filled", title: "Status Bar", color: .cyan, destination: StatusBarCustomizationView())
                         Divider().padding(.leading, 52)
                         AppearanceNavRow(icon: "dock.rectangle", title: "Tab Bar", color: .indigo, destination: TabBarCustomizationView())
