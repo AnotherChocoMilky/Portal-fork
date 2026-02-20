@@ -35,7 +35,7 @@ struct FileAdvancedToolsView: View {
             }
             .padding()
         }
-        .background(Color(UIColor.systemGroupedBackground))
+        .background(Color.clear)
         .navigationTitle("Advanced File Tools")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -262,7 +262,7 @@ struct ToolCategoryCard: View {
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
                 .padding()
-                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .background(Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
             .buttonStyle(.plain)
@@ -307,7 +307,7 @@ struct ToolCategoryCard: View {
                         }
                     }
                 }
-                .background(Color(UIColor.tertiarySystemGroupedBackground))
+                .background(Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 .padding(.top, 4)
             }
@@ -354,7 +354,7 @@ struct AdvancedToolDetailView: View {
             }
             .padding()
         }
-        .background(Color(UIColor.systemGroupedBackground))
+        .background(Color.clear)
         .navigationTitle(tool.name)
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showFilePicker) {
@@ -387,7 +387,7 @@ struct AdvancedToolDetailView: View {
         }
         .padding()
         .frame(maxWidth: .infinity)
-        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .background(Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
     
@@ -428,7 +428,7 @@ struct AdvancedToolDetailView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding()
-                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .background(Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             }
             .buttonStyle(.plain)
@@ -448,7 +448,7 @@ struct AdvancedToolDetailView: View {
                 Divider().padding(.leading, 44)
                 ToolOptionRow(title: "Export Results", icon: "square.and.arrow.up", isToggle: true)
             }
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
@@ -511,7 +511,7 @@ struct AdvancedToolDetailView: View {
                     .padding()
             }
             .frame(maxHeight: 300)
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
@@ -753,6 +753,7 @@ struct FilePickerView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle("Select File")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -889,6 +890,7 @@ struct BinaryAnalysisView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Binary Analysis")
         .onAppear {
             if fileURL != nil {
@@ -962,7 +964,7 @@ struct HexEditorAdvancedView: View {
                     .toggleStyle(.button)
             }
             .padding()
-            .background(Color(UIColor.secondarySystemBackground))
+            .background(Color.clear)
             
             // Search bar
             if showSearch {
@@ -977,7 +979,7 @@ struct HexEditorAdvancedView: View {
                     .buttonStyle(.bordered)
                 }
                 .padding()
-                .background(Color(UIColor.tertiarySystemBackground))
+                .background(Color.clear)
             }
             
             // Hex content
@@ -1008,7 +1010,7 @@ struct HexEditorAdvancedView: View {
             .font(.caption.monospaced())
             .padding(.horizontal)
             .padding(.vertical, 8)
-            .background(Color(UIColor.secondarySystemBackground))
+            .background(Color.clear)
         }
         .navigationTitle("Hex Editor")
         .onAppear {
@@ -1130,7 +1132,7 @@ struct EntropyAnalyzerView: View {
                     .foregroundStyle(.secondary)
             }
             .padding()
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             
             // Entropy graph
@@ -1163,11 +1165,11 @@ struct EntropyAnalyzerView: View {
                     )
                 }
                 .frame(height: 150)
-                .background(Color(UIColor.tertiarySystemGroupedBackground))
+                .background(Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
             .padding()
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(Color.clear)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
             
             Spacer()

@@ -16,6 +16,7 @@ struct IPAExplorerProvisionViewer: View {
                 Text(.localized("Loading..."))
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("embedded.mobileprovision")
         .onAppear {
             loadProvision()

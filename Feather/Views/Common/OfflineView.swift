@@ -82,7 +82,7 @@ struct OfflineView: View {
                 .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemBackground))
+                        .fill(Color.clear)
                 )
                 .padding(.horizontal, 32)
             }
@@ -103,7 +103,7 @@ struct OfflineView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemBackground))
+                    .fill(Color.clear)
             )
             .padding(.horizontal, 32)
             
@@ -118,7 +118,7 @@ struct OfflineView: View {
                 .padding(.bottom, 40)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(UIColor.systemBackground).ignoresSafeArea())
+        .background(Color.clear.ignoresSafeArea())
         .onAppear {
             animateIcon = true
             AppLogManager.shared.warning("Offline view displayed - no internet connection available", category: "Network")

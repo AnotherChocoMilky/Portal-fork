@@ -281,7 +281,7 @@ struct ReceiverAnimationView: View {
                 }
             }
             .padding(20)
-            .background(.ultraThinMaterial)
+            .background(Color.clear)
             .cornerRadius(24)
             .overlay(
                 RoundedRectangle(cornerRadius: 24)

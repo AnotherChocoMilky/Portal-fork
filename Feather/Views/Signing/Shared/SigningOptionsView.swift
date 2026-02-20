@@ -200,7 +200,7 @@ struct SigningOptionsView: View {
     @ViewBuilder
     private var modernBackground: some View {
         ZStack {
-            Color(UIColor.systemGroupedBackground)
+            Color.clear
                 .ignoresSafeArea()
 
             GeometryReader { geo in
@@ -252,7 +252,7 @@ struct SigningOptionsView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)

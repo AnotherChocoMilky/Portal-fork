@@ -136,8 +136,8 @@ struct InfoPlistEntriesView: View {
                 colors: [
                     Color.indigo.opacity(0.08),
                     Color.purple.opacity(0.04),
-                    Color(UIColor.systemBackground).opacity(0.95),
-                    Color(UIColor.systemBackground)
+                    Color.clear.opacity(0.95),
+                    Color.clear
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -245,7 +245,7 @@ struct InfoPlistEntriesView: View {
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
             
             if !options.customInfoPlistEntries.isEmpty {
@@ -263,7 +263,7 @@ struct InfoPlistEntriesView: View {
                         .frame(width: 40, height: 40)
                         .background(
                             RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(Color(.secondarySystemGroupedBackground))
+                                .fill(Color.clear)
                         )
                 }
             }
@@ -477,7 +477,7 @@ struct InfoPlistEntriesView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
         }
     }
@@ -550,7 +550,7 @@ struct InfoPlistEntriesView: View {
     private var addEntrySheet: some View {
         NavigationStack {
             ZStack {
-                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
+                Color.clear.ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 20) {
@@ -567,7 +567,7 @@ struct InfoPlistEntriesView: View {
                                 .padding(14)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(Color(.secondarySystemGroupedBackground))
+                                        .fill(Color.clear)
                                 )
                         }
                         
@@ -664,7 +664,7 @@ struct InfoPlistEntriesView: View {
                 .padding(14)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(.secondarySystemGroupedBackground))
+                        .fill(Color.clear)
                 )
             
         case .boolean:
@@ -680,7 +680,7 @@ struct InfoPlistEntriesView: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
             
         case .number:
@@ -690,7 +690,7 @@ struct InfoPlistEntriesView: View {
                 .padding(14)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(.secondarySystemGroupedBackground))
+                        .fill(Color.clear)
                 )
             
         case .array:
@@ -710,7 +710,7 @@ struct InfoPlistEntriesView: View {
                     .padding(12)
                     .background(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(Color(.tertiarySystemGroupedBackground))
+                            .fill(Color.clear)
                     )
                 }
                 
@@ -729,7 +729,7 @@ struct InfoPlistEntriesView: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
             
         case .dictionary:
@@ -741,7 +741,7 @@ struct InfoPlistEntriesView: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
         }
     }
@@ -750,7 +750,7 @@ struct InfoPlistEntriesView: View {
     private var editEntrySheet: some View {
         NavigationStack {
             ZStack {
-                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
+                Color.clear.ignoresSafeArea()
                 
                 ScrollView {
                     VStack(spacing: 20) {
@@ -767,7 +767,7 @@ struct InfoPlistEntriesView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(Color(.secondarySystemGroupedBackground))
+                                        .fill(Color.clear)
                                 )
                         }
                         
@@ -829,7 +829,7 @@ struct InfoPlistEntriesView: View {
                 .padding(14)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(.secondarySystemGroupedBackground))
+                        .fill(Color.clear)
                 )
             
         case .boolean:
@@ -845,7 +845,7 @@ struct InfoPlistEntriesView: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
             
         case .number:
@@ -855,7 +855,7 @@ struct InfoPlistEntriesView: View {
                 .padding(14)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(.secondarySystemGroupedBackground))
+                        .fill(Color.clear)
                 )
             
         default:
@@ -865,7 +865,7 @@ struct InfoPlistEntriesView: View {
                 .padding(14)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(.secondarySystemGroupedBackground))
+                        .fill(Color.clear)
                 )
         }
     }
@@ -1454,7 +1454,7 @@ struct InfoPlistEntriesView: View {
                 }
                 .padding(20)
             }
-            .background(Color(UIColor.systemGroupedBackground))
+            .background(Color.clear)
             .navigationTitle(.localized("Preset Options"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -1494,6 +1494,7 @@ struct InfoPlistEntriesView: View {
                 }
                 .disabled(searchReplaceTarget.isEmpty)
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Search And Replace"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -1543,6 +1544,7 @@ struct InfoPlistEntriesView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Batch Actions"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -1986,7 +1988,7 @@ struct PresetSection<Content: View>: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
         }
     }

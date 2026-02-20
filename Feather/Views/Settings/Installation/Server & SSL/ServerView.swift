@@ -137,7 +137,7 @@ private struct ServerMethodCard: View {
 			.padding(14)
 			.background(
 				RoundedRectangle(cornerRadius: 14, style: .continuous)
-					.fill(isSelected ? method.color.opacity(0.08) : Color(.secondarySystemGroupedBackground))
+					.fill(isSelected ? method.color.opacity(0.08) : Color.clear)
 			)
 			.overlay(
 				RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -261,7 +261,7 @@ struct ServerView: View {
 					.padding(10)
 					.background(
 						RoundedRectangle(cornerRadius: 8, style: .continuous)
-							.fill(Color(UIColor.tertiarySystemBackground))
+							.fill(Color.clear)
 					)
 					.overlay(
 						RoundedRectangle(cornerRadius: 8, style: .continuous)

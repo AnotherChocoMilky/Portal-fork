@@ -286,6 +286,7 @@ struct AllAppsCustomizationView: View {
                 Text("Customize every detail of the app list to match your preference.")
             }
         }
+            .scrollContentBackground(.hidden)
         .listStyle(.insetGrouped)
         .navigationTitle("All Apps")
     }

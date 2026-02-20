@@ -28,7 +28,7 @@ struct GuidesSettingsView: View {
             }
             .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background(Color.clear)
         .navigationTitle(.localized("Guides"))
         .navigationBarTitleDisplayMode(.inline)
         .task {
@@ -91,7 +91,7 @@ struct GuidesSettingsView: View {
             }
         }
         .padding(20)
-        .background(.ultraThinMaterial)
+        .background(Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -157,7 +157,7 @@ struct GuidesSettingsView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(20)
-        .background(.ultraThinMaterial)
+        .background(Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -203,7 +203,7 @@ struct GuidesSettingsView: View {
                         .foregroundStyle(.secondary)
                 }
                 .padding()
-                .background(Color(.tertiarySystemGroupedBackground).opacity(0.5))
+                .background(Color.clear.opacity(0.5))
                 .cornerRadius(12)
             }
             .buttonStyle(.plain)
@@ -228,11 +228,11 @@ struct GuidesSettingsView: View {
                 .disabled(customModelInput.isEmpty)
             }
             .padding()
-            .background(Color(.tertiarySystemGroupedBackground).opacity(0.5))
+            .background(Color.clear.opacity(0.5))
             .cornerRadius(12)
         }
         .padding(20)
-        .background(.ultraThinMaterial)
+        .background(Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -294,7 +294,7 @@ struct GuidesSettingsView: View {
             }
         }
         .padding(20)
-        .background(.ultraThinMaterial)
+        .background(Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
@@ -425,7 +425,7 @@ struct GuideAISettingsRow: View {
                         .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
                 .padding()
-                .background(Color(.tertiarySystemGroupedBackground).opacity(0.5))
+                .background(Color.clear.opacity(0.5))
                 .cornerRadius(12)
             }
             .buttonStyle(.plain)
@@ -459,7 +459,7 @@ struct GuideAISettingsRow: View {
                     }
                 }
                 .padding()
-                .background(Color(.tertiarySystemGroupedBackground).opacity(0.3))
+                .background(Color.clear.opacity(0.3))
                 .cornerRadius(12)
                 .padding(.top, 4)
             }

@@ -78,7 +78,7 @@ struct DeveloperAuthView: View {
                 // Background gradient
                 LinearGradient(
                     colors: [
-                        Color(UIColor.systemBackground),
+                        Color.clear,
                         Color.orange.opacity(0.05)
                     ],
                     startPoint: .top,
@@ -221,7 +221,7 @@ struct DeveloperAuthView: View {
                             Capsule()
                                 .fill(authMethod == method ? 
                                       AnyShapeStyle(LinearGradient(colors: gradientColors, startPoint: .leading, endPoint: .trailing)) :
-                                      AnyShapeStyle(Color(UIColor.tertiarySystemBackground)))
+                                      AnyShapeStyle(Color.clear))
                         )
                         .foregroundStyle(authMethod == method ? .white : .primary)
                         .contentShape(Capsule())
@@ -249,7 +249,7 @@ struct DeveloperAuthView: View {
         .padding(24)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(UIColor.secondarySystemBackground))
+                .fill(Color.clear)
                 .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.08), radius: 20, x: 0, y: 10)
         )
         .overlay(
@@ -282,7 +282,7 @@ struct DeveloperAuthView: View {
                 .padding()
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(UIColor.tertiarySystemBackground))
+                        .fill(Color.clear)
                 )
                 
                 // Authenticate button
@@ -334,7 +334,7 @@ struct DeveloperAuthView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color(UIColor.tertiarySystemBackground))
+                    .background(Color.clear)
                     .foregroundStyle(.orange)
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 }
@@ -406,7 +406,7 @@ struct DeveloperAuthView: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(UIColor.tertiarySystemBackground))
+                    .fill(Color.clear)
             )
             
             // Token hint
@@ -470,7 +470,7 @@ struct DeveloperAuthView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(UIColor.secondarySystemBackground))
+                .fill(Color.clear)
         )
         .frame(maxWidth: horizontalSizeClass == .regular ? 450 : .infinity)
     }
@@ -618,7 +618,7 @@ struct ModernPasscodeSetupView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(UIColor.systemBackground)
+                Color.clear
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -665,7 +665,7 @@ struct ModernPasscodeSetupView: View {
                                 .padding()
                                 .background(
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(Color(UIColor.secondarySystemBackground))
+                                        .fill(Color.clear)
                                 )
                             }
                             
@@ -684,7 +684,7 @@ struct ModernPasscodeSetupView: View {
                                 .padding()
                                 .background(
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(Color(UIColor.secondarySystemBackground))
+                                        .fill(Color.clear)
                                 )
                             }
                         }
@@ -938,7 +938,7 @@ struct DeveloperControlPanelView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
-        .background(Color(UIColor.systemGroupedBackground))
+        .background(Color.clear)
         .searchable(text: $searchText, prompt: "Search Developer")
     }
 
@@ -976,7 +976,7 @@ struct DeveloperControlPanelView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
     
@@ -1080,7 +1080,7 @@ struct DeveloperControlPanelView: View {
         .padding(.bottom, 14)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
     
@@ -1152,7 +1152,7 @@ struct DeveloperControlPanelView: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
     
@@ -1253,7 +1253,7 @@ struct DeveloperControlPanelView: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
 }
@@ -1410,6 +1410,7 @@ struct HomeUITestingView: View {
                 Text("Testing Actions")
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Home UI Testing")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -1491,6 +1492,7 @@ struct DeveloperSecurityView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Security Settings")
         .sheet(isPresented: $showChangePasscode) {
             ModernPasscodeSetupView(onComplete: { _ in })
@@ -1524,6 +1526,7 @@ struct NetworkInspectorView: View {
             Text("No Active Requests")
                 .foregroundStyle(.secondary)
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Network Inspector")
     }
 }
@@ -1540,6 +1543,7 @@ struct FileSystemBrowserView: View {
             Text("Library")
             Text("tmp")
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("File System")
     }
 }
@@ -1559,6 +1563,7 @@ struct UserDefaultsEditorView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("UserDefaults")
     }
 }
@@ -2418,6 +2423,7 @@ struct IPAInspectorView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("IPA Inspector")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isImporting) {
@@ -2752,6 +2758,7 @@ struct ListDetailView: View {
                     .font(.caption.monospaced())
             }
         }
+            .scrollContentBackground(.hidden)
         .searchable(text: $searchText, prompt: "Search")
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
@@ -2786,6 +2793,7 @@ struct PlistViewer: View {
                 .padding(.vertical, 4)
             }
         }
+            .scrollContentBackground(.hidden)
         .searchable(text: $searchText, prompt: "Search Keys")
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
@@ -2962,6 +2970,7 @@ struct IPAIntegrityCheckerView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Integrity Checker")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isImporting) {
@@ -3234,6 +3243,7 @@ struct SourceDataView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Source Data")
     }
 }
@@ -3258,6 +3268,7 @@ struct AppStateView: View {
                 Text("Cache: \(getCacheSize())")
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("App State")
     }
     
@@ -3321,6 +3332,7 @@ struct FeatureFlagsView: View {
                 Text("Enables advanced file management features including binary analysis, hex editing, file forensics, metadata extraction, batch operations, and more powerful file manipulation tools.")
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Feature Flags")
     }
 }
@@ -3381,6 +3393,7 @@ struct PerformanceMonitorView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Performance Monitor")
         .onAppear {
             monitor.startMonitoring()
@@ -3533,6 +3546,7 @@ struct CoreDataInspectorView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("CoreData Inspector")
     }
 }
@@ -3547,6 +3561,7 @@ struct EntityDetailView: View {
                 .foregroundStyle(.secondary)
             // Add more detailed entity inspection here
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle(entityName)
     }
 }
@@ -3596,6 +3611,7 @@ struct TestNotificationsView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Test Notifications")
         .navigationBarTitleDisplayMode(.inline)
         .alert("Did you receive the notification?", isPresented: $showResultDialog) {
@@ -3993,6 +4009,7 @@ struct UpdatesReleasesView: View {
                     .foregroundStyle(.secondary)
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Updates & Releases")
         .onAppear {
             if allReleases.isEmpty {
@@ -4165,6 +4182,7 @@ struct ReleaseDetailView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle(release.tagName)
     }
 }
@@ -4266,6 +4284,7 @@ struct SourcesLibraryDevView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Sources & Library")
     }
     
@@ -4393,6 +4412,7 @@ struct SourceInspectorView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle(source.name ?? "Source")
     }
     
@@ -4503,6 +4523,7 @@ struct InstallIPADevView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Install & IPA")
         .fullScreenCover(isPresented: $showInstallModifyDialog) {
             if let app = selectedApp {
@@ -4624,6 +4645,7 @@ struct UILayoutDevView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("UI & Layout")
     }
     
@@ -4743,6 +4765,7 @@ struct NetworkSystemDevView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Network & System")
         .onAppear {
             loadSystemInfo()
@@ -4837,6 +4860,7 @@ struct FailureInspectorView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Failures")
     }
 }
@@ -4925,6 +4949,7 @@ struct StatePersistenceDevView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("State & Persistence")
         .onAppear {
             calculateCacheSize()
@@ -5046,6 +5071,7 @@ struct DeviceInfoView: View {
             appInfoSection
             exportSection
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Device Information")
         .onAppear {
             loadDeviceInfo()
@@ -5281,6 +5307,7 @@ struct EnvironmentInspectorView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .searchable(text: $searchText, prompt: "Search Environment")
         .navigationTitle("Environment Inspector")
         .onAppear {
@@ -5373,6 +5400,7 @@ struct CrashLogViewer: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Crash Logs")
         .onAppear {
             loadCrashLogs()
@@ -5480,6 +5508,7 @@ struct QuickActionsDevView: View {
                 quickActionButton(.triggerMemoryWarning)
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Quick Actions")
         .alert("Confirm Action", isPresented: $showConfirmation) {
             Button("Cancel", role: .cancel) { }
@@ -5661,6 +5690,7 @@ struct IPASigningDashboardView: View {
                 Text("Configure external APIs and webhook notifications.")
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("IPA Signing Debugging")
     }
 }
@@ -5793,6 +5823,7 @@ struct CertificateProfileManagerView: View {
                 Text("Actions")
             }
         }
+            .scrollContentBackground(.hidden)
         .searchable(text: $searchText, prompt: "Search Certificates")
         .navigationTitle("Certificate Manager")
         .sheet(isPresented: $showAddCertificate) {
@@ -5912,7 +5943,7 @@ struct StatCard: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
 }
@@ -5990,6 +6021,7 @@ struct SigningLogsView: View {
                         SigningLogRow(entry: log)
                     }
                 }
+            .scrollContentBackground(.hidden)
             }
         }
         .searchable(text: $searchText, prompt: "Search Logs")
@@ -6214,6 +6246,7 @@ struct DeveloperBatchSigningView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             
             // Progress Overlay
             if isSigningBatch {
@@ -6244,7 +6277,7 @@ struct DeveloperBatchSigningView: View {
                         }
                     }
                     .padding(40)
-                    .background(.ultraThinMaterial)
+                    .background(Color.clear)
                     .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                     .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
                     .transition(AnyTransition.scale.combined(with: .opacity))
@@ -6434,6 +6467,7 @@ struct EntitlementsEditorTab: View {
                 Text("Export")
             }
         }
+            .scrollContentBackground(.hidden)
         .alert("Add Entitlement", isPresented: $showAddEntitlement) {
             TextField("Key", text: $newKey)
             TextField("Value", text: $newValue)
@@ -6610,6 +6644,7 @@ struct InfoPlistEditorTab: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .alert("Add Plist Key", isPresented: $showAddItem) {
             TextField("Key", text: $newKey)
             TextField("Value", text: $newValue)
@@ -6754,6 +6789,7 @@ struct SigningSecurityView: View {
                 Text("Security Actions")
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Security")
     }
     
@@ -6960,6 +6996,7 @@ struct SigningPerformanceMetricsView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Performance Metrics")
         .onAppear {
             loadMetrics()
@@ -7052,7 +7089,7 @@ struct MetricCard: View {
         .padding()
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
 }
@@ -7175,6 +7212,7 @@ struct APIWebhookIntegrationView: View {
                 Text("Logs")
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("API & Webhooks")
     }
     
@@ -7287,6 +7325,7 @@ struct APILogsView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("API Logs")
     }
 }
@@ -7664,7 +7703,7 @@ struct NearbyShareUITestingView: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
-                        .background(Color(UIColor.systemBackground).opacity(0.95))
+                        .background(Color.clear.opacity(0.95))
                         .cornerRadius(20)
                         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }
@@ -7740,7 +7779,7 @@ struct UIViewTestingView: View {
                         }
                         .padding(.horizontal, 16)
                         .padding(.vertical, 10)
-                        .background(Color(UIColor.systemBackground).opacity(0.95))
+                        .background(Color.clear.opacity(0.95))
                         .cornerRadius(20)
                         .shadow(color: Color.black.opacity(0.1), radius: 4, x: 0, y: 2)
                     }

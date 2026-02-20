@@ -15,7 +15,7 @@ struct JSONFormatterView: View {
                         .font(.system(.caption, design: .monospaced))
                         .frame(maxHeight: .infinity)
                         .padding(4)
-                        .background(Color(UIColor.secondarySystemBackground))
+                        .background(Color.clear)
                         .cornerRadius(8)
                 }
 
@@ -63,7 +63,7 @@ struct JSONFormatterView: View {
                             .padding(4)
                     }
                     .frame(maxHeight: .infinity)
-                    .background(Color(UIColor.secondarySystemBackground))
+                    .background(Color.clear)
                     .cornerRadius(8)
                 }
             }

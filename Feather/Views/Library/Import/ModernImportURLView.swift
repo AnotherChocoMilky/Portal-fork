@@ -165,7 +165,7 @@ struct ModernImportURLView: View {
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
@@ -243,7 +243,7 @@ struct ModernImportURLView: View {
                             .padding(.vertical, 10)
                             .background(
                                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                                    .fill(Color.clear)
                             )
                         }
                     }
@@ -305,7 +305,7 @@ struct ModernImportURLView: View {
                     .padding(.vertical, 16)
                     .background(
                         RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .fill(Color(uiColor: .secondarySystemGroupedBackground))
+                            .fill(Color.clear)
                     )
             }
             .contentShape(Rectangle())

@@ -25,8 +25,8 @@ struct SigningPropertiesView: View {
 					.background(
 						LinearGradient(
 							colors: [
-								Color(UIColor.secondarySystemGroupedBackground),
-								Color(UIColor.secondarySystemGroupedBackground).opacity(0.95),
+								Color.clear,
+								Color.clear.opacity(0.95),
 								Color.accentColor.opacity(0.02)
 							],
 							startPoint: .topLeading,

@@ -591,7 +591,7 @@ struct HomeView: View {
                     .padding(size == .large ? 20 : 16)
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color(UIColor.secondarySystemGroupedBackground))
+                            .fill(Color.clear)
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -636,7 +636,7 @@ struct HomeView: View {
             .padding(.vertical, size == .large ? 40 : 24)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
         }
     }
@@ -684,7 +684,7 @@ struct HomeView: View {
                 .padding(size == .large ? 20 : 16)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground))
+                        .fill(Color.clear)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -734,7 +734,7 @@ struct HomeView: View {
                 .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground))
+                        .fill(Color.clear)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -765,7 +765,7 @@ struct HomeView: View {
         .padding(24)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
     
@@ -806,7 +806,7 @@ struct HomeView: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -861,7 +861,7 @@ struct HomeView: View {
                 .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground))
+                        .fill(Color.clear)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -900,7 +900,7 @@ struct HomeView: View {
         .padding(24)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
     
@@ -931,7 +931,7 @@ struct HomeView: View {
                 .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground))
+                        .fill(Color.clear)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -968,7 +968,7 @@ struct HomeView: View {
         .padding(24)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
     
@@ -1002,7 +1002,7 @@ struct HomeView: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -1098,7 +1098,7 @@ struct HomeView: View {
             .padding(_compactMode ? 12 : 16)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -1261,7 +1261,7 @@ struct HomeView: View {
                 .frame(maxWidth: .infinity)
             }
             .padding(16)
-            .background(RoundedRectangle(cornerRadius: 16).fill(Color(UIColor.secondarySystemGroupedBackground)))
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color.clear))
         }
         .opacity(_appearAnimation ? 1 : 0)
         .offset(y: _appearAnimation ? 0 : 20)
@@ -1332,7 +1332,7 @@ struct HomeView: View {
                     .foregroundStyle(.secondary)
             }
             .padding(16)
-            .background(RoundedRectangle(cornerRadius: 16).fill(Color(UIColor.secondarySystemGroupedBackground)))
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color.clear))
         }
         .opacity(_appearAnimation ? 1 : 0)
         .offset(y: _appearAnimation ? 0 : 20)
@@ -1379,7 +1379,7 @@ struct HomeView: View {
                     .foregroundStyle(.tertiary)
             }
             .padding(16)
-            .background(RoundedRectangle(cornerRadius: 16).fill(Color(UIColor.secondarySystemGroupedBackground)))
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color.clear))
         }
         .opacity(_appearAnimation ? 1 : 0)
         .offset(y: _appearAnimation ? 0 : 20)
@@ -1398,7 +1398,7 @@ struct HomeView: View {
                 Divider().padding(.leading, 50)
                 QuickSettingToggle(title: "Tint App Icons", icon: "app.dashed", color: .blue, isOn: _shouldTintIconsBinding)
             }
-            .background(RoundedRectangle(cornerRadius: 16).fill(Color(UIColor.secondarySystemGroupedBackground)))
+            .background(RoundedRectangle(cornerRadius: 16).fill(Color.clear))
         }
         .opacity(_appearAnimation ? 1 : 0)
         .offset(y: _appearAnimation ? 0 : 20)
@@ -2192,7 +2192,7 @@ struct SignAndInstallPickerView: View {
                                     .padding(.vertical, 12)
                                     .background(
                                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                            .fill(Color(UIColor.secondarySystemGroupedBackground))
+                                            .fill(Color.clear)
                                     )
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -2534,6 +2534,7 @@ struct AppUpdatesListSheet: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle("App Updates")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

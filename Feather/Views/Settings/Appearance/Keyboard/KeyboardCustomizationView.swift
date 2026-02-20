@@ -287,6 +287,7 @@ struct KeyboardCustomizationView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .listStyle(.insetGrouped)
         .navigationTitle("Keyboard Backdrop")
         .fullScreenCover(isPresented: $showingAdvancedGradient) {

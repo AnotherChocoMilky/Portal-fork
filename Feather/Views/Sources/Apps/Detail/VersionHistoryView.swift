@@ -46,14 +46,14 @@ struct VersionHistoryView: View {
                         dominantColor.opacity(0.25),
                         dominantColor.opacity(0.15),
                         dominantColor.opacity(0.05),
-                        Color(UIColor.systemGroupedBackground)
+                        Color.clear
                     ],
                     startPoint: .top,
                     endPoint: .bottom
                 )
                 .frame(height: 300)
                 
-                Color(UIColor.systemGroupedBackground)
+                Color.clear
             }
             .ignoresSafeArea()
         )
@@ -272,7 +272,7 @@ struct VersionHistoryView: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)

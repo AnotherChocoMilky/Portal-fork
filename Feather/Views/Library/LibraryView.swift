@@ -177,7 +177,7 @@ struct LibraryView: View {
                 if _editMode == .active && !_selectedApps.isEmpty {
                     selectionActionBar
                         .padding(.horizontal, 20)
-                        .background(.ultraThinMaterial)
+                        .background(Color.clear)
                 }
             }
             .searchable(text: $_searchText)
@@ -891,7 +891,7 @@ struct ImportOptionButton: View {
             .padding(.vertical, 20)
             .background(
                 RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
                     .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
             )
             .overlay(

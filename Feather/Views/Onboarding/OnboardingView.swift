@@ -11,7 +11,7 @@ struct OnboardingView: View {
     var body: some View {
         ZStack {
             // Simple solid background
-            Color(uiColor: .systemBackground)
+            Color.clear
                 .ignoresSafeArea()
             
             // Simple content container
@@ -165,7 +165,7 @@ struct FeatureRow: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(uiColor: .secondarySystemBackground))
+                .fill(Color.clear)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         )
         .scaleEffect(isVisible ? 1.0 : 0.8)
@@ -192,7 +192,7 @@ struct OnboardingViewLegacy: View {
     var body: some View {
         ZStack {
             // Simple solid background
-            Color(uiColor: .systemBackground)
+            Color.clear
                 .ignoresSafeArea()
             
             // Simple content container
@@ -335,7 +335,7 @@ struct FeatureRowLegacy: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(uiColor: .secondarySystemBackground))
+                .fill(Color.clear)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         )
         .scaleEffect(isVisible ? 1.0 : 0.8)

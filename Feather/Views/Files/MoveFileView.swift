@@ -131,6 +131,7 @@ struct MoveFileView: View {
                         }
                     }
                 }
+            .scrollContentBackground(.hidden)
             }
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {

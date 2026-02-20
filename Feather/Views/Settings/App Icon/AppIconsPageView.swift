@@ -33,6 +33,7 @@ struct AppIconsPageView: View {
 				.listRowBackground(Color.clear)
 				.listRowInsets(EdgeInsets())
 			}
+            .scrollContentBackground(.hidden)
 		}
 	}
 }

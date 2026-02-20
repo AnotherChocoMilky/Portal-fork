@@ -109,7 +109,7 @@ struct FileCompareView: View {
                     }
                 }
                 .padding()
-                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .background(Color.clear)
                 
                 if isLoading {
                     Spacer()

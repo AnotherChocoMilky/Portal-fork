@@ -103,7 +103,7 @@ struct CategoryInfoDialog: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(Color(.systemBackground))
+                    .fill(Color.clear)
                     .shadow(color: .black.opacity(0.2), radius: 40, x: 0, y: 20)
             )
             .padding(.horizontal, 20)
@@ -160,7 +160,7 @@ private struct CategoryInfoCard: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
 }
@@ -290,7 +290,7 @@ struct FeedbackPreviewDialog: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(
                         RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color(.secondarySystemGroupedBackground))
+                            .fill(Color.clear)
                     )
                     .padding(.horizontal, 20)
                 }
@@ -351,7 +351,7 @@ struct FeedbackPreviewDialog: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(Color(.systemBackground))
+                    .fill(Color.clear)
                     .shadow(color: .black.opacity(0.2), radius: 40, x: 0, y: 20)
             )
             .padding(.horizontal, 16)
@@ -515,7 +515,7 @@ struct LinkInsertDialog: View {
                         .padding(14)
                         .background(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color(.tertiarySystemGroupedBackground))
+                                .fill(Color.clear)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -550,7 +550,7 @@ struct LinkInsertDialog: View {
                         .padding(14)
                         .background(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color(.tertiarySystemGroupedBackground))
+                                .fill(Color.clear)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -572,7 +572,7 @@ struct LinkInsertDialog: View {
                             .padding(.vertical, 14)
                             .background(
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(Color(.tertiarySystemGroupedBackground))
+                                    .fill(Color.clear)
                             )
                     }
                     
@@ -606,7 +606,7 @@ struct LinkInsertDialog: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(.systemBackground))
+                    .fill(Color.clear)
                     .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
             )
             .padding(.horizontal, 24)
@@ -734,7 +734,7 @@ struct ScreenshotErrorDialog: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(.systemBackground))
+                    .fill(Color.clear)
                     .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
             )
             .padding(.horizontal, 24)
@@ -867,7 +867,7 @@ struct FormattingToolbar: View {
             .buttonStyle(.plain)
         }
         .frame(height: toolbarHeight)
-        .background(Color(.systemBackground))
+        .background(Color.clear)
     }
     
     private func applyFormatting(_ format: FormatType) {
@@ -1023,7 +1023,7 @@ struct ModernFormattingToolbar: View {
         .frame(height: toolbarHeight)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.systemBackground))
+                .fill(Color.clear)
                 .shadow(color: Color.black.opacity(0.06), radius: 10, x: 0, y: -2)
                 .padding(.horizontal, 8)
                 .padding(.bottom, 4)
@@ -1442,7 +1442,7 @@ struct FeedbackView: View {
                     myFeedbackView
                 }
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.clear)
             .navigationTitle("Feedback")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
@@ -1540,7 +1540,7 @@ struct FeedbackView: View {
                     .frame(maxWidth: .infinity)
                     .background(
                         RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(selectedTab == tab ? Color.accentColor : Color(.tertiarySystemGroupedBackground))
+                            .fill(selectedTab == tab ? Color.accentColor : Color.clear)
                     )
                     .foregroundStyle(selectedTab == tab ? .white : .primary)
                 }
@@ -1805,6 +1805,7 @@ struct FeedbackView: View {
                 .disabled(!isFormValid || isSubmitting)
             }
         }
+            .scrollContentBackground(.hidden)
     }
     
     
@@ -1933,7 +1934,7 @@ struct FeedbackCategoryChip: View {
             .padding(.vertical, 10)
             .background(
                 Capsule()
-                    .fill(isSelected ? category.color : Color(.tertiarySystemGroupedBackground))
+                    .fill(isSelected ? category.color : Color.clear)
             )
             .foregroundStyle(isSelected ? Color.white : Color.primary)
         }
@@ -1973,7 +1974,7 @@ struct ModernCategoryChip: View {
                     .fill(
                         isSelected ?
                         LinearGradient(colors: [category.color, category.color.opacity(0.85)], startPoint: .topLeading, endPoint: .bottomTrailing) :
-                        LinearGradient(colors: [Color(.secondarySystemGroupedBackground), Color(.secondarySystemGroupedBackground)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                        LinearGradient(colors: [Color.clear, Color.clear], startPoint: .topLeading, endPoint: .bottomTrailing)
                     )
             )
             .overlay(
@@ -2012,7 +2013,7 @@ struct CleanCategoryChip: View {
             .padding(.vertical, 8)
             .background(
                 Capsule()
-                    .fill(isSelected ? category.color : Color(.tertiarySystemGroupedBackground))
+                    .fill(isSelected ? category.color : Color.clear)
             )
             .foregroundStyle(isSelected ? .white : .primary)
         }
@@ -2051,7 +2052,7 @@ struct CleanAttachmentToggle: View {
             .padding(.vertical, 14)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(isOn ? color : Color(.tertiarySystemGroupedBackground))
+                    .fill(isOn ? color : Color.clear)
             )
         }
         .buttonStyle(.plain)
@@ -2085,7 +2086,7 @@ struct CodeEditorSheet: View {
                 codeEditorContent
                 codeEditorFooter
             }
-            .background(Color(.systemGroupedBackground))
+            .background(Color.clear)
             .navigationTitle("Code Snippet")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -2165,7 +2166,7 @@ struct CodeEditorSheet: View {
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(.secondary)
                             .frame(width: 36, height: 36)
-                            .background(Circle().fill(Color(.tertiarySystemGroupedBackground)))
+                            .background(Circle().fill(Color.clear))
                     }
                     .disabled(localCode.isEmpty)
                     .opacity(localCode.isEmpty ? 0.5 : 1)
@@ -2180,7 +2181,7 @@ struct CodeEditorSheet: View {
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(.secondary)
                             .frame(width: 36, height: 36)
-                            .background(Circle().fill(Color(.tertiarySystemGroupedBackground)))
+                            .background(Circle().fill(Color.clear))
                     }
                     
                     Button {
@@ -2193,7 +2194,7 @@ struct CodeEditorSheet: View {
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(localCode.isEmpty ? Color.secondary : Color.red)
                             .frame(width: 36, height: 36)
-                            .background(Circle().fill(localCode.isEmpty ? Color(.tertiarySystemGroupedBackground) : Color.red.opacity(0.1)))
+                            .background(Circle().fill(localCode.isEmpty ? Color.clear : Color.red.opacity(0.1)))
                     }
                     .disabled(localCode.isEmpty)
                 }
@@ -2203,7 +2204,7 @@ struct CodeEditorSheet: View {
             
             Divider()
         }
-        .background(Color(.systemBackground))
+        .background(Color.clear)
     }
     
     private var codeEditorContent: some View {
@@ -2222,7 +2223,7 @@ struct CodeEditorSheet: View {
                 .frame(width: 40)
                 .padding(.top, 12)
                 .padding(.leading, 8)
-                .background(Color(.secondarySystemGroupedBackground).opacity(0.5))
+                .background(Color.clear.opacity(0.5))
                 
                 Rectangle()
                     .fill(Color.primary.opacity(0.08))
@@ -2237,7 +2238,7 @@ struct CodeEditorSheet: View {
                 .scrollContentBackground(.hidden)
                 .padding(.leading, 52)
                 .padding(.top, 4)
-                .background(Color(.systemBackground))
+                .background(Color.clear)
             
             // Placeholder
             if localCode.isEmpty {
@@ -2269,7 +2270,7 @@ struct CodeEditorSheet: View {
                 .padding(.vertical, 6)
                 .background(
                     Capsule()
-                        .fill(Color(.tertiarySystemGroupedBackground))
+                        .fill(Color.clear)
                 )
                 
                 Spacer()
@@ -2284,7 +2285,7 @@ struct CodeEditorSheet: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 10)
-            .background(Color(.systemBackground))
+            .background(Color.clear)
         }
     }
 }
@@ -2723,7 +2724,7 @@ struct ModernRecentFeedbackCard: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
         }
         .buttonStyle(.plain)
@@ -2804,7 +2805,7 @@ struct MyFeedbackCard: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
 }
@@ -2963,7 +2964,7 @@ struct FeedbackDetailSheet: View {
                     .padding(.vertical, 16)
                 }
             }
-            .background(Color(.systemBackground))
+            .background(Color.clear)
             .navigationTitle("Feedback Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

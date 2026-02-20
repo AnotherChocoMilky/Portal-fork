@@ -50,7 +50,7 @@ struct CheckForUpdatesView: View {
                 .padding(.horizontal, 20)
                 .padding(.bottom, 30)
             }
-            .background(Color(UIColor.systemGroupedBackground))
+            .background(Color.clear)
 
             // Dynamic Metal Loading Screen
             FullScreenMetalStateView(
@@ -374,7 +374,7 @@ struct CheckForUpdatesView: View {
                 Color.clear
             } else {
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
                     .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
             }
         }
@@ -433,7 +433,7 @@ struct CheckForUpdatesView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
                 .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
         )
     }
@@ -542,7 +542,7 @@ struct CheckForUpdatesView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
                 .shadow(color: .black.opacity(0.03), radius: 10, x: 0, y: 5)
         )
     }
@@ -695,7 +695,7 @@ struct FullReleaseNotesView: View {
             }
             .padding(.horizontal, 20)
             .padding(.vertical, 16)
-            .background(Color(UIColor.systemBackground))
+            .background(Color.clear)
             .overlay(Divider(), alignment: .bottom)
 
             ScrollView {
@@ -802,7 +802,7 @@ struct FullReleaseNotesView: View {
                                 .padding(12)
                                 .background(
                                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                        .fill(Color(UIColor.tertiarySystemBackground))
+                                        .fill(Color.clear)
                                 )
                             }
                         }
@@ -1251,7 +1251,7 @@ struct UpdateFinishedView: View {
             if #available(iOS 26.0, *) {
                 Color.clear
             } else {
-                Color(UIColor.systemGroupedBackground)
+                Color.clear
             }
         }
         .sheet(isPresented: $showShareSheet) {
@@ -1333,7 +1333,7 @@ struct UpdateFinishedView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
     
@@ -1384,7 +1384,7 @@ struct UpdateFinishedView: View {
                 .padding(.vertical, 14)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground))
+                        .fill(Color.clear)
                 )
                 .foregroundStyle(.primary)
             }
@@ -1638,7 +1638,7 @@ struct ModernMarkdownView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)
-                    .fill(Color(UIColor.tertiarySystemBackground))
+                    .fill(Color.clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8, style: .continuous)

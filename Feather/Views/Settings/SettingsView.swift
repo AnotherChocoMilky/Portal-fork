@@ -43,6 +43,7 @@ struct SettingsView: View {
                 if !isEnterprise { appSection }
                 if isDeveloperModeEnabled { developerSection }
             }
+            .scrollContentBackground(.hidden)
             .listStyle(.insetGrouped)
         }
         .fullScreenCover(isPresented: $_showAddSource) {

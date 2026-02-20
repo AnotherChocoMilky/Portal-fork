@@ -795,7 +795,7 @@ struct SFSymbolsPickerView: View {
             .padding(12)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
             
             // Custom Symbol Input
@@ -824,7 +824,7 @@ struct SFSymbolsPickerView: View {
             .padding(12)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
         }
         .padding(.horizontal, 16)
@@ -850,7 +850,7 @@ struct SFSymbolsPickerView: View {
                                 Capsule()
                                     .fill(viewModel.selectedCategory == category ? 
                                           Color.accentColor : 
-                                          Color(UIColor.tertiarySystemGroupedBackground))
+                                          Color.clear)
                             )
                             .foregroundStyle(viewModel.selectedCategory == category ? .white : .primary)
                     }
@@ -958,7 +958,7 @@ struct SFSymbolsPickerView: View {
                         .frame(width: 50, height: 50)
                         .background(
                             RoundedRectangle(cornerRadius: 10)
-                                .fill(Color(UIColor.tertiarySystemGroupedBackground))
+                                .fill(Color.clear)
                         )
                 }
                 
@@ -1016,7 +1016,7 @@ struct SFSymbolsPickerView: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
-        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .background(Color.clear)
         .transition(AnyTransition.move(edge: .bottom).combined(with: .opacity))
     }
     
@@ -1050,7 +1050,7 @@ struct SFSymbolsPickerView: View {
                             .frame(width: 56, height: 56)
                             .background(
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                    .fill(isSelected ? Color.accentColor.opacity(0.15) : Color(UIColor.tertiarySystemGroupedBackground))
+                                    .fill(isSelected ? Color.accentColor.opacity(0.15) : Color.clear)
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12, style: .continuous)

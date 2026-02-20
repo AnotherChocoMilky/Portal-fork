@@ -41,7 +41,7 @@ struct IPAExplorerSummaryHeader: View {
                 }
             }
             .padding()
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(Color.clear)
             .cornerRadius(12)
 
             HStack {

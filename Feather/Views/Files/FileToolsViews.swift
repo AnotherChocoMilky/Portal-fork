@@ -30,6 +30,7 @@ struct CreateJSONFileView: View {
                     Text(.localized("Content"))
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Create JSON File"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -82,6 +83,7 @@ struct CreateXMLFileView: View {
                     Text(.localized("Content"))
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Create XML File"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -154,6 +156,7 @@ struct URLImportView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Import from URL"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -252,6 +255,7 @@ struct ClipboardImportView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Import from Clipboard"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -310,7 +314,7 @@ struct AdvancedFileSearchView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(UIColor.systemGroupedBackground)
+                Color.clear
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -404,7 +408,7 @@ struct AdvancedFileSearchView: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(UIColor.tertiarySystemBackground))
+                    .fill(Color.clear)
             )
             
             VStack(spacing: 12) {
@@ -426,7 +430,7 @@ struct AdvancedFileSearchView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
                 .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.08), radius: 15, x: 0, y: 8)
         )
     }
@@ -455,7 +459,7 @@ struct AdvancedFileSearchView: View {
             .padding()
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(UIColor.tertiarySystemBackground))
+                    .fill(Color.clear)
             )
             
             HStack(spacing: 12) {
@@ -476,7 +480,7 @@ struct AdvancedFileSearchView: View {
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(UIColor.tertiarySystemBackground))
+                        .fill(Color.clear)
                 )
                 
                 HStack(spacing: 8) {
@@ -496,14 +500,14 @@ struct AdvancedFileSearchView: View {
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(UIColor.tertiarySystemBackground))
+                        .fill(Color.clear)
                 )
             }
         }
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
                 .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.08), radius: 15, x: 0, y: 8)
         )
     }
@@ -610,7 +614,7 @@ struct AdvancedFileSearchView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.tertiarySystemBackground))
+                    .fill(Color.clear)
             )
             
             if results.count > 50 {
@@ -623,7 +627,7 @@ struct AdvancedFileSearchView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
                 .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.08), radius: 15, x: 0, y: 8)
         )
     }
@@ -738,7 +742,7 @@ struct DiskUsageView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(UIColor.systemGroupedBackground)
+                Color.clear
                     .ignoresSafeArea()
                 
                 if isCalculating {
@@ -903,7 +907,7 @@ struct DiskUsageView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
                 .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.08), radius: 15, x: 0, y: 8)
         )
     }
@@ -927,13 +931,13 @@ struct DiskUsageView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.tertiarySystemBackground))
+                    .fill(Color.clear)
             )
         }
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
                 .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.08), radius: 15, x: 0, y: 8)
         )
     }
@@ -1081,6 +1085,7 @@ struct FileHasherView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Hash Calculator"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -1195,7 +1200,7 @@ struct Base64ToolView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(UIColor.systemGroupedBackground)
+                Color.clear
                     .ignoresSafeArea()
                 
                 ScrollView {
@@ -1290,7 +1295,7 @@ struct Base64ToolView: View {
                                     .fill(LinearGradient(colors: [modeOption.color, modeOption.color.opacity(0.8)], startPoint: .leading, endPoint: .trailing))
                             } else {
                                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                    .fill(Color(UIColor.tertiarySystemBackground))
+                                    .fill(Color.clear)
                             }
                         }
                     )
@@ -1302,7 +1307,7 @@ struct Base64ToolView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
                 .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.08), radius: 15, x: 0, y: 8)
         )
     }
@@ -1344,7 +1349,7 @@ struct Base64ToolView: View {
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(UIColor.tertiarySystemBackground))
+                        .fill(Color.clear)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -1373,7 +1378,7 @@ struct Base64ToolView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
                 .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.08), radius: 15, x: 0, y: 8)
         )
     }
@@ -1471,7 +1476,7 @@ struct Base64ToolView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(UIColor.tertiarySystemBackground))
+                        .fill(Color.clear)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -1497,7 +1502,7 @@ struct Base64ToolView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
                 .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.08), radius: 15, x: 0, y: 8)
         )
         .transition(AnyTransition.asymmetric(
@@ -1558,6 +1563,7 @@ struct SymlinkCreatorView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Create Symlink"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

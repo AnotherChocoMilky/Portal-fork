@@ -11,7 +11,7 @@ struct HexEditorView: View {
     var body: some View {
         NBNavigationView(.localized("Hex Editor"), displayMode: .inline) {
             ZStack {
-                Color(UIColor.systemGroupedBackground)
+                Color.clear
                     .ignoresSafeArea()
                 
                 VStack(spacing: 0) {
@@ -90,7 +90,7 @@ struct HexEditorView: View {
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(
                                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                        .fill(Color(UIColor.secondarySystemGroupedBackground))
+                                        .fill(Color.clear)
                                 )
                                 .padding()
                                 

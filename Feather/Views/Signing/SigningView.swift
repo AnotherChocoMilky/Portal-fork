@@ -62,10 +62,10 @@ struct SigningView: View {
 			.background(
 				LinearGradient(
 					colors: [
-						Color(UIColor.systemGroupedBackground),
-						Color(UIColor.systemGroupedBackground).opacity(0.95),
+						Color.clear,
+						Color.clear.opacity(0.95),
 						Color.accentColor.opacity(0.02),
-						Color(UIColor.systemGroupedBackground)
+						Color.clear
 					],
 					startPoint: .top,
 					endPoint: .bottom
@@ -76,10 +76,10 @@ struct SigningView: View {
 					// Gradient fade effect
 					LinearGradient(
 						colors: [
-							Color(UIColor.systemGroupedBackground).opacity(0),
-							Color(UIColor.systemGroupedBackground).opacity(0.8),
-							Color(UIColor.systemGroupedBackground).opacity(0.95),
-							Color(UIColor.systemGroupedBackground)
+							Color.clear.opacity(0),
+							Color.clear.opacity(0.8),
+							Color.clear.opacity(0.95),
+							Color.clear
 						],
 						startPoint: .top,
 						endPoint: .bottom
@@ -130,8 +130,8 @@ struct SigningView: View {
 					.background(
 						LinearGradient(
 							colors: [
-								Color(UIColor.systemGroupedBackground),
-								Color(UIColor.systemGroupedBackground).opacity(0.98)
+								Color.clear,
+								Color.clear.opacity(0.98)
 							],
 							startPoint: .top,
 							endPoint: .bottom
@@ -190,7 +190,7 @@ struct SigningView: View {
                             .font(.headline)
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(UIColor.systemBackground))
+                    .background(Color.clear)
                 }
             }
 			.sheet(isPresented: $_isAddingCertificatePresenting) {
@@ -306,8 +306,8 @@ extension SigningView {
 				.background(
 					LinearGradient(
 						colors: [
-							Color(UIColor.secondarySystemGroupedBackground),
-							Color(UIColor.secondarySystemGroupedBackground).opacity(0.95),
+							Color.clear,
+							Color.clear.opacity(0.95),
 							Color.accentColor.opacity(0.02)
 						],
 						startPoint: .topLeading,
@@ -349,7 +349,7 @@ extension SigningView {
 						_isVersionDialogPresenting = true
 					}
 				}
-				.background(Color(UIColor.secondarySystemGroupedBackground))
+				.background(Color.clear)
 				.clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 			}
 		}
@@ -374,8 +374,8 @@ extension SigningView {
 					.background(
 						LinearGradient(
 							colors: [
-								Color(UIColor.secondarySystemGroupedBackground),
-								Color(UIColor.secondarySystemGroupedBackground).opacity(0.95),
+								Color.clear,
+								Color.clear.opacity(0.95),
 								Color.accentColor.opacity(0.02)
 							],
 							startPoint: .topLeading,
@@ -457,8 +457,8 @@ extension SigningView {
 					.background(
 						LinearGradient(
 							colors: [
-								Color(UIColor.secondarySystemGroupedBackground),
-								Color(UIColor.secondarySystemGroupedBackground).opacity(0.95),
+								Color.clear,
+								Color.clear.opacity(0.95),
 								Color.orange.opacity(0.03)
 							],
 							startPoint: .topLeading,
@@ -585,6 +585,7 @@ extension SigningView {
 					options: $_temporaryOptions,
 					temporaryOptions: _optionsManager.options
 				)}
+            .scrollContentBackground(.hidden)
 				.navigationTitle(.localized("Properties"))
 			} label: {
 				HStack {
@@ -597,7 +598,7 @@ extension SigningView {
 				.padding()
             }
 			}
-			.background(Color(UIColor.secondarySystemGroupedBackground))
+			.background(Color.clear)
 			.clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 		}
 	}

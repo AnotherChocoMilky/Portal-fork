@@ -116,7 +116,7 @@ struct NearbyShareIntroView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(uiColor: .secondarySystemBackground))
+                .fill(Color.clear)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         )
         .padding(.horizontal, 24)
@@ -162,7 +162,7 @@ struct NearbyShareIntroView: View {
     var body: some View {
         ZStack {
             // Background
-            Color(uiColor: .systemBackground)
+            Color.clear
                 .ignoresSafeArea()
             
             ScrollView {
@@ -260,7 +260,7 @@ struct StepRow: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(uiColor: .secondarySystemBackground))
+                .fill(Color.clear)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         )
         .scaleEffect(isVisible ? 1.0 : 0.8)
@@ -406,7 +406,7 @@ struct NearbyShareIntroViewLegacy: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(uiColor: .secondarySystemBackground))
+                .fill(Color.clear)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         )
         .padding(.horizontal, 24)
@@ -452,7 +452,7 @@ struct NearbyShareIntroViewLegacy: View {
     var body: some View {
         ZStack {
             // Background
-            Color(uiColor: .systemBackground)
+            Color.clear
                 .ignoresSafeArea()
             
             ScrollView {
@@ -550,7 +550,7 @@ struct StepRowLegacy: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(uiColor: .secondarySystemBackground))
+                .fill(Color.clear)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         )
         .scaleEffect(isVisible ? 1.0 : 0.8)
@@ -672,7 +672,7 @@ struct InteractiveDemoSection: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(uiColor: .secondarySystemBackground))
+                .fill(Color.clear)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         )
         .animation(.easeInOut, value: selectedDemo)
@@ -940,7 +940,7 @@ struct SimplifiedTransferView: View {
         }
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(Color(uiColor: .secondarySystemBackground))
+                .fill(Color.clear)
                 .shadow(color: Color.black.opacity(0.05), radius: 8, x: 0, y: 4)
         )
         .onAppear {

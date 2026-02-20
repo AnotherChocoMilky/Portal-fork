@@ -48,6 +48,7 @@ struct ImageConverterView: View {
                     .disabled(isConverting)
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Image Converter"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

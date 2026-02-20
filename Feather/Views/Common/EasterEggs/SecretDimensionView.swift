@@ -35,7 +35,7 @@ struct SecretDimensionView: View {
                     SecretInfoRow(label: "LOCATION", value: "UNKNOWN")
                 }
                 .padding(25)
-                .background(.ultraThinMaterial)
+                .background(Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 25, style: .continuous))
                 .overlay(
                     RoundedRectangle(cornerRadius: 25, style: .continuous)

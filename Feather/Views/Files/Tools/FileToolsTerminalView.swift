@@ -112,7 +112,7 @@ struct FileToolsTerminalView: View {
                 }
             }
             .padding()
-            .background(Color(UIColor.secondarySystemBackground))
+            .background(Color.clear)
 
             // Command History / Suggestions bar
             if !viewModel.commandHistory.isEmpty {
@@ -134,7 +134,7 @@ struct FileToolsTerminalView: View {
                     .padding(.horizontal)
                     .padding(.vertical, 8)
                 }
-                .background(Color(UIColor.systemGroupedBackground))
+                .background(Color.clear)
             }
         }
     }

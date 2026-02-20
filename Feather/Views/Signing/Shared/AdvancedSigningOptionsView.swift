@@ -714,6 +714,7 @@ struct AdvancedDebugToolsView: View {
                 .tint(.green)
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Debug Tools")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -965,6 +966,7 @@ struct BinaryInspectorView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Binary Inspector")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -1071,6 +1073,7 @@ struct MachOAnalyzerView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Mach-O Analyzer")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { loadMachOInfo() }
@@ -1140,6 +1143,7 @@ struct DylibDependenciesView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Dylib Dependencies")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { loadDependencies() }
@@ -1204,6 +1208,7 @@ struct SecurityScanView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Security Scan")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { performScan() }
@@ -1283,6 +1288,7 @@ struct EntitlementAnalyzerView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Entitlement Analyzer")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { loadEntitlements() }
@@ -1356,6 +1362,7 @@ struct CodeSignatureView: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Code Signature")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear { loadSignatureInfo() }
@@ -1642,7 +1649,7 @@ struct InfoPlistEditorDebugView: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
         }
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(Color.clear)
     }
 
     // MARK: - Editor List View
@@ -1755,6 +1762,7 @@ struct InfoPlistEditorDebugView: View {
                 .tint(.green)
             }
         }
+            .scrollContentBackground(.hidden)
     }
 
     // MARK: - Raw Plist View
@@ -1787,7 +1795,7 @@ struct InfoPlistEditorDebugView: View {
             }
             .padding(.horizontal)
             .padding(.vertical, 8)
-            .background(Color(UIColor.tertiarySystemBackground))
+            .background(Color.clear)
 
             // Raw content editor
             ScrollView {
@@ -1889,6 +1897,7 @@ struct InfoPlistEditorDebugView: View {
                     Text("Suggestions")
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle("Add Entry")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -1968,6 +1977,7 @@ struct InfoPlistEditorDebugView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle("Edit Entry")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -2418,6 +2428,7 @@ struct EntitlementsDebugView: View {
                 Text("Quick Actions")
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle("Entitlements Editor")
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {
@@ -2430,6 +2441,7 @@ struct EntitlementsDebugView: View {
                         .autocapitalization(.none)
                     TextField("Value", text: $newValue)
                 }
+            .scrollContentBackground(.hidden)
                 .navigationTitle("Add Entitlement")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -2681,7 +2693,7 @@ struct ResourceModifierView: View {
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
-        .background(Color(UIColor.secondarySystemBackground))
+        .background(Color.clear)
     }
 
     // MARK: - Filter Bar
@@ -2748,7 +2760,7 @@ struct ResourceModifierView: View {
             .padding(.horizontal)
             .padding(.bottom, 4)
         }
-        .background(Color(UIColor.tertiarySystemBackground))
+        .background(Color.clear)
     }
 
     // MARK: - Loading View
@@ -2844,6 +2856,7 @@ struct ResourceModifierView: View {
                 Text("Quick Actions")
             }
         }
+            .scrollContentBackground(.hidden)
     }
 
     // MARK: - Helper Functions
@@ -3315,6 +3328,7 @@ struct ResourceDetailView: View {
                     Text("Actions")
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(resource.name)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -3446,6 +3460,7 @@ struct ResourceStatisticsView: View {
                     Text("Largest Resources")
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle("Statistics")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -3517,6 +3532,7 @@ struct SigningLogsDebugView: View {
                         .id(index)
                     }
                 }
+            .scrollContentBackground(.hidden)
                 .onChange(of: logs.count) { _ in
                     if autoScroll, let lastIndex = filteredLogs.indices.last {
                         withAnimation {

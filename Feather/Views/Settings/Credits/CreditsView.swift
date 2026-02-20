@@ -168,7 +168,7 @@ struct WSFLinkButton: View {
 					.foregroundStyle(.secondary.opacity(0.5))
 			}
 			.padding(12)
-			.background(Color(uiColor: .secondarySystemGroupedBackground))
+			.background(Color.clear)
 			.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 			.shadow(color: Color.black.opacity(0.03), radius: 4, x: 0, y: 2)
 		}
@@ -257,7 +257,7 @@ struct GitHubCreditCard: View {
 					.foregroundStyle(.secondary.opacity(0.5))
 			}
 			.padding(12)
-			.background(Color(uiColor: .secondarySystemGroupedBackground))
+			.background(Color.clear)
 			.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 			.overlay(
 				RoundedRectangle(cornerRadius: 16, style: .continuous)

@@ -162,7 +162,7 @@ struct SourceAppsView: View {
     private var backgroundGradient: some View {
         // Use a single solid color that matches the navigation bar area
         // to ensure seamless appearance from top to content
-        Color(UIColor.systemBackground)
+        Color.clear
             .ignoresSafeArea()
     }
     
@@ -254,7 +254,7 @@ struct SourceAppsView: View {
                 }
             }
         }
-        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .background(Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -502,7 +502,7 @@ struct ModernAppListCard: View {
     @ViewBuilder
     private var cardBackground: some View {
         RoundedRectangle(cornerRadius: 16, style: .continuous)
-            .fill(Color(UIColor.secondarySystemGroupedBackground))
+            .fill(Color.clear)
     }
     
     private func extractDominantColor(from url: URL) {
@@ -607,7 +607,7 @@ struct ModernAppGridCard: View {
         .frame(minHeight: 180)
         .background(
             RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 18, style: .continuous)

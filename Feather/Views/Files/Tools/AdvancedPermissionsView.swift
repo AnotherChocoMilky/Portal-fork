@@ -56,6 +56,7 @@ struct AdvancedPermissionsView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Advanced Permissions"))
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {

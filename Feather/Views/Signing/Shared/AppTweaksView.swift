@@ -66,8 +66,8 @@ struct AppTweaksView: View {
                 colors: [
                     Color.blue.opacity(0.08),
                     Color.purple.opacity(0.04),
-                    Color(UIColor.systemBackground).opacity(0.95),
-                    Color(UIColor.systemBackground)
+                    Color.clear.opacity(0.95),
+                    Color.clear
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -163,7 +163,7 @@ struct AppTweaksView: View {
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
         }
         .padding(.horizontal, 20)
@@ -235,7 +235,7 @@ struct AppTweaksView: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color(.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -277,7 +277,7 @@ struct AppTweaksView: View {
                     }
                     .background(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color(.secondarySystemGroupedBackground))
+                            .fill(Color.clear)
                     )
                     .overlay(
                         RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -319,7 +319,7 @@ struct AppTweaksView: View {
                             }
                         }
                         .padding(12)
-                        .background(Color(.secondarySystemGroupedBackground))
+                        .background(Color.clear)
                     }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
@@ -383,7 +383,7 @@ struct AppTweaksView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Color(.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 18, style: .continuous)
@@ -645,6 +645,7 @@ struct AddTweakUrlView: View {
                 }
                 .disabled(urlString.isEmpty || URL(string: urlString) == nil)
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle("Add From URL")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -673,7 +674,7 @@ struct ExtractTweaksView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
+                Color.clear.ignoresSafeArea()
 
                 VStack(spacing: 0) {
                     if isExtracting {
@@ -709,6 +710,7 @@ struct ExtractTweaksView: View {
                                 }
                             }
                         }
+            .scrollContentBackground(.hidden)
 
                         Button {
                             performExtract()

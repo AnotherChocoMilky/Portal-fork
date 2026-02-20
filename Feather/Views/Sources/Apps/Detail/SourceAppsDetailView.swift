@@ -40,7 +40,7 @@ struct SourceAppsDetailView: View {
     
     var body: some View {
         ZStack(alignment: .top) {
-            Color(UIColor.systemBackground)
+            Color.clear
                 .ignoresSafeArea()
 
             ScrollView(.vertical, showsIndicators: false) {
@@ -234,7 +234,7 @@ struct SourceAppsDetailView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
         }
     }
@@ -408,7 +408,7 @@ struct SourceAppsDetailView: View {
     
     private var iconPlaceholder: some View {
         RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous)
-            .fill(Color(UIColor.secondarySystemBackground))
+            .fill(Color.clear)
             .overlay(
                 Image(systemName: "app.fill")
                     .font(.system(size: 48))
@@ -486,7 +486,7 @@ struct SourceAppsDetailView: View {
         .padding(.vertical, 12)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
     
@@ -706,7 +706,7 @@ struct SourceAppsDetailView: View {
                     .padding(14)
                     .background(
                         RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color(UIColor.secondarySystemGroupedBackground))
+                            .fill(Color.clear)
                     )
                 }
                 .buttonStyle(.plain)
@@ -751,7 +751,7 @@ struct SourceAppsDetailView: View {
             .padding(16)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
         }
         .buttonStyle(.plain)
@@ -788,7 +788,7 @@ struct SourceAppsDetailView: View {
                 .padding(16)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground))
+                        .fill(Color.clear)
                 )
             }
             .buttonStyle(.plain)
@@ -866,7 +866,7 @@ struct ModernInfoCard: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .fill(Color.clear)
         )
     }
 }

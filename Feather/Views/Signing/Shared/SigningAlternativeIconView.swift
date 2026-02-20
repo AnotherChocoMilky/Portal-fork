@@ -71,6 +71,7 @@ struct SigningAlternativeIconView: View {
 					}
 				}
 			}
+            .scrollContentBackground(.hidden)
 			.onAppear(perform: _loadAlternateIcons)
 			.toolbar {
 				if isModifing {

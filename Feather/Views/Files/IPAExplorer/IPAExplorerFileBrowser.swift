@@ -25,6 +25,7 @@ struct IPAExplorerFileBrowser: View {
                 }
             }
         }
+            .scrollContentBackground(.hidden)
         .navigationTitle(currentURL == rootURL ? .localized("Payload") : currentURL.lastPathComponent)
         .onAppear {
             loadItems()

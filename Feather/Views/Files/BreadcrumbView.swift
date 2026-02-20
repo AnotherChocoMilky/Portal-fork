@@ -55,7 +55,7 @@ struct BreadcrumbView: View {
                             RoundedRectangle(cornerRadius: 8, style: .continuous)
                                 .fill(index == pathComponents.count - 1 
                                       ? Color.accentColor.opacity(0.12)
-                                      : Color(UIColor.secondarySystemGroupedBackground))
+                                      : Color.clear)
                         )
                     }
                     .buttonStyle(.plain)
@@ -71,7 +71,7 @@ struct BreadcrumbView: View {
             .padding(.horizontal)
             .padding(.vertical, 8)
         }
-        .background(Color(UIColor.systemGroupedBackground))
+        .background(Color.clear)
     }
 }
 

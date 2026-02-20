@@ -38,7 +38,7 @@ struct CertificatePasswordChangeView: View {
                 processButton
                     .padding(20)
             }
-            .background(Color(UIColor.systemGroupedBackground))
+            .background(Color.clear)
             .navigationTitle("Change P12 Password")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -107,7 +107,7 @@ struct CertificatePasswordChangeView: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .fill(Color.clear)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -135,7 +135,7 @@ struct CertificatePasswordChangeView: View {
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground))
+                        .fill(Color.clear)
                 )
             }
 
@@ -155,7 +155,7 @@ struct CertificatePasswordChangeView: View {
                 .padding(.vertical, 12)
                 .background(
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemGroupedBackground))
+                        .fill(Color.clear)
                 )
             }
         }

@@ -127,7 +127,7 @@ struct AppearanceTintColorView: View {
 			}
 			.padding(.horizontal, 16)
 			.padding(.vertical, 14)
-			.background(.ultraThinMaterial)
+			.background(Color.clear)
 			.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 			.overlay(
 				RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -241,7 +241,7 @@ struct ThemeColorPickerSheet: View {
 						.fontWeight(.bold)
 				}
 			}
-			.background(Color(UIColor.systemGroupedBackground))
+			.background(Color.clear)
 			.sheet(isPresented: $showCustomPicker) {
 				CustomColorPickerView(
 					colorType: $colorType,
@@ -354,6 +354,7 @@ struct CustomColorPickerView: View {
 				}
 				.listRowBackground(Color.clear)
 			}
+            .scrollContentBackground(.hidden)
 			.navigationTitle("Advanced Color")
 			.navigationBarTitleDisplayMode(.inline)
 			.toolbar {

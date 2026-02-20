@@ -179,7 +179,7 @@ struct AppearanceView: View {
             VStack(spacing: 0) {
                 content()
             }
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(Color.clear)
             .cornerRadius(24)
             .shadow(color: .black.opacity(0.03), radius: 10, x: 0, y: 5)
 

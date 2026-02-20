@@ -310,7 +310,7 @@ struct ColorCustomizationView: View {
                 Divider().padding(.leading, 44)
                 colorPickerRow(title: "Error", color: $errorColor, icon: "xmark.circle")
             }
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(Color.clear)
             .cornerRadius(16)
         }
     }
@@ -465,7 +465,7 @@ struct ColorCustomizationView: View {
                 }
             }
             .padding()
-            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .background(Color.clear)
             .cornerRadius(16)
         }
     }
@@ -650,7 +650,7 @@ struct ThemeLibraryView: View {
                         .fontWeight(.bold)
                 }
             }
-            .background(Color(UIColor.systemGroupedBackground))
+            .background(Color.clear)
         }
     }
 }

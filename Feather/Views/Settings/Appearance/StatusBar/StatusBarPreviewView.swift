@@ -83,7 +83,7 @@ struct StatusBarPreviewView: View {
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(Color(uiColor: .secondarySystemGroupedBackground))
+                    .background(Color.clear)
                     .cornerRadius(8)
                     .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
                 }
@@ -121,7 +121,7 @@ struct StatusBarPreviewView: View {
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
-                    .background(Color(uiColor: .secondarySystemGroupedBackground))
+                    .background(Color.clear)
                     .cornerRadius(8)
                     .shadow(color: .black.opacity(0.05), radius: 2, x: 0, y: 1)
                 }
@@ -149,11 +149,11 @@ struct StatusBarPreviewView: View {
                     
                     // iPhone content area
                     Rectangle()
-                        .fill(Color(uiColor: .secondarySystemBackground).opacity(0.5))
+                        .fill(Color.clear.opacity(0.5))
                     
                     // Bottom safe area
                     Rectangle()
-                        .fill(Color(uiColor: .systemBackground))
+                        .fill(Color.clear)
                         .frame(height: 30)
                 }
                 .frame(width: viewModel.selectedDeviceType.dimensions.width - 20, 
@@ -171,7 +171,7 @@ struct StatusBarPreviewView: View {
         }
         .padding()
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color(uiColor: .systemGroupedBackground))
+        .background(Color.clear)
         .onAppear {
             BatteryMonitoringService.shared.startMonitoring()
             updateBatteryInfo()
@@ -189,7 +189,7 @@ struct StatusBarPreviewView: View {
     private var statusBarContent: some View {
         ZStack(alignment: selectedAlignment) {
             // Notch background
-            Color(uiColor: .systemBackground)
+            Color.clear
                 .frame(height: 50)
             
             // Background with shadow for better visibility

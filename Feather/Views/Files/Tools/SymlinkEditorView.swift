@@ -27,6 +27,7 @@ struct SymlinkEditorView: View {
                     }
                 }
             }
+            .scrollContentBackground(.hidden)
             .navigationTitle(.localized("Symlink Editor"))
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {

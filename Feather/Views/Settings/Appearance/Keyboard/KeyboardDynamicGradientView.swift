@@ -39,7 +39,7 @@ struct KeyboardDynamicGradientView: View {
                                 controlRow(title: "Pulse", value: $manager.dynamicGradientPulseIntensity, range: 0.0...2.0, icon: "waveform.path.ecg", subtitle: "Intensity of the breathing scale effect.")
                             }
                             .padding()
-                            .background(.ultraThinMaterial)
+                            .background(Color.clear)
                             .clipShape(RoundedRectangle(cornerRadius: 20))
 
                             // Appearance & Vibrancy
@@ -53,7 +53,7 @@ struct KeyboardDynamicGradientView: View {
                                 controlRow(title: "Noise", value: $manager.dynamicGradientNoiseOpacity, range: 0.0...1.0, icon: "square.dotted", subtitle: "Add a grainy texture overlay for a vintage look.")
                             }
                             .padding()
-                            .background(.ultraThinMaterial)
+                            .background(Color.clear)
                             .clipShape(RoundedRectangle(cornerRadius: 20))
 
                             // Mesh Controls
@@ -70,7 +70,7 @@ struct KeyboardDynamicGradientView: View {
                                 }
                             }
                             .padding()
-                            .background(.ultraThinMaterial)
+                            .background(Color.clear)
                             .clipShape(RoundedRectangle(cornerRadius: 20))
 
                             // Direction Control
@@ -87,7 +87,7 @@ struct KeyboardDynamicGradientView: View {
                                 KeyboardDirectionPicker(direction: $manager.dynamicGradientDirection, color: .purple)
                             }
                             .padding()
-                            .background(.ultraThinMaterial)
+                            .background(Color.clear)
                             .clipShape(RoundedRectangle(cornerRadius: 20))
 
                             // Color Selection
@@ -121,7 +121,7 @@ struct KeyboardDynamicGradientView: View {
                                 .padding(.top, 8)
                             }
                             .padding()
-                            .background(.ultraThinMaterial)
+                            .background(Color.clear)
                             .clipShape(RoundedRectangle(cornerRadius: 20))
                         }
                         .padding(.horizontal)

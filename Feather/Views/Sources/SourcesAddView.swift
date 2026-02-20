@@ -71,7 +71,7 @@ struct SourcesAddView: View {
 			ScrollView {
 				_mainContent
 			}
-			.background(Color(.systemGroupedBackground))
+			.background(Color.clear)
 			.toolbar {
 				_toolbarContent
 			}
@@ -259,7 +259,7 @@ struct SourcesAddView: View {
 				.padding(12)
 				.background(
 					RoundedRectangle(cornerRadius: 20, style: .continuous)
-						.fill(Color(UIColor.secondarySystemGroupedBackground))
+						.fill(Color.clear)
 						.shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
 				)
 				.overlay(
@@ -409,7 +409,7 @@ struct SourcesAddView: View {
 		.padding(12)
 		.background(
 			RoundedRectangle(cornerRadius: 20, style: .continuous)
-				.fill(Color(UIColor.secondarySystemGroupedBackground))
+				.fill(Color.clear)
 				.shadow(color: .black.opacity(0.03), radius: 10, x: 0, y: 5)
 		)
 		.overlay(
@@ -433,7 +433,7 @@ struct SourcesAddView: View {
 				}
 				.padding()
 				.frame(maxWidth: .infinity)
-				.background(Color(UIColor.secondarySystemGroupedBackground))
+				.background(Color.clear)
 				.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 				.padding(.horizontal)
 			}
@@ -631,7 +631,7 @@ struct SourcesAddView: View {
 		}
 		.background(
 			RoundedRectangle(cornerRadius: 24, style: .continuous)
-				.fill(Color(UIColor.secondarySystemGroupedBackground))
+				.fill(Color.clear)
 				.shadow(color: .black.opacity(0.03), radius: 15, x: 0, y: 5)
 		)
 		.overlay(
@@ -689,7 +689,7 @@ struct PlainGroupBoxStyle: GroupBoxStyle {
             configuration.label
             configuration.content
                 .padding()
-                .background(Color(UIColor.secondarySystemGroupedBackground))
+                .background(Color.clear)
                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         }
     }
@@ -922,7 +922,7 @@ struct PortalExportView: View {
 				}
 				.padding(.vertical, 20)
 			}
-			.background(Color(.systemGroupedBackground))
+			.background(Color.clear)
 			.navigationTitle(.localized("Portal Transfer"))
 			.navigationBarTitleDisplayMode(.inline)
 			.toolbar {
@@ -984,7 +984,7 @@ struct PortalExportView: View {
 							.textSelection(.enabled)
 							.padding(12)
 							.frame(maxWidth: .infinity, alignment: .leading)
-							.background(.ultraThinMaterial)
+							.background(Color.clear)
 							.cornerRadius(12)
 					} else {
 						if #available(iOS 17.0, *) {
@@ -1035,7 +1035,7 @@ struct PortalExportView: View {
 						.font(.system(.caption, design: .monospaced))
 						.frame(minHeight: 120)
 						.padding(8)
-						.background(.ultraThinMaterial)
+						.background(Color.clear)
 						.cornerRadius(12)
 				}
 			}
@@ -1127,7 +1127,7 @@ struct ModernGroupBoxStyle: GroupBoxStyle {
 			configuration.content
 		}
 		.padding()
-		.background(.ultraThinMaterial)
+		.background(Color.clear)
 		.cornerRadius(16)
 	}
 }
