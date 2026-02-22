@@ -7,6 +7,7 @@ import OSLog
 // MARK: - Modern Compact Certificate Add View
 struct CertificatesAddView: View {
     @Environment(\.dismiss) private var dismiss
+    @Namespace private var _namespace
     @AppStorage("feature_usePortalCert") private var usePortalCert = false
     
     @State private var _selectedMethod = 0
@@ -28,49 +29,52 @@ struct CertificatesAddView: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    Picker("", selection: $_selectedMethod) {
-                        Label("Manual", systemImage: "hand.tap.fill").tag(0)
-                        Label("Portal Cert", systemImage: "shippingbox.fill").tag(1)
-                            .disabled(!usePortalCert)
-                        Label("ZIP File", systemImage: "doc.zipper").tag(2)
+            List {
+                Section {
+                    HStack(spacing: 0) {
+                        methodButton(title: "Manual", icon: "hand.tap.fill", tag: 0)
+                        methodButton(title: "Portal Cert", icon: "shippingbox.fill", tag: 1, disabled: !usePortalCert)
+                        methodButton(title: "ZIP File", icon: "doc.zipper", tag: 2)
                     }
-                    .pickerStyle(.segmented)
-                    .onChange(of: _selectedMethod) { newValue in
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                            if newValue == 1 && !usePortalCert {
-                                _selectedMethod = 0
-                            }
+                    .padding(4)
+                    .background(Color(UIColor.secondarySystemFill).opacity(0.5))
+                    .clipShape(Capsule())
+                }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 0, leading: 10, bottom: 0, trailing: 10))
+                .onChange(of: _selectedMethod) { newValue in
+                    withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                        if newValue == 1 && !usePortalCert {
+                            _selectedMethod = 0
                         }
                     }
+                }
 
-                    Group {
-                        if _selectedMethod == 0 {
-                            manualFilesSection
-                                .transition(.move(edge: .leading).combined(with: .opacity))
-                        } else if _selectedMethod == 1 {
-                            portalCertSection
-                                .transition(.scale(scale: 0.95).combined(with: .opacity))
-                        } else {
-                            zipSection
-                                .transition(.move(edge: .trailing).combined(with: .opacity))
-                        }
+                Group {
+                    if _selectedMethod == 0 {
+                        manualFilesSection
+                    } else if _selectedMethod == 1 {
+                        portalCertSection
+                    } else {
+                        zipSection
                     }
+                }
 
-                    VStack(spacing: 16) {
-                        passwordFieldSection
-                        nicknameFieldSection
-                        defaultSection
-                    }
+                Section {
+                    passwordFieldSection
+                    nicknameFieldSection
+                    defaultSection
+                } footer: {
+                    Text("Default certificate will be automatically selected when signing apps")
+                }
 
-                    Spacer(minLength: 20)
-
+                Section {
                     saveButton
                 }
-                .padding(20)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10))
             }
-            .background(Color.clear)
+            .listStyle(.insetGrouped)
             .navigationTitle("Add Certificate")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -97,44 +101,25 @@ struct CertificatesAddView: View {
     
     // MARK: - Sections
     private var manualFilesSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Files")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .textCase(.uppercase)
-                .padding(.horizontal, 4)
-
-            VStack(spacing: 0) {
-                fileRow(title: "Certificate (.p12)", subtitle: _p12URL?.lastPathComponent, icon: "key.fill") {
-                    _isImportingP12Presenting = true
-                }
-
-                Divider()
-                    .padding(.leading, 44)
-
-                fileRow(title: "Provisioning Profile", subtitle: _provisionURL?.lastPathComponent, icon: "doc.badge.gearshape.fill") {
-                    _isImportingMobileProvisionPresenting = true
-                }
+        Section {
+            fileRow(title: "Certificate (.p12)", subtitle: _p12URL?.lastPathComponent, icon: "key.fill") {
+                _isImportingP12Presenting = true
             }
-            .background(Color.clear)
-            .cornerRadius(12)
+
+            fileRow(title: "Provisioning Profile", subtitle: _provisionURL?.lastPathComponent, icon: "doc.badge.gearshape.fill") {
+                _isImportingMobileProvisionPresenting = true
+            }
+        } header: {
+            Text("Files")
         }
     }
     
     private var portalCertSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Portal Cert")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .textCase(.uppercase)
-                .padding(.horizontal, 4)
-            
+        Section {
             if usePortalCert {
                 fileRow(title: "Import .portalcert", subtitle: _p12URL != nil ? "Certificate Loaded" : nil, icon: "shippingbox.fill") {
                     _isImportingPortalCertPresenting = true
                 }
-                .background(Color.clear)
-                .cornerRadius(12)
             } else {
                 VStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -151,84 +136,52 @@ struct CertificatesAddView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 30)
-                .background(Color.clear)
-                .cornerRadius(12)
             }
+        } header: {
+            Text("Portal Cert")
         }
     }
     
     private var zipSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("ZIP File")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .textCase(.uppercase)
-                .padding(.horizontal, 4)
-
+        Section {
             fileRow(title: "Import ZIP", subtitle: _p12URL != nil ? "Certificate Loaded" : nil, icon: "doc.zipper") {
                 _isImportingZipPresenting = true
             }
-            .background(Color.clear)
-            .cornerRadius(12)
+        } header: {
+            Text("ZIP File")
         }
     }
     
     private var passwordFieldSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 4) {
-                Image(systemName: "lock.fill")
-                    .font(.caption)
-                Text("Password")
-                    .font(.subheadline)
-            }
-            .foregroundColor(.secondary)
-            .padding(.horizontal, 4)
+            Label("Password", systemImage: "lock.fill")
+                .font(.caption.bold())
+                .foregroundColor(.secondary)
 
             SecureField("Leave blank if no password required.", text: $_p12Password)
-                .padding()
-                .background(Color.clear)
-                .cornerRadius(12)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
         }
+        .padding(.vertical, 4)
     }
 
     private var nicknameFieldSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 4) {
-                Image(systemName: "tag.fill")
-                    .font(.caption)
-                Text("Nickname (Optional)")
-                    .font(.subheadline)
-            }
-            .foregroundColor(.secondary)
-            .padding(.horizontal, 4)
+            Label("Nickname (Optional)", systemImage: "tag.fill")
+                .font(.caption.bold())
+                .foregroundColor(.secondary)
 
             TextField("Nickname (Optional)", text: $_certificateName)
-                .padding()
-                .background(Color.clear)
-                .cornerRadius(12)
         }
+        .padding(.vertical, 4)
     }
 
     private var defaultSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: "star.fill")
-                    .foregroundColor(.orange)
-                Text("Set As Default")
-                    .font(.body)
-                Spacer()
-                Toggle("", isOn: $_isDefault)
-                    .labelsHidden()
-            }
-            .padding()
-            .background(Color.clear)
-            .cornerRadius(12)
-
-            Text("Default certificate will be automatically selected when signing apps")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .padding(.horizontal, 4)
+        Toggle(isOn: $_isDefault) {
+            Label("Set As Default", systemImage: "star.fill")
+                .foregroundColor(.primary)
         }
+        .tint(.accentColor)
     }
     
     private var saveButton: some View {
@@ -242,6 +195,7 @@ struct CertificatesAddView: View {
                         .tint(.white)
                 } else {
                     Image(systemName: "checkmark.circle.fill")
+                        .pulseEffect(_isSaving)
                 }
                 Text(_isSaving ? "Saving..." : "Save Certificate")
                     .fontWeight(.semibold)
@@ -254,17 +208,47 @@ struct CertificatesAddView: View {
     }
 
     // MARK: - Helper Views
+    private func methodButton(title: String, icon: String, tag: Int, disabled: Bool = false) -> some View {
+        let isSelected = _selectedMethod == tag
+        return Button {
+            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                _selectedMethod = tag
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: icon)
+                    .font(.system(size: 12))
+                Text(title)
+                    .font(.system(size: 12, weight: isSelected ? .bold : .medium))
+            }
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .foregroundStyle(isSelected ? .primary : .secondary)
+            .background {
+                if isSelected {
+                    Capsule()
+                        .fill(Color(UIColor.secondarySystemGroupedBackground))
+                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                        .matchedGeometryEffect(id: "methodBackground", in: _namespace)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(disabled)
+        .opacity(disabled ? 0.5 : 1.0)
+    }
+
     private func fileRow(title: String, subtitle: String?, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
+            HStack(spacing: 16) {
                 Image(systemName: icon)
-                    .font(.system(size: 18))
-                    .frame(width: 24)
+                    .font(.system(size: 20))
+                    .frame(width: 30)
                     .foregroundColor(.accentColor)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.body)
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.primary)
 
                     if let subtitle = subtitle {
@@ -278,11 +262,11 @@ struct CertificatesAddView: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 14, weight: .bold))
                     .foregroundColor(Color(UIColor.tertiaryLabel))
             }
-            .padding()
         }
+        .foregroundStyle(.primary)
     }
 
     // MARK: - Handle Portal Cert Import

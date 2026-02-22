@@ -388,41 +388,39 @@ struct LibraryView: View {
 
 // MARK: - Extension: View Components
 extension LibraryView {
-    // MARK: - Simple Filter Chips
+    // MARK: - Modern Filter Chips
     private var filterChips: some View {
-        HStack(spacing: 8) {
-            ForEach(FilterMode.allCases, id: \.self) { mode in
-                let isSelected = _filterMode == mode
-                let strokeColor: Color = {
-                    switch mode {
-                    case .all: return Color.accentColor
-                    case .unsigned: return .orange
-                    case .signed: return .green
-                    }
-                }()
+        HStack(spacing: 12) {
+            HStack(spacing: 0) {
+                ForEach(FilterMode.allCases, id: \.self) { mode in
+                    let isSelected = _filterMode == mode
 
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        _filterMode = mode
-                    }
-                    HapticsManager.shared.softImpact()
-                } label: {
-                    Text(mode.rawValue)
-                        .font(.system(size: 14, weight: isSelected ? .bold : .medium))
-                        .foregroundStyle(isSelected ? strokeColor : .secondary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background {
-                            if isSelected {
-                                Capsule()
-                                    .stroke(strokeColor, lineWidth: 1.5)
-                                    .matchedGeometryEffect(id: "activeFilter", in: _namespace)
-                            }
+                    Button {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.75)) {
+                            _filterMode = mode
                         }
-                        .contentShape(Capsule())
+                        HapticsManager.shared.softImpact()
+                    } label: {
+                        Text(mode.rawValue)
+                            .font(.system(size: 13, weight: isSelected ? .bold : .medium, design: .rounded))
+                            .foregroundStyle(isSelected ? .primary : .secondary)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background {
+                                if isSelected {
+                                    Capsule()
+                                        .fill(Color(UIColor.secondarySystemGroupedBackground))
+                                        .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+                                        .matchedGeometryEffect(id: "activeFilter", in: _namespace)
+                                }
+                            }
+                    }
+                    .buttonStyle(.plain)
                 }
-
             }
+            .padding(4)
+            .background(Color(UIColor.secondarySystemFill).opacity(0.5))
+            .clipShape(Capsule())
             
             Spacer()
             
@@ -436,11 +434,10 @@ extension LibraryView {
                     }
                     HapticsManager.shared.softImpact()
                 } label: {
-                    Text(_editMode == .active ? "Done" : "Edit")
-                        .font(.system(size: 15, weight: .bold))
+                    Image(systemName: _editMode == .active ? "checkmark.circle.fill" : "line.3.horizontal.decrease.circle")
+                        .font(.system(size: 22))
                         .foregroundStyle(Color.accentColor)
                 }
-
             }
         }
     }
@@ -665,10 +662,7 @@ struct LibraryAppRow: View {
                     Image(systemName: app.isSigned ? "arrow.down.circle.fill" : "signature")
                         .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(app.isSigned ? Color.green : Color.accentColor)
-                        .padding(8)
-                        .background(app.isSigned ? Color.green.opacity(0.1) : Color.accentColor.opacity(0.1))
-                        .clipShape(Circle())
-                        .contentShape(Circle())
+                        .contentShape(Rectangle())
                 }
 
             }

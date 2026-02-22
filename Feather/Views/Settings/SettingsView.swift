@@ -59,11 +59,6 @@ struct SettingsView: View {
         } message: {
             Text(String.localized("Developer Mode provides advanced debugging tools for app developers. This is NOT recommended for regular users as it may cause instability and crashes. Use at your own risk."))
         }
-        .onChange(of: saveDataToDevice) { newValue in
-            if newValue {
-                ToastManager.shared.show("💾 Your data is now safe with me...", type: .success)
-            }
-        }
         .onChange(of: greetingsName) { newValue in
             if newValue == "42" {
                 ToastManager.shared.show("🌌 The meaning of life, the universe, and everything.", type: .info)
@@ -185,15 +180,20 @@ struct SettingsView: View {
     private var saveDataSection: some View {
         Section {
             Toggle(isOn: $saveDataToDevice) {
-                SettingsRowContent(icon: "person.text.rectangle.fill", title: String.localized("Save Data To Device"), color: .accentColor)
-            }
-            .onChange(of: saveDataToDevice) { newValue in
-                if newValue {
-                    ToastManager.shared.show("💾 Your data is now safe with me...", type: .success)
+                HStack(spacing: 8) {
+                    SettingsRowContent(icon: "person.text.rectangle.fill", title: String.localized("Save Data To Device"), color: .accentColor)
+
+                    Text("BETA")
+                        .font(.system(size: 8, weight: .bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.blue)
+                        .clipShape(Capsule())
                 }
             }
         } footer: {
-            Text(.localized("Generates a unique ID on your device to recover your saved data even if you change the app's Bundle ID."))
+            Text(.localized("Generates a unique persistent ID on your device to recover your saved data and certificates even after app reinstallation or Bundle ID changes."))
         }
     }
 
