@@ -9,9 +9,17 @@ final class SaveDeviceStorage: ObservableObject {
         didSet {
             if isEnabled {
                 ensureDeviceID()
-                migrateData(toAppGroup: true)
+                if migrateData(toAppGroup: true) {
+                    ToastManager.shared.show("💾 Data migrated to App Group successfully!", type: .success)
+                } else {
+                    ToastManager.shared.show("⚠️ Migration to App Group failed. Some data might be missing.", type: .error)
+                }
             } else {
-                migrateData(toAppGroup: false)
+                if migrateData(toAppGroup: false) {
+                    ToastManager.shared.show("📦 Data restored to local storage.", type: .info)
+                } else {
+                    ToastManager.shared.show("⚠️ Restoring data to local storage failed.", type: .error)
+                }
             }
         }
     }
@@ -44,14 +52,16 @@ final class SaveDeviceStorage: ObservableObject {
     }
 
     /// Migrates data between local container and App Group
-    private func migrateData(toAppGroup: Bool) {
+    @discardableResult
+    internal func migrateData(toAppGroup: Bool) -> Bool {
         let fileManager = FileManager.default
         let localDocuments = URL.documentsDirectory
         let appGroupID = Storage.appGroupID
+        var success = true
 
         guard let groupContainer = fileManager.containerURL(forSecurityApplicationGroupIdentifier: appGroupID) else {
             AppLogManager.shared.error("App Group container not found during migration", category: "Storage")
-            return
+            return false
         }
 
         let groupDocuments = groupContainer.appendingPathComponent("Documents", isDirectory: true)
@@ -74,6 +84,7 @@ final class SaveDeviceStorage: ObservableObject {
             AppLogManager.shared.success("Migrated documents to \(toAppGroup ? "App Group" : "Local")", category: "Storage")
         } catch {
             AppLogManager.shared.error("Failed to migrate documents: \(error.localizedDescription)", category: "Storage")
+            success = false
         }
 
         // Migrate Core Data
@@ -96,9 +107,12 @@ final class SaveDeviceStorage: ObservableObject {
                     AppLogManager.shared.success("Migrated \(dbName).\(ext) to \(toAppGroup ? "App Group" : "Local")", category: "Storage")
                 } catch {
                     AppLogManager.shared.error("Failed to migrate \(dbName).\(ext): \(error.localizedDescription)", category: "Storage")
+                    success = false
                 }
             }
         }
+
+        return success
     }
 
     /// Retrieves the unique device ID from the storage

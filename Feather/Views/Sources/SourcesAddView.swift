@@ -67,11 +67,13 @@ struct SourcesAddView: View {
 	
 	// MARK: Body
 	var body: some View {
-		NBNavigationView(.localized("Add Source"), displayMode: .inline) {
-			ScrollView {
+		NavigationStack {
+			List {
 				_mainContent
 			}
-			.background(Color.clear)
+			.listStyle(.insetGrouped)
+			.navigationTitle(.localized("Add Source"))
+			.navigationBarTitleDisplayMode(.inline)
 			.toolbar {
 				_toolbarContent
 			}
@@ -88,29 +90,24 @@ struct SourcesAddView: View {
 	// MARK: - Main Content
 	@ViewBuilder
 	private var _mainContent: some View {
-		VStack(spacing: 28) {
-			// Import Results Section (shown after bulk import)
-			if _showImportResults {
-				_importResultsSection()
-					.transition(.move(edge: .top).combined(with: .opacity))
-			}
-			
-			// Regular UI when not showing import results
-			if !_showImportResults {
-				_sourceURLSection
+		// Import Results Section (shown after bulk import)
+		if _showImportResults {
+			_importResultsSection()
+		}
 
-				if !_isExportMode {
-					_featuredSourcesSection
-				}
-			}
-			
-			// Export mode UI
-			if _isExportMode {
-				_exportSelectionSection()
-					.transition(.move(edge: .bottom).combined(with: .opacity))
+		// Regular UI when not showing import results
+		if !_showImportResults {
+			_sourceURLSection
+
+			if !_isExportMode {
+				_featuredSourcesSection
 			}
 		}
-		.padding(.vertical, 20)
+
+		// Export mode UI
+		if _isExportMode {
+			_exportSelectionSection()
+		}
 	}
 	
 	// MARK: - Toolbar Content
@@ -216,29 +213,15 @@ struct SourcesAddView: View {
 	// MARK: - Source URL Section
 	@ViewBuilder
 	private var _sourceURLSection: some View {
-		VStack(alignment: .leading, spacing: 16) {
-			VStack(alignment: .leading, spacing: 4) {
-				Text(.localized("Add Source"))
-					.font(.system(.title2, design: .rounded).bold())
-					.foregroundStyle(.primary)
-
-				Text(.localized("Enter a repository URL to discover new apps"))
-					.font(.subheadline)
-					.foregroundStyle(.secondary)
-			}
-			.padding(.horizontal, 4)
-			
+		Section {
 			VStack(spacing: 16) {
 				HStack(spacing: 12) {
-					ZStack {
-						Circle()
-							.fill(Color.accentColor.opacity(0.12))
-							.frame(width: 44, height: 44)
-
-						Image(systemName: "link")
-							.font(.system(size: 18, weight: .bold))
-							.foregroundStyle(Color.accentColor)
-					}
+					Image(systemName: "link")
+						.font(.system(size: 18, weight: .bold))
+						.foregroundStyle(Color.accentColor)
+						.frame(width: 44, height: 44)
+						.background(Color.accentColor.opacity(0.12))
+						.clipShape(Circle())
 					
 					TextField(.localized("Repository URL"), text: $_sourceURL)
 						.keyboardType(.URL)
@@ -256,16 +239,7 @@ struct SourcesAddView: View {
 						.buttonStyle(.plain)
 					}
 				}
-				.padding(12)
-				.background(
-					RoundedRectangle(cornerRadius: 20, style: .continuous)
-						.fill(Color.clear)
-						.shadow(color: .black.opacity(0.04), radius: 12, x: 0, y: 6)
-				)
-				.overlay(
-					RoundedRectangle(cornerRadius: 20, style: .continuous)
-						.stroke(Color.accentColor.opacity(0.1), lineWidth: 1)
-				)
+				.padding(4)
 			}
 			
 			VStack(alignment: .leading, spacing: 6) {
@@ -274,9 +248,9 @@ struct SourcesAddView: View {
 			}
 			.font(.system(size: 12, weight: .semibold, design: .rounded))
 			.foregroundStyle(.secondary.opacity(0.8))
-			.padding(.horizontal, 8)
+		} header: {
+			Text(.localized("Add Source"))
 		}
-		.padding(.horizontal)
 	}
 
 	@ViewBuilder
@@ -310,38 +284,31 @@ struct SourcesAddView: View {
 	// MARK: - Loading Featured Section
 	@ViewBuilder
 	private var _loadingFeaturedSection: some View {
-		VStack(alignment: .leading, spacing: 16) {
-			Text(.localized("Featured"))
-				.font(.headline)
-				.foregroundStyle(.primary)
-				.padding(.horizontal, 4)
-			
-			VStack(spacing: 0) {
-				HStack {
-					Spacer()
-					VStack(spacing: 12) {
-						ProgressView()
-							.scaleEffect(1.2)
-						Text(.localized("Loading Featured Sources"))
-							.font(.subheadline)
-							.foregroundStyle(.secondary)
-					}
-					.padding(.vertical, 20)
-					Spacer()
-				}
-				.padding()
+		Section {
+			VStack(spacing: 12) {
+				ProgressView()
+					.scaleEffect(1.2)
+				Text(.localized("Loading Featured Sources"))
+					.font(.subheadline)
+					.foregroundStyle(.secondary)
 			}
+			.frame(maxWidth: .infinity)
+			.padding(.vertical, 40)
+		} header: {
+			Text(.localized("Featured"))
 		}
-		.padding(.horizontal)
 	}
 	
 	// MARK: - Featured Sources List
 	@ViewBuilder
 	private var _featuredSourcesList: some View {
-		VStack(alignment: .leading, spacing: 16) {
+		Section {
+			ForEach(_filteredRecommendedSourcesData, id: \.url) { (url, source) in
+				_featuredSourceRow(url: url, source: source)
+			}
+		} header: {
 			HStack {
 				Text(.localized("Featured Sources"))
-					.font(.system(.title3, design: .rounded).bold())
 				Spacer()
 				Text(.localized("Recommended"))
 					.font(.caption.bold())
@@ -351,27 +318,18 @@ struct SourcesAddView: View {
 					.background(Color.secondary.opacity(0.1))
 					.clipShape(Capsule())
 			}
-			.padding(.horizontal, 4)
-			
-			VStack(spacing: 12) {
-				ForEach(_filteredRecommendedSourcesData, id: \.url) { (url, source) in
-					_featuredSourceRow(url: url, source: source)
-				}
-			}
-			
+		} footer: {
 			Text(.localized("More sources will be added soon!"))
 				.font(.system(size: 12, weight: .medium, design: .rounded))
-				.foregroundStyle(.secondary)
 				.frame(maxWidth: .infinity, alignment: .center)
 				.padding(.top, 8)
 		}
-		.padding(.horizontal)
 	}
 	
 	// MARK: - Featured Source Row
 	@ViewBuilder
 	private func _featuredSourceRow(url: URL, source: ASRepository) -> some View {
-		HStack(spacing: 16) {
+		HStack(spacing: 12) {
 			FRIconCellView(
 				title: source.name ?? .localized("Unknown"),
 				subtitle: url.host ?? url.absoluteString,
@@ -390,32 +348,14 @@ struct SourcesAddView: View {
 				Text(.localized("Add"))
 					.font(.system(size: 14, weight: .bold, design: .rounded))
 					.foregroundStyle(.white)
-					.padding(.horizontal, 20)
-					.padding(.vertical, 8)
-					.background(
-						Capsule()
-							.fill(
-								LinearGradient(
-									colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
-									startPoint: .topLeading,
-									endPoint: .bottomTrailing
-								)
-							)
-					)
-					.shadow(color: Color.accentColor.opacity(0.3), radius: 5, x: 0, y: 3)
+					.padding(.horizontal, 16)
+					.padding(.vertical, 6)
+					.background(Color.accentColor)
+					.clipShape(Capsule())
 			}
 			.buttonStyle(.plain)
 		}
-		.padding(12)
-		.background(
-			RoundedRectangle(cornerRadius: 20, style: .continuous)
-				.fill(Color.clear)
-				.shadow(color: .black.opacity(0.03), radius: 10, x: 0, y: 5)
-		)
-		.overlay(
-			RoundedRectangle(cornerRadius: 20, style: .continuous)
-				.stroke(Color.primary.opacity(0.05), lineWidth: 1)
-		)
+		.padding(.vertical, 4)
 	}
 	
 	// MARK: - Import Results Section
