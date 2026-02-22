@@ -130,6 +130,10 @@ struct Options: Codable, Equatable {
 	var removedCapabilities: [String]
 	/// Custom URL schemes to add
 	var customURLSchemes: [String]
+	/// If app should be cloned with a random string
+	var cloneApp: Bool
+	/// Random string for app cloning
+	var cloneString: String
 	
 	// MARK: Experiments
 	
@@ -144,6 +148,105 @@ struct Options: Codable, Equatable {
 	/// This will delete your imported application after signing, to save on using unneeded space.
 	var post_deleteAppAfterSigned: Bool
 	
+	enum CodingKeys: String, CodingKey {
+		case appName, appVersion, appIdentifier, appEntitlementsFile, appAppearance, minimumAppRequirement, signingOption
+		case injectPath, injectFolder, ppqString, ppqProtection, dynamicProtection, identifiers, displayNames, injectionFiles
+		case disInjectionFiles, removeFiles, fileSharing, itunesFileSharing, proMotion, gameMode, ipadFullscreen, removeURLScheme
+		case removeProvisioning, changeLanguageFilesForCustomDisplayName, customInfoPlistEntries, customInfoPlistFile
+		case removedCapabilities, customURLSchemes, cloneApp, cloneString
+		case experiment_supportLiquidGlass, experiment_replaceSubstrateWithEllekit
+		case post_installAppAfterSigned, post_deleteAppAfterSigned
+	}
+
+	init(from decoder: Decoder) throws {
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+		appName = try container.decodeIfPresent(String.self, forKey: .appName)
+		appVersion = try container.decodeIfPresent(String.self, forKey: .appVersion)
+		appIdentifier = try container.decodeIfPresent(String.self, forKey: .appIdentifier)
+		appEntitlementsFile = try container.decodeIfPresent(URL.self, forKey: .appEntitlementsFile)
+		appAppearance = try container.decode(AppAppearance.self, forKey: .appAppearance)
+		minimumAppRequirement = try container.decode(MinimumAppRequirement.self, forKey: .minimumAppRequirement)
+		signingOption = try container.decode(SigningOption.self, forKey: .signingOption)
+		injectPath = try container.decode(InjectPath.self, forKey: .injectPath)
+		injectFolder = try container.decode(InjectFolder.self, forKey: .injectFolder)
+		ppqString = try container.decode(String.self, forKey: .ppqString)
+		ppqProtection = try container.decode(Bool.self, forKey: .ppqProtection)
+		dynamicProtection = try container.decode(Bool.self, forKey: .dynamicProtection)
+		identifiers = try container.decode([String: String].self, forKey: .identifiers)
+		displayNames = try container.decode([String: String].self, forKey: .displayNames)
+		injectionFiles = try container.decode([URL].self, forKey: .injectionFiles)
+		disInjectionFiles = try container.decode([String].self, forKey: .disInjectionFiles)
+		removeFiles = try container.decode([String].self, forKey: .removeFiles)
+		fileSharing = try container.decode(Bool.self, forKey: .fileSharing)
+		itunesFileSharing = try container.decode(Bool.self, forKey: .itunesFileSharing)
+		proMotion = try container.decode(Bool.self, forKey: .proMotion)
+		gameMode = try container.decode(Bool.self, forKey: .gameMode)
+		ipadFullscreen = try container.decode(Bool.self, forKey: .ipadFullscreen)
+		removeURLScheme = try container.decode(Bool.self, forKey: .removeURLScheme)
+		removeProvisioning = try container.decode(Bool.self, forKey: .removeProvisioning)
+		changeLanguageFilesForCustomDisplayName = try container.decode(Bool.self, forKey: .changeLanguageFilesForCustomDisplayName)
+		customInfoPlistEntries = try container.decode([String: AnyCodable].self, forKey: .customInfoPlistEntries)
+		customInfoPlistFile = try container.decodeIfPresent(URL.self, forKey: .customInfoPlistFile)
+		removedCapabilities = try container.decode([String].self, forKey: .removedCapabilities)
+		customURLSchemes = try container.decode([String].self, forKey: .customURLSchemes)
+		cloneApp = try container.decodeIfPresent(Bool.self, forKey: .cloneApp) ?? false
+		cloneString = try container.decodeIfPresent(String.self, forKey: .cloneString) ?? Options.randomCloneString()
+		experiment_supportLiquidGlass = try container.decode(Bool.self, forKey: .experiment_supportLiquidGlass)
+		experiment_replaceSubstrateWithEllekit = try container.decode(Bool.self, forKey: .experiment_replaceSubstrateWithEllekit)
+		post_installAppAfterSigned = try container.decode(Bool.self, forKey: .post_installAppAfterSigned)
+		post_deleteAppAfterSigned = try container.decode(Bool.self, forKey: .post_deleteAppAfterSigned)
+	}
+
+	init(
+		appName: String? = nil, appVersion: String? = nil, appIdentifier: String? = nil, appEntitlementsFile: URL? = nil,
+		appAppearance: AppAppearance = .default, minimumAppRequirement: MinimumAppRequirement = .default, signingOption: SigningOption = .default,
+		injectPath: InjectPath = .executable_path, injectFolder: InjectFolder = .frameworks, ppqString: String = randomString(),
+		ppqProtection: Bool = false, dynamicProtection: Bool = false, identifiers: [String: String] = [:], displayNames: [String: String] = [:],
+		injectionFiles: [URL] = [], disInjectionFiles: [String] = [], removeFiles: [String] = [], fileSharing: Bool = false,
+		itunesFileSharing: Bool = false, proMotion: Bool = false, gameMode: Bool = false, ipadFullscreen: Bool = false,
+		removeURLScheme: Bool = false, removeProvisioning: Bool = false, changeLanguageFilesForCustomDisplayName: Bool = false,
+		customInfoPlistEntries: [String: AnyCodable] = [:], customInfoPlistFile: URL? = nil, removedCapabilities: [String] = [],
+		customURLSchemes: [String] = [], cloneApp: Bool = false, cloneString: String = randomCloneString(),
+		experiment_supportLiquidGlass: Bool = false, experiment_replaceSubstrateWithEllekit: Bool = false,
+		post_installAppAfterSigned: Bool = false, post_deleteAppAfterSigned: Bool = false
+	) {
+		self.appName = appName
+		self.appVersion = appVersion
+		self.appIdentifier = appIdentifier
+		self.appEntitlementsFile = appEntitlementsFile
+		self.appAppearance = appAppearance
+		self.minimumAppRequirement = minimumAppRequirement
+		self.signingOption = signingOption
+		self.injectPath = injectPath
+		self.injectFolder = injectFolder
+		self.ppqString = ppqString
+		self.ppqProtection = ppqProtection
+		self.dynamicProtection = dynamicProtection
+		self.identifiers = identifiers
+		self.displayNames = displayNames
+		self.injectionFiles = injectionFiles
+		self.disInjectionFiles = disInjectionFiles
+		self.removeFiles = removeFiles
+		self.fileSharing = fileSharing
+		self.itunesFileSharing = itunesFileSharing
+		self.proMotion = proMotion
+		self.gameMode = gameMode
+		self.ipadFullscreen = ipadFullscreen
+		self.removeURLScheme = removeURLScheme
+		self.removeProvisioning = removeProvisioning
+		self.changeLanguageFilesForCustomDisplayName = changeLanguageFilesForCustomDisplayName
+		self.customInfoPlistEntries = customInfoPlistEntries
+		self.customInfoPlistFile = customInfoPlistFile
+		self.removedCapabilities = removedCapabilities
+		self.customURLSchemes = customURLSchemes
+		self.cloneApp = cloneApp
+		self.cloneString = cloneString
+		self.experiment_supportLiquidGlass = experiment_supportLiquidGlass
+		self.experiment_replaceSubstrateWithEllekit = experiment_replaceSubstrateWithEllekit
+		self.post_installAppAfterSigned = post_installAppAfterSigned
+		self.post_deleteAppAfterSigned = post_deleteAppAfterSigned
+	}
+
 	// MARK: - Defaults
 	static let defaultOptions = Options(
 		
@@ -177,6 +280,8 @@ struct Options: Codable, Equatable {
 		customInfoPlistFile: nil,
 		removedCapabilities: [],
 		customURLSchemes: [],
+		cloneApp: false,
+		cloneString: randomCloneString(),
 		
 		// MARK: Experiments
 		
@@ -252,6 +357,12 @@ struct Options: Codable, Equatable {
 	/// Default random value for `ppqString`
 	static func randomString() -> String {
 		String((0..<6).compactMap { _ in UUID().uuidString.randomElement() })
+	}
+
+	/// Default random value for `cloneString`
+	static func randomCloneString() -> String {
+		let letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+		return String((0..<5).compactMap { _ in letters.randomElement() })
 	}
 }
 

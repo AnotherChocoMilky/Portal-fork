@@ -364,9 +364,5 @@ struct CertificatesView: View {
 		Button(.localized("Export Entitlements"), systemImage: "square.and.arrow.up") {
 			_exportEntitlements(for: cert)
 		}
-		Divider()
-		Button(.localized("Check Revokage (Beta)"), systemImage: "person.text.rectangle") {
-			Storage.shared.revokagedCertificate(for: cert)
-		}
 	}
 }

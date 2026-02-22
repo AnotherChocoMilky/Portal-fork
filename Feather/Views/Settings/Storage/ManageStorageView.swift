@@ -62,41 +62,211 @@ struct ManageStorageView: View {
     }
     
     var body: some View {
-        NBNavigationView(.localized("Manage Storage"), displayMode: .inline) {
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Modern Storage Ring Card
-                    storageRingCard
-                    
-                    // Quick Actions Grid
-                    quickActionsGrid
-                    
-                    // Storage Breakdown with Interactive Cards
-                    storageBreakdownCards
-                    
-                    // Smart Cleanup Section
-                    smartCleanupCard
-                    
-                    // Advanced Tools Section
-                    advancedToolsSection
-                    
-                    // Danger Zone
-                    dangerZoneSection
+            List {
+                // Storage Overview
+                Section {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(formatBytes(usedSpace))
+                                .font(.title.bold())
+                            Text(.localized("Used of \(formatBytes(totalSpace))"))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if isCalculating {
+                            ProgressView()
+                        } else {
+                            Button {
+                                calculateStorageData()
+                            } label: {
+                                Image(systemName: "arrow.clockwise.circle.fill")
+                                    .font(.title2)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 8)
+
+                    ProgressView(value: Double(usedSpace), total: Double(max(totalSpace, 1)))
+                        .tint(.accentColor)
+                } header: {
+                    Text(.localized("Device Storage"))
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-            }
-            .background(Color.clear)
-            .onAppear {
-                calculateStorageData()
-                withAnimation(.easeInOut(duration: 1.0).delay(0.3)) {
-                    animateProgress = true
+
+                // Quick Tools
+                Section {
+                    Button {
+                        showStorageAnalyzer = true
+                    } label: {
+                        Label(.localized("Storage Analyzer"), systemImage: "chart.pie.fill")
+                    }
+
+                    Button {
+                        showDuplicateFinder = true
+                    } label: {
+                        Label(.localized("Duplicate Finder"), systemImage: "doc.on.doc.fill")
+                    }
+
+                    Button {
+                        showLargeFilesFinder = true
+                    } label: {
+                        Label(.localized("Large Files"), systemImage: "arrow.up.doc.fill")
+                    }
+                } header: {
+                    Text(.localized("Tools"))
+                }
+
+                // Storage Breakdown
+                Section {
+                    ForEach(storageCategories) { category in
+                        HStack {
+                            Label(category.name, systemImage: category.icon)
+                                .foregroundStyle(category.color)
+                            Spacer()
+                            Text(category.formattedSize)
+                                .foregroundStyle(.secondary)
+
+                            if category.action != nil && category.size > 0 {
+                                Button {
+                                    if let action = category.action {
+                                        showResetAlert(
+                                            title: String(format: .localized("Clear %@"), category.name),
+                                            message: category.formattedSize,
+                                            action: action
+                                        )
+                                    }
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .foregroundStyle(.red)
+                                }
+                                .buttonStyle(.borderless)
+                                .padding(.leading, 8)
+                            }
+                        }
+                    }
+                } header: {
+                    Text(.localized("Storage Breakdown"))
+                }
+
+                // Smart Cleanup
+                Section {
+                    Picker(.localized("Remove items older than"), selection: $cleanupPeriod) {
+                        ForEach(CleanupPeriod.allCases, id: \.self) { period in
+                            Text(period.displayName).tag(period)
+                        }
+                    }
+                    .onChange(of: cleanupPeriod) { _ in
+                        calculateReclaimableSpace()
+                    }
+
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(.localized("Reclaimable Space"))
+                                .font(.headline)
+                            Text(formatBytes(reclaimableSpace))
+                                .foregroundStyle(.orange)
+                        }
+                        Spacer()
+                        Button(.localized("Clean")) {
+                            performCleanup()
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.orange)
+                        .disabled(reclaimableSpace == 0 || isCalculating)
+                    }
+                    .padding(.vertical, 4)
+                } header: {
+                    Text(.localized("Smart Cleanup"))
+                }
+
+                // Advanced Tools
+                Section {
+                    Button(.localized("Clear Network Cache")) {
+                        let cacheSize = URLCache.shared.currentDiskUsage
+                        showResetAlert(
+                            title: .localized("Clear Network Cache"),
+                            message: formatBytes(Int64(cacheSize)),
+                            action: clearNetworkCache
+                        )
+                    }
+                    Button(.localized("Clear Work Cache")) {
+                        showResetAlert(
+                            title: .localized("Clear Work Cache"),
+                            message: "",
+                            action: clearWorkCache
+                        )
+                    }
+                    Button(.localized("Clear Logs")) {
+                        showResetAlert(
+                            title: .localized("Clear Logs"),
+                            message: formatBytes(logsSize),
+                            action: clearLogs
+                        )
+                    }
+                    Button(.localized("Reset Source Cache")) {
+                        showResetAlert(
+                            title: .localized("Reset Source Cache"),
+                            message: "",
+                            action: resetSourceCache
+                        )
+                    }
+                } header: {
+                    Text(.localized("Advanced Tools"))
+                }
+
+                // Danger Zone
+                Section {
+                    Button(role: .destructive) {
+                        showResetAlert(
+                            title: .localized("Delete All Signed Apps"),
+                            message: formatBytes(signedAppsSize),
+                            action: deleteSignedApps
+                        )
+                    } label: {
+                        Label(.localized("Delete All Signed Apps"), systemImage: "doc.badge.minus")
+                    }
+
+                    Button(role: .destructive) {
+                        showResetAlert(
+                            title: .localized("Delete All Imported Apps"),
+                            message: formatBytes(importedAppsSize),
+                            action: deleteImportedApps
+                        )
+                    } label: {
+                        Label(.localized("Delete All Imported Apps"), systemImage: "square.and.arrow.down.on.square")
+                    }
+
+                    Button(role: .destructive) {
+                        showResetAlert(
+                            title: .localized("Delete All Certificates"),
+                            message: formatBytes(certificatesSize),
+                            action: resetCertificates
+                        )
+                    } label: {
+                        Label(.localized("Delete All Certificates"), systemImage: "key.horizontal")
+                    }
+
+                    Button(role: .destructive) {
+                        showResetAlert(
+                            title: .localized("Reset All Sources"),
+                            message: "",
+                            action: resetSources
+                        )
+                    } label: {
+                        Label(.localized("Reset All Sources"), systemImage: "square.stack.3d.down.right")
+                    }
+                } header: {
+                    Text(.localized("Danger Zone"))
                 }
             }
+            .navigationTitle(.localized("Manage Storage"))
+            .navigationBarTitleDisplayMode(.inline)
             .refreshable {
                 await refreshStorageData()
             }
-        }
+            .onAppear {
+                calculateStorageData()
+            }
         .sheet(isPresented: $showStorageAnalyzer) {
             StorageAnalyzerView()
         }
