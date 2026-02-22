@@ -247,6 +247,8 @@ struct PairingView: View {
                 if !showingProgress {
                     showingProgress = true
                 }
+            case .failed(let error):
+                UIAlertController.showAlertWithOk(title: .localized("Transfer Failed"), message: error.localizedDescription)
             default:
                 break
             }
