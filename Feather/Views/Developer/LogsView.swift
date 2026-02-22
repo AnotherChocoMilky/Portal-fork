@@ -13,6 +13,7 @@ struct AppLogsView: View {
     @State private var logDocument: LogDocument?
     @State private var exportType: UTType = .plainText
     @State private var autoScroll = true
+    @State private var showInfo = false
     @Environment(\.colorScheme) var colorScheme
 
     var filteredLogs: [LogEntry] {
@@ -168,8 +169,16 @@ struct AppLogsView: View {
                 ToastManager.shared.show("🛠️ Developer Mode Phase 1 Complete!", type: .success)
             }
         }
+        .sheet(isPresented: $showInfo) {
+            LogInfoView()
+        }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
+                // Info button
+                Button(action: { showInfo = true }) {
+                    Image(systemName: "info.circle")
+                }
+
                 // Auto-scroll toggle
                 Button(action: { autoScroll.toggle() }) {
                     Image(systemName: autoScroll ? "arrow.down.circle.fill" : "arrow.down.circle")
@@ -343,6 +352,16 @@ struct LogEntryRow: View {
                                 .font(.system(size: 10, weight: .medium, design: .monospaced))
                                 .foregroundStyle(.secondary)
 
+                            if let code = entry.errorCode {
+                                Text(code)
+                                    .font(.system(size: 9, weight: .bold, design: .monospaced))
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 1)
+                                    .background(Color.red.opacity(0.1))
+                                    .foregroundStyle(.red)
+                                    .cornerRadius(4)
+                            }
+
                             Spacer()
 
                             Label(entry.category.uppercased(), systemImage: "tag.fill")
@@ -466,5 +485,94 @@ struct LogDocument: FileDocument {
 
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
         return FileWrapper(regularFileWithContents: data)
+    }
+}
+
+// MARK: - Log Info View
+struct LogInfoView: View {
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("Understanding Logs") {
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Logs are essential for debugging issues within Portal. They capture events, errors, and warnings that occur during operations like signing and installation.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        Text("Sharing these logs when reporting a bug helps developers identify and fix the issue much faster.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 8)
+                }
+
+                Section("Log Levels") {
+                    ForEach(LogEntry.LogLevel.allCases, id: \.self) { level in
+                        HStack(spacing: 12) {
+                            Text(level.icon)
+                            VStack(alignment: .leading) {
+                                Text(level.rawValue)
+                                    .font(.headline)
+                                Text(description(for: level))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+
+                Section("Error Log Codes") {
+                    ForEach(LogErrorCode.allCases, id: \.self) { code in
+                        let info = code.info
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text(info.code)
+                                    .font(.system(.subheadline, design: .monospaced))
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.red)
+                                Spacer()
+                            }
+
+                            Text(info.description)
+                                .font(.subheadline)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("SUGGESTION")
+                                    .font(.system(size: 10, weight: .black))
+                                    .foregroundStyle(.secondary)
+                                Text(info.suggestion)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(8)
+                            .background(Color.secondary.opacity(0.05))
+                            .cornerRadius(8)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+            }
+            .navigationTitle("Log Information")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                        .fontWeight(.bold)
+                }
+            }
+        }
+    }
+
+    private func description(for level: LogEntry.LogLevel) -> String {
+        switch level {
+        case .debug: return "Detailed technical information for developers."
+        case .info: return "General informational messages about normal operations."
+        case .success: return "Confirmation of successful completion of a task."
+        case .warning: return "Indications of potential issues that aren't yet fatal."
+        case .error: return "Standard error messages when an operation fails."
+        case .critical: return "Serious failures that might require immediate attention."
+        }
     }
 }

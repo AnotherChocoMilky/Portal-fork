@@ -91,6 +91,7 @@ struct AllAppsView: View {
     @State private var _isLoading = true
     @State private var _loadedSourcesCount = 0
     @State private var _currentFact = DidYouKnowFacts.random()
+    @State private var _spinnerRotation: Double = 0
     
     // Optimized State for Large Datasets
     @State private var _allApps: [(source: ASRepository, app: ASRepository.App)] = []
@@ -457,67 +458,105 @@ struct AllAppsView: View {
 	@ViewBuilder
 	private var loadingScreen: some View {
 		ZStack {
-			LinearGradient(colors: [.blue.opacity(0.1), .purple.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing)
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea()
+
+			LinearGradient(colors: [Color.accentColor.opacity(0.1), Color.blue.opacity(0.05), Color.purple.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing)
 				.ignoresSafeArea()
 			
-			VStack(spacing: 30) {
+			VStack(spacing: 40) {
 				Spacer()
 				
-				// Animated loading circle
+				// Modern Animated Loading Spinner
 				ZStack {
+                    // Background Ring
 					Circle()
-						.stroke(Color.secondary.opacity(0.2), lineWidth: 8)
-						.frame(width: 80, height: 80)
+						.stroke(Color.primary.opacity(0.05), lineWidth: 8)
+						.frame(width: 100, height: 100)
 
+                    // Glow Effect
+                    Circle()
+                        .trim(from: 0, to: 0.3)
+                        .stroke(
+                            LinearGradient(colors: [Color.accentColor, Color.blue], startPoint: .leading, endPoint: .trailing),
+                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                        )
+                        .frame(width: 100, height: 100)
+                        .rotationEffect(.degrees(_spinnerRotation))
+                        .blur(radius: 8)
+                        .opacity(0.5)
+
+                    // Main Ring
 					Circle()
-						.trim(from: 0, to: 0.7)
-						.stroke(Color.accentColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
-						.frame(width: 80, height: 80)
-						.rotationEffect(.degrees(-90))
-						.rotationEffect(.degrees(_isLoading ? 360 : 0))
-						.animation(.linear(duration: 1.5).repeatForever(autoreverses: false), value: _isLoading)
+						.trim(from: 0, to: 0.3)
+						.stroke(
+                            LinearGradient(colors: [Color.accentColor, Color.blue], startPoint: .leading, endPoint: .trailing),
+                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                        )
+						.frame(width: 100, height: 100)
+						.rotationEffect(.degrees(_spinnerRotation))
 				}
+                .onAppear {
+                    withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
+                        _spinnerRotation = 360
+                    }
+                }
 				
-				// Progress text
-				VStack(spacing: 8) {
-					Text("Loading Sources")
-						.font(.system(size: 22, weight: .bold, design: .rounded))
+				// Progress text with enhanced typography
+				VStack(spacing: 12) {
+					Text("Refreshing Library")
+						.font(.system(size: 28, weight: .bold, design: .rounded))
 						.foregroundStyle(.primary)
 
-					Text("\(_loadedSourcesCount)/\(object.count) Sources are being loaded...")
-						.font(.subheadline)
-						.foregroundStyle(.secondary)
-						.animation(.easeInOut(duration: 0.3), value: _loadedSourcesCount)
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("\(_loadedSourcesCount) / \(object.count) Sources")
+                            .font(.system(.subheadline, design: .monospaced))
+                            .fontWeight(.bold)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.primary.opacity(0.05))
+                    .cornerRadius(12)
 				}
 				
 				Spacer()
 
-				// Did you know section
-				VStack(spacing: 12) {
-					HStack(spacing: 8) {
-						Image(systemName: "lightbulb.fill")
-							.font(.system(size: 18))
-							.foregroundStyle(.yellow)
+				// Did you know section - Modern Card Style
+				VStack(spacing: 16) {
+					HStack(spacing: 10) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.yellow.opacity(0.2))
+                                .frame(width: 32, height: 32)
+                            Image(systemName: "lightbulb.fill")
+                                .font(.system(size: 16))
+                                .foregroundStyle(.yellow)
+                        }
 						Text("Did You Know?")
-							.font(.headline)
-							.fontWeight(.semibold)
+							.font(.system(size: 18, weight: .bold, design: .rounded))
 							.foregroundStyle(.primary)
 					}
 
 					Text(_currentFact)
-						.font(.subheadline)
+						.font(.system(size: 15, weight: .medium, design: .rounded))
 						.foregroundStyle(.secondary)
 						.multilineTextAlignment(.center)
-						.lineLimit(3)
-						.padding(.horizontal, 40)
-						.transition(AnyTransition.opacity.combined(with: .scale))
+						.lineLimit(4)
+						.padding(.horizontal, 20)
 				}
-				.padding(.bottom, 40)
+                .padding(24)
+                .background(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .fill(.regularMaterial)
+                        .shadow(color: .black.opacity(0.05), radius: 20, x: 0, y: 10)
+                )
+                .padding(.horizontal, 30)
+				.padding(.bottom, 60)
 			}
-			.padding(30)
-			.background(Color.clear)
-			.cornerRadius(20)
-			.padding(20)
 		}
 		.frame(maxWidth: .infinity, maxHeight: .infinity)
 	}
