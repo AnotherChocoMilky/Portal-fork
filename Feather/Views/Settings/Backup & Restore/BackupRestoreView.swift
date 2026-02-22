@@ -39,12 +39,13 @@ struct BackupRestoreView: View {
 
     // MARK: Body
     var body: some View {
-        NBList(.localized("Backup & Restore")) {
+        List {
             _headerSection
             _nearbyTransferSection
             _advancedToolsSection
             _aboutSection
         }
+        .navigationTitle(.localized("Backup & Restore"))
         .sheet(isPresented: $isBackupOptionsPresented) {
             BackupOptionsView(
                 options: $backupOptions,
@@ -131,78 +132,37 @@ struct BackupRestoreView: View {
     @ViewBuilder
     private var _headerSection: some View {
         Section {
-            ZStack {
-                LinearGradient(colors: [Color.green.opacity(0.1), Color.blue.opacity(0.1)], startPoint: .topLeading, endPoint: .bottomTrailing)
-                    .cornerRadius(20)
+            VStack(spacing: 12) {
+                Image(systemName: "arrow.counterclockwise.icloud.fill")
+                    .font(.system(size: 40))
+                    .foregroundStyle(Color.accentColor)
+                    .padding(.top, 10)
 
-                VStack(spacing: 12) {
-                    Image(systemName: "arrow.counterclockwise.icloud.fill")
-                        .font(.system(size: 40))
-                        .foregroundStyle(LinearGradient(colors: [.green, .blue], startPoint: .topLeading, endPoint: .bottomTrailing))
-
-                    Text(.localized("Secure your data by creating a backup of your apps and settings."))
-                        .font(.system(.subheadline, design: .rounded))
-                        .multilineTextAlignment(.center)
-                        .foregroundStyle(.secondary)
-                        .padding(.horizontal)
-                }
-                .padding(.vertical, 30)
+                Text(.localized("Secure your data by creating a backup of your apps and settings."))
+                    .font(.subheadline)
+                    .multilineTextAlignment(.center)
+                    .foregroundStyle(.secondary)
+                    .padding(.bottom, 10)
             }
+            .frame(maxWidth: .infinity)
             .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets())
         }
     }
 
     @ViewBuilder
     private var _nearbyTransferSection: some View {
         Section {
-            HStack(spacing: 16) {
-                NavigationLink(destination: NearbyTransferView()) {
-                    VStack(spacing: 12) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.purple.opacity(0.15))
-                                .frame(width: 54, height: 54)
-                            Image(systemName: "network.badge.shield.half.filled")
-                                .font(.title2)
-                                .foregroundStyle(.purple)
-                        }
-                        Text(.localized("Nearby Transfer"))
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(.purple)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 20)
-                    .background(Color.purple.opacity(0.05))
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                }
-                .buttonStyle(.plain)
-
-                NavigationLink(destination: SelfBackupRestoreView()) {
-                    VStack(spacing: 12) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(Color.green.opacity(0.15))
-                                .frame(width: 54, height: 54)
-                            Image(systemName: "externaldrive.fill")
-                                .font(.title2)
-                                .foregroundStyle(.green)
-                        }
-                        Text(.localized("Self Backup"))
-                            .font(.system(size: 15, weight: .bold, design: .rounded))
-                            .foregroundStyle(.green)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 20)
-                    .background(Color.green.opacity(0.05))
-                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                }
-                .buttonStyle(.plain)
+            NavigationLink(destination: NearbyTransferView()) {
+                Label(.localized("Nearby Transfer"), systemImage: "network.badge.shield.half.filled")
+                    .foregroundStyle(.purple)
             }
-            .listRowBackground(Color.clear)
-            .listRowInsets(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
+
+            NavigationLink(destination: SelfBackupRestoreView()) {
+                Label(.localized("Self Backup"), systemImage: "externaldrive.fill")
+                    .foregroundStyle(.green)
+            }
         } header: {
-            AppearanceSectionHeader(title: String.localized("Wireless Transfer"), icon: "wifi")
+            Text(.localized("Wireless Transfer"))
         }
     }
 
@@ -221,8 +181,6 @@ struct BackupRestoreView: View {
                 } label: {
                     Label(.localized("Verify Backup Integrity"), systemImage: "shield.checkerboard")
                 }
-
-                Divider()
 
                 Button {
                     handleClearCaches()
@@ -254,7 +212,7 @@ struct BackupRestoreView: View {
                     Label(.localized("View Pairing Status"), systemImage: "link.circle.fill")
                 }
             } header: {
-                AppearanceSectionHeader(title: String.localized("Advanced Tools"), icon: "wrench.and.screwdriver.fill")
+                Text(.localized("Advanced Tools"))
             }
         }
     }
@@ -262,21 +220,33 @@ struct BackupRestoreView: View {
     @ViewBuilder
     private var _aboutSection: some View {
         Section {
-            infoCard(
-                icon: "checkmark.shield.fill",
-                iconColor: .blue,
-                title: .localized("What's Included"),
-                description: .localized("Backups can include certificates, provisioning profiles, signed apps, imported apps, sources, and all app settings.")
-            )
+            Label {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(.localized("What's Included"))
+                        .font(.headline)
+                    Text(.localized("Backups can include certificates, profiles, signed apps, imported apps, sources, and settings."))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } icon: {
+                Image(systemName: "checkmark.shield.fill")
+                    .foregroundStyle(.blue)
+            }
 
-            infoCard(
-                icon: "exclamationmark.triangle.fill",
-                iconColor: .orange,
-                title: .localized("Important"),
-                description: .localized("Restoring requires the app to restart. Certificate restoration preserves files for manual re-import if needed.")
-            )
+            Label {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(.localized("Important"))
+                        .font(.headline)
+                    Text(.localized("Restoring requires the app to restart. Certificate restoration preserves files for manual re-import if needed."))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } icon: {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+            }
         } header: {
-            AppearanceSectionHeader(title: String.localized("About Backups"), icon: "info.circle.fill")
+            Text(.localized("About Backups"))
         }
     }
 
@@ -970,7 +940,7 @@ struct BackupOptionsView: View {
     let onConfirm: () -> Void
     var body: some View {
         NavigationStack {
-            NBList(.localized("Backup Options")) {
+            List {
                 Section {
                     Toggle(isOn: $options.includeCertificates) {
                         Label {
@@ -1027,7 +997,7 @@ struct BackupOptionsView: View {
                     }
 
                 } header: {
-                    AppearanceSectionHeader(title: String.localized("Backup Content"), icon: "list.bullet.indent")
+                    Text(.localized("Backup Content"))
                 }
 
                 if options.includeSignedApps || options.includeImportedApps {

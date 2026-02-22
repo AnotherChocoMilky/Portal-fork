@@ -6,146 +6,118 @@ struct NearbyTransferView: View {
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
-        NBList(.localized("Nearby Transfer")) {
+        List {
             // Header Section
             Section {
-                ZStack {
-                    LinearGradient(
-                        colors: [Color.indigo.opacity(0.15), Color.purple.opacity(0.1)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    .cornerRadius(22)
+                VStack(spacing: 16) {
+                    Image(systemName: "antenna.radiowaves.left.and.right")
+                        .font(.system(size: 48))
+                        .foregroundStyle(Color.accentColor)
+                        .padding(.top, 10)
                     
-                    VStack(spacing: 16) {
-                        Image(systemName: "antenna.radiowaves.left.and.right")
-                            .font(.system(size: 54))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.indigo, .purple, .blue],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .ifAvailableiOS18SymbolPulse()
-                        
-                        VStack(spacing: 8) {
-                            Text(.localized("Wireless Transfer"))
-                                .font(.system(.title2, design: .rounded, weight: .bold))
+                    VStack(spacing: 8) {
+                        Text(.localized("Wireless Transfer"))
+                            .font(.title2.bold())
 
-                            Text(.localized("Move your backups between devices instantly using a secure, direct connection."))
-                                .font(.system(.subheadline, design: .rounded))
-                                .multilineTextAlignment(.center)
-                                .foregroundStyle(.secondary)
-                                .padding(.horizontal, 20)
-                        }
+                        Text(.localized("Move your backups between devices instantly using a secure, direct connection."))
+                            .font(.subheadline)
+                            .multilineTextAlignment(.center)
+                            .foregroundStyle(.secondary)
                     }
-                    .padding(.vertical, 40)
+                    .padding(.bottom, 10)
                 }
+                .frame(maxWidth: .infinity)
                 .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: 10, leading: 16, bottom: 10, trailing: 16))
             }
             
             // Quick Start Section
             Section {
                 NavigationLink(destination: PairingView()) {
-                    HStack(spacing: 18) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.blue.opacity(0.2), .blue.opacity(0.1)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 56, height: 56)
-                            
-                            Image(systemName: "bolt.fill")
-                                .font(.title2)
-                                .foregroundStyle(.blue)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 4) {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(.localized("Start New Transfer"))
-                                .font(.system(.headline, design: .rounded))
+                                .font(.headline)
                             Text(.localized("Send or receive a backup securely."))
-                                .font(.system(.caption, design: .rounded))
+                                .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-                        
-                        Spacer()
+                    } icon: {
+                        Image(systemName: "bolt.fill")
+                            .foregroundStyle(.blue)
                     }
-                    .padding(.vertical, 10)
                 }
             } header: {
-                AppearanceSectionHeader(title: String.localized("Actions"), icon: "play.fill")
+                Text(.localized("Actions"))
             }
             
             // How It Works Section
             Section {
-                featureCard(
-                    icon: "lock.shield.fill",
-                    iconColor: .green,
-                    title: .localized("End-to-End Security"),
-                    description: .localized("All transfers are encrypted and happen directly between your devices. Your data never leaves your local network.")
-                )
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(.localized("End-to-End Security"))
+                            .font(.headline)
+                        Text(.localized("All transfers are encrypted and happen directly between your devices."))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "lock.shield.fill")
+                        .foregroundStyle(.green)
+                }
                 
-                featureCard(
-                    icon: "wifi.router.fill",
-                    iconColor: .blue,
-                    title: .localized("Direct Connection"),
-                    description: .localized("Uses Multipeer Connectivity to establish a fast, direct link via Wi-Fi or Bluetooth without needing the internet.")
-                )
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(.localized("Direct Connection"))
+                            .font(.headline)
+                        Text(.localized("Uses Multipeer Connectivity to establish a fast, direct link via Wi-Fi or Bluetooth."))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "wifi.router.fill")
+                        .foregroundStyle(.blue)
+                }
                 
-                featureCard(
-                    icon: "speedometer",
-                    iconColor: .orange,
-                    title: .localized("Lightning Fast"),
-                    description: .localized("High-speed data transfer with real-time progress monitoring, speed reporting, and automatic error recovery.")
-                )
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(.localized("Lightning Fast"))
+                            .font(.headline)
+                        Text(.localized("High-speed data transfer with real-time progress monitoring."))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "speedometer")
+                        .foregroundStyle(.orange)
+                }
             } header: {
-                AppearanceSectionHeader(title: String.localized("Why Nearby Transfer?"), icon: "sparkles")
+                Text(.localized("Why Nearby Transfer?"))
             }
             
             // Requirements Section
             Section {
-                requirementRow(
-                    icon: "network",
-                    text: .localized("Same Network: Both devices must be on the same Wi-Fi or within Bluetooth range.")
-                )
-                
-                requirementRow(
-                    icon: "iphone.gen2",
-                    text: .localized("App Version: Both devices should have the latest Portal version for best compatibility.")
-                )
-                
-                requirementRow(
-                    icon: "battery.100.bolt",
-                    text: .localized("Power: Ensure sufficient battery or connect to power for large backup transfers.")
-                )
+                Label(.localized("Same Network: Both devices must be on the same Wi-Fi or within Bluetooth range."), systemImage: "network")
+                Label(.localized("App Version: Both devices should have the latest Portal version."), systemImage: "iphone.gen2")
+                Label(.localized("Power: Ensure sufficient battery for large transfers."), systemImage: "battery.100.bolt")
             } header: {
-                AppearanceSectionHeader(title: String.localized("Requirements"), icon: "checklist")
+                Text(.localized("Requirements"))
             }
             
             // About Section
             Section {
-                VStack(alignment: .leading, spacing: 16) {
-                    Text(.localized("Supported Data Types"))
-                        .font(.system(.headline, design: .rounded))
-                    
-                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                        transferItemRow(icon: "checkmark.seal.fill", text: .localized("Certificates"), color: .blue)
-                        transferItemRow(icon: "app.badge.fill", text: .localized("Signed Apps"), color: .green)
-                        transferItemRow(icon: "square.and.arrow.down.fill", text: .localized("Imported"), color: .orange)
-                        transferItemRow(icon: "globe.fill", text: .localized("Sources"), color: .purple)
-                        transferItemRow(icon: "puzzlepiece.extension.fill", text: .localized("Frameworks"), color: .cyan)
-                        transferItemRow(icon: "gearshape.fill", text: .localized("Settings"), color: .gray)
-                    }
+                ForEach([
+                    ("checkmark.seal.fill", "Certificates", Color.blue),
+                    ("app.badge.fill", "Signed Apps", Color.green),
+                    ("square.and.arrow.down.fill", "Imported", Color.orange),
+                    ("globe.fill", "Sources", Color.purple),
+                    ("puzzlepiece.extension.fill", "Frameworks", Color.cyan),
+                    ("gearshape.fill", "Settings", Color.gray)
+                ], id: \.1) { icon, name, color in
+                    Label(name, systemImage: icon)
+                        .foregroundStyle(color)
                 }
-                .padding(.vertical, 12)
             } header: {
-                AppearanceSectionHeader(title: String.localized("Details"), icon: "info.circle.fill")
+                Text(.localized("Supported Data Types"))
             }
         }
         .navigationBarTitleDisplayMode(.inline)

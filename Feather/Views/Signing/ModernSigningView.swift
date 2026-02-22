@@ -217,9 +217,13 @@ struct ModernSigningView: View {
             }
         }
         .overlay {
-            FullScreenMetalStateView(state: $_metalState, errorMessage: _errorMessage)
-                .ignoresSafeArea()
-                .zIndex(100)
+            FullScreenMetalStateView(
+                state: $_metalState,
+                appName: _temporaryOptions.appName ?? app.name,
+                errorMessage: _errorMessage
+            )
+            .ignoresSafeArea()
+            .zIndex(100)
         }
         .handleStatusBarHiding()
     }
@@ -604,6 +608,67 @@ struct ModernSigningView: View {
                     
                     cleanEditableRow(title: "Version", value: _temporaryOptions.appVersion ?? app.version ?? "1.0", icon: "tag") {
                         _isVersionDialogPresenting = true
+                    }
+
+                    Divider().padding(.leading, 52)
+
+                    HStack(spacing: 14) {
+                        Image(systemName: "plus.square.on.square")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Clone App")
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundStyle(.secondary)
+                            Text("Append random string to ID")
+                                .font(.system(size: 10))
+                                .foregroundStyle(.tertiary)
+                        }
+
+                        Spacer()
+
+                        Toggle("", isOn: $_temporaryOptions.cloneApp)
+                            .labelsHidden()
+                            .tint(.accentColor)
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+
+                    if _temporaryOptions.cloneApp {
+                        Divider().padding(.leading, 52)
+
+                        HStack(spacing: 14) {
+                            Image(systemName: "dice.fill")
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 24)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Clone String")
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundStyle(.secondary)
+                                Text(_temporaryOptions.cloneString)
+                                    .font(.system(size: 15, weight: .bold, design: .monospaced))
+                                    .foregroundStyle(.primary)
+                            }
+
+                            Spacer()
+
+                            Button {
+                                _temporaryOptions.cloneString = Options.randomCloneString()
+                                HapticsManager.shared.impact()
+                            } label: {
+                                Image(systemName: "arrow.clockwise.circle.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .transition(.move(edge: .top).combined(with: .opacity))
                     }
                 }
                 .background(
@@ -1393,17 +1458,6 @@ struct ModernSigningOptionsView: View {
                     } label: {
                         Label("Minimum Requirement", systemImage: "ruler.fill")
                     }
-
-                    Toggle(isOn: $options.cloneApp) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Label("Clone App", systemImage: "plus.square.on.square")
-                                .font(.headline)
-                            Text("Automatically adds a random string to the Bundle ID.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .tint(.accentColor)
                 } header: {
                     Label("General", systemImage: "gearshape.2.fill")
                 }

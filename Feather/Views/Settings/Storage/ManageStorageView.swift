@@ -61,7 +61,10 @@ struct ManageStorageView: View {
         ]
     }
     
+    @State private var metalState: MetalAnimationState = .idle
+
     var body: some View {
+        ZStack {
             List {
                 // Storage Overview
                 Section {
@@ -267,6 +270,14 @@ struct ManageStorageView: View {
             .onAppear {
                 calculateStorageData()
             }
+            .overlay {
+                if isCalculating {
+                    FullScreenMetalStateView(state: .constant(.loading), appName: "Storage Data")
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                }
+            }
+        }
         .sheet(isPresented: $showStorageAnalyzer) {
             StorageAnalyzerView()
         }
