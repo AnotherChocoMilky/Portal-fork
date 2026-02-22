@@ -15,6 +15,10 @@ struct BackupContentsView: View {
     @State private var importedApps: [AppMetadata] = []
     @State private var errorMessage: String?
 
+    @State private var showDiffViewer = false
+    @State private var showRestoreSimulation = false
+    @AppStorage("feature_newBackupOptions") var newBackupOptions = false
+
     struct CertMetadata: Codable, Identifiable {
         var id: String { uuid }
         let uuid: String
@@ -141,14 +145,51 @@ struct BackupContentsView: View {
             .navigationTitle("Backup Contents")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                if newBackupOptions && !isLoading && errorMessage == nil {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Menu {
+                            Button {
+                                showDiffViewer = true
+                            } label: {
+                                Label("View Differences", systemImage: "arrow.left.arrow.right")
+                            }
+
+                            Button {
+                                showRestoreSimulation = true
+                            } label: {
+                                Label("Simulate Restore", systemImage: "play.circle")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                        }
+                    }
+                }
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                 }
+            }
+            .sheet(isPresented: $showDiffViewer) {
+                BackupDiffView(snapshotID: backupID?.uuidString ?? "", backupMetadata: collectedMetadata)
+            }
+            .sheet(isPresented: $showRestoreSimulation) {
+                RestoreSimulationView(snapshotID: backupID?.uuidString ?? "", backupMetadata: collectedMetadata)
             }
             .task {
                 await loadContents()
             }
         }
+    }
+
+    private var collectedMetadata: [String: Any] {
+        var metadata: [String: Any] = [:]
+        metadata["certificates"] = certificates.map { ["uuid": $0.uuid, "name": $0.name ?? ""] }
+        metadata["sources"] = sources.map { ["url": $0.url, "name": $0.name] }
+        metadata["signed_apps"] = signedApps.map { ["uuid": $0.uuid, "name": $0.name] }
+        metadata["imported_apps"] = importedApps.map { ["uuid": $0.uuid, "name": $0.name] }
+        metadata["profiles"] = [] // Simplified
+        metadata["settings"] = ["status": "present"] // Simplified
+        return metadata
     }
 
     private func headerView(title: String, icon: String, color: Color) -> some View {

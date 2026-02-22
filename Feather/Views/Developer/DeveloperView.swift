@@ -3288,6 +3288,7 @@ struct FeatureFlagsView: View {
     @AppStorage("feature_usePortalCert") var usePortalCert = false
     @AppStorage("feature_advancedFilesFeatures") var advancedFilesFeatures = false
     @AppStorage("feature_advancedBackupTools") var advancedBackupTools = false
+    @AppStorage("feature_newBackupOptions") var newBackupOptions = false
     @AppStorage("feature_passwordChanger") var passwordChanger = false
     
     var body: some View {
@@ -3326,6 +3327,8 @@ struct FeatureFlagsView: View {
                 }
 
                 Toggle("Show Advanced Backup Tools", isOn: $advancedBackupTools)
+
+                Toggle("New Backup Options", isOn: $newBackupOptions)
             } header: {
                 Text("Files")
             } footer: {
