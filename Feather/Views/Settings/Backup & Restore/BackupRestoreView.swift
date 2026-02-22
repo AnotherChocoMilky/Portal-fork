@@ -13,6 +13,7 @@ struct BackupOptions {
     var includeDefaultFrameworks: Bool = true
     var includeArchives: Bool = true
     var usePassword: Bool = true
+    var snapshotType: String = "full"
 }
 
 // MARK: - View
@@ -36,11 +37,16 @@ struct BackupRestoreView: View {
     @State private var pairingInfo: String = ""
 
     @AppStorage("feature_advancedBackupTools") var advancedBackupTools = false
+    @AppStorage("feature_newBackupOptions") var newBackupOptions = false
+    @ObservedObject private var advancedManager = BackupAdvancedManager.shared
 
     // MARK: Body
     var body: some View {
         List {
             _headerSection
+            if newBackupOptions {
+                _healthStatusSection
+            }
             _nearbyTransferSection
             _advancedToolsSection
             _aboutSection
@@ -127,6 +133,77 @@ struct BackupRestoreView: View {
             }
         }
         .overlay { _statusOverlays }
+        .onAppear {
+            if newBackupOptions {
+                advancedManager.loadAndRefresh()
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var _healthStatusSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(.localized("Backup Health"))
+                            .font(.headline)
+                        Text(advancedManager.chainIntegrityStatus == "Intact" ? .localized("All snapshots are consistent") : .localized("Broken snapshot chain detected"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    ZStack {
+                        Circle()
+                            .stroke(advancedManager.healthScore > 80 ? Color.green.opacity(0.2) : Color.orange.opacity(0.2), lineWidth: 4)
+                            .frame(width: 44, height: 44)
+                        Circle()
+                            .trim(from: 0, to: CGFloat(advancedManager.healthScore) / 100.0)
+                            .stroke(advancedManager.healthScore > 80 ? Color.green : Color.orange, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                            .frame(width: 44, height: 44)
+                            .rotationEffect(.degrees(-90))
+                        Text("\(advancedManager.healthScore)")
+                            .font(.system(size: 12, weight: .bold))
+                    }
+                }
+
+                Divider()
+
+                HStack(spacing: 20) {
+                    VStack(alignment: .leading) {
+                        Text(.localized("Last Backup"))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        if let last = advancedManager.lastBackupTime {
+                            Text(last, style: .date)
+                                .font(.caption.bold())
+                        } else {
+                            Text(.localized("Never"))
+                                .font(.caption.bold())
+                        }
+                    }
+
+                    VStack(alignment: .leading) {
+                        Text(.localized("Expiring Certs"))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Text("\(advancedManager.expiringCertsCount)")
+                            .font(.caption.bold())
+                            .foregroundStyle(advancedManager.expiringCertsCount > 0 ? .orange : .primary)
+                    }
+
+                    VStack(alignment: .leading) {
+                        Text(.localized("Integrity"))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Text(advancedManager.chainIntegrityStatus)
+                            .font(.caption.bold())
+                            .foregroundStyle(advancedManager.chainIntegrityStatus == "Intact" ? .green : .red)
+                    }
+                }
+            }
+            .padding(.vertical, 8)
+        }
     }
 
     @ViewBuilder
@@ -994,6 +1071,15 @@ struct BackupOptionsView: View {
                                 Text(.localized("Saved app archives")).font(.caption).foregroundStyle(.secondary)
                             }
                         } icon: { Image(systemName: "archivebox.fill").foregroundStyle(.indigo) }
+                    }
+
+                    if UserDefaults.standard.bool(forKey: "feature_newBackupOptions") {
+                        Picker(.localized("Snapshot Type"), selection: $options.snapshotType) {
+                            Text(.localized("Full")).tag("full")
+                            Text(.localized("Incremental")).tag("incremental")
+                        }
+                        .pickerStyle(.segmented)
+                        .padding(.vertical, 8)
                     }
 
                 } header: {

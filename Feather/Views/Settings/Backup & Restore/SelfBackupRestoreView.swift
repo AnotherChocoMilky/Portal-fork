@@ -15,6 +15,8 @@ struct SelfBackupRestoreView: View {
     @State private var showingRenameAlert = false
     @State private var backupToRename: LocalBackup?
     @State private var newBackupName = ""
+    @AppStorage("feature_newBackupOptions") var newBackupOptions = false
+    @ObservedObject private var advancedManager = BackupAdvancedManager.shared
     
     var body: some View {
         List {
@@ -136,6 +138,11 @@ struct SelfBackupRestoreView: View {
                     let backupText = count == 1 ? "Backup" : "Backups"
                     return Text("\(count) \(backupText) • \(viewModel.totalBackupSize)")
                 }
+            }
+
+            if newBackupOptions {
+                _storageUsageSection
+                _advancedBackupSection
             }
             
             // Current Operation Status
@@ -335,11 +342,95 @@ struct SelfBackupRestoreView: View {
         }
         .onAppear {
             viewModel.loadBackups()
+            advancedManager.refreshStats(backups: viewModel.localBackups)
         }
     }
     
     // MARK: - Helper Views
     
+    @ViewBuilder
+    private var _storageUsageSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text(.localized("Storage Usage"))
+                        .font(.headline)
+                    Spacer()
+                    Text(ByteCountFormatter.string(fromByteCount: advancedManager.usedStorage, countStyle: .file))
+                        .font(.subheadline.bold())
+                }
+
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.secondary.opacity(0.2))
+                            .frame(height: 8)
+
+                        RoundedRectangle(cornerRadius: 4)
+                            .fill(Color.accentColor)
+                            .frame(width: geo.size.width * CGFloat(advancedManager.storagePercentage), height: 8)
+                    }
+                }
+                .frame(height: 8)
+
+                HStack {
+                    Text(String(format: "%.1f%% consumed", advancedManager.storagePercentage * 100))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text("\(ByteCountFormatter.string(fromByteCount: advancedManager.availableStorage, countStyle: .file)) available")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.vertical, 4)
+        } header: {
+            Text(.localized("Backup Storage"))
+        }
+    }
+
+    @ViewBuilder
+    private var _advancedBackupSection: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 12) {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(.localized("Snapshot Versioning"))
+                            .font(.headline)
+                        Text(.localized("Full and Incremental backups supported.")).font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "clock.arrow.2.circlepath").foregroundStyle(.purple)
+                }
+
+                if let lastBackup = viewModel.localBackups.first {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(.localized("Latest Snapshot"))
+                            .font(.caption.bold())
+                        Text(lastBackup.snapshotID ?? lastBackup.id.uuidString)
+                            .font(.system(size: 10, design: .monospaced))
+                            .foregroundStyle(.secondary)
+
+                        if let type = lastBackup.snapshotType {
+                            Text("Type: \(type.capitalized)")
+                                .font(.caption2)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(Color.blue.opacity(0.1))
+                                .clipShape(Capsule())
+                        }
+                    }
+                    .padding(8)
+                    .background(Color.secondary.opacity(0.05))
+                    .cornerRadius(8)
+                }
+            }
+            .padding(.vertical, 4)
+        } header: {
+            Text(.localized("Advanced Backup"))
+        }
+    }
+
     @ViewBuilder
     private func backupRow(backup: LocalBackup) -> some View {
         Label {
@@ -352,6 +443,16 @@ struct SelfBackupRestoreView: View {
                         Image(systemName: "calendar.badge.clock")
                             .font(.caption)
                             .foregroundStyle(.orange)
+                    }
+
+                    if newBackupOptions, let type = backup.snapshotType {
+                        Text(type.prefix(1).uppercased())
+                            .font(.system(size: 8, weight: .bold))
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
+                            .background(type == "full" ? Color.blue.opacity(0.2) : Color.green.opacity(0.2))
+                            .foregroundStyle(type == "full" ? .blue : .green)
+                            .clipShape(RoundedRectangle(cornerRadius: 4))
                     }
                 }
                 
@@ -461,6 +562,10 @@ struct LocalBackup: Identifiable, Codable {
     let path: String
     var isEncrypted: Bool?
     var isAutomatic: Bool?
+    var snapshotID: String?
+    var parentSnapshotID: String?
+    var snapshotType: String?
+    var changeSummary: String?
     
     var sizeString: String {
         ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
@@ -609,13 +714,20 @@ class SelfBackupRestoreViewModel: ObservableObject {
             let fileSize = attributes[.size] as? Int64 ?? 0
             
             // Create backup metadata
+            let parent = localBackups.first
+            let changeSummary = BackupAdvancedManager.shared.generateChangeSummary(parent: parent, currentOptions: options)
+
             let backup = LocalBackup(
                 id: backupID,
                 name: "Backup \(timestamp.formatted(date: .abbreviated, time: .shortened))",
                 date: timestamp,
                 size: fileSize,
                 path: backupZipPath.path,
-                isEncrypted: options.usePassword
+                isEncrypted: options.usePassword,
+                snapshotID: backupID.uuidString,
+                parentSnapshotID: parent?.snapshotID,
+                snapshotType: options.snapshotType,
+                changeSummary: changeSummary
             )
             
             localBackups.append(backup)
@@ -927,15 +1039,30 @@ class SelfBackupRestoreViewModel: ObservableObject {
     
     private func collectBackupData(to directory: URL, options: BackupOptions) async throws {
         // This implementation mirrors the prepareBackup logic from BackupRestoreView
+        let isIncremental = options.snapshotType == "incremental"
+        var currentManifest: [String: Int64] = [:] // relPath: size
+        var parentManifest: [String: Int64] = [:]
         
+        if isIncremental, let parent = localBackups.first {
+            parentManifest = await BackupAdvancedManager.shared.loadManifest(from: URL(fileURLWithPath: parent.path))
+        }
+
         // Certificates
         if options.includeCertificates {
             let certsDir = directory.appendingPathComponent("certificates")
             try fileManager.createDirectory(at: certsDir, withIntermediateDirectories: true)
             
             if fileManager.fileExists(atPath: fileManager.certificates.path) {
-                let certFiles = try fileManager.contentsOfDirectory(at: fileManager.certificates, includingPropertiesForKeys: nil)
+                let certFiles = try fileManager.contentsOfDirectory(at: fileManager.certificates, includingPropertiesForKeys: [.fileSizeKey])
                 for certFile in certFiles {
+                    let relPath = "certificates/\(certFile.lastPathComponent)"
+                    let size = Int64((try? certFile.resourceValues(forKeys: [.fileSizeKey]).fileSize) ?? 0)
+                    currentManifest[relPath] = size
+
+                    if isIncremental && parentManifest[relPath] == size {
+                        continue // Skip unchanged file
+                    }
+
                     let destURL = certsDir.appendingPathComponent(certFile.lastPathComponent)
                     try? fileManager.copyItem(at: certFile, to: destURL)
                 }
@@ -1028,6 +1155,10 @@ class SelfBackupRestoreViewModel: ObservableObject {
         let standardPlist = try PropertyListSerialization.data(fromPropertyList: filteredStandard, format: .xml, options: 0)
         try standardPlist.write(to: directory.appendingPathComponent("standard_settings.plist"))
         
+        // Manifest file
+        let manifestData = try JSONSerialization.data(withJSONObject: currentManifest)
+        try manifestData.write(to: directory.appendingPathComponent("manifest.json"))
+
         // Marker file
         try kBackupMarkerContent.write(to: directory.appendingPathComponent(kBackupMarkerFilename), atomically: true, encoding: .utf8)
     }
