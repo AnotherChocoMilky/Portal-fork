@@ -12,6 +12,7 @@ struct ModernSigningView: View {
     @AppStorage(UserDefaults.Keys.installTrigger) private var installTrigger: Int = 0
     @AppStorage("feature_advancedSigning") private var _advancedSigningEnabled = false
     @StateObject private var _optionsManager = OptionsManager.shared
+    @StateObject private var _motionManager = MotionManager.shared
     
     @State private var _temporaryOptions: Options = OptionsManager.shared.options
     @State private var _temporaryCertificate: Int
@@ -33,6 +34,7 @@ struct ModernSigningView: View {
     @State private var _editingBundleId = ""
     @State private var _editingVersion = ""
     @State private var _capabilities: [String] = []
+    @State private var _decodedCertificate: Certificate?
     @State private var _metalState: MetalAnimationState = .idle
     @State private var _errorMessage: String? = nil
     
@@ -135,6 +137,11 @@ struct ModernSigningView: View {
             }
             .fullScreenCover(isPresented: $_isAddingCertificatePresenting) {
                 CertificatesAddView()
+            }
+            .onChange(of: _temporaryCertificate) { newValue in
+                if let cert = _selectedCert() {
+                    _decodedCertificate = Storage.shared.getProvisionFileDecoded(for: cert)
+                }
             }
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -274,6 +281,7 @@ struct ModernSigningView: View {
     }
 
     private func _onAppearAction() {
+                _motionManager.start()
                 _loadCapabilities()
                 // Apply global installation trigger setting if not already set
                 if installTrigger == 1 {
@@ -296,6 +304,10 @@ struct ModernSigningView: View {
                    let newName = _temporaryOptions.displayNames[currentName] {
                     _temporaryOptions.appName = newName
                 }
+
+                if let cert = _selectedCert() {
+                    _decodedCertificate = Storage.shared.getProvisionFileDecoded(for: cert)
+                }
                 
                 // Trigger entrance animation
                 withAnimation(.spring(response: 0.7, dampingFraction: 0.7)) {
@@ -308,6 +320,7 @@ struct ModernSigningView: View {
     
     // MARK: - Dismiss with Animation
     private func dismissWithAnimation() {
+        _motionManager.stop()
         withAnimation(.easeOut(duration: 0.25)) {
             _headerScale = 0.9
             _contentOpacity = 0
@@ -336,8 +349,9 @@ struct ModernSigningView: View {
 
                         for i in 0..<3 {
                             let speed = Double(i + 1) * 0.2
-                            let x = (sin(time * speed) + 1) / 2 * size.width
-                            let y = (cos(time * speed * 0.7) + 1) / 2 * size.height
+                            let motionOffset = CGFloat(i + 1) * 15
+                            let x = (sin(time * speed) + 1) / 2 * size.width + (_motionManager.roll * motionOffset)
+                            let y = (cos(time * speed * 0.7) + 1) / 2 * size.height + (_motionManager.pitch * motionOffset)
 
                             let color = i == 0 ? Color.accentColor : (i == 1 ? Color.purple : Color.cyan)
 
@@ -384,7 +398,10 @@ struct ModernSigningView: View {
                         )
                         .frame(width: 320, height: 320)
                         .blur(radius: 70)
-                        .offset(x: _floatingAnimation ? -40 : 40, y: _floatingAnimation ? -25 : 25)
+                        .offset(
+                            x: (_floatingAnimation ? -40 : 40) + (_motionManager.roll * 20),
+                            y: (_floatingAnimation ? -25 : 25) + (_motionManager.pitch * 20)
+                        )
                         .position(x: geo.size.width * 0.15, y: geo.size.height * 0.12)
 
                     // Secondary purple orb
@@ -403,7 +420,10 @@ struct ModernSigningView: View {
                         )
                         .frame(width: 260, height: 260)
                         .blur(radius: 55)
-                        .offset(x: _floatingAnimation ? 35 : -35, y: _floatingAnimation ? 15 : -15)
+                        .offset(
+                            x: (_floatingAnimation ? 35 : -35) + (_motionManager.roll * -15),
+                            y: (_floatingAnimation ? 15 : -15) + (_motionManager.pitch * -15)
+                        )
                         .position(x: geo.size.width * 0.88, y: geo.size.height * 0.65)
                 }
                 .ignoresSafeArea()
@@ -746,6 +766,34 @@ struct ModernSigningView: View {
                         Text(cert.nickname ?? "Certificate")
                             .font(.body.weight(.medium))
                             .foregroundStyle(.primary)
+
+                        HStack(spacing: 8) {
+                            if cert.ppQCheck {
+                                Text("PPQ")
+                                    .font(.system(size: 8, weight: .bold))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 2)
+                                    .background(Capsule().fill(Color.blue))
+                            }
+
+                            if _decodedCertificate?.ProvisionedDevices != nil {
+                                Text("UDID")
+                                    .font(.system(size: 8, weight: .bold))
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 4)
+                                    .padding(.vertical, 2)
+                                    .background(Capsule().fill(Color.orange))
+                            }
+
+                            if let team = _decodedCertificate?.TeamName {
+                                Text(team)
+                                    .font(.system(size: 10))
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(1)
+                            }
+                        }
+
                         if let expiration = cert.expiration {
                             let formattedDate = expiration.formatted(date: .abbreviated, time: .omitted)
                             Label(.localized("Expires \(formattedDate)"), systemImage: "calendar")
@@ -1177,6 +1225,12 @@ struct ModernSigningView: View {
         AppStateManager.shared.isSigning = true
         
         _metalState = .loading
+
+        // Apply Clone App logic if enabled
+        if _temporaryOptions.cloneApp, let identifier = app.identifier {
+            _temporaryOptions.appIdentifier = "\(identifier).\(_temporaryOptions.cloneString)"
+        }
+
         // Animate out before showing signing process
         withAnimation(.easeOut(duration: 0.4)) {
             _headerScale = 0.85
@@ -1291,185 +1345,174 @@ struct ModernSigningOptionsView: View {
             // Modern animated background
             modernOptionsBackground
             
-            ScrollView {
-                VStack(spacing: 20) {
-                    // Protection Section
-                    modernOptionSection(title: "Protection", icon: "shield.lefthalf.filled", color: .blue) {
-                        modernOptionToggle(
-                            title: "PPQ Protection",
-                            subtitle: isPPQProtectionForced ? "Required for your certificate." : "Append random string to Bundle IDs to avoid Apple flagging this certificate.",
-                            icon: "shield.checkered",
-                            color: .blue,
-                            isOn: Binding(
-                                get: { isPPQProtectionForced ? true : options.ppqProtection },
-                                set: { newValue in
-                                    if !isPPQProtectionForced || newValue {
-                                        options.ppqProtection = newValue
-                                    }
-                                }
-                            ),
-                            disabled: isPPQProtectionForced
-                        )
-                        
-                        Button {
-                            showPPQInfo = true
-                        } label: {
-                            HStack(spacing: 12) {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color.accentColor.opacity(0.15))
-                                        .frame(width: 32, height: 32)
-                                    Image(systemName: "questionmark.circle.fill")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.accentColor)
-                                }
-                                Text("What is PPQ?")
-                                    .font(.subheadline.weight(.medium))
-                                    .foregroundStyle(.primary)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                                    .font(.caption.weight(.semibold))
-                                    .foregroundStyle(.tertiary)
-                                    .padding(6)
-                                    .background(Circle().fill(Color(UIColor.tertiarySystemFill)))
+            List {
+                // Protection Section
+                Section {
+                    Toggle(isOn: Binding(
+                        get: { isPPQProtectionForced ? true : options.ppqProtection },
+                        set: { newValue in
+                            if !isPPQProtectionForced || newValue {
+                                options.ppqProtection = newValue
                             }
-                            .padding(12)
+                        }
+                    )) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Label("PPQ Protection", systemImage: "shield.checkered")
+                                .font(.headline)
+                            Text(isPPQProtectionForced ? "Required for your certificate." : "Append random string to Bundle IDs to avoid Apple flagging this certificate.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
+                    .disabled(isPPQProtectionForced)
+                    .tint(.accentColor)
                     
-                    // General Section
-                    modernOptionSection(title: "General", icon: "gearshape.2.fill", color: .gray) {
-                        modernOptionPicker(
-                            title: "Appearance",
-                            icon: "paintpalette.fill",
-                            color: .pink,
-                            selection: $options.appAppearance,
-                            values: Options.AppAppearance.allCases
-                        )
-                        
-                        modernOptionPicker(
-                            title: "Minimum Requirement",
-                            icon: "ruler.fill",
-                            color: .indigo,
-                            selection: $options.minimumAppRequirement,
-                            values: Options.MinimumAppRequirement.allCases
-                        )
+                    Button {
+                        showPPQInfo = true
+                    } label: {
+                        Label("What is PPQ?", systemImage: "questionmark.circle.fill")
                     }
-                    
-                    // Signing Section
-                    modernOptionSection(title: "Signing", icon: "signature", color: .purple) {
-                        modernOptionPicker(
-                            title: "Signing Type",
-                            icon: "pencil.and.scribble",
-                            color: .purple,
-                            selection: $options.signingOption,
-                            values: Options.SigningOption.allCases
-                        )
-                    }
-                    
-                    // App Features Section
-                    modernOptionSection(title: "App Features", icon: "sparkles", color: .yellow) {
-                        modernOptionToggle(title: "File Sharing", subtitle: "Enable Document Sharing.", icon: "folder.fill.badge.person.crop", color: .blue, isOn: $options.fileSharing)
-                        modernOptionToggle(title: "iTunes File Sharing", subtitle: "Access Via iTunes/Finder.", icon: "music.note.list", color: .pink, isOn: $options.itunesFileSharing)
-                        modernOptionToggle(title: "ProMotion", subtitle: "120Hz Display Support.", icon: "gauge.with.dots.needle.67percent", color: .green, isOn: $options.proMotion)
-                        modernOptionToggle(title: "Game Mode", subtitle: "Turn on Gaming Mode (iOS 18+).", icon: "gamecontroller.fill", color: .purple, isOn: $options.gameMode)
-                        modernOptionToggle(title: "iPad Fullscreen", subtitle: "Full Screen On iPad.", icon: "ipad.landscape", color: .orange, isOn: $options.ipadFullscreen)
-                    }
-                    
-                    // Removal Section
-                    modernOptionSection(title: "Removal", icon: "trash.slash.fill", color: .red) {
-                        modernOptionToggle(title: "Remove URL Scheme", subtitle: "Strip URL Handlers.", icon: "link.badge.minus", color: .red, isOn: $options.removeURLScheme)
-                        modernOptionToggle(title: "Remove Provisioning", subtitle: "Exclude .mobileprovision.", icon: "doc.badge.minus", color: .orange, isOn: $options.removeProvisioning)
-                    }
-                    
-                    // URL Schemes Section
-                    modernOptionSection(title: "URL Schemes", icon: "link", color: .blue) {
-                        Text("This app will respond to the schemes you add here.")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, 14)
-                            .padding(.top, 10)
-                            .padding(.bottom, 4)
+                } header: {
+                    Label("Protection", systemImage: "shield.lefthalf.filled")
+                }
 
-                        ForEach(options.customURLSchemes, id: \.self) { scheme in
-                            HStack {
-                                Image(systemName: "link")
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 20)
-
-                                Text(scheme + "://")
-                                    .font(.system(size: 13, weight: .medium, design: .monospaced))
-
-                                Spacer()
-
-                                Button {
-                                    withAnimation {
-                                        options.customURLSchemes.removeAll(where: { $0 == scheme })
-                                    }
-                                } label: {
-                                    Image(systemName: "minus.circle.fill")
-                                        .foregroundStyle(.red.opacity(0.8))
-                                }
-                            }
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 6)
-
-                            Divider().padding(.leading, 44)
+                // General Section
+                Section {
+                    Picker(selection: $options.appAppearance) {
+                        ForEach(Options.AppAppearance.allCases, id: \.self) { appearance in
+                            Text(appearance.localizedDescription).tag(appearance)
                         }
+                    } label: {
+                        Label("Appearance", systemImage: "paintpalette.fill")
+                    }
+                    
+                    Picker(selection: $options.minimumAppRequirement) {
+                        ForEach(Options.MinimumAppRequirement.allCases, id: \.self) { requirement in
+                            Text(requirement.localizedDescription).tag(requirement)
+                        }
+                    } label: {
+                        Label("Minimum Requirement", systemImage: "ruler.fill")
+                    }
 
+                    Toggle(isOn: $options.cloneApp) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Label("Clone App", systemImage: "plus.square.on.square")
+                                .font(.headline)
+                            Text("Automatically adds a random string to the Bundle ID.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .tint(.accentColor)
+                } header: {
+                    Label("General", systemImage: "gearshape.2.fill")
+                }
+
+                // Signing Section
+                Section {
+                    Picker(selection: $options.signingOption) {
+                        ForEach(Options.SigningOption.allCases, id: \.self) { option in
+                            Text(option.localizedDescription).tag(option)
+                        }
+                    } label: {
+                        Label("Signing Type", systemImage: "pencil.and.scribble")
+                    }
+                } header: {
+                    Label("Signing", systemImage: "signature")
+                }
+
+                // App Features Section
+                Section {
+                    Toggle("File Sharing", isOn: $options.fileSharing)
+                    Toggle("iTunes File Sharing", isOn: $options.itunesFileSharing)
+                    Toggle("ProMotion", isOn: $options.proMotion)
+                    Toggle("Game Mode", isOn: $options.gameMode)
+                    Toggle("iPad Fullscreen", isOn: $options.ipadFullscreen)
+                } header: {
+                    Label("App Features", systemImage: "sparkles")
+                }
+
+                // Removal Section
+                Section {
+                    Toggle("Remove URL Scheme", isOn: $options.removeURLScheme)
+                    Toggle("Remove Provisioning", isOn: $options.removeProvisioning)
+                } header: {
+                    Label("Removal", systemImage: "trash.slash.fill")
+                }
+
+                // URL Schemes Section
+                Section {
+                    ForEach(options.customURLSchemes, id: \.self) { scheme in
                         HStack {
-                            TextField("Enter Scheme (e.g. test)", text: $newURLScheme)
-                                .textFieldStyle(.plain)
-                                .font(.system(size: 14))
-                                .autocorrectionDisabled()
-                                .textInputAutocapitalization(.never)
-
-                            Button {
-                                if !newURLScheme.isEmpty {
-                                    let cleanScheme = newURLScheme.replacingOccurrences(of: "://", with: "")
-                                    if !options.customURLSchemes.contains(cleanScheme) {
-                                        withAnimation {
-                                            options.customURLSchemes.append(cleanScheme)
-                                        }
-                                    }
-                                    newURLScheme = ""
+                            Text(scheme + "://")
+                                .font(.system(.body, design: .monospaced))
+                            Spacer()
+                            Button(role: .destructive) {
+                                withAnimation {
+                                    options.customURLSchemes.removeAll(where: { $0 == scheme })
                                 }
                             } label: {
-                                Text("Add")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(Color.accentColor)
-                                    .foregroundStyle(.white)
-                                    .cornerRadius(12)
+                                Image(systemName: "minus.circle.fill")
                             }
                         }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
                     }
+                    
+                    HStack {
+                        TextField("Enter Scheme (e.g. test)", text: $newURLScheme)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
 
-                    // Localization Section
-                    modernOptionSection(title: "Localization", icon: "globe.badge.chevron.backward", color: .green) {
-                        modernOptionToggle(title: "Force Localize", subtitle: "Override Localized Titles.", icon: "character.bubble.fill", color: .green, isOn: $options.changeLanguageFilesForCustomDisplayName)
+                        Button("Add") {
+                            if !newURLScheme.isEmpty {
+                                let cleanScheme = newURLScheme.replacingOccurrences(of: "://", with: "")
+                                if !options.customURLSchemes.contains(cleanScheme) {
+                                    withAnimation {
+                                        options.customURLSchemes.append(cleanScheme)
+                                    }
+                                }
+                                newURLScheme = ""
+                            }
+                        }
+                        .disabled(newURLScheme.isEmpty)
                     }
-                    
-                    // Post Signing Section
-                    modernOptionSection(title: "Post Signing", icon: "clock.arrow.circlepath", color: .orange) {
-                        modernOptionToggle(title: "Install After Signing", subtitle: "Auto Install When Done.", icon: "arrow.down.circle.fill", color: .green, isOn: $options.post_installAppAfterSigned)
-                        modernOptionToggle(title: "Delete After Signing", subtitle: "Remove Original File.", icon: "trash.fill", color: .red, isOn: $options.post_deleteAppAfterSigned)
-                    }
-                    
-                    // Experiments Section
-                    modernOptionSection(title: "Experiments", icon: "flask.fill", color: .purple, isBeta: true) {
-                        modernOptionToggle(title: "Replace Substrate", subtitle: "Use ElleKit Instead.", icon: "arrow.triangle.2.circlepath.circle.fill", color: .cyan, isOn: $options.experiment_replaceSubstrateWithEllekit)
-                        modernOptionToggle(title: "Liquid Glass", subtitle: "Use iOS 26 Redesign Support.", icon: "sparkles.rectangle.stack.fill", color: .purple, isOn: $options.experiment_supportLiquidGlass)
+                } header: {
+                    Label("URL Schemes", systemImage: "link")
+                } footer: {
+                    Text("This app will respond to the schemes you add here.")
+                }
+
+                // Localization Section
+                Section {
+                    Toggle("Force Localize", isOn: $options.changeLanguageFilesForCustomDisplayName)
+                } header: {
+                    Label("Localization", systemImage: "globe.badge.chevron.backward")
+                }
+
+                // Post Signing Section
+                Section {
+                    Toggle("Install After Signing", isOn: $options.post_installAppAfterSigned)
+                    Toggle("Delete After Signing", isOn: $options.post_deleteAppAfterSigned)
+                } header: {
+                    Label("Post Signing", systemImage: "clock.arrow.circlepath")
+                }
+
+                // Experiments Section
+                Section {
+                    Toggle("Replace Substrate", isOn: $options.experiment_replaceSubstrateWithEllekit)
+                    Toggle("Liquid Glass", isOn: $options.experiment_supportLiquidGlass)
+                } header: {
+                    HStack {
+                        Label("Experiments", systemImage: "flask.fill")
+                        Text("BETA")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(Color.purple))
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
             }
+            .scrollContentBackground(.hidden)
         }
         .navigationTitle("Signing Options")
         .navigationBarTitleDisplayMode(.inline)

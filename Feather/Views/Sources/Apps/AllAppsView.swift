@@ -86,6 +86,7 @@ struct AllAppsView: View {
     
     var object: [AltSource]
     @ObservedObject var viewModel: SourcesViewModel
+
     @State private var _sources: [ASRepository]?
     @State private var _isLoading = true
     @State private var _loadedSourcesCount = 0
@@ -95,6 +96,19 @@ struct AllAppsView: View {
     @State private var _allApps: [(source: ASRepository, app: ASRepository.App)] = []
     @State private var _filteredApps: [(source: ASRepository, app: ASRepository.App)] = []
     @State private var _filterTask: Task<Void, Never>?
+
+    init(isTab: Bool = false, object: [AltSource], viewModel: SourcesViewModel) {
+        self.isTab = isTab
+        self.object = object
+        self.viewModel = viewModel
+
+        if !viewModel.allApps.isEmpty {
+            self.__allApps = State(initialValue: viewModel.allApps)
+            self.__filteredApps = State(initialValue: viewModel.allApps)
+            self.__isLoading = State(initialValue: false)
+            self.__sources = State(initialValue: object.compactMap { viewModel.sources[$0] })
+        }
+    }
 
     private var _totalAppCount: Int {
         _allApps.count
@@ -526,8 +540,10 @@ struct AllAppsView: View {
 			if Task.isCancelled { return }
 
             await MainActor.run {
-                withAnimation {
-                    _isSearching = true
+                if !searchText.isEmpty {
+                    withAnimation {
+                        _isSearching = true
+                    }
                 }
             }
 
@@ -598,7 +614,15 @@ struct AllAppsView: View {
 
 	// MARK: - Load All Sources
 	private func _loadAllSources() {
-		// If we don't have apps yet, show the loading screen
+		// If we already have data in viewModel, use it immediately
+		if _allApps.isEmpty && !viewModel.allApps.isEmpty {
+			_allApps = viewModel.allApps
+			_filteredApps = viewModel.allApps
+			_sources = object.compactMap { viewModel.sources[$0] }
+			_isLoading = false
+		}
+
+		// If we still don't have apps, show the loading screen
 		if _allApps.isEmpty {
 			_isLoading = true
 			_loadedSourcesCount = 0
@@ -952,31 +976,49 @@ struct AllAppsRowView: View {
     }
 
     private var downloadProgressBar: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 6) {
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
-                    // Background
+                    // Modern Background
                     Capsule()
-                        .fill(Color.primary.opacity(0.1))
-                        .frame(height: 4)
+                        .fill(.ultraThinMaterial)
+                        .frame(height: 6)
+                        .overlay(
+                            Capsule()
+                                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
+                        )
 
-                    // Progress
+                    // Modern Gradient Progress
                     Capsule()
-                        .fill(Color.accentColor)
-                        .frame(width: geometry.size.width * downloadProgress, height: 4)
+                        .fill(
+                            LinearGradient(
+                                colors: [Color.accentColor, Color.blue],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            )
+                        )
+                        .frame(width: max(6, geometry.size.width * downloadProgress), height: 6)
+                        .shadow(color: Color.accentColor.opacity(0.3), radius: 3, x: 0, y: 1)
                 }
             }
-            .frame(height: 4)
+            .frame(height: 6)
 
-            // Progress percentage
+            // Progress percentage with better font
             HStack {
-                Spacer()
                 Text("\(Int(downloadProgress * 100))%")
-                    .font(.system(size: 11, weight: .medium))
+                    .font(.system(size: 10, weight: .bold, design: .monospaced))
+                    .foregroundStyle(Color.accentColor)
+
+                Spacer()
+
+                Text(isDownloading ? "Downloading..." : "Complete")
+                    .font(.system(size: 10, weight: .medium))
                     .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
             }
         }
-        .transition(AnyTransition.opacity.combined(with: .scale(scale: 0.9)))
+        .padding(.top, 4)
+        .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
     }
 	
 	@ViewBuilder
@@ -1010,7 +1052,7 @@ struct AllAppsRowView: View {
 		RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous)
 			.fill(Color.secondary.opacity(0.2))
 			.overlay(
-				Image(systemName: "app.fill")
+				Image(systemName: "square.dashed")
 					.font(.system(size: iconSize * 0.4))
 					.foregroundStyle(.secondary)
 			)

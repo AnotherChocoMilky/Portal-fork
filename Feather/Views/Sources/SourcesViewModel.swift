@@ -52,7 +52,12 @@ final class SourcesViewModel: ObservableObject {
     }
 
     var isFinished = false
-    @Published var sources: [AltSource: ASRepository] = [:]
+    @Published var sources: [AltSource: ASRepository] = [:] {
+        didSet {
+            _updateFlattenedApps()
+        }
+    }
+    @Published var allApps: [(source: ASRepository, app: ASRepository.App)] = []
     @Published var fetchState: SourceFetchState = .idle
     @Published var fetchProgress: Double = 0
     @Published var failedSources: Set<String> = []
@@ -287,6 +292,12 @@ final class SourcesViewModel: ObservableObject {
         fetchProgress = 1.0
     }
     
+    private func _updateFlattenedApps() {
+        allApps = sources.values.flatMap { source in
+            source.apps.map { (source: source, app: $0) }
+        }
+    }
+
     // MARK: - Single Source Refresh
     func refreshSource(_ source: AltSource) async {
         guard let url = source.sourceURL else { return }
