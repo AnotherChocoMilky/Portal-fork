@@ -22,7 +22,7 @@ struct FullScreenMetalStateView: View {
                     .transition(.opacity)
                     .zIndex(0)
 
-                if state == .loading {
+                if state == .loading || state == .success {
                     loadingOverlay
                         .zIndex(1)
                 }
