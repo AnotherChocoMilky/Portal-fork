@@ -34,7 +34,7 @@ struct BackupRestoreView: View {
     @State private var isRestoring = false
     @State private var isPreparingBackup = false
     @State private var isShowingPairingStatus = false
-    @State private var currentSession: PairingSession?
+    @State private var currentTransferSession: SecureTransferSession?
     @State private var pairingStatusError: String?
 
     @AppStorage("feature_advancedBackupTools") var advancedBackupTools = false
@@ -115,18 +115,18 @@ struct BackupRestoreView: View {
         .sheet(isPresented: $isShowingPairingStatus) {
             NavigationStack {
                 List {
-                    if let session = currentSession {
+                    if let session = currentTransferSession {
                         Section {
                             HStack {
                                 Text("Device Name")
                                 Spacer()
-                                Text(session.deviceName)
+                                Text(session.remoteDeviceName)
                                     .foregroundStyle(.secondary)
                             }
                             HStack {
                                 Text("Method")
                                 Spacer()
-                                Text(session.pairingMethod)
+                                Text(session.transferMethod)
                                     .foregroundStyle(.secondary)
                             }
                             HStack {
@@ -151,7 +151,7 @@ struct BackupRestoreView: View {
                             HStack {
                                 Text("Status")
                                 Spacer()
-                                if PairingSessionManager.shared.isSessionValid(session) {
+                                if SecureTransferSessionManager.shared.isSessionValid(session) {
                                     Label("Active", systemImage: "checkmark.circle.fill")
                                         .foregroundStyle(.green)
                                 } else {
@@ -165,11 +165,11 @@ struct BackupRestoreView: View {
 
                         Section {
                             Button(role: .destructive) {
-                                PairingSessionManager.shared.deleteSession()
-                                currentSession = nil
+                                SecureTransferSessionManager.shared.deleteSession()
+                                currentTransferSession = nil
                                 isShowingPairingStatus = false
                             } label: {
-                                Label("Reset Pairing", systemImage: "trash")
+                                Label("Reset Session", systemImage: "trash")
                             }
                         }
                     } else if let error = pairingStatusError {
@@ -179,14 +179,14 @@ struct BackupRestoreView: View {
                                     .foregroundStyle(.red)
                                     .font(.headline)
 
-                                Text("The pairing record is unreadable or contains invalid data.")
+                                Text("The session record is unreadable or contains invalid data.")
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                             }
                             .padding(.vertical, 4)
 
-                            Button("Reset Pairing State", role: .destructive) {
-                                PairingSessionManager.shared.deleteSession()
+                            Button("Reset Session State", role: .destructive) {
+                                SecureTransferSessionManager.shared.deleteSession()
                                 pairingStatusError = nil
                                 isShowingPairingStatus = false
                             }
@@ -199,10 +199,10 @@ struct BackupRestoreView: View {
                                     .foregroundStyle(.secondary)
                                     .padding(.top, 10)
 
-                                Text("No active pairing session.")
+                                Text("Secure Transfer")
                                     .font(.headline)
 
-                                Text("Pair your device via Nearby Transfer to see status information here.")
+                                Text("No active secure session. Start a secure transfer to generate pairing data.")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                                     .multilineTextAlignment(.center)
@@ -210,10 +210,8 @@ struct BackupRestoreView: View {
 
                                 Button {
                                     isShowingPairingStatus = false
-                                    // Could navigate to PairingView here if possible,
-                                    // but we are already in a sheet.
                                 } label: {
-                                    Text("Dismiss")
+                                    Text("Start Secure Transfer")
                                         .fontWeight(.semibold)
                                 }
                                 .buttonStyle(.bordered)
@@ -222,7 +220,7 @@ struct BackupRestoreView: View {
                         }
                     }
                 }
-                .navigationTitle("Pairing Status")
+                .navigationTitle("Secure Session Status")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -388,7 +386,7 @@ struct BackupRestoreView: View {
                 Button {
                     handleViewPairingStatus()
                 } label: {
-                    Label(.localized("View Pairing Status"), systemImage: "link.circle.fill")
+                    Label(.localized("View Secure Session Status"), systemImage: "link.circle.fill")
                 }
             } header: {
                 Text(.localized("Advanced Tools"))
@@ -838,14 +836,14 @@ struct BackupRestoreView: View {
     private func handleViewPairingStatus() {
         pairingStatusError = nil
 
-        if PairingSessionManager.shared.sessionExists() {
-            if let session = PairingSessionManager.shared.loadSession() {
-                currentSession = session
+        if SecureTransferSessionManager.shared.sessionExists() {
+            if let session = SecureTransferSessionManager.shared.loadSession() {
+                currentTransferSession = session
             } else {
-                pairingStatusError = "Pairing data corrupted."
+                pairingStatusError = "Session data corrupted."
             }
         } else {
-            currentSession = nil
+            currentTransferSession = nil
         }
         isShowingPairingStatus = true
     }

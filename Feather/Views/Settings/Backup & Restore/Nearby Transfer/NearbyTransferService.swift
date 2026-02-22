@@ -249,24 +249,17 @@ extension NearbyTransferService: MCSessionDelegate {
                 self.state = .connecting
                 self.currentItem = "Connected To \(peerID.displayName)"
 
-                // Save pairing session record
-                let session = PairingSession(
-                    sessionID: UUID().uuidString,
-                    createdAt: Date(),
-                    pairingMethod: self.currentPairingMethod,
-                    deviceName: peerID.displayName,
-                    encryptionType: "AES-256",
-                    sessionFingerprint: String(UUID().uuidString.prefix(8)).uppercased(),
-                    isActive: true,
-                    expirationDate: Calendar.current.date(byAdding: .day, value: 7, to: Date())
+                // Save secure transfer session record
+                SecureTransferSessionManager.shared.recordSessionAuthenticated(
+                    method: self.currentPairingMethod,
+                    remoteDeviceName: peerID.displayName
                 )
-                PairingSessionManager.shared.saveSession(session)
 
             case .connecting:
                 self.currentItem = "Connecting To \(peerID.displayName)..."
             case .notConnected:
-                // Deactivate pairing session
-                PairingSessionManager.shared.deactivateSession()
+                // Deactivate secure transfer session
+                SecureTransferSessionManager.shared.deactivateSession()
 
                 if case .transferring = self.state {
                     // Transfer was interrupted
