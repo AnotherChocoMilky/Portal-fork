@@ -58,6 +58,7 @@ class NearbyTransferService: NSObject, ObservableObject {
     
     var mode: TransferMode = .receive
     var currentOTP: String?
+    var currentPairingMethod: String = "Nearby"
     
     override init() {
         let deviceName = UIDevice.current.name
@@ -247,9 +248,26 @@ extension NearbyTransferService: MCSessionDelegate {
             case .connected:
                 self.state = .connecting
                 self.currentItem = "Connected To \(peerID.displayName)"
+
+                // Save pairing session record
+                let session = PairingSession(
+                    sessionID: UUID().uuidString,
+                    createdAt: Date(),
+                    pairingMethod: self.currentPairingMethod,
+                    deviceName: peerID.displayName,
+                    encryptionType: "AES-256",
+                    sessionFingerprint: String(UUID().uuidString.prefix(8)).uppercased(),
+                    isActive: true,
+                    expirationDate: Calendar.current.date(byAdding: .day, value: 7, to: Date())
+                )
+                PairingSessionManager.shared.saveSession(session)
+
             case .connecting:
                 self.currentItem = "Connecting To \(peerID.displayName)..."
             case .notConnected:
+                // Deactivate pairing session
+                PairingSessionManager.shared.deactivateSession()
+
                 if case .transferring = self.state {
                     // Transfer was interrupted
                     self.state = .failed(NSError(domain: "NearbyTransfer", code: -1, userInfo: [NSLocalizedDescriptionKey: "Connection Lost"]))

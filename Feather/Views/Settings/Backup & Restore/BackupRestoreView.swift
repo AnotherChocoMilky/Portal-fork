@@ -34,7 +34,8 @@ struct BackupRestoreView: View {
     @State private var isRestoring = false
     @State private var isPreparingBackup = false
     @State private var isShowingPairingStatus = false
-    @State private var pairingInfo: String = ""
+    @State private var currentSession: PairingSession?
+    @State private var pairingStatusError: String?
 
     @AppStorage("feature_advancedBackupTools") var advancedBackupTools = false
     @AppStorage("feature_newBackupOptions") var newBackupOptions = false
@@ -113,12 +114,112 @@ struct BackupRestoreView: View {
         }
         .sheet(isPresented: $isShowingPairingStatus) {
             NavigationStack {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text(pairingInfo)
-                            .font(.system(.body, design: .monospaced))
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                List {
+                    if let session = currentSession {
+                        Section {
+                            HStack {
+                                Text("Device Name")
+                                Spacer()
+                                Text(session.deviceName)
+                                    .foregroundStyle(.secondary)
+                            }
+                            HStack {
+                                Text("Method")
+                                Spacer()
+                                Text(session.pairingMethod)
+                                    .foregroundStyle(.secondary)
+                            }
+                            HStack {
+                                Text("Created")
+                                Spacer()
+                                Text(session.createdAt, style: .date)
+                                    .foregroundStyle(.secondary)
+                            }
+                            HStack {
+                                Text("Encryption")
+                                Spacer()
+                                Text(session.encryptionType)
+                                    .foregroundStyle(.secondary)
+                            }
+                            HStack {
+                                Text("Fingerprint")
+                                Spacer()
+                                Text(session.sessionFingerprint)
+                                    .font(.system(.body, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                            }
+                            HStack {
+                                Text("Status")
+                                Spacer()
+                                if PairingSessionManager.shared.isSessionValid(session) {
+                                    Label("Active", systemImage: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                } else {
+                                    Label("Expired", systemImage: "xmark.circle.fill")
+                                        .foregroundStyle(.red)
+                                }
+                            }
+                        } header: {
+                            Text("Session Details")
+                        }
+
+                        Section {
+                            Button(role: .destructive) {
+                                PairingSessionManager.shared.deleteSession()
+                                currentSession = nil
+                                isShowingPairingStatus = false
+                            } label: {
+                                Label("Reset Pairing", systemImage: "trash")
+                            }
+                        }
+                    } else if let error = pairingStatusError {
+                        Section {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Label(error, systemImage: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.red)
+                                    .font(.headline)
+
+                                Text("The pairing record is unreadable or contains invalid data.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.vertical, 4)
+
+                            Button("Reset Pairing State", role: .destructive) {
+                                PairingSessionManager.shared.deleteSession()
+                                pairingStatusError = nil
+                                isShowingPairingStatus = false
+                            }
+                        }
+                    } else {
+                        Section {
+                            VStack(alignment: .center, spacing: 12) {
+                                Image(systemName: "link.badge.plus")
+                                    .font(.system(size: 40))
+                                    .foregroundStyle(.secondary)
+                                    .padding(.top, 10)
+
+                                Text("No active pairing session.")
+                                    .font(.headline)
+
+                                Text("Pair your device via Nearby Transfer to see status information here.")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.bottom, 10)
+
+                                Button {
+                                    isShowingPairingStatus = false
+                                    // Could navigate to PairingView here if possible,
+                                    // but we are already in a sheet.
+                                } label: {
+                                    Text("Dismiss")
+                                        .fontWeight(.semibold)
+                                }
+                                .buttonStyle(.bordered)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
                     }
                 }
                 .navigationTitle("Pairing Status")
@@ -131,6 +232,7 @@ struct BackupRestoreView: View {
                     }
                 }
             }
+            .presentationDetents([.medium, .large])
         }
         .overlay { _statusOverlays }
         .onAppear {
@@ -734,23 +836,16 @@ struct BackupRestoreView: View {
     }
 
     private func handleViewPairingStatus() {
-        let pairingFileURL = Storage.shared.documentsURL.appendingPathComponent("pairingFile.plist")
-        if FileManager.default.fileExists(atPath: pairingFileURL.path) {
-            if let dict = NSDictionary(contentsOf: pairingFileURL) as? [String: Any] {
-                var info = "Pairing File Found\n\n"
-                for (key, value) in dict {
-                    if key.lowercased().contains("key") || key.lowercased().contains("secret") {
-                        info += "\(key): [HIDDEN]\n"
-                    } else {
-                        info += "\(key): \(value)\n"
-                    }
-                }
-                pairingInfo = info
+        pairingStatusError = nil
+
+        if PairingSessionManager.shared.sessionExists() {
+            if let session = PairingSessionManager.shared.loadSession() {
+                currentSession = session
             } else {
-                pairingInfo = "Pairing file found but could not be read as a dictionary."
+                pairingStatusError = "Pairing data corrupted."
             }
         } else {
-            pairingInfo = "No pairing file found at:\n\(pairingFileURL.path)"
+            currentSession = nil
         }
         isShowingPairingStatus = true
     }

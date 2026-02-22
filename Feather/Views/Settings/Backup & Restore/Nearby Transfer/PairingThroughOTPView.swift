@@ -341,6 +341,7 @@ class OTPPairingViewModel: ObservableObject {
     
     func confirmConnection() {
         guard let peerInfo = connectedPeerInfo else { return }
+        transferService.currentPairingMethod = "Remote"
         transferService.connect(to: peerInfo.peerId)
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
             self?.isPeerConnected = true; self?.transferStarted = true
