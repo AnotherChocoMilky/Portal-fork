@@ -1,8 +1,8 @@
 import SwiftUI
 import NimbleViews
 
-// MARK: - Nearby Transfer View
-struct NearbyTransferView: View {
+// MARK: - Transfer Setup View
+struct TransferSetupView: View {
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
@@ -91,7 +91,7 @@ struct NearbyTransferView: View {
                         .foregroundStyle(.orange)
                 }
             } header: {
-                Text(.localized("Why Nearby Transfer?"))
+                Text(.localized("Why Secure Transfer?"))
             }
             
             // Requirements Section

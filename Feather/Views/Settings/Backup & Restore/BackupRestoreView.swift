@@ -34,8 +34,7 @@ struct BackupRestoreView: View {
     @State private var isRestoring = false
     @State private var isPreparingBackup = false
     @State private var isShowingPairingStatus = false
-    @State private var currentTransferSession: SecureTransferSession?
-    @State private var pairingStatusError: String?
+    @State private var showSecureTransfer = false
 
     @AppStorage("feature_advancedBackupTools") var advancedBackupTools = false
     @AppStorage("feature_newBackupOptions") var newBackupOptions = false
@@ -114,120 +113,11 @@ struct BackupRestoreView: View {
         }
         .sheet(isPresented: $isShowingPairingStatus) {
             NavigationStack {
-                List {
-                    if let session = currentTransferSession {
-                        Section {
-                            HStack {
-                                Text("Device Name")
-                                Spacer()
-                                Text(session.remoteDeviceName)
-                                    .foregroundStyle(.secondary)
-                            }
-                            HStack {
-                                Text("Method")
-                                Spacer()
-                                Text(session.transferMethod)
-                                    .foregroundStyle(.secondary)
-                            }
-                            HStack {
-                                Text("Created")
-                                Spacer()
-                                Text(session.createdAt, style: .date)
-                                    .foregroundStyle(.secondary)
-                            }
-                            HStack {
-                                Text("Encryption")
-                                Spacer()
-                                Text(session.encryptionType)
-                                    .foregroundStyle(.secondary)
-                            }
-                            HStack {
-                                Text("Fingerprint")
-                                Spacer()
-                                Text(session.sessionFingerprint)
-                                    .font(.system(.body, design: .monospaced))
-                                    .foregroundStyle(.secondary)
-                            }
-                            HStack {
-                                Text("Status")
-                                Spacer()
-                                if SecureTransferSessionManager.shared.isSessionValid(session) {
-                                    Label("Active", systemImage: "checkmark.circle.fill")
-                                        .foregroundStyle(.green)
-                                } else {
-                                    Label("Expired", systemImage: "xmark.circle.fill")
-                                        .foregroundStyle(.red)
-                                }
-                            }
-                        } header: {
-                            Text("Session Details")
-                        }
-
-                        Section {
-                            Button(role: .destructive) {
-                                SecureTransferSessionManager.shared.deleteSession()
-                                currentTransferSession = nil
-                                isShowingPairingStatus = false
-                            } label: {
-                                Label("Reset Session", systemImage: "trash")
-                            }
-                        }
-                    } else if let error = pairingStatusError {
-                        Section {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Label(error, systemImage: "exclamationmark.triangle.fill")
-                                    .foregroundStyle(.red)
-                                    .font(.headline)
-
-                                Text("The session record is unreadable or contains invalid data.")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding(.vertical, 4)
-
-                            Button("Reset Session State", role: .destructive) {
-                                SecureTransferSessionManager.shared.deleteSession()
-                                pairingStatusError = nil
-                                isShowingPairingStatus = false
-                            }
-                        }
-                    } else {
-                        Section {
-                            VStack(alignment: .center, spacing: 12) {
-                                Image(systemName: "link.badge.plus")
-                                    .font(.system(size: 40))
-                                    .foregroundStyle(.secondary)
-                                    .padding(.top, 10)
-
-                                Text("Secure Transfer")
-                                    .font(.headline)
-
-                                Text("No active secure session. Start a secure transfer to generate pairing data.")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .multilineTextAlignment(.center)
-                                    .padding(.bottom, 10)
-
-                                Button {
-                                    isShowingPairingStatus = false
-                                } label: {
-                                    Text("Start Secure Transfer")
-                                        .fontWeight(.semibold)
-                                }
-                                .buttonStyle(.bordered)
-                            }
-                            .frame(maxWidth: .infinity)
-                        }
-                    }
+                SecureSessionStatusView {
+                    showSecureTransfer = true
                 }
-                .navigationTitle("Secure Session Status")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Done") {
-                            isShowingPairingStatus = false
-                        }
-                    }
+                .navigationDestination(isPresented: $showSecureTransfer) {
+                    TransferSetupView()
                 }
             }
             .presentationDetents([.medium, .large])
@@ -329,8 +219,8 @@ struct BackupRestoreView: View {
     @ViewBuilder
     private var _nearbyTransferSection: some View {
         Section {
-            NavigationLink(destination: NearbyTransferView()) {
-                Label(.localized("Nearby Transfer"), systemImage: "network.badge.shield.half.filled")
+            NavigationLink(destination: TransferSetupView()) {
+                Label(.localized("Secure Transfer"), systemImage: "network.badge.shield.half.filled")
                     .foregroundStyle(.purple)
             }
 
@@ -834,17 +724,6 @@ struct BackupRestoreView: View {
     }
 
     private func handleViewPairingStatus() {
-        pairingStatusError = nil
-
-        if SecureTransferSessionManager.shared.sessionExists() {
-            if let session = SecureTransferSessionManager.shared.loadSession() {
-                currentTransferSession = session
-            } else {
-                pairingStatusError = "Session data corrupted."
-            }
-        } else {
-            currentTransferSession = nil
-        }
         isShowingPairingStatus = true
     }
 

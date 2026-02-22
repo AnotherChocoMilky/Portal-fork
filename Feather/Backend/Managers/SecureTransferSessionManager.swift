@@ -1,7 +1,10 @@
 import Foundation
+import Combine
 
-class SecureTransferSessionManager {
+class SecureTransferSessionManager: ObservableObject {
     static let shared = SecureTransferSessionManager()
+
+    @Published var currentSession: SecureTransferSession?
 
     private let sessionFileName = "secureTransferSession.plist"
 
@@ -9,7 +12,9 @@ class SecureTransferSessionManager {
         return URL.documentsDirectory.appendingPathComponent(sessionFileName)
     }
 
-    private init() {}
+    private init() {
+        self.currentSession = loadSession()
+    }
 
     func sessionExists() -> Bool {
         return FileManager.default.fileExists(atPath: sessionFileURL.path)
@@ -21,6 +26,11 @@ class SecureTransferSessionManager {
             encoder.outputFormat = .xml
             let data = try encoder.encode(session)
             try data.write(to: sessionFileURL, options: .atomic)
+
+            DispatchQueue.main.async {
+                self.currentSession = session
+            }
+
             AppLogManager.shared.success("Secure transfer session saved: \(session.remoteDeviceName)", category: "Session")
         } catch {
             AppLogManager.shared.error("Failed to save secure transfer session: \(error.localizedDescription)", category: "Session")
@@ -35,11 +45,16 @@ class SecureTransferSessionManager {
         do {
             let data = try Data(contentsOf: sessionFileURL)
             let decoder = PropertyListDecoder()
-            return try decoder.decode(SecureTransferSession.self, from: data)
+            let session = try decoder.decode(SecureTransferSession.self, from: data)
+            return session
         } catch {
             AppLogManager.shared.error("Failed to load secure transfer session: \(error.localizedDescription)", category: "Session")
             return nil
         }
+    }
+
+    func refreshSession() {
+        self.currentSession = loadSession()
     }
 
     func deactivateSession() {
@@ -54,6 +69,9 @@ class SecureTransferSessionManager {
         do {
             if sessionExists() {
                 try FileManager.default.removeItem(at: sessionFileURL)
+                DispatchQueue.main.async {
+                    self.currentSession = nil
+                }
                 AppLogManager.shared.info("Secure transfer session deleted", category: "Session")
             }
         } catch {
@@ -78,15 +96,24 @@ class SecureTransferSessionManager {
         return false
     }
 
-    func recordSessionAuthenticated(method: String, remoteDeviceName: String, encryptionType: String = "AES-256") {
+    func recordSessionAuthenticated(
+        sessionID: UUID = UUID(),
+        createdAt: Date = Date(),
+        method: String,
+        remoteDeviceName: String,
+        encryptionType: String = "AES-256",
+        sessionFingerprint: String? = nil,
+        isActive: Bool = true
+    ) {
+        let fingerprint = sessionFingerprint ?? String(UUID().uuidString.prefix(8)).uppercased()
         let session = SecureTransferSession(
-            sessionID: UUID(),
-            createdAt: Date(),
+            sessionID: sessionID,
+            createdAt: createdAt,
             transferMethod: method,
             remoteDeviceName: remoteDeviceName,
             encryptionType: encryptionType,
-            sessionFingerprint: String(UUID().uuidString.prefix(8)).uppercased(),
-            isActive: true,
+            sessionFingerprint: fingerprint,
+            isActive: isActive,
             expirationDate: Calendar.current.date(byAdding: .day, value: 7, to: Date())
         )
         saveSession(session)

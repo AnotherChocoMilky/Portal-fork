@@ -7470,7 +7470,7 @@ struct NearbyTransferSimulationView: View {
     private func simulatedViewDestination(for view: NearbyTransferUIView) -> some View {
         switch view {
         case .main:
-            NearbyTransferView()
+            TransferSetupView()
         case .pairingNearby:
             PairingView()
                 .environment(\.nearbyTransferSimulation, true)
@@ -7630,7 +7630,7 @@ struct NearbyShareUITestingView: View {
     private func renderSelectedView() -> some View {
         switch selectedView {
         case .loading:
-            NearbyTransferView()
+            TransferSetupView()
         case .error:
             TransferProgressView(
                 service: {
