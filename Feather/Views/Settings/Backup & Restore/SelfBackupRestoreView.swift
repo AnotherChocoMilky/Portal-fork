@@ -118,7 +118,11 @@ struct SelfBackupRestoreView: View {
             if !viewModel.localBackups.isEmpty {
                 Section {
                     ForEach(viewModel.localBackups) { backup in
-                        NavigationLink(destination: BackupContentsView(backupURL: URL(fileURLWithPath: backup.path))) {
+                        NavigationLink(destination: BackupContentsView(
+                            backupURL: URL(fileURLWithPath: backup.path),
+                            isEncrypted: backup.isEncrypted ?? false,
+                            backupID: backup.id
+                        )) {
                             backupRow(backup: backup)
                         }
                     }
@@ -367,7 +371,11 @@ struct SelfBackupRestoreView: View {
         }
         .padding(.vertical, 4)
         .contextMenu {
-            NavigationLink(destination: BackupContentsView(backupURL: URL(fileURLWithPath: backup.path))) {
+            NavigationLink(destination: BackupContentsView(
+                backupURL: URL(fileURLWithPath: backup.path),
+                isEncrypted: backup.isEncrypted ?? false,
+                backupID: backup.id
+            )) {
                 Label("View Backup Contents", systemImage: "eye")
             }
 

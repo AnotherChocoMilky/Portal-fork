@@ -1,9 +1,12 @@
 import SwiftUI
 import ZIPFoundation
+import CryptoKit
 
 struct BackupContentsView: View {
     @Environment(\.dismiss) private var dismiss
     let backupURL: URL
+    let isEncrypted: Bool
+    let backupID: UUID?
 
     @State private var isLoading = true
     @State private var certificates: [CertMetadata] = []
@@ -158,13 +161,74 @@ struct BackupContentsView: View {
         .padding(.vertical, 8)
     }
 
+    private func decryptData(_ encryptedData: Data, with customPassword: String? = nil) throws -> Data {
+        let password = "PortalLocalBackup2026"
+        let decryptionPassword = customPassword ?? password
+        let key = SymmetricKey(data: SHA256.hash(data: decryptionPassword.data(using: .utf8)!))
+
+        // Check for binary magic header (v2)
+        let v2Header = "PORTAL_V2".data(using: .utf8)!
+        if encryptedData.starts(with: v2Header) {
+            let dataToDecrypt = encryptedData.suffix(from: v2Header.count)
+            let sealedBox = try AES.GCM.SealedBox(combined: dataToDecrypt)
+            return try AES.GCM.open(sealedBox, using: key)
+        }
+
+        // Fallback to legacy JSON format (v1)
+        var dataToDecrypt = encryptedData
+        let v1Header = "PORTAL_ENC".data(using: .utf8)!
+        if encryptedData.starts(with: v1Header) {
+            dataToDecrypt = encryptedData.suffix(from: v1Header.count)
+        }
+
+        struct SimplePayload: Codable {
+            let version: String
+            let timestamp: TimeInterval
+            let data: Data
+        }
+
+        let sealedBox = try AES.GCM.SealedBox(combined: dataToDecrypt)
+        let decryptedData = try AES.GCM.open(sealedBox, using: key)
+
+        let decoder = JSONDecoder()
+        let payload = try decoder.decode(SimplePayload.self, from: decryptedData)
+        return payload.data
+    }
+
     private func loadContents() async {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("BackupContents_\(UUID().uuidString)")
 
         do {
             try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
 
-            try FileManager.default.unzipItem(at: backupURL, to: tempDir)
+            // Access security scoped resource
+            let isSecurityScoped = backupURL.startAccessingSecurityScopedResource()
+            defer { if isSecurityScoped { backupURL.stopAccessingSecurityScopedResource() } }
+
+            let fileData = try Data(contentsOf: backupURL)
+            let zipData: Data
+
+            if isEncrypted {
+                // Try to get password from Keychain
+                var backupPassword: String? = nil
+                if let id = backupID {
+                    backupPassword = try? KeychainManager.shared.retrieve(account: "backup_\(id.uuidString)")
+                }
+
+                zipData = try decryptData(fileData, with: backupPassword)
+            } else {
+                // Check if it's an old encrypted style or already a ZIP
+                if let decrypted = try? decryptData(fileData, with: nil) {
+                    zipData = decrypted
+                } else {
+                    zipData = fileData
+                }
+            }
+
+            let tempZipURL = tempDir.appendingPathComponent("backup.zip")
+            try zipData.write(to: tempZipURL)
+
+            try FileManager.default.unzipItem(at: tempZipURL, to: tempDir)
 
             // Load Certificates
             let certsURL = tempDir.appendingPathComponent("certificates_metadata.json")
