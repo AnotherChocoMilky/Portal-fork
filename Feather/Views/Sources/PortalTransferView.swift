@@ -179,6 +179,9 @@ struct PortalTransferView: View {
             return
         }
 
+        // Record session as authenticated (Manual method)
+        SecureTransferSessionManager.shared.recordSessionAuthenticated(method: "Manual", remoteDeviceName: "Imported Code")
+
         var addedCount = 0
         for urlString in urls {
             if !Storage.shared.sourceExists(urlString) {

@@ -332,6 +332,9 @@ class OTPPairingViewModel: ObservableObject {
             guard let self = self else { return }
             if let matchingPeer = self.transferService.findPeerWithOTP(code) {
                 self.connectedPeerInfo = (deviceName: matchingPeer.displayName, peerId: matchingPeer); self.isValidating = false; self.errorMessage = nil
+
+                // Record session as authenticated (Remote method)
+                SecureTransferSessionManager.shared.recordSessionAuthenticated(method: "Remote", remoteDeviceName: matchingPeer.displayName)
             } else {
                 self.errorMessage = "Invalid or expired code. Please get your sender's device to generate it again."; self.isValidating = false; self.connectedPeerInfo = nil
                 DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in self?.errorMessage = nil }
