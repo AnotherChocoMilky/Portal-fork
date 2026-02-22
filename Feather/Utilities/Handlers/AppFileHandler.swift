@@ -31,6 +31,22 @@ final class AppFileHandler: NSObject, @unchecked Sendable {
 	}
 	
 	func copy() async throws {
+		// Start Live Activity if enabled
+		if #available(iOS 16.2, *), UserDefaults.standard.bool(forKey: "Feather.liveActivityEnabled") {
+			LiveActivityManager.shared.startActivity(
+				appName: _ipa.lastPathComponent,
+				bundleId: "com.feather.import",
+				appVersion: "1.0"
+			)
+
+			await LiveActivityManager.shared.updateActivity(
+				progress: 0.1,
+				bytesDownloaded: 0,
+				totalBytes: 0,
+				status: .preparing
+			)
+		}
+
 		try _fileManager.createDirectoryIfNeeded(at: _uniqueWorkDir)
 		
 		let destinationURL = _uniqueWorkDir.appendingPathComponent(_ipa.lastPathComponent)
@@ -177,6 +193,14 @@ final class AppFileHandler: NSObject, @unchecked Sendable {
 			appVersion: bundle?.version,
 			appIcon: bundle?.iconFileName
 		) { error in
+			if #available(iOS 16.2, *) {
+				if error == nil {
+					LiveActivityManager.shared.endActivityWithSuccess()
+				} else {
+					LiveActivityManager.shared.endActivityWithError()
+				}
+			}
+
 			if let error = error {
 				Logger.misc.error("[\(self._uuid)] Failed to add to database: \(error.localizedDescription)")
 				AppLogManager.shared.error("Failed to add app to database: \(error.localizedDescription)", category: "Import")

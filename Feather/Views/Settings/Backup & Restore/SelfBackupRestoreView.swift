@@ -17,38 +17,23 @@ struct SelfBackupRestoreView: View {
     @State private var newBackupName = ""
     
     var body: some View {
-        NBList(.localized("Self Backup & Restore")) {
+        List {
             // Header Section
             Section {
-                ZStack {
-                    LinearGradient(
-                        colors: [Color.green.opacity(0.1), Color.blue.opacity(0.1)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                    .cornerRadius(20)
+                VStack(spacing: 12) {
+                    Image(systemName: "externaldrive.fill")
+                        .font(.system(size: 40))
+                        .foregroundStyle(Color.accentColor)
+                        .padding(.top, 10)
                     
-                    VStack(spacing: 12) {
-                        Image(systemName: "externaldrive.fill")
-                            .font(.system(size: 40))
-                            .foregroundStyle(
-                                LinearGradient(
-                                    colors: [.green, .blue],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                        
-                        Text(.localized("Create and restore backups locally on your device."))
-                            .font(.system(.subheadline, design: .rounded))
-                            .multilineTextAlignment(.center)
-                            .foregroundStyle(.secondary)
-                            .padding(.horizontal)
-                    }
-                    .padding(.vertical, 30)
+                    Text(.localized("Create and restore backups locally on your device."))
+                        .font(.subheadline)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                        .padding(.bottom, 10)
                 }
+                .frame(maxWidth: .infinity)
                 .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
             }
             
             // Quick Actions Section
@@ -57,39 +42,18 @@ struct SelfBackupRestoreView: View {
                 Button {
                     showingBackupOptions = true
                 } label: {
-                    HStack(spacing: 16) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.green.opacity(0.25), .green.opacity(0.1)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 56, height: 56)
-                            
-                            Image(systemName: "square.and.arrow.down.fill")
-                                .font(.title2)
-                                .foregroundStyle(.green)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 4) {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(.localized("Create Backup"))
                                 .font(.headline)
-                                .foregroundStyle(.primary)
                             Text(.localized("Save Your Current Data"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-                        
-                        Spacer()
-                        
-                        if viewModel.isCreatingBackup {
-                            ProgressView()
-                        }
+                    } icon: {
+                        Image(systemName: "square.and.arrow.down.fill")
+                            .foregroundStyle(.green)
                     }
-                    .padding(.vertical, 10)
                 }
                 .disabled(viewModel.isCreatingBackup || viewModel.isRestoring)
                 
@@ -97,39 +61,18 @@ struct SelfBackupRestoreView: View {
                 Button {
                     showingRestoreList = true
                 } label: {
-                    HStack(spacing: 16) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.blue.opacity(0.25), .blue.opacity(0.1)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 56, height: 56)
-                            
-                            Image(systemName: "square.and.arrow.up.fill")
-                                .font(.title2)
-                                .foregroundStyle(.blue)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 4) {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(.localized("Restore Backup"))
                                 .font(.headline)
-                                .foregroundStyle(.primary)
                             Text(.localized("Load Previously Saved Data"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-                        
-                        Spacer()
-                        
-                        if viewModel.isRestoring {
-                            ProgressView()
-                        }
+                    } icon: {
+                        Image(systemName: "square.and.arrow.up.fill")
+                            .foregroundStyle(.blue)
                     }
-                    .padding(.vertical, 10)
                 }
                 .disabled(viewModel.isCreatingBackup || viewModel.isRestoring || viewModel.localBackups.isEmpty)
                 
@@ -137,52 +80,57 @@ struct SelfBackupRestoreView: View {
                 Button {
                     showingDocumentPicker = true
                 } label: {
-                    HStack(spacing: 16) {
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color.purple.opacity(0.15))
-                                .frame(width: 50, height: 50)
-                            
-                            Image(systemName: "square.and.arrow.down.on.square.fill")
-                                .font(.title2)
-                                .foregroundStyle(.purple)
-                        }
-                        
-                        VStack(alignment: .leading, spacing: 4) {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(.localized("Import Backup"))
                                 .font(.headline)
-                                .foregroundStyle(.primary)
                             Text(.localized("Import Backup File"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-                        
-                        Spacer()
+                    } icon: {
+                        Image(systemName: "square.and.arrow.down.on.square.fill")
+                            .foregroundStyle(.purple)
                     }
-                    .padding(.vertical, 8)
                 }
                 .disabled(viewModel.isCreatingBackup || viewModel.isRestoring)
+
+                // Automatic Backups
+                NavigationLink(destination: AutoBackupsView()) {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(.localized("Automatic Backups"))
+                                .font(.headline)
+                            Text(.localized("Configure Schedule & Content"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "calendar.badge.clock")
+                            .foregroundStyle(.orange)
+                    }
+                }
             } header: {
-                AppearanceSectionHeader(title: String.localized("Quick Actions"), icon: "bolt.fill")
+                Text(.localized("Quick Actions"))
             }
             
             // Saved Backups Section
             if !viewModel.localBackups.isEmpty {
                 Section {
                     ForEach(viewModel.localBackups) { backup in
-                        backupRow(backup: backup)
+                        NavigationLink(destination: BackupContentsView(backupURL: URL(fileURLWithPath: backup.path))) {
+                            backupRow(backup: backup)
+                        }
                     }
                     .onDelete { indexSet in
                         viewModel.deleteBackups(at: indexSet)
                     }
                 } header: {
-                    AppearanceSectionHeader(title: String.localized("Saved Backups"), icon: "archivebox.fill")
+                    Text(.localized("Saved Backups"))
                 } footer: {
                     let count = viewModel.localBackups.count
                     let backupText = count == 1 ? "Backup" : "Backups"
                     return Text("\(count) \(backupText) • \(viewModel.totalBackupSize)")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
             }
             
@@ -204,54 +152,52 @@ struct SelfBackupRestoreView: View {
                     }
                     .padding(.vertical, 8)
                 } header: {
-                    AppearanceSectionHeader(title: String.localized("Status"), icon: "info.circle.fill")
+                    Text(.localized("Status"))
                 }
             }
             
             // Features Section
             Section {
-                featureCard(
-                    icon: "lock.shield.fill",
-                    iconColor: .green,
-                    title: .localized("Encrypted Storage"),
-                    description: .localized("All backups are encrypted for security.")
-                )
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(.localized("Encrypted Storage"))
+                            .font(.headline)
+                        Text(.localized("All backups are encrypted for security."))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "lock.shield.fill")
+                        .foregroundStyle(.green)
+                }
                 
-                featureCard(
-                    icon: "internaldrive.fill",
-                    iconColor: .blue,
-                    title: .localized("Local Storage"),
-                    description: .localized("Backups are stored locally on your device without any network transfer.")
-                )
-                
-                featureCard(
-                    icon: "clock.arrow.circlepath",
-                    iconColor: .orange,
-                    title: .localized("Quick Restore"),
-                    description: .localized("Restore your data instantly from any saved backup.")
-                )
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(.localized("Local Storage"))
+                            .font(.headline)
+                        Text(.localized("Backups are stored locally on your device."))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "internaldrive.fill")
+                        .foregroundStyle(.blue)
+                }
             } header: {
-                AppearanceSectionHeader(title: String.localized("Features"), icon: "star.fill")
+                Text(.localized("Features"))
             }
             
             // Info Section
             Section {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(.localized("Backups Include:"))
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                    
-                    backupItemRow(icon: "checkmark.seal.fill", text: "Certificates & Profiles", color: .blue)
-                    backupItemRow(icon: "app.badge.fill", text: "Signed Apps", color: .green)
-                    backupItemRow(icon: "square.and.arrow.down.fill", text: "Imported Apps", color: .orange)
-                    backupItemRow(icon: "globe.fill", text: "Sources", color: .purple)
-                    backupItemRow(icon: "puzzlepiece.extension.fill", text: "Default Frameworks", color: .cyan)
-                    backupItemRow(icon: "archivebox.fill", text: "Archives", color: .indigo)
-                    backupItemRow(icon: "gearshape.fill", text: "Settings", color: .gray)
-                }
-                .padding(.vertical, 8)
+                Label("Certificates & Profiles", systemImage: "checkmark.seal.fill").foregroundStyle(.blue)
+                Label("Signed Apps", systemImage: "app.badge.fill").foregroundStyle(.green)
+                Label("Imported Apps", systemImage: "square.and.arrow.down.fill").foregroundStyle(.orange)
+                Label("Sources", systemImage: "globe.fill").foregroundStyle(.purple)
+                Label("Default Frameworks", systemImage: "puzzlepiece.extension.fill").foregroundStyle(.cyan)
+                Label("Archives", systemImage: "archivebox.fill").foregroundStyle(.indigo)
+                Label("Settings", systemImage: "gearshape.fill").foregroundStyle(.gray)
             } header: {
-                AppearanceSectionHeader(title: String.localized("What's Included"), icon: "list.bullet")
+                Text(.localized("What's Included"))
             }
         }
         .navigationTitle("Self Backup & Restore")
@@ -392,20 +338,18 @@ struct SelfBackupRestoreView: View {
     
     @ViewBuilder
     private func backupRow(backup: LocalBackup) -> some View {
-        HStack(spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(Color.blue.opacity(0.15))
-                    .frame(width: 44, height: 44)
-                
-                Image(systemName: "archivebox.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(.blue)
-            }
-            
+        Label {
             VStack(alignment: .leading, spacing: 4) {
-                Text(backup.name)
-                    .font(.headline)
+                HStack {
+                    Text(backup.name)
+                        .font(.headline)
+
+                    if backup.isAutomatic == true {
+                        Image(systemName: "calendar.badge.clock")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
+                }
                 
                 HStack(spacing: 8) {
                     Text(backup.date, style: .date)
@@ -417,11 +361,16 @@ struct SelfBackupRestoreView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             }
-            
-            Spacer()
+        } icon: {
+            Image(systemName: "archivebox.fill")
+                .foregroundStyle(.blue)
         }
         .padding(.vertical, 4)
         .contextMenu {
+            NavigationLink(destination: BackupContentsView(backupURL: URL(fileURLWithPath: backup.path))) {
+                Label("View Backup Contents", systemImage: "eye")
+            }
+
             Button {
                 backupToRename = backup
                 newBackupName = backup.name
@@ -503,6 +452,7 @@ struct LocalBackup: Identifiable, Codable {
     let size: Int64
     let path: String
     var isEncrypted: Bool?
+    var isAutomatic: Bool?
     
     var sizeString: String {
         ByteCountFormatter.string(fromByteCount: size, countStyle: .file)

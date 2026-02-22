@@ -82,7 +82,7 @@ struct SourcesAddView: View {
 				await _fetchRecommendedRepositories()
 			}
 			.sheet(isPresented: $_showPortalExport) {
-				PortalExportView(exportData: $_portalExportData)
+				PortalTransferView(exportData: $_portalExportData)
 			}
 		}
 	}
@@ -125,7 +125,12 @@ struct SourcesAddView: View {
 			
 			ToolbarItem(placement: .confirmationAction) {
 				Button {
-					let selectedUrls = _selectedSourcesForExport.joined(separator: "\n")
+				let sources = Storage.shared.getSources()
+				let selectedUrls = sources
+					.filter { _selectedSourcesForExport.contains($0.identifier ?? "") }
+					.compactMap { $0.sourceURL?.absoluteString }
+					.joined(separator: "\n")
+
 					UIPasteboard.general.string = selectedUrls
 					UIAlertController.showAlertWithOk(
 						title: .localized("Success"),
@@ -191,7 +196,7 @@ struct SourcesAddView: View {
 								_isExportMode = false
 								return
 							}
-							_selectedSourcesForExport = Set(sources.compactMap { $0.sourceURL?.absoluteString })
+							_selectedSourcesForExport = Set(sources.compactMap { $0.identifier })
 						} label: {
 							Label(.localized("Export Mode"), systemImage: "doc.on.doc")
 						}
@@ -513,7 +518,7 @@ struct SourcesAddView: View {
 		HStack(spacing: 12) {
 			Button {
 				withAnimation(.spring(response: 0.3)) {
-					_selectedSourcesForExport = Set(sources.compactMap { $0.sourceURL?.absoluteString })
+					_selectedSourcesForExport = Set(sources.compactMap { $0.identifier })
 				}
 				HapticsManager.shared.softImpact()
 			} label: {
@@ -547,22 +552,22 @@ struct SourcesAddView: View {
 	@ViewBuilder
 	private func _exportSectionSourceList(sources: [AltSource]) -> some View {
 		VStack(spacing: 0) {
-			ForEach(sources, id: \.sourceURL?.absoluteString) { source in
-				if let urlString = source.sourceURL?.absoluteString {
+			ForEach(sources, id: \.identifier) { source in
+				if let identifier = source.identifier {
 					ExportSourceRow(
 						source: source,
-						isSelected: _selectedSourcesForExport.contains(urlString),
+						isSelected: _selectedSourcesForExport.contains(identifier),
 						toggleSelect: {
-							if _selectedSourcesForExport.contains(urlString) {
-								_selectedSourcesForExport.remove(urlString)
+							if _selectedSourcesForExport.contains(identifier) {
+								_selectedSourcesForExport.remove(identifier)
 							} else {
-								_selectedSourcesForExport.insert(urlString)
+								_selectedSourcesForExport.insert(identifier)
 							}
 							HapticsManager.shared.selectionChanged()
 						}
 					)
 
-					if sources.last?.sourceURL?.absoluteString != urlString {
+					if sources.last?.identifier != identifier {
 						Divider()
 							.padding(.leading, 56)
 					}
@@ -637,7 +642,11 @@ struct PlainGroupBoxStyle: GroupBoxStyle {
 	
 	// MARK: - Export through Portal
 	private func _exportThroughPortal() {
-		let selectedUrls = Array(_selectedSourcesForExport)
+		let sources = Storage.shared.getSources()
+		let selectedUrls = sources
+			.filter { _selectedSourcesForExport.contains($0.identifier ?? "") }
+			.compactMap { $0.sourceURL?.absoluteString }
+
 		let exportData = PortalSourceExport.encode(urls: selectedUrls)
 		_portalExportData = exportData
 		_showPortalExport = true

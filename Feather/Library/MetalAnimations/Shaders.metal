@@ -55,8 +55,13 @@ float3 palette(float t) {
     float3 a = float3(0.5, 0.5, 0.5);
     float3 b = float3(0.5, 0.5, 0.5);
     float3 c = float3(1.0, 1.0, 1.0);
-    float3 d = float3(0.263, 0.416, 0.557);
-    return a + b * cos(6.28318 * (c * t + d));
+    float3 d = float3(0.0, 0.33, 0.67);
+
+    // More complex palette with more colors
+    float3 col1 = a + b * cos(6.28318 * (c * t + d));
+    float3 col2 = a + b * cos(6.28318 * (c * (t + 0.5) + d + float3(0.5, 0.2, 0.1)));
+
+    return mix(col1, col2, sin(t) * 0.5 + 0.5);
 }
 
 fragment float4 fragment_main(float4 position [[stage_in]],
@@ -74,10 +79,16 @@ fragment float4 fragment_main(float4 position [[stage_in]],
         float2 p0 = p;
         float3 finalColor = float3(0.0);
 
-        for (float i = 0.0; i < 3.0; i++) {
+        // Increase iterations for more intensity and color complexity
+        for (float i = 0.0; i < 5.0; i++) {
             p = fract(p * 1.5) - 0.5;
             float d = length(p) * exp(-length(p0));
-            float3 col = palette(length(p0) + i * 0.4 + uniforms.time * 0.4);
+
+            // Generate over 10 dynamically moving colors by combining multiple palette shifts
+            float3 col = palette(length(p0) + i * 0.4 + uniforms.time * 0.3);
+            float3 col2 = palette(length(p) + i * 0.2 - uniforms.time * 0.2);
+            col = mix(col, col2, 0.5 + 0.5 * sin(uniforms.time + i));
+
             d = sin(d * 8.0 + uniforms.time) / 8.0;
             d = abs(d);
             d = pow(0.01 / d, 1.2);
@@ -90,7 +101,7 @@ fragment float4 fragment_main(float4 position [[stage_in]],
         float shape = smoothstep(0.4, 0.41, abs(sin(angle * 3.0)) * 0.1 + r);
         finalColor *= (1.0 - (1.0 - shape) * 0.5);
 
-        color = float4(finalColor * 0.6, 0.9);
+        color = float4(finalColor * 0.8, 0.95); // Increased intensity
 
     } else if (uniforms.state == 2) { // Success: Radiant energy burst
         float t = uniforms.stateTime;

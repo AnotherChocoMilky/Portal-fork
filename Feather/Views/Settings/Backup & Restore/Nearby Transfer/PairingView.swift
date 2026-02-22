@@ -18,153 +18,141 @@ struct PairingView: View {
     @Namespace private var animation
     
     var body: some View {
-        NBList(.localized("Nearby Transfer")) {
-            // Mode Selection - Custom Animated Cards
+        List {
+            // Mode Selection
             Section {
-                HStack(spacing: 12) {
-                    modeCard(mode: .send, title: "Send", icon: "arrow.up.circle.fill", color: .blue)
-                    modeCard(mode: .receive, title: "Receive", icon: "arrow.down.circle.fill", color: .green)
+                Picker("Transfer Mode", selection: $selectedMode) {
+                    Text("Send").tag(TransferMode.send)
+                    Text("Receive").tag(TransferMode.receive)
                 }
+                .pickerStyle(.segmented)
                 .padding(.vertical, 8)
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
+                .onChange(of: selectedMode) { _ in
+                    updateServiceMode()
+                }
             } header: {
-                AppearanceSectionHeader(title: String.localized("Transfer Mode"), icon: "arrow.left.arrow.right")
+                Text(.localized("Transfer Mode"))
             }
             
-            // Pairing Method - Modern Interactive Cards
+            // Pairing Method
             Section {
-                // Nearby Pairing Card
-                pairingMethodCard(
-                    title: "Nearby Pairing",
-                    subtitle: "Instant connection for devices on the same Wi-Fi.",
-                    icon: "antenna.radiowaves.left.and.right",
-                    gradientColors: [.blue, .cyan],
-                    isActive: true,
-                    badge: "ACTIVE",
-                    action: {}
-                )
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Nearby Pairing")
+                            .font(.headline)
+                        Text("Instant connection for devices on the same Wi-Fi.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "antenna.radiowaves.left.and.right")
+                        .foregroundStyle(.blue)
+                }
                 
-                // Remote Pairing (OTP) Card
                 NavigationLink(destination: PairingThroughOTPView()) {
-                    pairingMethodCard(
-                        title: "Pair Remotely",
-                        subtitle: "Secure 6-digit code connection over the internet.",
-                        icon: "key.fill",
-                        gradientColors: [.purple, .indigo],
-                        isActive: false,
-                        badge: "SECURE",
-                        action: {}
-                    )
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Pair Remotely")
+                                .font(.headline)
+                            Text("Secure 6-digit code connection over the internet.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "key.fill")
+                            .foregroundStyle(.purple)
+                    }
                 }
-                .buttonStyle(.plain)
             } header: {
-                AppearanceSectionHeader(title: String.localized("Pairing Method"), icon: "rectangle.connected.to.line.below")
+                Text(.localized("Pairing Method"))
             } footer: {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Choose how to connect:")
-                        .font(.system(.caption, design: .rounded, weight: .semibold))
-                    Text("• Nearby Pairing: Uses Apple's local network discovery.")
-                    Text("• Remote Pairing: Uses a secure code for manual connection.")
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("• Nearby Pairing: Uses local network discovery.")
+                    Text("• Remote Pairing: Uses a secure code for connection.")
                 }
-                .font(.system(.caption, design: .rounded))
-                .foregroundStyle(.secondary)
             }
             
-            // Send Mode - Modern Peer List
+            // Send Mode - Peer List
             if selectedMode == .send {
                 Section {
                     if service.discoveredPeers.isEmpty {
-                        VStack(spacing: 16) {
-                            ProgressView()
-                                .scaleEffect(1.2)
-                            Text("Searching for nearby devices...")
-                                .font(.system(.subheadline, design: .rounded))
-                                .foregroundStyle(.secondary)
+                        HStack {
+                            Spacer()
+                            VStack(spacing: 12) {
+                                ProgressView()
+                                Text("Searching for nearby devices...")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(.vertical, 20)
+                            Spacer()
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 30)
                     } else {
                         ForEach(service.discoveredPeers, id: \.self) { peer in
                             Button {
                                 selectedPeer = peer
                                 initiateBackupSend(to: peer)
                             } label: {
-                                HStack(spacing: 16) {
-                                    deviceIcon(for: peer.displayName)
-                                    
-                                    VStack(alignment: .leading, spacing: 4) {
+                                Label {
+                                    VStack(alignment: .leading, spacing: 2) {
                                         Text(peer.displayName)
-                                            .font(.system(.headline, design: .rounded))
-                                            .foregroundStyle(.primary)
+                                            .font(.headline)
                                         Text("Tap to establish secure connection")
-                                            .font(.system(.caption, design: .rounded))
+                                            .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
-                                    
-                                    Spacer()
-                                    
-                                    Image(systemName: "chevron.right")
-                                        .font(.system(size: 14, weight: .bold))
-                                        .foregroundStyle(.secondary.opacity(0.5))
+                                } icon: {
+                                    Image(systemName: peer.displayName.contains("iPad") ? "ipad.gen2" : "iphone.gen2")
+                                        .foregroundStyle(.blue)
                                 }
-                                .padding(.vertical, 10)
                             }
                         }
                     }
                 } header: {
-                    AppearanceSectionHeader(title: String.localized("Available Devices"), icon: "iphone.radiowaves.left.and.right")
+                    Text(.localized("Available Devices"))
                 }
             }
             
-            // Receive Mode - Modern Status
+            // Receive Mode - Status
             if selectedMode == .receive {
                 Section {
-                    VStack(spacing: 24) {
-                        ZStack {
-                            Circle()
-                                .fill(
-                                    RadialGradient(
-                                        colors: [.blue.opacity(0.2), .clear],
-                                        center: .center,
-                                        startRadius: 0,
-                                        endRadius: 80
-                                    )
-                                )
-                                .frame(width: 160, height: 160)
-
-                            Circle()
-                                .stroke(Color.blue.opacity(0.1), lineWidth: 1)
-                                .frame(width: 120, height: 120)
-                            
-                            Image(systemName: "antenna.radiowaves.left.and.right")
-                                .font(.system(size: 48))
-                                .foregroundStyle(.blue)
-                                .ifAvailableiOS18SymbolPulse()
-                        }
+                    VStack(spacing: 20) {
+                        Image(systemName: "antenna.radiowaves.left.and.right")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.blue)
+                            .padding(.top, 10)
                         
-                        VStack(spacing: 8) {
-                            Text("Ready to Receive")
-                                .font(.system(.title3, design: .rounded, weight: .bold))
-                            Text("Stay on this screen to remain visible to senders.")
-                                .font(.system(.subheadline, design: .rounded))
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
+                        Text("Ready to Receive")
+                            .font(.headline)
+
+                        Text("Stay on this screen to remain visible to senders.")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
                         
                         VStack(spacing: 12) {
-                            statusRow(icon: "iphone", label: "Device Name", value: UIDevice.current.name)
-                            statusRow(icon: "lock.shield.fill", label: "Connection", value: "Encrypted", valueColor: .green)
-                            statusRow(icon: "dot.radiowaves.left.and.right", label: "Visibility", value: "Advertising", valueColor: .blue)
+                            HStack {
+                                Label("Device Name", systemImage: "iphone")
+                                Spacer()
+                                Text(UIDevice.current.name).foregroundStyle(.secondary)
+                            }
+                            HStack {
+                                Label("Connection", systemImage: "lock.shield.fill")
+                                Spacer()
+                                Text("Encrypted").foregroundStyle(.green)
+                            }
+                            HStack {
+                                Label("Visibility", systemImage: "dot.radiowaves.left.and.right")
+                                Spacer()
+                                Text("Advertising").foregroundStyle(.blue)
+                            }
                         }
-                        .padding(16)
-                        .background(Color.secondary.opacity(0.05))
-                        .cornerRadius(18)
+                        .font(.subheadline)
+                        .padding(.bottom, 10)
                     }
-                    .padding(.vertical, 20)
                     .frame(maxWidth: .infinity)
                 } header: {
-                    AppearanceSectionHeader(title: String.localized("Receiver Status"), icon: "square.and.arrow.down")
+                    Text(.localized("Receiver Status"))
                 }
             }
         }

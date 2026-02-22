@@ -19,18 +19,23 @@ struct PairingThroughOTPView: View {
     @FocusState private var isOTPFieldFocused: Bool
     
     var body: some View {
-        NBList(.localized("Remote Pairing")) {
+        List {
             // Mode Selection
             Section {
-                HStack(spacing: 12) {
-                    modeToggleCard(mode: .sender, title: "Sender", icon: "arrow.up.circle.fill", color: .blue)
-                    modeToggleCard(mode: .recipient, title: "Recipient", icon: "arrow.down.circle.fill", color: .purple)
+                Picker("Your Role", selection: $selectedMode) {
+                    Text("Sender").tag(OTPPairingMode.sender)
+                    Text("Recipient").tag(OTPPairingMode.recipient)
                 }
+                .pickerStyle(.segmented)
                 .padding(.vertical, 8)
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
+                .onChange(of: selectedMode) { newValue in
+                    withAnimation {
+                        viewModel.switchMode(to: newValue)
+                        otpInput = ""
+                    }
+                }
             } header: {
-                AppearanceSectionHeader(title: String.localized("Your Role"), icon: "person.2.fill")
+                Text(.localized("Your Role"))
             }
             
             // Interaction Area
@@ -42,16 +47,11 @@ struct PairingThroughOTPView: View {
             
             // Guidance
             Section {
-                VStack(alignment: .leading, spacing: 12) {
-                    Label("Direct over Wi-Fi/Bluetooth", systemImage: "wifi")
-                    Label("Secure 6-digit encryption", systemImage: "lock.shield.fill")
-                    Label("Auto-expiring codes", systemImage: "timer")
-                }
-                .font(.system(.caption, design: .rounded, weight: .medium))
-                .foregroundStyle(.secondary)
-                .padding(.vertical, 8)
+                Label("Direct over Wi-Fi/Bluetooth", systemImage: "wifi")
+                Label("Secure 6-digit encryption", systemImage: "lock.shield.fill")
+                Label("Auto-expiring codes", systemImage: "timer")
             } header: {
-                AppearanceSectionHeader(title: String.localized("Security Features"), icon: "shield.checkered")
+                Text(.localized("Security Features"))
             }
         }
         .navigationTitle("Remote Pairing")
@@ -83,36 +83,38 @@ struct PairingThroughOTPView: View {
     @ViewBuilder
     private var senderUI: some View {
         Section {
-            VStack(spacing: 24) {
+            VStack(spacing: 20) {
                 Text("Your Secure Code")
-                    .font(.system(.headline, design: .rounded))
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
 
-                HStack(spacing: 12) {
-                    ForEach(Array(viewModel.otpCode.enumerated()), id: \.offset) { index, char in
-                        otpDigitCard(char: String(char), color: .blue)
-                    }
-                }
+                Text(viewModel.otpCode)
+                    .font(.system(size: 40, weight: .bold, design: .monospaced))
+                    .tracking(10)
+                    .foregroundStyle(.blue)
+                    .padding()
                 
                 // Expiry Countdown
                 VStack(spacing: 8) {
                     ProgressView(value: Double(viewModel.timeRemaining), total: Double(viewModel.otpExpirationSeconds))
                         .tint(viewModel.expirationColor)
-                        .frame(width: 200)
                     
                     Text("Expires in \(viewModel.timeRemaining) seconds")
-                        .font(.system(.caption, design: .rounded, weight: .bold))
+                        .font(.caption.bold())
                         .foregroundStyle(viewModel.expirationColor)
                 }
+                .padding(.horizontal, 40)
                 
                 if viewModel.isPeerConnected {
-                    statusBadge(text: "Recipient Connected", color: .green, icon: "checkmark.circle.fill")
+                    Label("Recipient Connected", systemImage: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
                 } else if viewModel.isWaitingForRecipient {
-                    statusBadge(text: "Waiting for recipient...", color: .blue, icon: "antenna.radiowaves.left.and.right")
+                    Label("Waiting for recipient...", systemImage: "antenna.radiowaves.left.and.right")
+                        .foregroundStyle(.blue)
                 }
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 30)
+            .padding(.vertical, 10)
         }
         
         Section {
@@ -127,7 +129,6 @@ struct PairingThroughOTPView: View {
                     Text(viewModel.showCopyFeedback ? "Copied!" : "Copy Code")
                 }
                 .frame(maxWidth: .infinity)
-                .font(.headline)
             }
             .buttonStyle(.borderedProminent)
             .tint(viewModel.showCopyFeedback ? .green : .blue)
@@ -136,7 +137,6 @@ struct PairingThroughOTPView: View {
                 Text("Generate New Code")
                     .frame(maxWidth: .infinity)
             }
-            .buttonStyle(.bordered)
         }
     }
     
@@ -144,34 +144,26 @@ struct PairingThroughOTPView: View {
     @ViewBuilder
     private var recipientUI: some View {
         Section {
-            VStack(spacing: 24) {
+            VStack(spacing: 20) {
                 Text("Enter 6-Digit Code")
-                    .font(.system(.headline, design: .rounded))
+                    .font(.subheadline)
                     .foregroundStyle(.secondary)
 
-                ZStack {
-                    HStack(spacing: 12) {
-                        ForEach(0..<6, id: \.self) { index in
-                            let char = index < otpInput.count ? String(Array(otpInput)[index]) : ""
-                            otpDigitCard(char: char, color: .purple, isPlaceholder: char.isEmpty, isFocused: index == otpInput.count && isOTPFieldFocused)
+                TextField("000000", text: $otpInput)
+                    .font(.system(size: 40, weight: .bold, design: .monospaced))
+                    .multilineTextAlignment(.center)
+                    .keyboardType(.numberPad)
+                    .textContentType(.oneTimeCode)
+                    .focused($isOTPFieldFocused)
+                    .onChange(of: otpInput) { newValue in
+                        let filtered = newValue.filter { $0.isNumber }
+                        otpInput = String(filtered.prefix(6))
+                        if otpInput.count == 6 {
+                            isOTPFieldFocused = false
+                            viewModel.validateOTP(otpInput)
                         }
                     }
-
-                    TextField("", text: $otpInput)
-                        .keyboardType(.numberPad)
-                        .textContentType(.oneTimeCode)
-                        .focused($isOTPFieldFocused)
-                        .opacity(0)
-                        .onChange(of: otpInput) { newValue in
-                            let filtered = newValue.filter { $0.isNumber }
-                            otpInput = String(filtered.prefix(6))
-                            if otpInput.count == 6 {
-                                isOTPFieldFocused = false
-                                viewModel.validateOTP(otpInput)
-                            }
-                        }
-                }
-                .onTapGesture { isOTPFieldFocused = true }
+                    .padding()
 
                 if viewModel.isValidating {
                     ProgressView("Connecting to sender...")
@@ -182,39 +174,29 @@ struct PairingThroughOTPView: View {
                         .font(.caption)
                         .foregroundStyle(.red)
                         .multilineTextAlignment(.center)
-                        .padding(.horizontal, 20)
                 }
                 
                 if let peer = viewModel.connectedPeerInfo {
                     VStack(spacing: 16) {
-                        HStack {
-                            Image(systemName: "iphone.gen2")
-                                .font(.title2)
-                                .foregroundStyle(.purple)
-                            Text(peer.deviceName)
-                                .font(.headline)
-                        }
-                        .padding()
-                        .background(Color.purple.opacity(0.1))
-                        .cornerRadius(12)
+                        Label(peer.deviceName, systemImage: "iphone.gen2")
+                            .font(.headline)
+                            .foregroundStyle(.purple)
                         
                         Toggle("Trust Device", isOn: $viewModel.trustDevice)
-                            .padding(.horizontal)
 
                         Button { viewModel.confirmConnection() } label: {
                             Text("Start Receiving")
                                 .frame(maxWidth: .infinity)
-                                .font(.headline)
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(.green)
                         .disabled(!viewModel.trustDevice)
                     }
+                    .padding(.top, 10)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                 }
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 30)
+            .padding(.vertical, 10)
         }
     }
 

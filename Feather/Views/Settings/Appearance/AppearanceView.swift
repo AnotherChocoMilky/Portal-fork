@@ -16,139 +16,140 @@ struct AppearanceView: View {
     @StateObject private var hapticsManager = HapticsManager.shared
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // MARK: - Theme
-                appearanceCard(title: "Theme", icon: "paintbrush.fill", onIconLongPress: {
-                    let icons = ["AppIcon", "AppIcon-1", "AppIcon-2", "AppIcon-3"]
-                    let current = UIApplication.shared.alternateIconName ?? "AppIcon"
-                    let next = icons[(icons.firstIndex(of: current) ?? 0 + 1) % icons.count]
-                    UIApplication.shared.setAlternateIconName(next == "AppIcon" ? nil : next)
-                    ToastManager.shared.show("🎭 Icon Cycle: \(next)", type: .success)
-                    HapticsManager.shared.success()
-                }) {
-                    Picker("Appearance", selection: $userInterfaceStyle) {
-                        ForEach(UIUserInterfaceStyle.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.rawValue) { style in
-                            Label(style.label, systemImage: style.iconName).tag(style.rawValue)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(16)
-                }
-
-                // MARK: - Color
-                appearanceCard(title: "Color", icon: "paintpalette.fill") {
-                    AppearanceNavRow(icon: "paintpalette.fill", title: "Customization", color: .pink, destination: ColorCustomizationView())
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                }
-
-                // MARK: - Tint Icons
-                if #available(iOS 18.0, *) {
-                    appearanceCard(title: "Tint Icons", icon: "paintpalette", footer: "Allow Portal to tint your app icons when signing apps with the current accent color set.") {
-                        AppearanceToggle(icon: "paintpalette", title: "Tint App Icons", isOn: $_shouldTintIcons, color: .pink)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
+        List {
+            // MARK: - Theme
+            Section {
+                Picker("Appearance", selection: $userInterfaceStyle) {
+                    ForEach(UIUserInterfaceStyle.allCases.sorted(by: { $0.rawValue < $1.rawValue }), id: \.rawValue) { style in
+                        Label(style.label, systemImage: style.iconName).tag(style.rawValue)
                     }
                 }
+                .pickerStyle(.segmented)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .padding(.vertical, 8)
+            } header: {
+                Label("Theme", systemImage: "paintbrush.fill")
+            }
 
-                // MARK: - Display
-                appearanceCard(title: "Display", icon: "eye.fill") {
-                    VStack(spacing: 0) {
-                        AppearanceToggle(icon: "square.grid.2x2", title: "Show Icons", isOn: $showIconsInAppearance, color: .blue)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                        Divider().padding(.leading, 52)
-                        AppearanceToggle(icon: "newspaper", title: "Show News", isOn: $showNews, color: .orange)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                    }
+            // MARK: - Color
+            Section {
+                NavigationLink(destination: ColorCustomizationView()) {
+                    Label("Customization", systemImage: "paintpalette.fill")
+                        .foregroundStyle(.pink)
                 }
+            } header: {
+                Label("Color", systemImage: "paintpalette.fill")
+            }
 
-                // MARK: - Haptics
-                appearanceCard(title: "App Haptics", icon: "waveform") {
-                    VStack(spacing: 0) {
-                        Toggle(isOn: $hapticsManager.isEnabled) {
-                            AppearanceRowLabel(icon: "iphone.radiowaves.left.and.right", title: "Enable Haptics", color: .purple)
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
-                        .onChange(of: hapticsManager.isEnabled) { newValue in
-                            if newValue { HapticsManager.shared.impact() }
-                        }
-
-                        if hapticsManager.isEnabled {
-                            Divider().padding(.leading, 52)
-                            ForEach(HapticsManager.HapticIntensity.allCases, id: \.self) { intensity in
-                                HapticIntensityRow(
-                                    intensity: intensity,
-                                    isSelected: hapticsManager.intensity == intensity
-                                ) {
-                                    hapticsManager.intensity = intensity
-                                    HapticsManager.shared.impact()
-                                }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 12)
-
-                                if intensity != HapticsManager.HapticIntensity.allCases.last {
-                                    Divider().padding(.leading, 52)
-                                }
-                            }
-                        }
+            // MARK: - Tint Icons
+            if #available(iOS 18.0, *) {
+                Section {
+                    Toggle(isOn: $_shouldTintIcons) {
+                        Label("Tint App Icons", systemImage: "paintpalette")
+                            .foregroundStyle(.pink)
                     }
-                }
-
-                // MARK: - Personalization
-                appearanceCard(title: "Personalization", icon: "person.crop.circle.fill", footer: "Personalize the Home Screen greeting.") {
-                    HStack(spacing: 12) {
-                        Image(systemName: "person.fill")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundStyle(.green)
-                            .frame(width: 24)
-
-                        Text("Your Name")
-                            .font(.body)
-
-                        Spacer()
-
-                        TextField("Enter Name", text: $greetingsName)
-                            .multilineTextAlignment(.trailing)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-                }
-
-                // MARK: - Customization
-                appearanceCard(title: "Customization", icon: "slider.horizontal.3") {
-                    VStack(spacing: 0) {
-                        AppearanceNavRow(icon: "square.grid.2x2.fill", title: "All Apps", color: .blue, destination: AllAppsCustomizationView())
-                        Divider().padding(.leading, 52)
-                        AppearanceNavRow(icon: "eye.slash.fill", title: "Hide UI Elements", color: .red, destination: AppHideElementsView())
-                        Divider().padding(.leading, 52)
-                        AppearanceNavRow(icon: "rectangle.topthird.inset.filled", title: "Status Bar", color: .cyan, destination: StatusBarCustomizationView())
-                        Divider().padding(.leading, 52)
-                        AppearanceNavRow(icon: "dock.rectangle", title: "Tab Bar", color: .indigo, destination: TabBarCustomizationView())
-
-                        if ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 16 {
-                            Divider().padding(.leading, 52)
-                            AppearanceNavRow(icon: "keyboard", title: "Keyboard Backdrop", color: .purple, destination: KeyboardCustomizationView())
-                        }
-                    }
-                    .padding(.vertical, 4)
-                }
-
-                // MARK: - Experiments
-                if #available(iOS 19.0, *) {
-                    appearanceCard(title: "Liquid Glass", icon: "sparkle", footer: "Requires Portal to restart so Liquid Glass can be applied.") {
-                        AppearanceToggle(icon: "sparkles", title: "Enable Liquid Glass", isOn: $ignoreSolariumLinkedOnCheck, color: .pink)
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                    }
+                } header: {
+                    Label("Tint Icons", systemImage: "paintpalette")
+                } footer: {
+                    Text("Allow Portal to tint your app icons when signing apps with the current accent color set.")
                 }
             }
-            .padding(20)
-            .padding(.bottom, 30)
+
+            // MARK: - Display
+            Section {
+                Toggle(isOn: $showIconsInAppearance) {
+                    Label("Show Icons", systemImage: "square.grid.2x2")
+                        .foregroundStyle(.blue)
+                }
+                Toggle(isOn: $showNews) {
+                    Label("Show News", systemImage: "newspaper")
+                        .foregroundStyle(.orange)
+                }
+            } header: {
+                Label("Display", systemImage: "eye.fill")
+            }
+
+            // MARK: - Haptics
+            Section {
+                Toggle(isOn: $hapticsManager.isEnabled) {
+                    Label("Enable Haptics", systemImage: "iphone.radiowaves.left.and.right")
+                        .foregroundStyle(.purple)
+                }
+
+                if hapticsManager.isEnabled {
+                    ForEach(HapticsManager.HapticIntensity.allCases, id: \.self) { intensity in
+                        HapticIntensityRow(
+                            intensity: intensity,
+                            isSelected: hapticsManager.intensity == intensity
+                        ) {
+                            hapticsManager.intensity = intensity
+                            HapticsManager.shared.impact()
+                        }
+                    }
+                }
+            } header: {
+                Label("App Haptics", systemImage: "waveform")
+            }
+
+            // MARK: - Personalization
+            Section {
+                HStack {
+                    Label("Your Name", systemImage: "person.fill")
+                        .foregroundStyle(.green)
+                    Spacer()
+                    TextField("Enter Name", text: $greetingsName)
+                        .multilineTextAlignment(.trailing)
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                Label("Personalization", systemImage: "person.crop.circle.fill")
+            } footer: {
+                Text("Personalize the Home Screen greeting.")
+            }
+
+            // MARK: - Customization
+            Section {
+                NavigationLink(destination: AllAppsCustomizationView()) {
+                    Label("All Apps", systemImage: "square.grid.2x2.fill")
+                        .foregroundStyle(.blue)
+                }
+                NavigationLink(destination: AppHideElementsView()) {
+                    Label("Hide UI Elements", systemImage: "eye.slash.fill")
+                        .foregroundStyle(.red)
+                }
+                NavigationLink(destination: StatusBarCustomizationView()) {
+                    Label("Status Bar", systemImage: "rectangle.topthird.inset.filled")
+                        .foregroundStyle(.cyan)
+                }
+                NavigationLink(destination: TabBarCustomizationView()) {
+                    Label("Tab Bar", systemImage: "dock.rectangle")
+                        .foregroundStyle(.indigo)
+                }
+
+                if ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 16 {
+                    NavigationLink(destination: KeyboardCustomizationView()) {
+                        Label("Keyboard Backdrop", systemImage: "keyboard")
+                            .foregroundStyle(.purple)
+                    }
+                }
+            } header: {
+                Label("Customization", systemImage: "slider.horizontal.3")
+            }
+
+            // MARK: - Experiments
+            if #available(iOS 19.0, *) {
+                Section {
+                    Toggle(isOn: $ignoreSolariumLinkedOnCheck) {
+                        Label("Enable Liquid Glass", systemImage: "sparkles")
+                            .foregroundStyle(.pink)
+                    }
+                } header: {
+                    Label("Liquid Glass", systemImage: "sparkle")
+                } footer: {
+                    Text("Requires Portal to restart so Liquid Glass can be applied.")
+                }
+            }
         }
         .background(Color.clear)
         .navigationTitle("Appearance")
