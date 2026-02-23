@@ -724,7 +724,7 @@ struct LogErrorCodeRow: View {
             } else {
                 Text("Click to see suggestion")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                     .padding(.vertical, 4)
             }
         }
