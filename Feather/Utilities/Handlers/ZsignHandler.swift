@@ -50,9 +50,9 @@ final class ZsignHandler {
 			completion: { _, error in
 				self.hadError = error
                 if let error = error {
-                    AppLogManager.shared.error("Signing failed: \(error.localizedDescription)", category: "Signing")
+                    AppLogManager.shared.error("Signing failed: \(error.localizedDescription)", category: "Signing", errorCode: .SIGN_FAILED)
                 } else {
-                    AppLogManager.shared.success("Signing completed successfully", category: "Signing")
+                    AppLogManager.shared.success("Signing completed successfully", category: "Signing", errorCode: .SIGN_SUCCESS)
                 }
 			}
 		)

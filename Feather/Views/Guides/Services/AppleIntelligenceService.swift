@@ -82,7 +82,7 @@ final class AppleIntelligenceService {
         let isSupported = supportedPrefixes.contains { identifier.hasPrefix($0) }
         
         if !isSupported {
-            AppLogManager.shared.error("Device '\(identifier)' not in supported list for Apple Intelligence", category: "AppleIntelligence")
+            AppLogManager.shared.error("Device '\(identifier)' not in supported list for Apple Intelligence", category: "AppleIntelligence", errorCode: .DEVICE_NOT_SUPPORTED)
         } else {
             AppLogManager.shared.success("Device '\(identifier)' supports Apple Intelligence", category: "AppleIntelligence")
         }
@@ -103,7 +103,7 @@ final class AppleIntelligenceService {
         
         guard isAvailable else {
             let error = AppleIntelligenceError.deviceNotSupported(deviceIdentifier)
-            AppLogManager.shared.error("Apple Intelligence not available: \(error.localizedDescription)", category: "AppleIntelligence")
+            AppLogManager.shared.error("Apple Intelligence not available: \(error.localizedDescription)", category: "AppleIntelligence", errorCode: .DEVICE_NOT_SUPPORTED)
             throw error
         }
         
@@ -133,7 +133,7 @@ final class AppleIntelligenceService {
         guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
               let rootViewController = windowScene.windows.first?.rootViewController else {
             let error = AppleIntelligenceError.processingFailed("Unable to present interface - no root view controller")
-            AppLogManager.shared.error("Failed to get root view controller", category: "AppleIntelligence")
+            AppLogManager.shared.error("Failed to get root view controller", category: "AppleIntelligence", errorCode: .UNEXPECTED_ERROR)
             continuation.resume(throwing: error)
             return
         }
@@ -157,7 +157,7 @@ final class AppleIntelligenceService {
                 AppLogManager.shared.debug("Output Length: \(processedText.count) characters", category: "AppleIntelligence")
                 continuation.resume(returning: processedText)
             case .failure(let error):
-                AppLogManager.shared.error("Apple Intelligence Processing Failed: \(error.localizedDescription)", category: "AppleIntelligence")
+                AppLogManager.shared.error("Apple Intelligence Processing Failed: \(error.localizedDescription)", category: "AppleIntelligence", errorCode: .APPLE_INTEL_ERR)
                 continuation.resume(throwing: error)
             }
         }
@@ -338,7 +338,7 @@ class WritingToolsViewController: UIViewController {
         
         dismiss(animated: true) {
             if processedText.isEmpty {
-                AppLogManager.shared.error("No result from Writing Tools - empty text", category: "AppleIntelligence")
+                AppLogManager.shared.error("No result from Writing Tools - empty text", category: "AppleIntelligence", errorCode: .APPLE_INTEL_ERR)
                 self.completion(.failure(AppleIntelligenceService.AppleIntelligenceError.noResult))
             } else {
                 self.completion(.success(processedText))

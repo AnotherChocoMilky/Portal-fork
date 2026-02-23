@@ -1400,7 +1400,7 @@ struct FilesView: View {
                     HapticsManager.shared.error()
                 }
             } catch {
-                AppLogManager.shared.error("Failed to check file structure: \(error.localizedDescription)", category: "Files")
+                AppLogManager.shared.error("Failed to check file structure: \(error.localizedDescription)", category: "Files", errorCode: .FILE_OP_FAILED)
                 HapticsManager.shared.error()
             }
         }
@@ -1454,7 +1454,7 @@ struct FilesView: View {
                 
             } catch {
                 HapticsManager.shared.error()
-                AppLogManager.shared.error("Failed to open in signer: \(error.localizedDescription)", category: "Files")
+                AppLogManager.shared.error("Failed to open in signer: \(error.localizedDescription)", category: "Files", errorCode: .INVALID_IPA)
                 
                 let errorMessage = String(format: .localized("Failed to import IPA file: %@"), error.localizedDescription)
                 UIAlertController.showAlertWithOk(
@@ -1823,7 +1823,7 @@ class FileManagerService: ObservableObject {
             loadFiles()
         } catch {
             HapticsManager.shared.error()
-            AppLogManager.shared.error("Failed to delete file: \(error.localizedDescription)", category: "Files")
+            AppLogManager.shared.error("Failed to delete file: \(error.localizedDescription)", category: "Files", errorCode: .FILE_OP_FAILED)
         }
     }
     
@@ -1835,7 +1835,7 @@ class FileManagerService: ObservableObject {
             loadFiles()
         } catch {
             HapticsManager.shared.error()
-            AppLogManager.shared.error("Failed to rename file: \(error.localizedDescription)", category: "Files")
+            AppLogManager.shared.error("Failed to rename file: \(error.localizedDescription)", category: "Files", errorCode: .FILE_OP_FAILED)
         }
     }
     
@@ -1859,7 +1859,7 @@ class FileManagerService: ObservableObject {
             loadFiles()
         } catch {
             HapticsManager.shared.error()
-            AppLogManager.shared.error("Failed to duplicate file: \(error.localizedDescription)", category: "Files")
+            AppLogManager.shared.error("Failed to duplicate file: \(error.localizedDescription)", category: "Files", errorCode: .FILE_OP_FAILED)
         }
     }
     
@@ -1886,7 +1886,7 @@ class FileManagerService: ObservableObject {
             loadFiles()
         } catch {
             HapticsManager.shared.error()
-            AppLogManager.shared.error("Failed to import file: \(error.localizedDescription)", category: "Files")
+            AppLogManager.shared.error("Failed to import file: \(error.localizedDescription)", category: "Files", errorCode: .FILE_OP_FAILED)
         }
     }
 }
