@@ -124,7 +124,6 @@ class IPAExplorerViewModel: ObservableObject {
            let primaryIcon = icons["CFBundlePrimaryIcon"] as? [String: Any],
            let iconFiles = primaryIcon["CFBundleIconFiles"] as? [String],
            let lastIcon = iconFiles.last {
-            let iconURL = appBundle.appendingPathComponent(lastIcon)
             // Note: iOS app icons usually don't have extension in Info.plist, and might have @2x/@3x
             // For simplicity, we try to find a matching file
             if let files = try? fileManager.contentsOfDirectory(at: appBundle, includingPropertiesForKeys: nil) {
