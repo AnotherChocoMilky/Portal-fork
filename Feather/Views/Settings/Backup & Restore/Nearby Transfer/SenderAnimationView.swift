@@ -133,11 +133,11 @@ struct SenderAnimationView: View {
                             .stroke(Color.white.opacity(0.3), lineWidth: 1)
                     )
                 
-                if #available(iOS 18.0, *) {
+                if #available(iOS 17.0, *) {
                     Image(systemName: "arrow.up.circle.fill")
                         .font(.system(size: 70))
                         .foregroundStyle(.white)
-                        .symbolEffect(.pulse, options: .repeating)
+                        .pulseEffect()
                 } else {
                     Image(systemName: "arrow.up.circle.fill")
                         .font(.system(size: 70))

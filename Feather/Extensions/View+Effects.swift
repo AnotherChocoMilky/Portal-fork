@@ -32,6 +32,24 @@ struct PulseEffectModifier<T: Equatable>: ViewModifier {
 }
 
 extension View {
+    @ViewBuilder
+    func pulseEffect() -> some View {
+        if #available(iOS 17.0, *) {
+            self.symbolEffect(.pulse, options: .repeating)
+        } else {
+            self
+        }
+    }
+
+    @ViewBuilder
+    func bounceEffect() -> some View {
+        if #available(iOS 17.0, *) {
+            self.symbolEffect(.bounce, options: .repeating)
+        } else {
+            self
+        }
+    }
+
     func bounceEffect<T: Equatable>(_ value: T) -> some View {
         self.modifier(BounceEffectModifier(value: value))
     }
