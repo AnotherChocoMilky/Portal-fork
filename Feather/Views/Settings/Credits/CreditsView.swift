@@ -132,6 +132,23 @@ struct CreditsView: View {
 			}
 			.listRowBackground(Color.clear)
 			.listRowSeparator(.hidden)
+
+			// Portal Source Code Section
+			Section {
+				WSFLinkButton(link: WSFLink(
+					title: .localized("Check out Portal's code"),
+					url: "https://github.com/dylans2010/Portal",
+					icon: "code.bracket",
+					color: .blue
+				))
+			} header: {
+				Text(.localized("Portal Source"))
+					.font(.footnote.bold())
+					.foregroundStyle(.secondary)
+					.textCase(.uppercase)
+			}
+			.listRowBackground(Color.clear)
+			.listRowSeparator(.hidden)
 		}
 	}
 }

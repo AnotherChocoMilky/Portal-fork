@@ -51,7 +51,7 @@ struct CoreSignHeaderView: View {
             // App Name
             Text("Portal")
                 .font(.title2).bold()
-                .foregroundStyle(.primary)
+                .foregroundStyle(Color.accentColor)
                 .simultaneousGesture(
                     TapGesture(count: 3)
                         .onEnded {
@@ -82,7 +82,7 @@ struct CoreSignHeaderView: View {
                     Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.0")
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                 }
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.accentColor)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
                 .background(Color.primary.opacity(0.05))
@@ -96,17 +96,17 @@ struct CoreSignHeaderView: View {
                     .padding(.vertical, 4)
                     .background(.ultraThinMaterial)
                     .clipShape(Capsule())
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color.accentColor)
                     .overlay(
                         Capsule()
-                            .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
+                            .stroke(Color.accentColor.opacity(0.2), lineWidth: 0.5)
                     )
             }
 
             // Subtexts (Secondary Text)
             Text(currentSubtitle)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color.accentColor.opacity(0.7))
                 .transition(.opacity)
                 .id(currentSubtitleIndex)
                 .padding(.top, 4)
@@ -131,25 +131,30 @@ struct CoreSignHeaderView: View {
     // MARK: - App Icon
     @ViewBuilder
     private var appIcon: some View {
-        if let iconName = Bundle.main.iconFileName,
-           let icon = UIImage(named: iconName) {
-            Image(uiImage: icon)
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 60, height: 60)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)
-                )
-        } else {
-            Image(systemName: "questionmark.square.dashed")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 60, height: 60)
-                .foregroundColor(.gray)
+        ZStack {
+            Color.accentColor.opacity(0.15)
+
+            if let iconName = Bundle.main.iconFileName,
+               let icon = UIImage(named: iconName) {
+                Image(uiImage: icon)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 60, height: 60)
+            } else {
+                Image(systemName: "questionmark.square.dashed")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 40, height: 40)
+                    .foregroundColor(Color.accentColor)
+            }
         }
+        .frame(width: 60, height: 60)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)
+        )
     }
     
     // MARK: - Credits Button
