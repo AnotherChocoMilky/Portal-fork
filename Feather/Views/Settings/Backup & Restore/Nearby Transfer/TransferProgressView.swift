@@ -130,7 +130,6 @@ struct TransferProgressView: View {
                 Image(systemName: icon)
                     .font(.system(size: 48))
                     .foregroundStyle(color)
-                    .ifAvailableiOS18SymbolPulse()
             }
             
             VStack(spacing: 8) {
