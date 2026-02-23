@@ -6,6 +6,7 @@ import Zip
 struct InstallationOptionsSplashView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("Feather.serverMethod") private var serverMethod: Int = 0
+    @State private var _showServerSheet = false
     
     var body: some View {
         NavigationStack {
@@ -31,7 +32,18 @@ struct InstallationOptionsSplashView: View {
                 .listRowBackground(Color.clear)
 
                 Section("Server Settings") {
-                    ServerView()
+                    Button {
+                        _showServerSheet = true
+                        HapticsManager.shared.softImpact()
+                    } label: {
+                        Label {
+                            Text("Configure Server")
+                                .foregroundStyle(.primary)
+                        } icon: {
+                            Image(systemName: "server.rack")
+                                .foregroundStyle(.blue)
+                        }
+                    }
                 }
 
                 Section {
@@ -58,6 +70,11 @@ struct InstallationOptionsSplashView: View {
                         dismiss()
                     }
                 }
+            }
+            .sheet(isPresented: $_showServerSheet) {
+                ServerView()
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
             }
         }
     }

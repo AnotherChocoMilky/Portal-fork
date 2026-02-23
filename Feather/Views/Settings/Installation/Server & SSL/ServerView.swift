@@ -55,10 +55,10 @@ extension ServerView {
 		
 		var description: String {
 			switch self {
-			case .fullyLocal: return .localized("Fully signs and installs apps on device.")
-			case .semiLocal: return .localized("Signs locally but uses a local server for installation via Wi-Fi.")
-			case .custom: return .localized("Use your own custom API endpoint for remote signing and installation.")
-			case .semiLocalBackground: return .localized("Signs locally but uses a local server in the background for installation.")
+			case .fullyLocal: return .localized("Sign and install on-device.")
+			case .semiLocal: return .localized("Local signing, Wi-Fi install.")
+			case .custom: return .localized("Custom remote signing API.")
+			case .semiLocalBackground: return .localized("Background local signing.")
 			}
 		}
 		
@@ -82,75 +82,9 @@ extension ServerView {
 	}
 }
 
-// MARK: - Server Method Card View
-private struct ServerMethodCard: View {
-	let method: ServerView.ServerMethod
-	let isSelected: Bool
-	let action: () -> Void
-	
-	var body: some View {
-		Button(action: action) {
-			HStack(spacing: 14) {
-				ZStack {
-					RoundedRectangle(cornerRadius: 10, style: .continuous)
-						.fill(
-							LinearGradient(
-								colors: isSelected ? [method.color, method.color.opacity(0.8)] : [Color(.tertiarySystemFill), Color(.tertiarySystemFill)],
-								startPoint: .topLeading,
-								endPoint: .bottomTrailing
-							)
-						)
-						.frame(width: 40, height: 40)
-						.shadow(color: isSelected ? method.color.opacity(0.3) : .clear, radius: 6, x: 0, y: 3)
-					
-					Image(systemName: method.icon)
-						.font(.system(size: 16, weight: .semibold))
-						.foregroundStyle(isSelected ? .white : .secondary)
-				}
-				
-				VStack(alignment: .leading, spacing: 3) {
-					Text(method.name)
-						.font(.system(size: 15, weight: .semibold))
-						.foregroundStyle(isSelected ? .primary : .secondary)
-					
-					Text(method.description)
-						.font(.system(size: 12))
-						.foregroundStyle(.secondary)
-						.lineLimit(2)
-						.fixedSize(horizontal: false, vertical: true)
-				}
-				
-				Spacer()
-				
-				ZStack {
-					Circle()
-						.strokeBorder(isSelected ? method.color : Color(.tertiarySystemFill), lineWidth: 2)
-						.frame(width: 22, height: 22)
-					
-					if isSelected {
-						Circle()
-							.fill(method.color)
-							.frame(width: 14, height: 14)
-					}
-				}
-			}
-			.padding(14)
-			.background(
-				RoundedRectangle(cornerRadius: 14, style: .continuous)
-					.fill(isSelected ? method.color.opacity(0.08) : Color.clear)
-			)
-			.overlay(
-				RoundedRectangle(cornerRadius: 14, style: .continuous)
-					.strokeBorder(isSelected ? method.color.opacity(0.3) : Color.clear, lineWidth: 1.5)
-			)
-		}
-		.buttonStyle(.plain)
-		.animation(.spring(response: 0.35, dampingFraction: 0.7), value: isSelected)
-	}
-}
-
 // MARK: - View
 struct ServerView: View {
+    @Environment(\.dismiss) private var dismiss
 	@AppStorage("Feather.ipFix") private var _ipFix: Bool = false
 	@AppStorage("Feather.serverMethod") private var _serverMethod: Int = 0
 	@AppStorage("Feather.customSigningAPI") private var _customSigningAPI: String = ""
@@ -172,38 +106,73 @@ struct ServerView: View {
 	
 	// MARK: Body
 	var body: some View {
-		Group {
-			serverTypeSection
-			
-			// Show custom API input when Custom method is selected
-			if _serverMethod == 2 {
-				customAPISection
-			}
-			
-			sslCertificatesSection
-			
-			serverStatusSection
+        NavigationStack {
+            Form {
+                serverTypeSection
 
-			successAnimationSection
-		}
+                // Show custom API input when Custom method is selected
+                if _serverMethod == 2 {
+                    customAPISection
+                }
+
+                sslCertificatesSection
+
+                serverStatusSection
+
+                successAnimationSection
+            }
+            .navigationTitle("Server Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                }
+            }
+        }
 	}
 	
 	private var serverTypeSection: some View {
 		Section {
-			VStack(spacing: 10) {
-				ForEach(ServerMethod.allCases, id: \.rawValue) { method in
-					ServerMethodCard(
-						method: method,
-						isSelected: _serverMethod == method.rawValue
-					) {
-						withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
-							_serverMethod = method.rawValue
-						}
-						HapticsManager.shared.softImpact()
-					}
-				}
-			}
-			.padding(.vertical, 4)
+            Menu {
+                Picker("Server Type", selection: $_serverMethod) {
+                    ForEach(ServerMethod.allCases, id: \.rawValue) { method in
+                        Label(method.name, systemImage: method.icon)
+                            .tag(method.rawValue)
+                    }
+                }
+            } label: {
+                HStack {
+                    Label {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(selectedMethod.name)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(.primary)
+                            Text(selectedMethod.description)
+                                .font(.system(size: 12))
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(selectedMethod.color.opacity(0.1))
+                                .frame(width: 40, height: 40)
+
+                            Image(systemName: selectedMethod.icon)
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(selectedMethod.color)
+                        }
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+            }
 			
 			if _serverMethod == 1 || _serverMethod == 3 {
 				Toggle(isOn: $_ipFix) {

@@ -2,6 +2,7 @@ import SwiftUI
 import AltSourceKit
 import NimbleViews
 import Combine
+import NukeUI
 
 // MARK: - Did You Know Facts
 struct DidYouKnowFacts {
@@ -64,6 +65,7 @@ struct AllAppsView: View {
     @State private var _selectedRoute: SourceAppRoute?
     @FocusState private var _searchFieldFocused: Bool
     @State private var _isSearching = false
+    @State private var _showAppAdd = false
 
     @AppStorage("Feather.allApps.sortOption") private var _sortOption: AppSortOption = .name
     @AppStorage("Feather.allApps.sortAscending") private var _sortAscending: Bool = true
@@ -127,8 +129,19 @@ struct AllAppsView: View {
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
-                            if _showSorting && !_isLoading {
-                                _sortingMenu
+                            HStack(spacing: 12) {
+                                Button {
+                                    _showAppAdd = true
+                                    HapticsManager.shared.softImpact()
+                                } label: {
+                                    Image(systemName: "plus.circle.fill")
+                                        .font(.system(size: 20))
+                                        .foregroundStyle(Color.accentColor)
+                                }
+
+                                if _showSorting && !_isLoading {
+                                    _sortingMenu
+                                }
                             }
                         }
                     }
@@ -147,6 +160,12 @@ struct AllAppsView: View {
         }
         .navigationDestinationIfAvailable(item: $_selectedRoute) { route in
             SourceAppsDetailView(source: route.source, app: route.app)
+        }
+        .sheet(isPresented: $_showAppAdd) {
+            AppAddView()
+                .presentationDetents([.height(260)])
+                .presentationDragIndicator(.visible)
+                .compatPresentationRadius(24)
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: _useGrid)
@@ -263,6 +282,21 @@ struct AllAppsView: View {
             }
 
             Spacer()
+
+            if !isTab {
+                Button {
+                    _showAppAdd = true
+                    HapticsManager.shared.softImpact()
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundStyle(Color.accentColor)
+                        .padding(8)
+                        .background(Color.accentColor.opacity(0.1))
+                        .clipShape(Circle())
+                        .contentShape(Circle())
+                }
+            }
 
             if _showSorting && !isTab {
                 _sortingMenu
@@ -839,8 +873,8 @@ struct AllAppsRowView: View {
                     .frame(width: iconSize, height: iconSize)
                     .overlay(alignment: .bottomLeading) {
                         if showSourceIcon, let iconURL = source.currentIconURL {
-                            AsyncImage(url: iconURL) { phase in
-                                if let image = phase.image {
+                            LazyImage(url: iconURL) { state in
+                                if let image = state.image {
                                     image
                                         .resizable()
                                         .aspectRatio(contentMode: .fit)
@@ -955,8 +989,8 @@ struct AllAppsRowView: View {
                     .frame(width: iconSize * 1.2, height: iconSize * 1.2)
 
                 if showSourceIcon, let iconURL = source.currentIconURL {
-                    AsyncImage(url: iconURL) { phase in
-                        if let image = phase.image {
+                    LazyImage(url: iconURL) { state in
+                        if let image = state.image {
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
@@ -1063,11 +1097,8 @@ struct AllAppsRowView: View {
 	@ViewBuilder
 	private var appIcon: some View {
 		if let iconURL = app.iconURL {
-			AsyncImage(url: iconURL) { phase in
-				switch phase {
-				case .empty:
-					iconPlaceholder
-				case .success(let image):
+			LazyImage(url: iconURL) { state in
+				if let image = state.image {
 					image
 						.resizable()
 						.aspectRatio(contentMode: .fill)
@@ -1076,9 +1107,7 @@ struct AllAppsRowView: View {
                             RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous)
                                 .stroke(Color(hex: iconBorderColor), lineWidth: iconBorderWidth)
                         )
-				case .failure:
-					iconPlaceholder
-				@unknown default:
+				} else {
 					iconPlaceholder
 				}
 			}
