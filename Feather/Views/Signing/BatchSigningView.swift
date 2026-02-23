@@ -46,7 +46,7 @@ struct BatchSigningView: View {
         let id = UUID()
         let appName: String
         let success: Bool
-        let message: String
+        var message: String
         var installLink: String? = nil
         var app: AppInfoPresentable? = nil
     }
