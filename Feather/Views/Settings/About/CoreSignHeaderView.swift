@@ -1,5 +1,4 @@
 import SwiftUI
-import CoreImage
 
 struct CoreSignHeaderView: View {
     // MARK: - State
@@ -7,7 +6,6 @@ struct CoreSignHeaderView: View {
     @State private var showCredits = false
     @State private var showSecretDimension = false
     @State private var iconRotationAngle: Double = 0
-    @State private var dominantColors: [Color] = []
     var hideAboutButton: Bool = false
 
     // MARK: - Current Subtitle
@@ -21,7 +19,6 @@ struct CoreSignHeaderView: View {
             .onAppear {
                 setupLifecycleObservers()
                 rotateSubtitle()
-                extractColors()
             }
             .sheet(isPresented: $showCredits) {
                 CreditsView()
@@ -33,8 +30,8 @@ struct CoreSignHeaderView: View {
     
     // MARK: - Header Card
     private var headerCard: some View {
-        VStack(spacing: 20) {
-            // App Icon centered at the top
+        VStack(alignment: .leading, spacing: 12) {
+            // App Icon
             appIcon
                 .rotationEffect(.degrees(iconRotationAngle))
                 .onTapGesture(count: 3) {
@@ -51,33 +48,33 @@ struct CoreSignHeaderView: View {
                         }
                 )
             
-            VStack(spacing: 12) {
-                // App Name centered below
-                Text("Portal")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
-                    .simultaneousGesture(
-                        TapGesture(count: 3)
-                            .onEnded {
-                                showSecretDimension = true
+            // App Name
+            Text("Portal")
+                .font(.title2).bold()
+                .foregroundStyle(.primary)
+                .simultaneousGesture(
+                    TapGesture(count: 3)
+                        .onEnded {
+                            showSecretDimension = true
+                            HapticsManager.shared.success()
+                        }
+                )
+                .simultaneousGesture(
+                    TapGesture(count: 2)
+                        .onEnded {
+                            let colors: [Color] = [.red, .blue, .green, .yellow, .purple, .orange, .pink, .cyan, .mint]
+                            if let randomColor = colors.randomElement() {
+                                UIApplication.shared.connectedScenes
+                                    .compactMap { $0 as? UIWindowScene }
+                                    .flatMap { $0.windows }
+                                    .forEach { $0.tintColor = UIColor(randomColor) }
+                                ToastManager.shared.show("🎨 Color Splash!", type: .info)
                                 HapticsManager.shared.success()
                             }
-                    )
-                    .simultaneousGesture(
-                        TapGesture(count: 2)
-                            .onEnded {
-                                let colors: [Color] = [.red, .blue, .green, .yellow, .purple, .orange, .pink, .cyan, .mint]
-                                if let randomColor = colors.randomElement() {
-                                    UIApplication.shared.connectedScenes
-                                        .compactMap { $0 as? UIWindowScene }
-                                        .flatMap { $0.windows }
-                                        .forEach { $0.tintColor = UIColor(randomColor) }
-                                    ToastManager.shared.show("🎨 Color Splash!", type: .info)
-                                    HapticsManager.shared.success()
-                                }
-                            }
-                    )
+                        }
+                )
 
+            HStack(spacing: 8) {
                 // Version Row
                 HStack(spacing: 6) {
                     Image(systemName: "info.circle.fill")
@@ -106,11 +103,10 @@ struct CoreSignHeaderView: View {
                     )
             }
 
-            // Subtexts centered below
+            // Subtexts (Secondary Text)
             Text(currentSubtitle)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundStyle(Color.accentColor)
-                .multilineTextAlignment(.center)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
                 .transition(.opacity)
                 .id(currentSubtitleIndex)
                 .padding(.top, 4)
@@ -121,35 +117,15 @@ struct CoreSignHeaderView: View {
                     .padding(.top, 4)
             }
         }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 32)
-        .padding(.horizontal, 24)
-        .background(
-            ZStack {
-                if !dominantColors.isEmpty {
-                    LinearGradient(
-                        colors: [
-                            dominantColors[0].opacity(0.1),
-                            (dominantColors.count > 1 ? dominantColors[1] : dominantColors[0]).opacity(0.05)
-                        ],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                } else {
-                    Color.primary.opacity(0.03)
-                }
-
-                Rectangle()
-                    .fill(.ultraThinMaterial.opacity(0.5))
-            }
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(24)
+        .background(Color(white: 0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .shadow(color: .black.opacity(0.05), radius: 15, x: 0, y: 8)
         .overlay(
-            RoundedRectangle(cornerRadius: 32, style: .continuous)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
                 .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
         )
-        .padding(.horizontal)
     }
     
     // MARK: - App Icon
@@ -160,18 +136,18 @@ struct CoreSignHeaderView: View {
             Image(uiImage: icon)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 80, height: 80)
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .frame(width: 60, height: 60)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)
                 )
         } else {
             Image(systemName: "questionmark.square.dashed")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 80, height: 80)
+                .frame(width: 60, height: 60)
                 .foregroundColor(.gray)
         }
     }
@@ -205,63 +181,6 @@ struct CoreSignHeaderView: View {
             queue: .main
         ) { _ in
             rotateSubtitle()
-        }
-    }
-
-    // MARK: - Color Extraction
-    private func extractColors() {
-        guard let iconName = Bundle.main.iconFileName,
-              let uiImage = UIImage(named: iconName),
-              let cgImage = uiImage.cgImage else {
-            return
-        }
-
-        func computeDominantColors(_ cgImage: CGImage) -> [Color] {
-            let ciImage = CIImage(cgImage: cgImage)
-            let extent = ciImage.extent
-
-            let filter = CIFilter(name: "CIAreaAverage")
-            filter?.setValue(ciImage, forKey: kCIInputImageKey)
-            filter?.setValue(CIVector(cgRect: extent), forKey: kCIInputExtentKey)
-
-            var extracted: [Color] = []
-
-            if let output = filter?.outputImage {
-                var bitmap = [UInt8](repeating: 0, count: 4)
-                let context = CIContext()
-                context.render(output, toBitmap: &bitmap, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: nil)
-                let color = Color(red: Double(bitmap[0]) / 255, green: Double(bitmap[1]) / 255, blue: Double(bitmap[2]) / 255)
-                extracted.append(color)
-            }
-
-            let quarterExtent = CGRect(x: extent.width * 0.25, y: extent.height * 0.25, width: extent.width * 0.5, height: extent.height * 0.5)
-            let filter2 = CIFilter(name: "CIAreaAverage")
-            filter2?.setValue(ciImage, forKey: kCIInputImageKey)
-            filter2?.setValue(CIVector(cgRect: quarterExtent), forKey: kCIInputExtentKey)
-
-            if let output2 = filter2?.outputImage {
-                var bitmap = [UInt8](repeating: 0, count: 4)
-                let context = CIContext()
-                context.render(output2, toBitmap: &bitmap, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: nil)
-                let color2 = Color(red: Double(bitmap[0]) / 255, green: Double(bitmap[1]) / 255, blue: Double(bitmap[2]) / 255)
-                if let first = extracted.first {
-                    let firstComponents = UIColor(first).cgColor.components ?? [0, 0, 0]
-                    let diff = abs(Double(bitmap[0])/255 - Double(firstComponents[0])) +
-                               abs(Double(bitmap[1])/255 - Double(firstComponents[1])) +
-                               abs(Double(bitmap[2])/255 - Double(firstComponents[2]))
-                    if diff > 0.3 {
-                        extracted.append(color2)
-                    }
-                }
-            }
-            return extracted.isEmpty ? [.accentColor] : extracted
-        }
-
-        Task.detached {
-            let colors = computeDominantColors(cgImage)
-            await MainActor.run {
-                self.dominantColors = colors
-            }
         }
     }
 
