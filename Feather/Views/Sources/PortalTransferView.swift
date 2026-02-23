@@ -71,12 +71,13 @@ struct PortalTransferView: View {
     private var headerSection: some View {
         VStack(spacing: 12) {
             Image(systemName: isImportMode ? "arrow.down.doc.fill" : "arrow.up.doc.fill")
-                .font(.system(size: 48))
-                .foregroundStyle(isImportMode ? .cyan : .purple)
+                .font(.system(size: 64))
+                .foregroundStyle(isImportMode ? AnyShapeStyle(.cyan.gradient) : AnyShapeStyle(.purple.gradient))
+                .pulseEffect(true)
                 .padding(.top, 20)
 
             Text(isImportMode ? .localized("Import Sources") : .localized("Export Sources"))
-                .font(.title2.bold())
+                .font(.system(.title2, design: .rounded).bold())
 
             Text(isImportMode ? .localized("Paste your Portal Transfer code to import.") : .localized("Share your sources with a Portal Transfer code."))
                 .font(.subheadline)
@@ -86,6 +87,7 @@ struct PortalTransferView: View {
                 .padding(.bottom, 20)
         }
         .frame(maxWidth: .infinity)
+        .animation(.spring(), value: isImportMode)
     }
 
     private var exportSection: some View {
@@ -96,29 +98,36 @@ struct PortalTransferView: View {
                         .font(.system(.caption2, design: .monospaced))
                         .textSelection(.enabled)
                         .foregroundStyle(.secondary)
+                        .padding(12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(UIColor.secondarySystemFill).opacity(0.3))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
                         .padding(.vertical, 8)
                 } else {
                     Text(.localized("No Data"))
                         .foregroundStyle(.secondary)
                 }
             } header: {
-                Label(.localized("Transfer Code"), systemImage: "key.fill")
-            } footer: {
-                if !exportData.isEmpty {
-                    Button {
-                        UIPasteboard.general.string = exportData
-                        HapticsManager.shared.success()
-                        withAnimation { showCopiedFeedback = true }
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                            withAnimation { showCopiedFeedback = false }
+                HStack {
+                    Label(.localized("Transfer Code"), systemImage: "key.fill")
+                    Spacer()
+                    if !exportData.isEmpty {
+                        Button {
+                            UIPasteboard.general.string = exportData
+                            HapticsManager.shared.success()
+                            withAnimation { showCopiedFeedback = true }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                                withAnimation { showCopiedFeedback = false }
+                            }
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: showCopiedFeedback ? "checkmark" : "doc.on.doc")
+                                Text(showCopiedFeedback ? .localized("Copied") : .localized("Copy"))
+                            }
+                            .font(.caption.bold())
                         }
-                    } label: {
-                        Label(showCopiedFeedback ? .localized("Copied") : .localized("Copy Code"), systemImage: showCopiedFeedback ? "checkmark" : "doc.on.doc")
-                            .frame(maxWidth: .infinity)
+                        .bounceEffect(showCopiedFeedback)
                     }
-                    .buttonStyle(.bordered)
-                    .tint(.purple)
-                    .padding(.top, 8)
                 }
             }
         }
@@ -130,32 +139,51 @@ struct PortalTransferView: View {
                 TextEditor(text: $importText)
                     .font(.system(.caption, design: .monospaced))
                     .frame(minHeight: 120)
+                    .padding(8)
+                    .background(Color(UIColor.secondarySystemFill).opacity(0.3))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.accentColor.opacity(0.2), lineWidth: 1)
+                    )
+                    .padding(.vertical, 8)
             } header: {
                 HStack {
                     Label(.localized("Portal Code"), systemImage: "square.and.pencil")
                     Spacer()
                     Button {
                         if let clipboard = UIPasteboard.general.string {
-                            importText = clipboard
+                            withAnimation {
+                                importText = clipboard
+                            }
                             HapticsManager.shared.softImpact()
                         }
                     } label: {
-                        Text(.localized("Paste"))
-                            .font(.caption.bold())
+                        HStack(spacing: 4) {
+                            Image(systemName: "doc.on.clipboard.fill")
+                            Text(.localized("Paste"))
+                        }
+                        .font(.caption.bold())
                     }
                 }
             }
 
             Section {
                 Button {
-                    performImport()
+                    withAnimation(.spring()) {
+                        performImport()
+                    }
                 } label: {
                     Label(.localized("Import Sources"), systemImage: "arrow.down.circle.fill")
+                        .font(.headline)
                         .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.cyan)
                 .disabled(importText.isEmpty)
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
             }
 
             if let result = importResult {
@@ -164,9 +192,11 @@ struct PortalTransferView: View {
                     case .success(let count):
                         Label(.localized("\(count) Sources Added"), systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.green)
+                            .transition(.move(edge: .top).combined(with: .opacity))
                     case .error(let message):
                         Label(message, systemImage: "xmark.circle.fill")
                             .foregroundStyle(.red)
+                            .transition(.move(edge: .top).combined(with: .opacity))
                     }
                 }
             }

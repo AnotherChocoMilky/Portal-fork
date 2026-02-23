@@ -13,6 +13,8 @@ struct BackupContentsView: View {
     @State private var sources: [SourceMetadata] = []
     @State private var signedApps: [AppMetadata] = []
     @State private var importedApps: [AppMetadata] = []
+    @State private var frameworks: [String] = []
+    @State private var archives: [String] = []
     @State private var errorMessage: String?
 
     @State private var showDiffViewer = false
@@ -24,6 +26,8 @@ struct BackupContentsView: View {
         let uuid: String
         let name: String?
         let teamName: String?
+        let teamID: String?
+        let date: TimeInterval?
         let ppQCheck: Bool
     }
 
@@ -67,12 +71,36 @@ struct BackupContentsView: View {
                         Section {
                             ForEach(certificates) { cert in
                                 Label {
-                                    VStack(alignment: .leading) {
+                                    VStack(alignment: .leading, spacing: 4) {
                                         Text(cert.name ?? "Unknown Certificate")
                                             .font(.headline)
-                                        if let team = cert.teamName {
-                                            Text(team).font(.caption).foregroundStyle(.secondary)
+
+                                        HStack(spacing: 8) {
+                                            if let teamID = cert.teamID {
+                                                Text(teamID)
+                                                    .font(.caption.monospaced())
+                                                    .padding(.horizontal, 6)
+                                                    .padding(.vertical, 2)
+                                                    .background(Color.blue.opacity(0.1), in: Capsule())
+                                            }
+
+                                            if let team = cert.teamName {
+                                                Text(team).font(.caption).foregroundStyle(.secondary)
+                                            }
                                         }
+
+                                        HStack(spacing: 12) {
+                                            if let date = cert.date {
+                                                Label(Date(timeIntervalSince1970: date).formatted(date: .abbreviated, time: .omitted), systemImage: "calendar")
+                                            }
+
+                                            if cert.ppQCheck {
+                                                Label("PPQ Protected", systemImage: "shield.checkered")
+                                                    .foregroundStyle(.green)
+                                            }
+                                        }
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
                                     }
                                 } icon: {
                                     Image(systemName: "checkmark.seal.fill").foregroundStyle(.blue)
@@ -117,24 +145,45 @@ struct BackupContentsView: View {
                         }
                     }
 
-                    if !sources.isEmpty {
+                    if !frameworks.isEmpty {
                         Section {
-                            ForEach(sources) { source in
-                                Label {
-                                    VStack(alignment: .leading) {
-                                        Text(source.name).font(.headline)
-                                        Text(source.url).font(.caption).foregroundStyle(.secondary)
-                                    }
-                                } icon: {
-                                    Image(systemName: "globe").foregroundStyle(.purple)
-                                }
+                            ForEach(frameworks, id: \.self) { framework in
+                                Label(framework, systemImage: "puzzlepiece.extension.fill")
+                                    .foregroundStyle(.cyan)
                             }
                         } header: {
-                            headerView(title: "Sources", icon: "globe", color: .purple)
+                            headerView(title: "Default Frameworks", icon: "puzzlepiece.extension.fill", color: .cyan)
                         }
                     }
 
-                    if certificates.isEmpty && signedApps.isEmpty && importedApps.isEmpty && sources.isEmpty {
+                    if !archives.isEmpty {
+                        Section {
+                            ForEach(archives, id: \.self) { archive in
+                                Label(archive, systemImage: "archivebox.fill")
+                                    .foregroundStyle(.indigo)
+                            }
+                        } header: {
+                            headerView(title: "Archives", icon: "archivebox.fill", color: .indigo)
+                        }
+                    }
+
+                    if !sources.isEmpty {
+                        Section {
+                            DisclosureGroup {
+                                ForEach(sources) { source in
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(source.name).font(.subheadline.bold())
+                                        Text(source.url).font(.caption2).foregroundStyle(.secondary)
+                                    }
+                                    .padding(.vertical, 4)
+                                }
+                            } label: {
+                                headerView(title: "Sources (\(sources.count))", icon: "globe", color: .purple)
+                            }
+                        }
+                    }
+
+                    if certificates.isEmpty && signedApps.isEmpty && importedApps.isEmpty && frameworks.isEmpty && archives.isEmpty {
                         Section {
                             Text("No recognizable metadata found in backup.")
                                 .foregroundStyle(.secondary)
@@ -293,6 +342,18 @@ struct BackupContentsView: View {
             let importedURL = tempDir.appendingPathComponent("imported_apps_metadata.json")
             if let data = try? Data(contentsOf: importedURL) {
                 importedApps = (try? JSONDecoder().decode([AppMetadata].self, from: data)) ?? []
+            }
+
+            // Load Frameworks
+            let frameworksDir = tempDir.appendingPathComponent("default_frameworks")
+            if let items = try? FileManager.default.contentsOfDirectory(atPath: frameworksDir.path) {
+                frameworks = items.filter { !$0.hasPrefix(".") }
+            }
+
+            // Load Archives
+            let archivesDir = tempDir.appendingPathComponent("archives")
+            if let items = try? FileManager.default.contentsOfDirectory(atPath: archivesDir.path) {
+                archives = items.filter { !$0.hasPrefix(".") }
             }
 
             try? FileManager.default.removeItem(at: tempDir)
