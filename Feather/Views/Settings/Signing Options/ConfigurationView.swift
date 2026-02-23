@@ -2,84 +2,6 @@ import SwiftUI
 import NimbleViews
 import Zip
 
-// MARK: - Modern Installation Options View
-struct InstallationOptionsSplashView: View {
-    @Environment(\.dismiss) private var dismiss
-    @AppStorage("Feather.serverMethod") private var serverMethod: Int = 0
-    @State private var _showServerSheet = false
-    
-    var body: some View {
-        NavigationStack {
-            Form {
-                Section {
-                    VStack(spacing: 16) {
-                        Image(systemName: "gearshape.arrow.trianglehead.2.clockwise.rotate.90")
-                            .font(.system(size: 60))
-                            .foregroundStyle(.cyan)
-                        
-                        VStack(spacing: 6) {
-                            Text("Installation Flow")
-                                .font(.title2.bold())
-
-                            Text("Configure which action you want to do to when signing apps.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 20)
-                }
-                .listRowBackground(Color.clear)
-
-                Section("Server Settings") {
-                    Button {
-                        _showServerSheet = true
-                        HapticsManager.shared.softImpact()
-                    } label: {
-                        Label {
-                            Text("Configure Server")
-                                .foregroundStyle(.primary)
-                        } icon: {
-                            Image(systemName: "server.rack")
-                                .foregroundStyle(.blue)
-                        }
-                    }
-                }
-
-                Section {
-                    Label {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("About Installation")
-                                .font(.subheadline.weight(.semibold))
-                            Text("Apps are installed using a local server that communicates with iOS. Choose the method that works best for you.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    } icon: {
-                        Image(systemName: "info.circle.fill")
-                            .foregroundStyle(.blue)
-                    }
-                }
-            }
-            .scrollContentBackground(.hidden)
-            .navigationTitle("Installation")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
-            }
-            .sheet(isPresented: $_showServerSheet) {
-                ServerView()
-                    .presentationDetents([.medium, .large])
-                    .presentationDragIndicator(.visible)
-            }
-        }
-    }
-}
-
 // MARK: - Configuration View
 struct ConfigurationView: View {
     @StateObject private var optionsManager = OptionsManager.shared
@@ -156,7 +78,9 @@ struct ConfigurationView: View {
             }
         }
         .sheet(isPresented: $showInstallationOptions) {
-            InstallationOptionsSplashView()
+            ServerView()
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
         }
         .alert("PPQ String", isPresented: $isRandomAlertPresenting) {
             TextField("String", text: $randomString)

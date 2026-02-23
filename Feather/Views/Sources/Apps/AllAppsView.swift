@@ -129,18 +129,22 @@ struct AllAppsView: View {
                     .navigationBarTitleDisplayMode(.inline)
                     .toolbar {
                         ToolbarItem(placement: .topBarTrailing) {
-                            HStack(spacing: 12) {
-                                Button {
-                                    _showAppAdd = true
-                                    HapticsManager.shared.softImpact()
+                            if !_isLoading {
+                                Menu {
+                                    Button {
+                                        _showAppAdd = true
+                                        HapticsManager.shared.softImpact()
+                                    } label: {
+                                        Label("Add App", systemImage: "plus")
+                                    }
+
+                                    if _showSorting {
+                                        _sortingMenuContent
+                                    }
                                 } label: {
-                                    Image(systemName: "plus.circle.fill")
+                                    Image(systemName: "ellipsis.circle")
                                         .font(.system(size: 20))
                                         .foregroundStyle(Color.accentColor)
-                                }
-
-                                if _showSorting && !_isLoading {
-                                    _sortingMenu
                                 }
                             }
                         }
@@ -284,11 +288,19 @@ struct AllAppsView: View {
             Spacer()
 
             if !isTab {
-                Button {
-                    _showAppAdd = true
-                    HapticsManager.shared.softImpact()
+                Menu {
+                    Button {
+                        _showAppAdd = true
+                        HapticsManager.shared.softImpact()
+                    } label: {
+                        Label("Add App", systemImage: "plus")
+                    }
+
+                    if _showSorting {
+                        _sortingMenuContent
+                    }
                 } label: {
-                    Image(systemName: "plus.circle.fill")
+                    Image(systemName: "ellipsis.circle.fill")
                         .font(.system(size: 22))
                         .foregroundStyle(Color.accentColor)
                         .padding(8)
@@ -297,18 +309,15 @@ struct AllAppsView: View {
                         .contentShape(Circle())
                 }
             }
-
-            if _showSorting && !isTab {
-                _sortingMenu
-            }
         }
         .padding(.horizontal, 20)
         .padding(.top, 16)
         .padding(.bottom, 10)
     }
 
-    private var _sortingMenu: some View {
-        Menu {
+    @ViewBuilder
+    private var _sortingMenuContent: some View {
+        Section("Sort By") {
             ForEach(AppSortOption.allCases) { option in
                 Button {
                     if _sortOption == option {
@@ -327,14 +336,6 @@ struct AllAppsView: View {
                     }
                 }
             }
-        } label: {
-            Image(systemName: "line.3.horizontal.decrease.circle.fill")
-                .font(.system(size: 22))
-                .foregroundStyle(Color.accentColor)
-                .padding(8)
-                .background(Color.accentColor.opacity(0.1))
-                .clipShape(Circle())
-                .contentShape(Circle())
         }
     }
 
@@ -367,7 +368,17 @@ struct AllAppsView: View {
             }
 
             if _showSorting {
-                _sortingMenu
+                Menu {
+                    _sortingMenuContent
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                        .font(.system(size: 22))
+                        .foregroundStyle(Color.accentColor)
+                        .padding(8)
+                        .background(Color.accentColor.opacity(0.1))
+                        .clipShape(Circle())
+                        .contentShape(Circle())
+                }
             }
         }
         .padding(.horizontal, _searchBarStyle == 2 ? 0 : 14)
