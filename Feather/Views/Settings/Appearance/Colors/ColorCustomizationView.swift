@@ -286,52 +286,59 @@ struct ColorCustomizationView: View {
                 .padding(.leading, 8)
 
             VStack(spacing: 0) {
-                colorPickerRow(title: "Background", color: $backgroundManager.baseColor, icon: "square.fill")
+                colorPickerRow(title: "Background", subtext: "The main background color of the application.", color: $backgroundManager.baseColor, icon: "square.fill")
                 Divider().padding(.leading, 44)
-                colorPickerRow(title: "UI Elements", color: $uiElementColor, icon: "app.fill")
+                colorPickerRow(title: "UI Elements", subtext: "Color for cards, buttons, and other interface components.", color: $uiElementColor, icon: "app.fill")
                 Divider().padding(.leading, 44)
-                colorPickerRow(title: "Primary Text", color: $textColor, icon: "textformat")
+                colorPickerRow(title: "Primary Text", subtext: "Main color for titles and body text.", color: $textColor, icon: "textformat")
                 Divider().padding(.leading, 44)
-                colorPickerRow(title: "Secondary Text", color: $secondaryTextColor, icon: "textformat.size")
+                colorPickerRow(title: "Secondary Text", subtext: "Used for descriptions, hints, and less important text.", color: $secondaryTextColor, icon: "textformat.size")
                 Divider().padding(.leading, 44)
-                colorPickerRow(title: "Accent", color: $tintColor, icon: "sparkles")
+                colorPickerRow(title: "Accent", subtext: "Highlights interactive elements and call-to-actions.", color: $tintColor, icon: "sparkles")
                 Divider().padding(.leading, 44)
-                colorPickerRow(title: "Nav Bar", color: $navBarColor, icon: "menubar.rectangle")
+                colorPickerRow(title: "Nav Bar", subtext: "The color of the top navigation bar.", color: $navBarColor, icon: "menubar.rectangle")
                 Divider().padding(.leading, 44)
-                colorPickerRow(title: "Tab Bar", color: $tabBarColor, icon: "dock.rectangle")
+                colorPickerRow(title: "Tab Bar", subtext: "The color of the bottom navigation bar.", color: $tabBarColor, icon: "dock.rectangle")
                 Divider().padding(.leading, 44)
-                colorPickerRow(title: "Divider", color: $dividerColor, icon: "minus")
+                colorPickerRow(title: "Divider", subtext: "Color for lines separating different sections.", color: $dividerColor, icon: "minus")
                 Divider().padding(.leading, 44)
-                colorPickerRow(title: "Sheet BG", color: $sheetBackgroundColor, icon: "square.stack")
+                colorPickerRow(title: "Sheet BG", subtext: "Background color for popups and modal sheets.", color: $sheetBackgroundColor, icon: "square.stack")
                 Divider().padding(.leading, 44)
-                colorPickerRow(title: "Success", color: $successColor, icon: "checkmark.circle")
+                colorPickerRow(title: "Success", subtext: "Color used for successful actions and indicators.", color: $successColor, icon: "checkmark.circle")
                 Divider().padding(.leading, 44)
-                colorPickerRow(title: "Warning", color: $warningColor, icon: "exclamationmark.triangle")
+                colorPickerRow(title: "Warning", subtext: "Color used for warnings and cautionary alerts.", color: $warningColor, icon: "exclamationmark.triangle")
                 Divider().padding(.leading, 44)
-                colorPickerRow(title: "Error", color: $errorColor, icon: "xmark.circle")
+                colorPickerRow(title: "Error", subtext: "Color used for error messages and critical alerts.", color: $errorColor, icon: "xmark.circle")
             }
             .background(Color.clear)
             .cornerRadius(16)
         }
     }
 
-    private func colorPickerRow(title: String, color: Binding<Color>, icon: String) -> some View {
+    private func colorPickerRow(title: String, subtext: String, color: Binding<Color>, icon: String) -> some View {
         ColorPicker(selection: color, supportsOpacity: false) {
             HStack(spacing: 12) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8)
+                    RoundedRectangle(cornerRadius: 10)
                         .fill(color.wrappedValue.opacity(0.1))
-                        .frame(width: 32, height: 32)
+                        .frame(width: 36, height: 36)
                     Image(systemName: icon)
-                        .font(.system(size: 14))
+                        .font(.system(size: 16))
                         .foregroundStyle(color.wrappedValue)
                 }
-                Text(title)
-                    .font(.body)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    Text(subtext)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 10)
+        .padding(.vertical, 12)
     }
 
     private var actionsSection: some View {

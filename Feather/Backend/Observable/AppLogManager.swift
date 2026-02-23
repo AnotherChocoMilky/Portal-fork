@@ -12,6 +12,7 @@ struct LogEntry: Identifiable, Codable {
     let level: LogLevel
     let category: String
     let message: String
+    let errorCode: String?
     let file: String
     let function: String
     let line: Int
@@ -54,14 +55,16 @@ struct LogEntry: Identifiable, Codable {
     }
     
     var formattedMessage: String {
-        return "[\(formattedTimestamp)] \(level.icon) [\(level.rawValue)] [\(category)] \(message)"
+        let codeStr = errorCode != nil ? " [\(errorCode!)]" : ""
+        return "[\(formattedTimestamp)] \(level.icon) [\(level.rawValue)]\(codeStr) [\(category)] \(message)"
     }
     
     var detailedMessage: String {
+        let codeStr = errorCode != nil ? "Error Code: \(errorCode!)\n" : ""
         return """
         [\(formattedTimestamp)] \(level.icon) [\(level.rawValue)]
         Category: \(category)
-        Message: \(message)
+        \(codeStr)Message: \(message)
         Location: \(file):\(line) In \(function)
         """
     }
@@ -86,6 +89,7 @@ final class AppLogManager: ObservableObject {
         _ message: String,
         level: LogEntry.LogLevel = .info,
         category: String = "General",
+        errorCode: String? = nil,
         file: String = #file,
         function: String = #function,
         line: Int = #line
@@ -96,6 +100,7 @@ final class AppLogManager: ObservableObject {
             level: level,
             category: category,
             message: message,
+            errorCode: errorCode,
             file: URL(fileURLWithPath: file).lastPathComponent,
             function: function,
             line: line
@@ -133,28 +138,28 @@ final class AppLogManager: ObservableObject {
     }
     
     // Convenience methods
-    func debug(_ message: String, category: String = "General", file: String = #file, function: String = #function, line: Int = #line) {
-        log(message, level: .debug, category: category, file: file, function: function, line: line)
+    func debug(_ message: String, category: String = "General", errorCode: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {
+        log(message, level: .debug, category: category, errorCode: errorCode, file: file, function: function, line: line)
     }
     
-    func info(_ message: String, category: String = "General", file: String = #file, function: String = #function, line: Int = #line) {
-        log(message, level: .info, category: category, file: file, function: function, line: line)
+    func info(_ message: String, category: String = "General", errorCode: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {
+        log(message, level: .info, category: category, errorCode: errorCode, file: file, function: function, line: line)
     }
     
-    func success(_ message: String, category: String = "General", file: String = #file, function: String = #function, line: Int = #line) {
-        log(message, level: .success, category: category, file: file, function: function, line: line)
+    func success(_ message: String, category: String = "General", errorCode: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {
+        log(message, level: .success, category: category, errorCode: errorCode, file: file, function: function, line: line)
     }
     
-    func warning(_ message: String, category: String = "General", file: String = #file, function: String = #function, line: Int = #line) {
-        log(message, level: .warning, category: category, file: file, function: function, line: line)
+    func warning(_ message: String, category: String = "General", errorCode: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {
+        log(message, level: .warning, category: category, errorCode: errorCode, file: file, function: function, line: line)
     }
     
-    func error(_ message: String, category: String = "General", file: String = #file, function: String = #function, line: Int = #line) {
-        log(message, level: .error, category: category, file: file, function: function, line: line)
+    func error(_ message: String, category: String = "General", errorCode: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {
+        log(message, level: .error, category: category, errorCode: errorCode, file: file, function: function, line: line)
     }
     
-    func critical(_ message: String, category: String = "General", file: String = #file, function: String = #function, line: Int = #line) {
-        log(message, level: .critical, category: category, file: file, function: function, line: line)
+    func critical(_ message: String, category: String = "General", errorCode: String? = nil, file: String = #file, function: String = #function, line: Int = #line) {
+        log(message, level: .critical, category: category, errorCode: errorCode, file: file, function: function, line: line)
     }
     
     // MARK: - Filtering
