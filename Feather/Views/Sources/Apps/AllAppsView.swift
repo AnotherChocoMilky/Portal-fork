@@ -513,40 +513,7 @@ struct AllAppsView: View {
 			VStack(spacing: 40) {
 				Spacer()
 				
-				// Modern Animated Loading Spinner
-				ZStack {
-                    // Background Ring
-					Circle()
-						.stroke(Color.primary.opacity(0.05), lineWidth: 8)
-						.frame(width: 100, height: 100)
 
-                    // Glow Effect
-                    Circle()
-                        .trim(from: 0, to: 0.3)
-                        .stroke(
-                            LinearGradient(colors: [Color.accentColor, Color.blue], startPoint: .leading, endPoint: .trailing),
-                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                        )
-                        .frame(width: 100, height: 100)
-                        .rotationEffect(.degrees(_spinnerRotation))
-                        .blur(radius: 8)
-                        .opacity(0.5)
-
-                    // Main Ring
-					Circle()
-						.trim(from: 0, to: 0.3)
-						.stroke(
-                            LinearGradient(colors: [Color.accentColor, Color.blue], startPoint: .leading, endPoint: .trailing),
-                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                        )
-						.frame(width: 100, height: 100)
-						.rotationEffect(.degrees(_spinnerRotation))
-				}
-                .onAppear {
-                    withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
-                        _spinnerRotation = 360
-                    }
-                }
 				
 				// Progress text with enhanced typography
 				VStack(spacing: 12) {

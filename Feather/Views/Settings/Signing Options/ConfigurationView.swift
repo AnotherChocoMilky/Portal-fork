@@ -79,7 +79,7 @@ struct ConfigurationView: View {
         }
         .sheet(isPresented: $showInstallationOptions) {
             ServerView()
-                .presentationDetents([.medium, .large])
+                .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
         .alert("PPQ String", isPresented: $isRandomAlertPresenting) {
