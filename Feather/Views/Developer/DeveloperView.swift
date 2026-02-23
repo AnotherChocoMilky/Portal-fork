@@ -5590,7 +5590,7 @@ struct QuickActionsDevView: View {
             AppLogManager.shared.warning("UserDefaults reset via Quick Actions", category: "Developer")
             
         case .simulateCrash:
-            AppLogManager.shared.critical("Simulated crash log entry for testing purposes", category: "Developer")
+            AppLogManager.shared.critical("Simulated crash log entry for testing purposes", category: "Developer", errorCode: .CRASH_LOG)
             HapticsManager.shared.error()
             ToastManager.shared.show("⚠️ Crash log entry created", type: .warning)
             

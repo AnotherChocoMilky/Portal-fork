@@ -109,7 +109,7 @@ final class OpenRouterService {
         model: String
     ) async throws -> String {
         guard !apiKey.isEmpty else {
-            AppLogManager.shared.error("OpenRouter: API key is empty", category: "GuideAI")
+            AppLogManager.shared.error("OpenRouter: API key is empty", category: "GuideAI", errorCode: .API_UNAUTHORIZED)
             throw OpenRouterError.invalidAPIKey
         }
         
@@ -129,7 +129,7 @@ final class OpenRouterService {
         )
         
         guard let url = URL(string: baseURL) else {
-            AppLogManager.shared.error("OpenRouter: Invalid URL", category: "GuideAI")
+            AppLogManager.shared.error("OpenRouter: Invalid URL", category: "GuideAI", errorCode: .INVALID_URL)
             throw OpenRouterError.invalidResponse
         }
         
@@ -145,7 +145,7 @@ final class OpenRouterService {
         do {
             urlRequest.httpBody = try encoder.encode(request)
         } catch {
-            AppLogManager.shared.error("OpenRouter: Failed to encode request - \(error.localizedDescription)", category: "GuideAI")
+            AppLogManager.shared.error("OpenRouter: Failed to encode request - \(error.localizedDescription)", category: "GuideAI", errorCode: .API_ERR)
             throw OpenRouterError.invalidResponse
         }
         
@@ -155,12 +155,12 @@ final class OpenRouterService {
         do {
             (data, response) = try await URLSession.shared.data(for: urlRequest)
         } catch {
-            AppLogManager.shared.error("OpenRouter: Network error - \(error.localizedDescription)", category: "GuideAI")
+            AppLogManager.shared.error("OpenRouter: Network error - \(error.localizedDescription)", category: "GuideAI", errorCode: .CONNECTION_FAILED)
             throw OpenRouterError.networkError(error)
         }
         
         guard let httpResponse = response as? HTTPURLResponse else {
-            AppLogManager.shared.error("OpenRouter: Invalid HTTP response", category: "GuideAI")
+            AppLogManager.shared.error("OpenRouter: Invalid HTTP response", category: "GuideAI", errorCode: .API_ERR)
             throw OpenRouterError.invalidResponse
         }
         
@@ -175,24 +175,24 @@ final class OpenRouterService {
         case 200...299:
             break
         case 401:
-            AppLogManager.shared.error("OpenRouter: Invalid API key (401)", category: "GuideAI")
+            AppLogManager.shared.error("OpenRouter: Invalid API key (401)", category: "GuideAI", errorCode: .API_UNAUTHORIZED)
             throw OpenRouterError.invalidAPIKey
         case 429:
-            AppLogManager.shared.warning("OpenRouter: Rate limited (429)", category: "GuideAI")
+            AppLogManager.shared.warning("OpenRouter: Rate limited (429)", category: "GuideAI", errorCode: .TIMEOUT)
             throw OpenRouterError.rateLimited
         case 402:
-            AppLogManager.shared.error("OpenRouter: Insufficient credits (402)", category: "GuideAI")
+            AppLogManager.shared.error("OpenRouter: Insufficient credits (402)", category: "GuideAI", errorCode: .API_INSUFFICIENT_CREDITS)
             throw OpenRouterError.insufficientCredits
         case 404:
-            AppLogManager.shared.error("OpenRouter: Model not found (404) - Model: \(model)", category: "GuideAI")
+            AppLogManager.shared.error("OpenRouter: Model not found (404) - Model: \(model)", category: "GuideAI", errorCode: .MODEL_NOT_FOUND)
             throw OpenRouterError.apiError("Model '\(model)' not found. Please select a different model in Settings → Guides.")
         default:
             if let errorResponse = try? JSONDecoder().decode(ChatCompletionResponse.self, from: data),
                let error = errorResponse.error {
-                AppLogManager.shared.error("OpenRouter: API error - \(error.message)", category: "GuideAI")
+                AppLogManager.shared.error("OpenRouter: API error - \(error.message)", category: "GuideAI", errorCode: .API_ERR)
                 throw OpenRouterError.apiError(error.message)
             }
-            AppLogManager.shared.error("OpenRouter: HTTP error \(httpResponse.statusCode)", category: "GuideAI")
+            AppLogManager.shared.error("OpenRouter: HTTP error \(httpResponse.statusCode)", category: "GuideAI", errorCode: .API_ERR)
             throw OpenRouterError.apiError("HTTP \(httpResponse.statusCode)")
         }
         
@@ -202,18 +202,18 @@ final class OpenRouterService {
         do {
             completionResponse = try decoder.decode(ChatCompletionResponse.self, from: data)
         } catch {
-            AppLogManager.shared.error("OpenRouter: Failed to decode response - \(error.localizedDescription)", category: "GuideAI")
+            AppLogManager.shared.error("OpenRouter: Failed to decode response - \(error.localizedDescription)", category: "GuideAI", errorCode: .DECODE_ERR)
             throw OpenRouterError.invalidResponse
         }
         
         if let error = completionResponse.error {
-            AppLogManager.shared.error("OpenRouter: Response error - \(error.message)", category: "GuideAI")
+            AppLogManager.shared.error("OpenRouter: Response error - \(error.message)", category: "GuideAI", errorCode: .API_ERR)
             throw OpenRouterError.apiError(error.message)
         }
         
         guard let choices = completionResponse.choices,
               let firstChoice = choices.first else {
-            AppLogManager.shared.error("OpenRouter: No content in response", category: "GuideAI")
+            AppLogManager.shared.error("OpenRouter: No content in response", category: "GuideAI", errorCode: .DECODE_ERR)
             throw OpenRouterError.noContent
         }
         

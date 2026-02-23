@@ -140,7 +140,7 @@ final class AppFileHandler: NSObject, @unchecked Sendable {
 				successCount += 1
 			} catch {
 				Logger.misc.error("[\(self._uuid)] Failed to load default framework \(dylibURL.lastPathComponent): \(error.localizedDescription)")
-				AppLogManager.shared.error("Failed to load default framework \(dylibURL.lastPathComponent): \(error.localizedDescription)", category: "DefaultFrameworks")
+				AppLogManager.shared.error("Failed to load default framework \(dylibURL.lastPathComponent): \(error.localizedDescription)", category: "DefaultFrameworks", errorCode: .FILE_NOT_FOUND)
 				// Continue with other frameworks
 			}
 		}
@@ -172,7 +172,7 @@ final class AppFileHandler: NSObject, @unchecked Sendable {
 		
 		guard let appUrl = _fileManager.getPath(in: app, for: "app") else {
 			Logger.misc.error("[\(self._uuid)] Failed to find .app directory in Payload")
-			AppLogManager.shared.error("Failed to find .app directory in Payload", category: "Import")
+			AppLogManager.shared.error("Failed to find .app directory in Payload", category: "Import", errorCode: .APP_NOT_FOUND)
 			return
 		}
 		
@@ -203,7 +203,7 @@ final class AppFileHandler: NSObject, @unchecked Sendable {
 
 			if let error = error {
 				Logger.misc.error("[\(self._uuid)] Failed to add to database: \(error.localizedDescription)")
-				AppLogManager.shared.error("Failed to add app to database: \(error.localizedDescription)", category: "Import")
+				AppLogManager.shared.error("Failed to add app to database: \(error.localizedDescription)", category: "Import", errorCode: .DB_ERR)
 			} else {
 				Logger.misc.info("[\(self._uuid)] Successfully added to database")
 			}

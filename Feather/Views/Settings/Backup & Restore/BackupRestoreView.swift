@@ -83,7 +83,7 @@ struct BackupRestoreView: View {
                     handleVerifyBackup(at: url)
                 }
             case .failure(let error):
-                AppLogManager.shared.error("Failed to pick backup file for verification: \(error.localizedDescription)", category: "Backup & Restore")
+                AppLogManager.shared.error("Failed to pick backup file for verification: \(error.localizedDescription)", category: "Backup & Restore", errorCode: .BACKUP_FAILED)
             }
         }
         .fileExporter(
@@ -97,7 +97,7 @@ struct BackupRestoreView: View {
                 AppLogManager.shared.success("Backup exported successfully to: \(url.path)", category: "Backup & Restore")
                 HapticsManager.shared.success()
             case .failure(let error):
-                AppLogManager.shared.error("Failed to export backup: \(error.localizedDescription)", category: "Backup & Restore")
+                AppLogManager.shared.error("Failed to export backup: \(error.localizedDescription)", category: "Backup & Restore", errorCode: .BACKUP_FAILED)
                 HapticsManager.shared.error()
             }
             // Clean up the temporary zip file after export attempt
@@ -668,7 +668,7 @@ struct BackupRestoreView: View {
             AppLogManager.shared.success("Cleared \(count) cache items", category: "Advanced Tools")
             UIAlertController.showAlertWithOk(title: "Caches Cleared", message: "Successfully removed \(count) temporary files and cached items.")
         } catch {
-            AppLogManager.shared.error("Failed to clear caches: \(error.localizedDescription)", category: "Advanced Tools")
+            AppLogManager.shared.error("Failed to clear caches: \(error.localizedDescription)", category: "Advanced Tools", errorCode: .FILE_OP_FAILED)
         }
     }
 
@@ -693,7 +693,7 @@ struct BackupRestoreView: View {
             try logs.write(to: tempURL, atomically: true, encoding: .utf8)
             UIActivityViewController.show(activityItems: [tempURL])
         } catch {
-            AppLogManager.shared.error("Failed to export logs: \(error.localizedDescription)", category: "Advanced Tools")
+            AppLogManager.shared.error("Failed to export logs: \(error.localizedDescription)", category: "Advanced Tools", errorCode: .BACKUP_FAILED)
         }
     }
 

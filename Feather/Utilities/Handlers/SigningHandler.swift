@@ -113,7 +113,7 @@ final class SigningHandler: NSObject {
 		AppLogManager.shared.info("Starting copy operation for app: \(_app.name ?? "Unknown")", category: "Signing")
 		
 		guard let appUrl = Storage.shared.getAppDirectory(for: _app) else {
-			AppLogManager.shared.error("App not found in storage", category: "Signing")
+			AppLogManager.shared.error("App not found in storage", category: "Signing", errorCode: .APP_NOT_FOUND)
 			throw SigningFileHandlerError.appNotFound
 		}
 
@@ -152,7 +152,7 @@ final class SigningHandler: NSObject {
 		}
 
 		guard let movedAppPath = _movedAppPath else {
-			AppLogManager.shared.error("App path not found during modification", category: "Signing")
+			AppLogManager.shared.error("App path not found during modification", category: "Signing", errorCode: .APP_NOT_FOUND)
 			throw SigningFileHandlerError.appNotFound
 		}
 		
@@ -161,7 +161,7 @@ final class SigningHandler: NSObject {
 				contentsOf: movedAppPath.appendingPathComponent("Info.plist")
 			)!.mutableCopy() as? NSMutableDictionary
 		else {
-			AppLogManager.shared.error("Info.plist not found or invalid", category: "Signing")
+			AppLogManager.shared.error("Info.plist not found or invalid", category: "Signing", errorCode: .MISSING_PLIST)
 			throw SigningFileHandlerError.infoPlistNotFound
 		}
 		
@@ -334,7 +334,7 @@ final class SigningHandler: NSObject {
 		} else if _options.signingOption == .onlyModify {
 			AppLogManager.shared.info("Skipping signing (only modify mode)", category: "Signing")
 		} else {
-			AppLogManager.shared.error("No certificate available for signing", category: "Signing")
+			AppLogManager.shared.error("No certificate available for signing", category: "Signing", errorCode: .MISSING_CERT)
 			throw SigningFileHandlerError.missingCertifcate
 		}
 		
@@ -356,18 +356,18 @@ final class SigningHandler: NSObject {
 		}
 
 		if let error = handler.hadError {
-			AppLogManager.shared.error("Signing failed: \(error.localizedDescription)", category: "Signing")
+			AppLogManager.shared.error("Signing failed: \(error.localizedDescription)", category: "Signing", errorCode: .SIGN_FAILED)
 			throw error
 		}
 		
-		AppLogManager.shared.success("App modification and signing completed successfully", category: "Signing")
+		AppLogManager.shared.success("App modification and signing completed successfully", category: "Signing", errorCode: .SIGN_SUCCESS)
 	}
 	
 	func move() async throws {
 		AppLogManager.shared.info("Moving signed app to final location", category: "Signing")
 		
 		guard let movedAppPath = _movedAppPath else {
-			AppLogManager.shared.error("App path not found during move", category: "Signing")
+			AppLogManager.shared.error("App path not found during move", category: "Signing", errorCode: .APP_NOT_FOUND)
 			throw SigningFileHandlerError.appNotFound
 		}
 		
@@ -431,14 +431,14 @@ final class SigningHandler: NSObject {
 			
 			// Return the signed app URL
 			guard let signedAppPath = try await _getSignedAppURL() else {
-				AppLogManager.shared.error("Failed to get signed app URL", category: "Signing")
+				AppLogManager.shared.error("Failed to get signed app URL", category: "Signing", errorCode: .APP_NOT_FOUND)
 				throw SigningFileHandlerError.appNotFound
 			}
 			
-			AppLogManager.shared.success("Successfully signed app: \(_app.name ?? "Unknown")", category: "Signing")
+			AppLogManager.shared.success("Successfully signed app: \(_app.name ?? "Unknown")", category: "Signing", errorCode: .SIGN_SUCCESS)
 			return signedAppPath
 		} catch {
-			AppLogManager.shared.error("Signing process failed: \(error.localizedDescription)", category: "Signing")
+			AppLogManager.shared.error("Signing process failed: \(error.localizedDescription)", category: "Signing", errorCode: .SIGN_FAILED)
 			throw error
 		}
 	}

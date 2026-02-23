@@ -203,7 +203,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
 		FR.handlePackageFile(url, download: dl) { err in
 			if err != nil {
 				HapticsManager.shared.error()
-				AppLogManager.shared.error("Failed to handle package file: \(err?.localizedDescription ?? "Unknown error")", category: "Download")
+				AppLogManager.shared.error("Failed to handle package file: \(err?.localizedDescription ?? "Unknown error")", category: "Download", errorCode: .INVALID_IPA)
 				
 				// End Live Activity with error
 				if #available(iOS 16.2, *), dl.liveActivityStarted {
@@ -225,7 +225,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
 				}
 			} else {
 				HapticsManager.shared.success()
-				AppLogManager.shared.success("Successfully handled package file: \(url.lastPathComponent)", category: "Download")
+				AppLogManager.shared.success("Successfully handled package file: \(url.lastPathComponent)", category: "Download", errorCode: .IMPORT_SUCCESS)
 				
 				// End Live Activity with success
 				if #available(iOS 16.2, *), dl.liveActivityStarted {
@@ -303,7 +303,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
 				errorMessage = error.localizedDescription
 			}
 			
-			AppLogManager.shared.error("Error handling downloaded file: \(errorMessage)", category: "Download")
+			AppLogManager.shared.error("Error handling downloaded file: \(errorMessage)", category: "Download", errorCode: .INVALID_IPA)
 			
 			// Post failure notification for manual downloads
 			if isManualDownload(download.id) {
@@ -394,7 +394,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
 		// If there's an error, handle it
 		if let error = error {
 			let appName = download.fileName.replacingOccurrences(of: ".ipa", with: "").replacingOccurrences(of: ".tipa", with: "")
-			AppLogManager.shared.error("Download Failed: \(error.localizedDescription)", category: "Download")
+			AppLogManager.shared.error("Download Failed: \(error.localizedDescription)", category: "Download", errorCode: .DOWNLOAD_FAILED)
 			
 			// End Live Activity with error
 			if #available(iOS 16.2, *), download.liveActivityStarted {

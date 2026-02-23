@@ -326,6 +326,7 @@ struct FilterPill: View {
 struct LogEntryRow: View {
     let entry: LogEntry
     @State private var isExpanded = false
+    @State private var showErrorCodeDetail = false
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
@@ -405,6 +406,21 @@ struct LogEntryRow: View {
                     HapticsManager.shared.success()
                 } label: {
                     Label("Copy Detailed Log", systemImage: "doc.text.below.ecg")
+                }
+
+                if let code = entry.errorCode {
+                    Divider()
+
+                    Button {
+                        showErrorCodeDetail = true
+                    } label: {
+                        Label("Error Log", systemImage: "info.circle")
+                    }
+                }
+            }
+            .sheet(isPresented: $showErrorCodeDetail) {
+                if let code = entry.errorCode {
+                    ErrorCodeDetailView(code: code)
                 }
             }
 
@@ -488,9 +504,98 @@ struct LogDocument: FileDocument {
     }
 }
 
+// MARK: - Error Code Detail View
+struct ErrorCodeDetailView: View {
+    let code: LogErrorCode
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        NavigationStack {
+                VStack(spacing: 24) {
+                    // Header
+                    VStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(.red.opacity(0.1))
+                                .frame(width: 80, height: 80)
+
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 40))
+                                .foregroundStyle(.red)
+                        }
+
+                        Text(code.rawValue)
+                            .font(.system(.title3, design: .monospaced))
+                            .fontWeight(.bold)
+                            .foregroundStyle(.red)
+                    }
+                    .padding(.top, 20)
+
+                    VStack(alignment: .leading, spacing: 20) {
+                        // Description
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label("DESCRIPTION", systemImage: "text.alignleft")
+                                .font(.system(size: 12, weight: .black))
+                                .foregroundStyle(.secondary)
+
+                            Text(code.info.description)
+                                .font(.body)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.secondary.opacity(0.05))
+                        .cornerRadius(12)
+
+                        // Suggestion
+                        VStack(alignment: .leading, spacing: 8) {
+                            Label("SUGGESTION", systemImage: "lightbulb.fill")
+                                .font(.system(size: 12, weight: .black))
+                                .foregroundStyle(.orange)
+
+                            Text(code.info.suggestion)
+                                .font(.body)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.orange.opacity(0.1))
+                        .cornerRadius(12)
+                    }
+                    .padding(.horizontal)
+
+                    Spacer()
+
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Got it")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.accentColor)
+                            .cornerRadius(12)
+                    }
+                    .padding()
+                }
+            .navigationTitle("Error Details")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") { dismiss() }
+                }
+            }
+        }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.visible)
+    }
+}
+
 // MARK: - Log Info View
 struct LogInfoView: View {
     @Environment(\.dismiss) var dismiss
+    @State private var expandedCodes: Set<LogErrorCode> = []
 
     var body: some View {
         NavigationStack {
@@ -526,6 +631,8 @@ struct LogInfoView: View {
                 Section("Error Log Codes") {
                     ForEach(LogErrorCode.allCases, id: \.self) { code in
                         let info = code.info
+                        let isExpanded = expandedCodes.contains(code)
+
                         VStack(alignment: .leading, spacing: 6) {
                             HStack {
                                 Text(info.code)
@@ -533,24 +640,49 @@ struct LogInfoView: View {
                                     .fontWeight(.bold)
                                     .foregroundStyle(.red)
                                 Spacer()
+
+                                Image(systemName: "chevron.down")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.tertiary)
+                                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
                             }
 
                             Text(info.description)
                                 .font(.subheadline)
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("SUGGESTION")
-                                    .font(.system(size: 10, weight: .black))
-                                    .foregroundStyle(.secondary)
-                                Text(info.suggestion)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                            if isExpanded {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("SUGGESTION")
+                                        .font(.system(size: 10, weight: .black))
+                                        .foregroundStyle(.secondary)
+                                    Text(info.suggestion)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .padding(8)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .background(Color.secondary.opacity(0.05))
+                                .cornerRadius(8)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                            } else {
+                                Text("Click to see suggestion")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.accentColor)
+                                    .padding(.vertical, 4)
                             }
-                            .padding(8)
-                            .background(Color.secondary.opacity(0.05))
-                            .cornerRadius(8)
                         }
                         .padding(.vertical, 4)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                                if isExpanded {
+                                    expandedCodes.remove(code)
+                                } else {
+                                    expandedCodes.insert(code)
+                                }
+                            }
+                            HapticsManager.shared.softImpact()
+                        }
                     }
                 }
             }

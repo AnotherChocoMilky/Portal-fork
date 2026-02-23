@@ -233,7 +233,7 @@ final class AppUpdateTrackingManager: ObservableObject {
                 autoFetchProgress = 0
                 BackgroundAudioManager.shared.stop()
             }
-            AppLogManager.shared.error("Auto-fetch failed: \(error.localizedDescription)", category: "AutoFetch")
+            AppLogManager.shared.error("Auto-fetch failed: \(error.localizedDescription)", category: "AutoFetch", errorCode: .UPDATE_CHECK_FAILED)
         }
     }
     

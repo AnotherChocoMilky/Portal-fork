@@ -233,7 +233,7 @@ struct FeatherApp: App {
         
         URLSession.shared.dataTask(with: request) { [self] data, response, error in
             guard let data = data, error == nil else {
-                AppLogManager.shared.warning("Failed to check for updates: \(error?.localizedDescription ?? "Unknown error")", category: "Updates")
+                AppLogManager.shared.warning("Failed to check for updates: \(error?.localizedDescription ?? "Unknown error")", category: "Updates", errorCode: .CONNECTION_FAILED)
                 return
             }
             
@@ -258,7 +258,7 @@ struct FeatherApp: App {
                     AppLogManager.shared.info("App is up to date", category: "Updates")
                 }
             } catch {
-                AppLogManager.shared.warning("Failed to parse update info: \(error.localizedDescription)", category: "Updates")
+                AppLogManager.shared.warning("Failed to parse update info: \(error.localizedDescription)", category: "Updates", errorCode: .DECODE_ERR)
             }
         }.resume()
     }
@@ -504,7 +504,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         _ = AppUpdateTrackingManager.shared
 
 		// Log app launch
-		AppLogManager.shared.info("Application launched successfully", category: "Lifecycle")
+		AppLogManager.shared.info("Application launched successfully", category: "Lifecycle", errorCode: .APP_LAUNCH)
 		
 		return true
 	}
@@ -542,7 +542,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 			Call Stack: \(exception.callStackSymbols.joined(separator: "\n"))
 			"""
 			
-			AppLogManager.shared.critical(crashInfo, category: "Crash")
+			AppLogManager.shared.critical(crashInfo, category: "Crash", errorCode: .CRASH_LOG)
 			
 			// Force persist logs immediately
 			if let data = try? JSONEncoder().encode(AppLogManager.shared.logs.suffix(1000)) {
@@ -553,22 +553,22 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		
 		// Set up signal handler for crashes
 		signal(SIGABRT) { signal in
-			AppLogManager.shared.critical("App crashed with SIGABRT signal", category: "Crash")
+			AppLogManager.shared.critical("App crashed with SIGABRT signal", category: "Crash", errorCode: .CRASH_LOG)
 		}
 		signal(SIGILL) { signal in
-			AppLogManager.shared.critical("App crashed with SIGILL signal", category: "Crash")
+			AppLogManager.shared.critical("App crashed with SIGILL signal", category: "Crash", errorCode: .CRASH_LOG)
 		}
 		signal(SIGSEGV) { signal in
-			AppLogManager.shared.critical("App crashed with SIGSEGV signal", category: "Crash")
+			AppLogManager.shared.critical("App crashed with SIGSEGV signal", category: "Crash", errorCode: .CRASH_LOG)
 		}
 		signal(SIGFPE) { signal in
-			AppLogManager.shared.critical("App crashed with SIGFPE signal", category: "Crash")
+			AppLogManager.shared.critical("App crashed with SIGFPE signal", category: "Crash", errorCode: .CRASH_LOG)
 		}
 		signal(SIGBUS) { signal in
-			AppLogManager.shared.critical("App crashed with SIGBUS signal", category: "Crash")
+			AppLogManager.shared.critical("App crashed with SIGBUS signal", category: "Crash", errorCode: .CRASH_LOG)
 		}
 		signal(SIGPIPE) { signal in
-			AppLogManager.shared.critical("App crashed with SIGPIPE signal", category: "Crash")
+			AppLogManager.shared.critical("App crashed with SIGPIPE signal", category: "Crash", errorCode: .CRASH_LOG)
 		}
 	}
 	

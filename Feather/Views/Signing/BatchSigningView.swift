@@ -377,7 +377,7 @@ struct BatchSigningView: View {
                                         message: "Signed Successfully (Remote)"
                                     )
                                     batchResults.append(result)
-                                    AppLogManager.shared.success("Batch remote signing succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
+                                    AppLogManager.shared.success("Batch remote signing succeeded for \(app.name ?? "Unknown")", category: "BatchSign", errorCode: .SIGN_SUCCESS)
 
                                     // Auto install for remote signing means opening the itms link
                                     if autoInstall {
@@ -393,7 +393,7 @@ struct BatchSigningView: View {
                                         message: error.localizedDescription
                                     )
                                     batchResults.append(result)
-                                    AppLogManager.shared.error("Batch remote signing failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
+                                    AppLogManager.shared.error("Batch remote signing failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign", errorCode: .BATCH_SIGN_FAILED)
                                 }
                                 continuation.resume()
                             }
@@ -413,7 +413,7 @@ struct BatchSigningView: View {
                                     message: error.localizedDescription
                                 )
                                 batchResults.append(result)
-                                AppLogManager.shared.error("Batch signing failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
+                                AppLogManager.shared.error("Batch signing failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign", errorCode: .BATCH_SIGN_FAILED)
                             } else {
                                 let result = BatchSignResult(
                                     appName: app.name ?? "Unknown",
@@ -422,7 +422,7 @@ struct BatchSigningView: View {
                                 )
                                 batchResults.append(result)
                                 signedAppsForInstall.append(app)
-                                AppLogManager.shared.success("Batch signing succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
+                                AppLogManager.shared.success("Batch signing succeeded for \(app.name ?? "Unknown")", category: "BatchSign", errorCode: .SIGN_SUCCESS)
                             }
                             continuation.resume()
                         }
@@ -437,7 +437,7 @@ struct BatchSigningView: View {
 
             await MainActor.run {
                 batchProgress = 1.0
-                AppLogManager.shared.success("Batch signing completed for \(Int(totalApps)) apps", category: "BatchSign")
+                AppLogManager.shared.success("Batch signing completed for \(Int(totalApps)) apps", category: "BatchSign", errorCode: .SIGN_SUCCESS)
             }
             
             // Only clean up for direct device installations
@@ -491,7 +491,7 @@ struct BatchSigningView: View {
                 await MainActor.run {
                     if let url = URL(string: installer.iTunesLink) {
                         UIApplication.shared.open(url)
-                        AppLogManager.shared.success("Triggered installation link for \(app.name ?? "Unknown")", category: "BatchSign")
+                        AppLogManager.shared.success("Triggered installation link for \(app.name ?? "Unknown")", category: "BatchSign", errorCode: .INSTALL_SUCCESS)
                         
                         // Update result to show installation was triggered
                         updateBatchResult(for: app, message: "Signed - Installation Link Opened")
@@ -505,13 +505,13 @@ struct BatchSigningView: View {
                 
                 await MainActor.run {
                     updateBatchResult(for: app, message: "Signed and Installed Successfully")
-                    AppLogManager.shared.success("Batch installation succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
+                    AppLogManager.shared.success("Batch installation succeeded for \(app.name ?? "Unknown")", category: "BatchSign", errorCode: .INSTALL_SUCCESS)
                 }
             }
         } catch {
             await MainActor.run {
                 updateBatchResult(for: app, message: "Signed Successfully, Installation Failed: \(error.localizedDescription)")
-                AppLogManager.shared.error("Installation failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
+                AppLogManager.shared.error("Installation failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign", errorCode: .BATCH_SIGN_FAILED)
             }
         }
         
@@ -540,7 +540,7 @@ struct BatchSigningView: View {
                 AppLogManager.shared.info("Deleted app: \(app.name ?? "Unknown")", category: "BatchSign")
             }
             
-            AppLogManager.shared.success("Cleanup completed: \(signedAppsForInstall.count) apps deleted", category: "BatchSign")
+            AppLogManager.shared.success("Cleanup completed: \(signedAppsForInstall.count) apps deleted", category: "BatchSign", errorCode: .SIGN_SUCCESS)
             signedAppsForInstall.removeAll()
         }
     }
@@ -590,7 +590,7 @@ struct BatchSigningView: View {
                                 message: "Signed Successfully (Server Ready)"
                             )
                         }
-                        AppLogManager.shared.success("Batch installation ready for \(app.name ?? "Unknown")", category: "BatchSign")
+                        AppLogManager.shared.success("Batch installation ready for \(app.name ?? "Unknown")", category: "BatchSign", errorCode: .INSTALL_SUCCESS)
                     }
                 } else if installationMethod == 1 {
                     // Direct device installation
@@ -605,7 +605,7 @@ struct BatchSigningView: View {
                                 message: "Signed and Installed Successfully"
                             )
                         }
-                        AppLogManager.shared.success("Batch installation succeeded for \(app.name ?? "Unknown")", category: "BatchSign")
+                        AppLogManager.shared.success("Batch installation succeeded for \(app.name ?? "Unknown")", category: "BatchSign", errorCode: .INSTALL_SUCCESS)
                     }
                 }
             } catch {
@@ -617,7 +617,7 @@ struct BatchSigningView: View {
                             message: "Signed Successfully, Installation Failed: \(error.localizedDescription)"
                         )
                     }
-                    AppLogManager.shared.error("Batch installation failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign")
+                    AppLogManager.shared.error("Batch installation failed for \(app.name ?? "Unknown"): \(error.localizedDescription)", category: "BatchSign", errorCode: .BATCH_SIGN_FAILED)
                 }
             }
         }
@@ -629,7 +629,7 @@ struct BatchSigningView: View {
             selectedApps.removeAll()
             HapticsManager.shared.success()
             ToastManager.shared.show("✅ Batch Signing and Installation Completed", type: .success)
-            AppLogManager.shared.success("Batch installation completed: \(Int(totalApps)) apps processed", category: "BatchSign")
+            AppLogManager.shared.success("Batch installation completed: \(Int(totalApps)) apps processed", category: "BatchSign", errorCode: .INSTALL_SUCCESS)
         }
     }
 }
