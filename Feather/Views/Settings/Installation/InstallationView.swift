@@ -30,7 +30,7 @@ struct InstallationView: View {
         }
         .sheet(isPresented: $_showServerSheet) {
             ServerView()
-                .presentationDetents([.medium, .large])
+                .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
     }

@@ -87,6 +87,8 @@ struct ServerView: View {
 	private let _serverPackUrl = "https://backloop.dev/pack.json"
 	
 	@State private var _showSuccessAnimation = false
+	@State private var _isUpdatingSSL = false
+	@State private var _sslUpdated = false
 
 	private var selectedMethod: ServerMethod {
 		ServerMethod(rawValue: _serverMethod) ?? .fullyLocal
@@ -99,8 +101,6 @@ struct ServerView: View {
                 serverTypeSection
 
                 sslCertificatesSection
-
-                successAnimationSection
             }
             .navigationTitle("Server Settings")
             .navigationBarTitleDisplayMode(.inline)
@@ -192,18 +192,23 @@ struct ServerView: View {
 		}
 	}
 	
-	private var sslCertificatesSection: some View {
+		private var sslCertificatesSection: some View {
 		Section {
-			Button(.localized("Update SSL Certificates"), systemImage: "arrow.down.doc") {
+			Button {
+				_isUpdatingSSL = true
 				FR.downloadSSLCertificates(from: _serverPackUrl) { success in
 					DispatchQueue.main.async {
+						_isUpdatingSSL = false
 						if success {
 							withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-								_showSuccessAnimation = true
+								_sslUpdated = true
 							}
-							DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
-								withAnimation(.easeOut(duration: 0.3)) {
-									_showSuccessAnimation = false
+
+							HapticsManager.shared.success()
+
+							DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+								withAnimation(.spring()) {
+									_sslUpdated = false
 								}
 							}
 						} else {
@@ -214,7 +219,51 @@ struct ServerView: View {
 						}
 					}
 				}
+			} label: {
+				HStack {
+					if _sslUpdated {
+						Label(.localized("SSL Certificates Updated!"), systemImage: "checkmark.seal.fill")
+							.foregroundStyle(.green)
+							.font(.system(size: 16, weight: .bold))
+					} else {
+						Label {
+							Text(_isUpdatingSSL ? .localized("Updating...") : .localized("Update SSL Certificates"))
+						} icon: {
+							if _isUpdatingSSL {
+								ProgressView()
+									.controlSize(.small)
+									.padding(.trailing, 4)
+							} else {
+								Image(systemName: "arrow.down.doc")
+							}
+						}
+					}
+
+					Spacer()
+
+					if _sslUpdated {
+						Image(systemName: "sparkles")
+							.foregroundStyle(.green)
+							.symbolEffect(.pulse)
+					}
+				}
+				.padding(.vertical, 8)
+				.padding(.horizontal, 12)
+				.background {
+					if _sslUpdated {
+						ZStack {
+							Color.green.opacity(0.15)
+							Rectangle().fill(.ultraThinMaterial)
+						}
+						.cornerRadius(12)
+						.overlay(
+							RoundedRectangle(cornerRadius: 12)
+								.stroke(Color.green.opacity(0.3), lineWidth: 1)
+						)
+					}
+				}
 			}
+			.disabled(_isUpdatingSSL || _sslUpdated)
 		} header: {
 			Label(.localized("SSL Certificates"), systemImage: "lock.shield.fill")
 		} footer: {
@@ -224,36 +273,4 @@ struct ServerView: View {
 	}
 	
 
-	@ViewBuilder
-	private var successAnimationSection: some View {
-		if _showSuccessAnimation {
-			Section {
-				HStack {
-					Spacer()
-					VStack(spacing: 12) {
-						ZStack {
-							Circle()
-								.fill(Color.green.opacity(0.15))
-								.frame(width: 80, height: 80)
-							
-							Image(systemName: "checkmark.circle.fill")
-								.font(.system(size: 50))
-								.foregroundStyle(.green)
-						}
-						.scaleEffect(_showSuccessAnimation ? 1.0 : 0.5)
-						.opacity(_showSuccessAnimation ? 1.0 : 0.0)
-						.animation(.spring(response: 0.6, dampingFraction: 0.7), value: _showSuccessAnimation)
-						
-						Text(.localized("SSL Certificates Updated Successfully!"))
-							.font(.headline)
-							.foregroundStyle(.green)
-							.opacity(_showSuccessAnimation ? 1.0 : 0.0)
-							.animation(.easeIn(duration: 0.3).delay(0.2), value: _showSuccessAnimation)
-					}
-					.padding(.vertical, 20)
-					Spacer()
-				}
-			}
-		}
 	}
-}
