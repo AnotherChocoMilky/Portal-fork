@@ -57,4 +57,13 @@ extension View {
     func pulseEffect<T: Equatable>(_ value: T) -> some View {
         self.modifier(PulseEffectModifier(value: value))
     }
+
+    @ViewBuilder
+    func ifAvailableiOS18SymbolPulse() -> some View {
+        if #available(iOS 18, *) {
+            self.symbolEffect(.pulse)
+        } else {
+            self
+        }
+    }
 }
