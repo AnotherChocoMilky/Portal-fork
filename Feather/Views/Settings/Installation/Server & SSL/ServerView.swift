@@ -244,7 +244,7 @@ struct ServerView: View {
 					if _sslUpdated {
 						Image(systemName: "sparkles")
 							.foregroundStyle(.green)
-							.symbolEffect(.pulse)
+							.pulseEffect()
 					}
 				}
 				.padding(.vertical, 8)

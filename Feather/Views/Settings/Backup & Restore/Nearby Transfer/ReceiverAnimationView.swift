@@ -132,11 +132,11 @@ struct ReceiverAnimationView: View {
                             .stroke(Color.white.opacity(0.3), lineWidth: 1)
                     )
                 
-                if #available(iOS 18.0, *) {
+                if #available(iOS 17.0, *) {
                     Image(systemName: "arrow.down.circle.fill")
                         .font(.system(size: 70))
                         .foregroundStyle(.white)
-                        .symbolEffect(.bounce, options: .repeating)
+                        .bounceEffect()
                 } else {
                     Image(systemName: "arrow.down.circle.fill")
                         .font(.system(size: 70))

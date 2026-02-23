@@ -307,7 +307,7 @@ struct PairingView: View {
                 Image(systemName: icon)
                     .font(.title3)
                     .foregroundStyle(LinearGradient(colors: gradientColors, startPoint: .top, endPoint: .bottom))
-                    .ifAvailableiOS18SymbolPulse()
+                    .pulseEffect()
             }
 
             VStack(alignment: .leading, spacing: 4) {
@@ -635,17 +635,5 @@ struct PairingView: View {
 
         alert.addAction(UIAlertAction(title: .localized("Later"), style: .cancel))
         UIApplication.topViewController()?.present(alert, animated: true)
-    }
-}
-
-// MARK: - Extension
-extension View {
-    @ViewBuilder
-    func ifAvailableiOS18SymbolPulse() -> some View {
-        if #available(iOS 18.0, *) {
-            self.symbolEffect(.pulse, options: .repeating)
-        } else {
-            self
-        }
     }
 }
