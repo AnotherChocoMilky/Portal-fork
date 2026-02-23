@@ -392,7 +392,9 @@ extension ASRepository {
 		
 		// "UNIQUE" hahaha
 		public var currentUniqueId: String {
-			"\(id ?? uuid.uuidString).\(downloadURL?.absoluteString ?? uuid.uuidString)"
+			let bundleID = id ?? name ?? uuid.uuidString
+			let download = downloadURL?.absoluteString ?? version ?? uuid.uuidString
+			return "\(bundleID).\(download)"
 		}
 
 		public struct Version: Decodable, Encodable, Hashable, Identifiable, Comparable, Sendable {

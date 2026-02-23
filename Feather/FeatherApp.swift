@@ -171,6 +171,7 @@ struct FeatherApp: App {
 						_checkForPendingNearbyRestore()
 					}
 					.overlay(StatusBarOverlay())
+					.overlay(PortalTopView())
 				}
 			}
 			.applyGlobalTheme()

@@ -31,8 +31,8 @@ struct CoreSignHeaderView: View {
     
     // MARK: - Header Card
     private var headerCard: some View {
-        HStack(spacing: 12) {
-            // App Icon
+        VStack(spacing: 12) {
+            // App Icon centered at the top
             appIcon
                 .rotationEffect(.degrees(iconRotationAngle))
                 .onTapGesture(count: 3) {
@@ -49,71 +49,69 @@ struct CoreSignHeaderView: View {
                         }
                 )
             
-            // Title & Subtitle
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text("Portal")
-                        .font(.system(size: 18, weight: .bold, design: .rounded))
-                        .foregroundStyle(.primary)
-                        .simultaneousGesture(
-                            TapGesture(count: 3)
-                                .onEnded {
-                                    showSecretDimension = true
+            VStack(spacing: 4) {
+                // App Name centered below
+                Text("Portal")
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
+                    .simultaneousGesture(
+                        TapGesture(count: 3)
+                            .onEnded {
+                                showSecretDimension = true
+                                HapticsManager.shared.success()
+                            }
+                    )
+                    .simultaneousGesture(
+                        TapGesture(count: 2)
+                            .onEnded {
+                                // 2-finger double tap is hard, so we just use double tap for random color
+                                let colors: [Color] = [.red, .blue, .green, .yellow, .purple, .orange, .pink, .cyan, .mint]
+                                if let randomColor = colors.randomElement() {
+                                    UIApplication.shared.connectedScenes
+                                        .compactMap { $0 as? UIWindowScene }
+                                        .flatMap { $0.windows }
+                                        .forEach { $0.tintColor = UIColor(randomColor) }
+                                    ToastManager.shared.show("🎨 Color Splash!", type: .info)
                                     HapticsManager.shared.success()
                                 }
-                        )
-                        .simultaneousGesture(
-                            TapGesture(count: 2)
-                                .onEnded {
-                                    // 2-finger double tap is hard, so we just use double tap for random color
-                                    let colors: [Color] = [.red, .blue, .green, .yellow, .purple, .orange, .pink, .cyan, .mint]
-                                    if let randomColor = colors.randomElement() {
-                                        UIApplication.shared.connectedScenes
-                                            .compactMap { $0 as? UIWindowScene }
-                                            .flatMap { $0.windows }
-                                            .forEach { $0.tintColor = UIColor(randomColor) }
-                                        ToastManager.shared.show("🎨 Color Splash!", type: .info)
-                                        HapticsManager.shared.success()
-                                    }
-                                }
-                        )
-
-                    versionBadge
-                        .onTapGesture {
-                            withAnimation {
-                                badgeColor = [Color.orange, Color.blue, Color.green, Color.purple, Color.red, Color.pink, Color.yellow].randomElement()!
                             }
-                            HapticsManager.shared.softImpact()
-                        }
-                }
-                
-                Text(currentSubtitle)
-                    .font(.system(size: 12, weight: .medium))
+                    )
+
+                // Version centered below
+                Text("\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.0") Release")
+                    .font(.system(size: 14, weight: .medium, design: .rounded))
                     .foregroundStyle(.secondary)
-                    .transition(AnyTransition.asymmetric(
-                        insertion: .move(edge: .bottom).combined(with: .opacity),
-                        removal: .move(edge: .top).combined(with: .opacity)
-                    ))
-                    .id(currentSubtitleIndex)
             }
-            
-            Spacer()
+
+            // Subtexts centered below
+            Text(currentSubtitle)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundStyle(Color.accentColor)
+                .multilineTextAlignment(.center)
+                .transition(AnyTransition.asymmetric(
+                    insertion: .move(edge: .bottom).combined(with: .opacity),
+                    removal: .move(edge: .top).combined(with: .opacity)
+                ))
+                .id(currentSubtitleIndex)
+                .padding(.top, 4)
             
             // Action Buttons
             if !hideAboutButton {
                 creditsButton
+                    .padding(.top, 8)
             }
         }
-        .padding(.vertical, 10)
-        .padding(.horizontal, 14)
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 24)
+        .padding(.horizontal, 20)
         .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.clear)
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 3)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color.primary.opacity(0.03))
+                .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(Color.accentColor.opacity(0.1), lineWidth: 0.5)
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
         )
         .padding(.horizontal)
     }
@@ -126,18 +124,18 @@ struct CoreSignHeaderView: View {
             Image(uiImage: icon)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 40, height: 40)
-                .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                .frame(width: 64, height: 64)
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 9, style: .continuous)
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .strokeBorder(Color.white.opacity(0.1), lineWidth: 0.5)
                 )
-                .shadow(color: .accentColor.opacity(0.15), radius: 4, x: 0, y: 2)
+                .shadow(color: .accentColor.opacity(0.2), radius: 10, x: 0, y: 5)
         } else {
             Image(systemName: "questionmark.square.dashed")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 40, height: 40)
+                .frame(width: 64, height: 64)
                 .foregroundColor(.gray)
         }
     }

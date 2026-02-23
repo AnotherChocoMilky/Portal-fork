@@ -41,14 +41,12 @@ extension ServerView {
 	enum ServerMethod: Int, CaseIterable {
 		case fullyLocal = 0
 		case semiLocal = 1
-		case custom = 2
 		case semiLocalBackground = 3
 		
 		var name: String {
 			switch self {
 			case .fullyLocal: return .localized("On Device")
 			case .semiLocal: return .localized("Server")
-			case .custom: return .localized("Custom")
 			case .semiLocalBackground: return .localized("Server 2")
 			}
 		}
@@ -57,7 +55,6 @@ extension ServerView {
 			switch self {
 			case .fullyLocal: return .localized("Sign and install on-device.")
 			case .semiLocal: return .localized("Local signing, Wi-Fi install.")
-			case .custom: return .localized("Custom remote signing API.")
 			case .semiLocalBackground: return .localized("Background local signing.")
 			}
 		}
@@ -66,7 +63,6 @@ extension ServerView {
 			switch self {
 			case .fullyLocal: return "iphone"
 			case .semiLocal: return "cloud"
-			case .custom: return "link"
 			case .semiLocalBackground: return "cloud.fill"
 			}
 		}
@@ -75,7 +71,6 @@ extension ServerView {
 			switch self {
 			case .fullyLocal: return .blue
 			case .semiLocal: return .green
-			case .custom: return .purple
 			case .semiLocalBackground: return .teal
 			}
 		}
@@ -87,18 +82,11 @@ struct ServerView: View {
     @Environment(\.dismiss) private var dismiss
 	@AppStorage("Feather.ipFix") private var _ipFix: Bool = false
 	@AppStorage("Feather.serverMethod") private var _serverMethod: Int = 0
-	@AppStorage("Feather.customSigningAPI") private var _customSigningAPI: String = ""
 	
 	private let _dataService = NBFetchService()
 	private let _serverPackUrl = "https://backloop.dev/pack.json"
 	
 	@State private var _showSuccessAnimation = false
-	
-	// Server Status State
-	@State private var _serverStatus: String = "Unknown"
-	@State private var _responseTime: String = "--"
-	@State private var _isCheckingStatus: Bool = false
-	@State private var _statusColor: Color = .gray
 
 	private var selectedMethod: ServerMethod {
 		ServerMethod(rawValue: _serverMethod) ?? .fullyLocal
@@ -110,14 +98,7 @@ struct ServerView: View {
             Form {
                 serverTypeSection
 
-                // Show custom API input when Custom method is selected
-                if _serverMethod == 2 {
-                    customAPISection
-                }
-
                 sslCertificatesSection
-
-                serverStatusSection
 
                 successAnimationSection
             }
@@ -211,54 +192,6 @@ struct ServerView: View {
 		}
 	}
 	
-	private var customAPISection: some View {
-		Section {
-			VStack(alignment: .leading, spacing: 12) {
-				HStack(spacing: 8) {
-					Image(systemName: "link.circle.fill")
-						.font(.system(size: 14))
-						.foregroundStyle(Color.accentColor)
-					Text("API Endpoint URL")
-						.font(.subheadline.weight(.semibold))
-				}
-				
-				TextField("Sign API Endpoint", text: $_customSigningAPI)
-					.textInputAutocapitalization(.never)
-					.autocorrectionDisabled()
-					.keyboardType(.URL)
-					.font(.system(size: 14, design: .monospaced))
-					.padding(10)
-					.background(
-						RoundedRectangle(cornerRadius: 8, style: .continuous)
-							.fill(Color.clear)
-					)
-					.overlay(
-						RoundedRectangle(cornerRadius: 8, style: .continuous)
-							.strokeBorder(Color.accentColor.opacity(0.3), lineWidth: 1)
-					)
-			}
-			.padding(.vertical, 4)
-		} header: {
-			Label("Custom API Configuration", systemImage: "gearshape.2.fill")
-		} footer: {
-			VStack(alignment: .leading, spacing: 8) {
-				Text("Use your own API signing endpoint, this feature is still under development, it does not work yet.")
-					.font(.caption)
-				
-				if !_customSigningAPI.isEmpty {
-					HStack(spacing: 4) {
-						Image(systemName: _customSigningAPI.hasPrefix("https://") ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
-							.font(.caption2)
-							.foregroundStyle(_customSigningAPI.hasPrefix("https://") ? .green : .orange)
-						Text(_customSigningAPI.hasPrefix("https://") ? "HTTPS Endpoint Configured" : "Warning: Using HTTP may be insecure, your choice.")
-							.font(.caption2)
-							.foregroundStyle(_customSigningAPI.hasPrefix("https://") ? .green : .orange)
-					}
-				}
-			}
-		}
-	}
-	
 	private var sslCertificatesSection: some View {
 		Section {
 			Button(.localized("Update SSL Certificates"), systemImage: "arrow.down.doc") {
@@ -290,114 +223,6 @@ struct ServerView: View {
 		}
 	}
 	
-	private var serverStatusSection: some View {
-		Section {
-			VStack(spacing: 16) {
-				HStack {
-					VStack(alignment: .leading, spacing: 4) {
-						Text("Status")
-							.font(.caption)
-							.foregroundStyle(.secondary)
-						HStack(spacing: 6) {
-							Circle()
-								.fill(_statusColor)
-								.frame(width: 8, height: 8)
-							Text(_serverStatus)
-								.font(.system(size: 16, weight: .semibold))
-						}
-					}
-
-					Spacer()
-
-					VStack(alignment: .trailing, spacing: 4) {
-						Text("Response Time")
-							.font(.caption)
-							.foregroundStyle(.secondary)
-						Text(_responseTime)
-							.font(.system(size: 16, weight: .medium, design: .monospaced))
-					}
-				}
-				.padding(.horizontal, 4)
-
-				Button {
-					_checkServerStatus()
-				} label: {
-					HStack {
-						if _isCheckingStatus {
-							ProgressView()
-								.controlSize(.small)
-								.padding(.trailing, 8)
-						} else {
-							Image(systemName: "waveform.path.ecg")
-								.padding(.trailing, 4)
-						}
-						Text(_isCheckingStatus ? "Checking Server Status..." : "Check Status")
-							.fontWeight(.semibold)
-					}
-					.frame(maxWidth: .infinity)
-					.padding(.vertical, 10)
-					.background(Color.accentColor.opacity(0.1))
-					.cornerRadius(10)
-				}
-				.disabled(_isCheckingStatus)
-			}
-			.padding(.vertical, 8)
-		} header: {
-			Label("Server Status", systemImage: "antenna.radiowaves.left.and.right")
-		} footer: {
-			Text("Test the connection to your selected signing server or API endpoint.")
-				.font(.caption)
-		}
-	}
-
-	private func _checkServerStatus() {
-		_isCheckingStatus = true
-		_serverStatus = "Checking Server Status..."
-		_statusColor = .orange
-
-		let urlString: String
-		if _serverMethod == 2 {
-			urlString = _customSigningAPI.isEmpty ? "https://google.com" : _customSigningAPI //lmaoo google
-		} else if _serverMethod == 1 || _serverMethod == 3 {
-			urlString = "http://localhost:4000" // Default local server port
-		} else {
-			urlString = "https://backloop.dev"
-		}
-
-		guard let url = URL(string: urlString) else {
-			_serverStatus = "Invalid URL"
-			_statusColor = .red
-			_isCheckingStatus = false
-			return
-		}
-
-		let start = Date()
-		let task = URLSession.shared.dataTask(with: url) { _, response, error in
-			let end = Date()
-			let time = Int(end.timeIntervalSince(start) * 1000)
-
-			DispatchQueue.main.async {
-				_isCheckingStatus = false
-				if let error = error {
-					_serverStatus = "Offline"
-					_statusColor = .red
-					_responseTime = "--"
-					print("Server Status Check Failed: \(error.localizedDescription)")
-				} else if let httpResponse = response as? HTTPURLResponse {
-					if (200...399).contains(httpResponse.statusCode) {
-						_serverStatus = "Online"
-						_statusColor = .green
-						_responseTime = "\(time)ms"
-					} else {
-						_serverStatus = "Error \(httpResponse.statusCode)"
-						_statusColor = .orange
-						_responseTime = "\(time)ms"
-					}
-				}
-			}
-		}
-		task.resume()
-	}
 
 	@ViewBuilder
 	private var successAnimationSection: some View {

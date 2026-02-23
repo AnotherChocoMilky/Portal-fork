@@ -35,6 +35,7 @@ struct SettingsView: View {
         NBNavigationView(.localized("Settings")) {
             List {
                 headerSection
+                fetchProgressSection
                 preferencesSection
                 signingSection
                 dataSection
@@ -79,18 +80,70 @@ struct SettingsView: View {
     
     private var headerSection: some View {
         Section {
-            VStack(spacing: 8) {
-                CoreSignHeaderView(hideAboutButton: true)
-
-                Text("Portal \(Bundle.main.bundleIdentifier ?? "ayon1xw.PortalDev")")
-                    .font(.system(size: 10, weight: .medium, design: .monospaced))
-                    .foregroundStyle(.secondary.opacity(0.6))
-            }
-            .listRowInsets(EdgeInsets())
-            .listRowBackground(Color.clear)
+            CoreSignHeaderView(hideAboutButton: true)
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
         }
     }
-    
+
+    @ObservedObject private var sourcesViewModel = SourcesViewModel.shared
+    @ObservedObject private var updateManager = AppUpdateTrackingManager.shared
+
+    private var fetchProgressSection: some View {
+        Group {
+            if _isFetchingFullData {
+                Section {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.accentColor.opacity(0.1))
+                                    .frame(width: 38, height: 38)
+
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundStyle(Color.accentColor)
+                                    .rotationEffect(.degrees(_isFetchingFullData ? 360 : 0))
+                                    .animation(.linear(duration: 2).repeatForever(autoreverses: false), value: _isFetchingFullData)
+                            }
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Refreshing Sources")
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+
+                                Text(sourcesViewModel.fetchProgress < 1.0 ? "Downloading repository data..." : "Finalizing updates...")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            Text("\(Int(sourcesViewModel.fetchProgress * 100))%")
+                                .font(.system(size: 14, weight: .bold, design: .monospaced))
+                                .foregroundStyle(Color.accentColor)
+                        }
+
+                        ProgressView(value: sourcesViewModel.fetchProgress)
+                            .tint(Color.accentColor)
+                            .scaleEffect(x: 1, y: 1.5, anchor: .center)
+                            .clipShape(Capsule())
+
+                        HStack {
+                            Label("\(sourcesViewModel.sources.count) Loaded", systemImage: "tray.full.fill")
+                            Spacer()
+                            if sourcesViewModel.fetchProgress < 1.0 {
+                                Text("Step \(Int(sourcesViewModel.fetchProgress * Double(_sources.count))) of \(_sources.count)")
+                            }
+                        }
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 8)
+                }
+            }
+        }
+    }
+
     private var preferencesSection: some View {
         Section {
             if showDashboard && !hideManager.isHidden("settings.home") {
