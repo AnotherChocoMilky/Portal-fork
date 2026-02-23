@@ -408,7 +408,7 @@ struct LogEntryRow: View {
                     Label("Copy Detailed Log", systemImage: "doc.text.below.ecg")
                 }
 
-                if let code = entry.errorCode {
+                if entry.errorCode != nil {
                     Divider()
 
                     Button {
@@ -653,52 +653,12 @@ struct LogInfoView: View {
     private var errorLogCodesSection: some View {
         Section("Error Log Codes") {
             ForEach(LogErrorCode.allCases, id: \.self) { code in
-                let info = code.info
-                let isExpanded = expandedCodes.contains(code)
-
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        Text(info.code)
-                            .font(.system(.subheadline, design: .monospaced))
-                            .fontWeight(.bold)
-                            .foregroundStyle(.red)
-                        Spacer()
-
-                        Image(systemName: "chevron.down")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.tertiary)
-                            .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                    }
-
-                    Text(info.description)
-                        .font(.subheadline)
-
-                    if isExpanded {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("SUGGESTION")
-                                .font(.system(size: 10, weight: .black))
-                                .foregroundStyle(.secondary)
-                            Text(info.suggestion)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.secondary.opacity(0.05))
-                        .cornerRadius(8)
-                        .transition(.opacity.combined(with: .move(edge: .top)))
-                    } else {
-                        Text("Click to see suggestion")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.accentColor)
-                            .padding(.vertical, 4)
-                    }
-                }
-                .padding(.vertical, 4)
-                .contentShape(Rectangle())
-                .onTapGesture {
+                LogErrorCodeRow(
+                    code: code,
+                    isExpanded: expandedCodes.contains(code)
+                ) {
                     withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                        if isExpanded {
+                        if expandedCodes.contains(code) {
                             expandedCodes.remove(code)
                         } else {
                             expandedCodes.insert(code)
@@ -718,6 +678,60 @@ struct LogInfoView: View {
         case .warning: return "Indications of potential issues that aren't yet fatal."
         case .error: return "Standard error messages when an operation fails."
         case .critical: return "Serious failures that might require immediate attention."
+        }
+    }
+}
+
+// MARK: - Log Error Code Row
+struct LogErrorCodeRow: View {
+    let code: LogErrorCode
+    let isExpanded: Bool
+    let onToggle: () -> Void
+
+    var body: some View {
+        let info = code.info
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(info.code)
+                    .font(.system(.subheadline, design: .monospaced))
+                    .fontWeight(.bold)
+                    .foregroundStyle(.red)
+                Spacer()
+
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.tertiary)
+                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
+            }
+
+            Text(info.description)
+                .font(.subheadline)
+
+            if isExpanded {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("SUGGESTION")
+                        .font(.system(size: 10, weight: .black))
+                        .foregroundStyle(.secondary)
+                    Text(info.suggestion)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.secondary.opacity(0.05))
+                .cornerRadius(8)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            } else {
+                Text("Click to see suggestion")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(.accentColor)
+                    .padding(.vertical, 4)
+            }
+        }
+        .padding(.vertical, 4)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            onToggle()
         }
     }
 }
