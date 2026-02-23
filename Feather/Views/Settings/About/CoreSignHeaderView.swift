@@ -216,7 +216,7 @@ struct CoreSignHeaderView: View {
             return
         }
 
-        Task.detached {
+        func computeDominantColors(_ cgImage: CGImage) -> [Color] {
             let ciImage = CIImage(cgImage: cgImage)
             let extent = ciImage.extent
 
@@ -230,7 +230,6 @@ struct CoreSignHeaderView: View {
                 var bitmap = [UInt8](repeating: 0, count: 4)
                 let context = CIContext()
                 context.render(output, toBitmap: &bitmap, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: nil)
-
                 let color = Color(red: Double(bitmap[0]) / 255, green: Double(bitmap[1]) / 255, blue: Double(bitmap[2]) / 255)
                 extracted.append(color)
             }
@@ -244,9 +243,7 @@ struct CoreSignHeaderView: View {
                 var bitmap = [UInt8](repeating: 0, count: 4)
                 let context = CIContext()
                 context.render(output2, toBitmap: &bitmap, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: nil)
-
                 let color2 = Color(red: Double(bitmap[0]) / 255, green: Double(bitmap[1]) / 255, blue: Double(bitmap[2]) / 255)
-
                 if let first = extracted.first {
                     let firstComponents = UIColor(first).cgColor.components ?? [0, 0, 0]
                     let diff = abs(Double(bitmap[0])/255 - Double(firstComponents[0])) +
@@ -257,9 +254,13 @@ struct CoreSignHeaderView: View {
                     }
                 }
             }
+            return extracted.isEmpty ? [.accentColor] : extracted
+        }
 
+        Task.detached {
+            let colors = computeDominantColors(cgImage)
             await MainActor.run {
-                self.dominantColors = extracted.isEmpty ? [.accentColor] : extracted
+                self.dominantColors = colors
             }
         }
     }
