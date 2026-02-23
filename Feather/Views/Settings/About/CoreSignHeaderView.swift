@@ -1,12 +1,13 @@
 import SwiftUI
+import CoreImage
 
 struct CoreSignHeaderView: View {
     // MARK: - State
     @State private var currentSubtitleIndex: Int = 0
     @State private var showCredits = false
     @State private var showSecretDimension = false
-    @State private var badgeColor: Color = .orange
     @State private var iconRotationAngle: Double = 0
+    @State private var dominantColors: [Color] = []
     var hideAboutButton: Bool = false
 
     // MARK: - Current Subtitle
@@ -20,6 +21,7 @@ struct CoreSignHeaderView: View {
             .onAppear {
                 setupLifecycleObservers()
                 rotateSubtitle()
+                extractColors()
             }
             .sheet(isPresented: $showCredits) {
                 CreditsView()
@@ -31,7 +33,7 @@ struct CoreSignHeaderView: View {
     
     // MARK: - Header Card
     private var headerCard: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 20) {
             // App Icon centered at the top
             appIcon
                 .rotationEffect(.degrees(iconRotationAngle))
@@ -49,10 +51,10 @@ struct CoreSignHeaderView: View {
                         }
                 )
             
-            VStack(spacing: 4) {
+            VStack(spacing: 12) {
                 // App Name centered below
                 Text("Portal")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(.system(size: 26, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                     .simultaneousGesture(
                         TapGesture(count: 3)
@@ -64,7 +66,6 @@ struct CoreSignHeaderView: View {
                     .simultaneousGesture(
                         TapGesture(count: 2)
                             .onEnded {
-                                // 2-finger double tap is hard, so we just use double tap for random color
                                 let colors: [Color] = [.red, .blue, .green, .yellow, .purple, .orange, .pink, .cyan, .mint]
                                 if let randomColor = colors.randomElement() {
                                     UIApplication.shared.connectedScenes
@@ -77,10 +78,32 @@ struct CoreSignHeaderView: View {
                             }
                     )
 
-                // Version centered below
-                Text("\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.0") Release")
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
+                // Version Row
+                HStack(spacing: 6) {
+                    Image(systemName: "info.circle.fill")
+                        .font(.system(size: 12))
+                    Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.0")
+                        .font(.system(size: 14, weight: .semibold, design: .rounded))
+                }
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(Color.primary.opacity(0.05))
+                .clipShape(Capsule())
+
+                // Release Label (Modern capsule badge)
+                Text("RELEASE")
+                    .font(.system(size: 10, weight: .bold))
+                    .kerning(1.0)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(.ultraThinMaterial)
+                    .clipShape(Capsule())
                     .foregroundStyle(.secondary)
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
+                    )
             }
 
             // Subtexts centered below
@@ -88,29 +111,42 @@ struct CoreSignHeaderView: View {
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(Color.accentColor)
                 .multilineTextAlignment(.center)
-                .transition(AnyTransition.asymmetric(
-                    insertion: .move(edge: .bottom).combined(with: .opacity),
-                    removal: .move(edge: .top).combined(with: .opacity)
-                ))
+                .transition(.opacity)
                 .id(currentSubtitleIndex)
                 .padding(.top, 4)
             
             // Action Buttons
             if !hideAboutButton {
                 creditsButton
-                    .padding(.top, 8)
+                    .padding(.top, 4)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 24)
-        .padding(.horizontal, 20)
+        .padding(.vertical, 32)
+        .padding(.horizontal, 24)
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.primary.opacity(0.03))
-                .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
+            ZStack {
+                if !dominantColors.isEmpty {
+                    LinearGradient(
+                        colors: [
+                            dominantColors[0].opacity(0.1),
+                            (dominantColors.count > 1 ? dominantColors[1] : dominantColors[0]).opacity(0.05)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                } else {
+                    Color.primary.opacity(0.03)
+                }
+
+                Rectangle()
+                    .fill(.ultraThinMaterial.opacity(0.5))
+            }
         )
+        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+        .shadow(color: .black.opacity(0.05), radius: 15, x: 0, y: 8)
         .overlay(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
+            RoundedRectangle(cornerRadius: 32, style: .continuous)
                 .stroke(Color.primary.opacity(0.08), lineWidth: 0.5)
         )
         .padding(.horizontal)
@@ -124,39 +160,20 @@ struct CoreSignHeaderView: View {
             Image(uiImage: icon)
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 64, height: 64)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .frame(width: 80, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .strokeBorder(Color.white.opacity(0.1), lineWidth: 0.5)
+                    RoundedRectangle(cornerRadius: 20, style: .continuous)
+                        .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)
                 )
-                .shadow(color: .accentColor.opacity(0.2), radius: 10, x: 0, y: 5)
         } else {
             Image(systemName: "questionmark.square.dashed")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 64, height: 64)
+                .frame(width: 80, height: 80)
                 .foregroundColor(.gray)
         }
-    }
-    
-    // MARK: - Version Badge
-    private var versionBadge: some View {
-        HStack(spacing: 3) {
-            Text("3.0")
-                .font(.system(size: 9, weight: .bold, design: .rounded))
-            Text("Release")
-                .font(.system(size: 8, weight: .heavy))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 4)
-                .padding(.vertical, 1)
-                .background(Capsule().fill(badgeColor))
-        }
-        .foregroundStyle(.primary)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 3)
-        .background(Capsule().fill(Color.accentColor.opacity(0.1)))
-        .overlay(Capsule().strokeBorder(Color.accentColor.opacity(0.15), lineWidth: 0.5))
     }
     
     // MARK: - Credits Button
@@ -188,6 +205,62 @@ struct CoreSignHeaderView: View {
             queue: .main
         ) { _ in
             rotateSubtitle()
+        }
+    }
+
+    // MARK: - Color Extraction
+    private func extractColors() {
+        guard let iconName = Bundle.main.iconFileName,
+              let uiImage = UIImage(named: iconName),
+              let cgImage = uiImage.cgImage else {
+            return
+        }
+
+        Task.detached {
+            let ciImage = CIImage(cgImage: cgImage)
+            let extent = ciImage.extent
+
+            let filter = CIFilter(name: "CIAreaAverage")
+            filter?.setValue(ciImage, forKey: kCIInputImageKey)
+            filter?.setValue(CIVector(cgRect: extent), forKey: kCIInputExtentKey)
+
+            var extracted: [Color] = []
+
+            if let output = filter?.outputImage {
+                var bitmap = [UInt8](repeating: 0, count: 4)
+                let context = CIContext()
+                context.render(output, toBitmap: &bitmap, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: nil)
+
+                let color = Color(red: Double(bitmap[0]) / 255, green: Double(bitmap[1]) / 255, blue: Double(bitmap[2]) / 255)
+                extracted.append(color)
+            }
+
+            let quarterExtent = CGRect(x: extent.width * 0.25, y: extent.height * 0.25, width: extent.width * 0.5, height: extent.height * 0.5)
+            let filter2 = CIFilter(name: "CIAreaAverage")
+            filter2?.setValue(ciImage, forKey: kCIInputImageKey)
+            filter2?.setValue(CIVector(cgRect: quarterExtent), forKey: kCIInputExtentKey)
+
+            if let output2 = filter2?.outputImage {
+                var bitmap = [UInt8](repeating: 0, count: 4)
+                let context = CIContext()
+                context.render(output2, toBitmap: &bitmap, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: nil)
+
+                let color2 = Color(red: Double(bitmap[0]) / 255, green: Double(bitmap[1]) / 255, blue: Double(bitmap[2]) / 255)
+
+                if let first = extracted.first {
+                    let firstComponents = UIColor(first).cgColor.components ?? [0, 0, 0]
+                    let diff = abs(Double(bitmap[0])/255 - Double(firstComponents[0])) +
+                               abs(Double(bitmap[1])/255 - Double(firstComponents[1])) +
+                               abs(Double(bitmap[2])/255 - Double(firstComponents[2]))
+                    if diff > 0.3 {
+                        extracted.append(color2)
+                    }
+                }
+            }
+
+            await MainActor.run {
+                self.dominantColors = extracted.isEmpty ? [.accentColor] : extracted
+            }
         }
     }
 
