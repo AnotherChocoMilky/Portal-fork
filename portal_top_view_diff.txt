@@ -1,14 +1,14 @@
-import SwiftUI
-
-struct PortalTopView: View {
-    var body: some View {
-        GeometryReader { geometry in
-            let safeAreaTop = geometry.safeAreaInsets.top
-
-            VStack(spacing: 0) {
-                HStack {
-                    Spacer()
-
+<<<<<<< SEARCH
+                    // Floating Pill
+                    Text("Portal")
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundStyle(Color.accentColor)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
+                        .background(.ultraThinMaterial)
+                        .clipShape(Capsule())
+                        .shadow(color: .black.opacity(0.08), radius: 4, x: 0, y: 2)
+=======
                     // Modern Floating Pill
                     HStack(spacing: 8) {
                         if let iconName = Bundle.main.iconFileName,
@@ -41,16 +41,4 @@ struct PortalTopView: View {
                             }
                     }
                     .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
-
-                    Spacer()
-                }
-                .frame(height: max(safeAreaTop, 20))
-
-                Spacer()
-            }
-        }
-        .allowsHitTesting(false)
-        .zIndex(1000)
-        .ignoresSafeArea(edges: .top)
-    }
-}
+>>>>>>> REPLACE
