@@ -354,7 +354,7 @@ struct LogEntryRow: View {
                                 .foregroundStyle(.secondary)
 
                             if let code = entry.errorCode {
-                                Text(code)
+                                Text(code.rawValue)
                                     .font(.system(size: 9, weight: .bold, design: .monospaced))
                                     .padding(.horizontal, 4)
                                     .padding(.vertical, 1)
@@ -600,91 +600,9 @@ struct LogInfoView: View {
     var body: some View {
         NavigationStack {
             List {
-                Section("Understanding Logs") {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text("Logs are essential for debugging issues within Portal. They capture events, errors, and warnings that occur during operations like signing and installation.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-
-                        Text("Sharing these logs when reporting a bug helps developers identify and fix the issue much faster.")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.vertical, 8)
-                }
-
-                Section("Log Levels") {
-                    ForEach(LogEntry.LogLevel.allCases, id: \.self) { level in
-                        HStack(spacing: 12) {
-                            Text(level.icon)
-                            VStack(alignment: .leading) {
-                                Text(level.rawValue)
-                                    .font(.headline)
-                                Text(description(for: level))
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    }
-                }
-
-                Section("Error Log Codes") {
-                    ForEach(LogErrorCode.allCases, id: \.self) { code in
-                        let info = code.info
-                        let isExpanded = expandedCodes.contains(code)
-
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                Text(info.code)
-                                    .font(.system(.subheadline, design: .monospaced))
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.red)
-                                Spacer()
-
-                                Image(systemName: "chevron.down")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(.tertiary)
-                                    .rotationEffect(.degrees(isExpanded ? 180 : 0))
-                            }
-
-                            Text(info.description)
-                                .font(.subheadline)
-
-                            if isExpanded {
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("SUGGESTION")
-                                        .font(.system(size: 10, weight: .black))
-                                        .foregroundStyle(.secondary)
-                                    Text(info.suggestion)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .padding(8)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color.secondary.opacity(0.05))
-                                .cornerRadius(8)
-                                .transition(.opacity.combined(with: .move(edge: .top)))
-                            } else {
-                                Text("Click to see suggestion")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(.accentColor)
-                                    .padding(.vertical, 4)
-                            }
-                        }
-                        .padding(.vertical, 4)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                                if isExpanded {
-                                    expandedCodes.remove(code)
-                                } else {
-                                    expandedCodes.insert(code)
-                                }
-                            }
-                            HapticsManager.shared.softImpact()
-                        }
-                    }
-                }
+                understandingLogsSection
+                logLevelsSection
+                errorLogCodesSection
             }
             .navigationTitle("Log Information")
             .navigationBarTitleDisplayMode(.inline)
@@ -692,6 +610,101 @@ struct LogInfoView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
                         .fontWeight(.bold)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var understandingLogsSection: some View {
+        Section("Understanding Logs") {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Logs are essential for debugging issues within Portal. They capture events, errors, and warnings that occur during operations like signing and installation.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                Text("Sharing these logs when reporting a bug helps developers identify and fix the issue much faster.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.vertical, 8)
+        }
+    }
+
+    @ViewBuilder
+    private var logLevelsSection: some View {
+        Section("Log Levels") {
+            ForEach(LogEntry.LogLevel.allCases, id: \.self) { level in
+                HStack(spacing: 12) {
+                    Text(level.icon)
+                    VStack(alignment: .leading) {
+                        Text(level.rawValue)
+                            .font(.headline)
+                        Text(description(for: level))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var errorLogCodesSection: some View {
+        Section("Error Log Codes") {
+            ForEach(LogErrorCode.allCases, id: \.self) { code in
+                let info = code.info
+                let isExpanded = expandedCodes.contains(code)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text(info.code)
+                            .font(.system(.subheadline, design: .monospaced))
+                            .fontWeight(.bold)
+                            .foregroundStyle(.red)
+                        Spacer()
+
+                        Image(systemName: "chevron.down")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.tertiary)
+                            .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                    }
+
+                    Text(info.description)
+                        .font(.subheadline)
+
+                    if isExpanded {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("SUGGESTION")
+                                .font(.system(size: 10, weight: .black))
+                                .foregroundStyle(.secondary)
+                            Text(info.suggestion)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.secondary.opacity(0.05))
+                        .cornerRadius(8)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    } else {
+                        Text("Click to see suggestion")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.accentColor)
+                            .padding(.vertical, 4)
+                    }
+                }
+                .padding(.vertical, 4)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        if isExpanded {
+                            expandedCodes.remove(code)
+                        } else {
+                            expandedCodes.insert(code)
+                        }
+                    }
+                    HapticsManager.shared.softImpact()
                 }
             }
         }
