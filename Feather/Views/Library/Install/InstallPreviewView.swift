@@ -196,8 +196,16 @@ struct InstallPreviewView: View {
                         }
                     } else if await _installationMethod == 1 {
                         let handler = await InstallationProxy(viewModel: viewModel)
-                        try await handler.install(at: packageUrl, suspend: app.identifier == Bundle.main.bundleIdentifier!)
-                        await MainActor.run { _metalState = .success }
+                        do {
+                            try await handler.install(at: packageUrl, suspend: app.identifier == Bundle.main.bundleIdentifier!)
+                            await MainActor.run { _metalState = .success }
+                        } catch {
+                            await MainActor.run {
+                                _errorMessage = error.localizedDescription
+                                _metalState = .error
+                                viewModel.status = .broken(error)
+                            }
+                        }
                     }
                 } else {
                     let package = try await handler.moveToArchive(packageUrl, shouldOpen: !_useShareSheet)

@@ -45,113 +45,49 @@ struct SigningView: View {
 		
 	// MARK: Body
     var body: some View {
-		NBNavigationView(app.name ?? .localized("Unknown"), displayMode: .inline) {
-			ScrollView {
-				VStack(spacing: 20) {
-					_customizationOptions(for: app)
-					_cert()
-					_customizationProperties(for: app)
-					
-					// Bottom padding for button
-					Spacer()
-						.frame(height: 100)
-				}
-				.padding(.horizontal)
-				.padding(.top, 12)
-			}
-			.background(
-				LinearGradient(
-					colors: [
-						Color.clear,
-						Color.clear.opacity(0.95),
-						Color.accentColor.opacity(0.02),
-						Color.clear
-					],
-					startPoint: .top,
-					endPoint: .bottom
-				)
-			)
-			.overlay(alignment: .bottom) {
-				VStack(spacing: 0) {
-					// Gradient fade effect
-					LinearGradient(
-						colors: [
-							Color.clear.opacity(0),
-							Color.clear.opacity(0.8),
-							Color.clear.opacity(0.95),
-							Color.clear
-						],
-						startPoint: .top,
-						endPoint: .bottom
-					)
-					.frame(height: 40)
-					
-					// Modern floating button with gradient
-					Button {
-						_start()
-					} label: {
-						HStack(spacing: 12) {
-							Image(systemName: "signature")
-								.font(.system(size: 18, weight: .semibold))
-							Text(.localized("Start Signing"))
-								.font(.system(size: 17, weight: .semibold))
-						}
-						.foregroundStyle(.white)
-						.frame(maxWidth: .infinity)
-						.padding(.vertical, 16)
-						.background(
-							ZStack {
-								// Shadow layer
-								Capsule()
-									.fill(Color.accentColor.opacity(0.3))
-									.blur(radius: 6)
-									.offset(y: 3)
-								
-								// Main gradient with multiple colors
-								Capsule()
-									.fill(
-										LinearGradient(
-											colors: [
-												Color.accentColor,
-												Color.accentColor.opacity(0.9),
-												Color.accentColor.opacity(0.85)
-											],
-											startPoint: .topLeading,
-											endPoint: .bottomTrailing
-										)
-									)
-							}
-						)
-						.clipShape(Capsule())
-						.shadow(color: Color.accentColor.opacity(0.5), radius: 15, x: 0, y: 8)
-					}
-					.padding(.horizontal, 20)
-					.padding(.vertical, 12)
-					.background(
-						LinearGradient(
-							colors: [
-								Color.clear,
-								Color.clear.opacity(0.98)
-							],
-							startPoint: .top,
-							endPoint: .bottom
-						)
-					)
-				}
-				.ignoresSafeArea(edges: .bottom)
-			}
-
-			.toolbar {
-				NBToolbarButton(role: .dismiss)
-				NBToolbarButton(
-					.localized("Reset"),
-					style: .text,
-					placement: .topBarTrailing
-				) {
-					_temporaryOptions = OptionsManager.shared.options
-					appIcon = nil
-				}
-			}
+        NavigationStack {
+            Form {
+                _customizationOptions(for: app)
+                _cert()
+                _customizationProperties(for: app)
+            }
+            .navigationTitle(app.name ?? .localized("Unknown"))
+            .navigationBarTitleDisplayMode(.inline)
+            .safeAreaInset(edge: .bottom) {
+                Button {
+                    _start()
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "signature")
+                        Text(.localized("Start Signing"))
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.accentColor)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .padding()
+                .background(.ultraThinMaterial)
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(.localized("Reset")) {
+                        _temporaryOptions = OptionsManager.shared.options
+                        appIcon = nil
+                    }
+                }
+            }
 			.sheet(isPresented: $_isAltPickerPresenting) { SigningAlternativeIconView(app: app, appIcon: $appIcon, isModifing: .constant(true)) }
 			.sheet(isPresented: $_isFilePickerPresenting) {
 				FileImporterRepresentableView(
@@ -257,379 +193,153 @@ struct SigningView: View {
 extension SigningView {
 	@ViewBuilder
 	private func _customizationOptions(for app: AppInfoPresentable) -> some View {
-		VStack(alignment: .leading, spacing: 16) {
-			Text(.localized("Customization"))
-				.font(.headline)
-				.foregroundStyle(.primary)
-				.padding(.horizontal, 4)
-			
-			VStack(spacing: 0) {
-				// Enhanced icon selection with gradient background
-				HStack(spacing: 16) {
-					Menu {
-						Button(.localized("Select Alternative Icon"), systemImage: "app.dashed") { _isAltPickerPresenting = true }
-						Button(.localized("Choose From Files"), systemImage: "folder") { _isFilePickerPresenting = true }
-						Button(.localized("Choose From Photos"), systemImage: "photo") { _isImagePickerPresenting = true }
-					} label: {
-						ZStack {
-							if let icon = appIcon {
-								Image(uiImage: icon)
-									.appIconStyle()
-									.shadow(color: Color.accentColor.opacity(0.25), radius: 8, x: 0, y: 4)
-							} else {
-								FRAppIconView(app: app, size: 64)
-									.shadow(color: Color.accentColor.opacity(0.25), radius: 8, x: 0, y: 4)
-							}
-						}
-					}
-					
-					VStack(alignment: .leading, spacing: 4) {
-						Text(app.name ?? .localized("Unknown"))
-							.font(.title3)
-							.fontWeight(.bold)
-							.foregroundStyle(
-								LinearGradient(
-									colors: [Color.primary, Color.primary.opacity(0.8)],
-									startPoint: .leading,
-									endPoint: .trailing
-								)
-							)
-						
-						Text(.localized("Tap icon to change"))
-							.font(.caption)
-							.foregroundStyle(.secondary)
-					}
-					
-					Spacer()
-				}
-				.padding()
-				.background(
-					LinearGradient(
-						colors: [
-							Color.clear,
-							Color.clear.opacity(0.95),
-							Color.accentColor.opacity(0.02)
-						],
-						startPoint: .topLeading,
-						endPoint: .bottomTrailing
-					)
-				)
-				.clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-				.overlay(
-					RoundedRectangle(cornerRadius: 14, style: .continuous)
-						.stroke(
-							LinearGradient(
-								colors: [Color.accentColor.opacity(0.15), Color.accentColor.opacity(0.05)],
-								startPoint: .topLeading,
-								endPoint: .bottomTrailing
-							),
-							lineWidth: 1
-						)
-				)
-				
-				Divider()
-					.padding(.vertical, 8)
-				
-				VStack(spacing: 0) {
-					_infoCell(.localized("Name"), desc: _temporaryOptions.appName ?? app.name, icon: "pencil") {
-						_isNameDialogPresenting = true
-					}
-					
-					Divider()
-						.padding(.leading, 52)
-					
-					_infoCell(.localized("Identifier"), desc: _temporaryOptions.appIdentifier ?? app.identifier, icon: "barcode") {
-						_isIdentifierDialogPresenting = true
-					}
-					
-					Divider()
-						.padding(.leading, 52)
-					
-					_infoCell(.localized("Version"), desc: _temporaryOptions.appVersion ?? app.version, icon: "tag") {
-						_isVersionDialogPresenting = true
-					}
-				}
-				.background(Color.clear)
-				.clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-			}
+		Section(.localized("Customization")) {
+            HStack(spacing: 16) {
+                Menu {
+                    Button(.localized("Select Alternative Icon"), systemImage: "app.dashed") { _isAltPickerPresenting = true }
+                    Button(.localized("Choose From Files"), systemImage: "folder") { _isFilePickerPresenting = true }
+                    Button(.localized("Choose From Photos"), systemImage: "photo") { _isImagePickerPresenting = true }
+                } label: {
+                    if let icon = appIcon {
+                        Image(uiImage: icon)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 60, height: 60)
+                            .cornerRadius(12)
+                    } else {
+                        FRAppIconView(app: app, size: 60)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(app.name ?? .localized("Unknown"))
+                        .font(.headline)
+                    Text(.localized("Tap icon to change"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.vertical, 8)
+
+            _infoCell(.localized("Name"), desc: _temporaryOptions.appName ?? app.name, icon: "pencil") {
+                _isNameDialogPresenting = true
+            }
+
+            _infoCell(.localized("Identifier"), desc: _temporaryOptions.appIdentifier ?? app.identifier, icon: "barcode") {
+                _isIdentifierDialogPresenting = true
+            }
+
+            _infoCell(.localized("Version"), desc: _temporaryOptions.appVersion ?? app.version, icon: "tag") {
+                _isVersionDialogPresenting = true
+            }
 		}
 	}
 	
 	@ViewBuilder
 	private func _cert() -> some View {
-		VStack(alignment: .leading, spacing: 16) {
-			Text(.localized("Signing"))
-				.font(.headline)
-				.foregroundStyle(.primary)
-				.padding(.horizontal, 4)
-			
-			VStack(spacing: 0) {
-				if let cert = _selectedCert() {
-					NavigationLink {
-						CertificatesView(selectedCert: $_temporaryCertificate)
-					} label: {
-						CertificatesCellView(cert: cert)
-							.padding()
-					}
-					.background(
-						LinearGradient(
-							colors: [
-								Color.clear,
-								Color.clear.opacity(0.95),
-								Color.accentColor.opacity(0.02)
-							],
-							startPoint: .topLeading,
-							endPoint: .bottomTrailing
-						)
-					)
-					.clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-					.overlay(
-						RoundedRectangle(cornerRadius: 14, style: .continuous)
-							.stroke(
-								LinearGradient(
-									colors: [Color.accentColor.opacity(0.15), Color.accentColor.opacity(0.05)],
-									startPoint: .topLeading,
-									endPoint: .bottomTrailing
-								),
-								lineWidth: 1
-							)
-					)
-				} else {
-					VStack(spacing: 16) {
-						HStack(spacing: 12) {
-							ZStack {
-								Circle()
-									.fill(
-										LinearGradient(
-											colors: [Color.orange.opacity(0.2), Color.orange.opacity(0.15)],
-											startPoint: .topLeading,
-											endPoint: .bottomTrailing
-										)
-									)
-									.frame(width: 44, height: 44)
-								
-								Image(systemName: "exclamationmark.triangle.fill")
-									.font(.title3)
-									.foregroundStyle(
-										LinearGradient(
-											colors: [Color.orange, Color.orange.opacity(0.8)],
-											startPoint: .topLeading,
-											endPoint: .bottomTrailing
-										)
-									)
-							}
-							
-							VStack(alignment: .leading, spacing: 4) {
-								Text(.localized("No Certificate"))
-									.font(.headline)
-									.foregroundColor(.primary)
-								Text(.localized("Add a certificate to continue"))
-									.font(.caption)
-									.foregroundColor(.secondary)
-							}
-							Spacer()
-						}
-						
-						Button {
-							_isAddingCertificatePresenting = true
-						} label: {
-							HStack(spacing: 10) {
-								Image(systemName: "plus.circle.fill")
-									.font(.body)
-								Text(.localized("Add Certificate"))
-									.font(.body.weight(.semibold))
-							}
-							.foregroundStyle(.white)
-							.frame(maxWidth: .infinity)
-							.padding(.vertical, 14)
-							.background(
-								LinearGradient(
-									colors: [Color.accentColor, Color.accentColor.opacity(0.9), Color.accentColor.opacity(0.8)],
-									startPoint: .topLeading,
-									endPoint: .bottomTrailing
-								)
-							)
-							.clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-							.shadow(color: Color.accentColor.opacity(0.4), radius: 10, x: 0, y: 5)
-						}
-					}
-					.padding()
-					.background(
-						LinearGradient(
-							colors: [
-								Color.clear,
-								Color.clear.opacity(0.95),
-								Color.orange.opacity(0.03)
-							],
-							startPoint: .topLeading,
-							endPoint: .bottomTrailing
-						)
-					)
-					.clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-					.overlay(
-						RoundedRectangle(cornerRadius: 14, style: .continuous)
-							.stroke(
-								LinearGradient(
-									colors: [Color.orange.opacity(0.2), Color.orange.opacity(0.1)],
-									startPoint: .topLeading,
-									endPoint: .bottomTrailing
-								),
-								lineWidth: 1.5
-							)
-					)
-				}
-			}
+		Section(.localized("Signing")) {
+            if let cert = _selectedCert() {
+                NavigationLink {
+                    CertificatesView(selectedCert: $_temporaryCertificate)
+                } label: {
+                    CertificatesCellView(cert: cert)
+                }
+            } else {
+                VStack(spacing: 16) {
+                    HStack(spacing: 12) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.orange)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(.localized("No Certificate"))
+                                .font(.headline)
+                            Text(.localized("Add a certificate to continue"))
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        Spacer()
+                    }
+
+                    Button {
+                        _isAddingCertificatePresenting = true
+                    } label: {
+                        Text(.localized("Add Certificate"))
+                            .font(.body.weight(.semibold))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 10)
+                            .background(Color.accentColor)
+                            .foregroundStyle(.white)
+                            .cornerRadius(10)
+                    }
+                }
+                .padding(.vertical, 8)
+            }
 		}
 	}
 	
 	@ViewBuilder
 	private func _customizationProperties(for app: AppInfoPresentable) -> some View {
-		VStack(alignment: .leading, spacing: 16) {
-			Text(.localized("Advanced"))
-				.font(.headline)
-				.foregroundStyle(.primary)
-				.padding(.horizontal, 4)
-			
-			VStack(spacing: 0) {
-				DisclosureGroup(
-                content: {
-					VStack(spacing: 0) {
-						NavigationLink {
-							SigningDylibView(
-								app: app,
-								options: $_temporaryOptions.optional()
-							)
-						} label: {
-							HStack {
-								Label(.localized("Existing Dylibs"), systemImage: "puzzlepiece")
-								Spacer()
-								Image(systemName: "chevron.right")
-									.font(.caption)
-									.foregroundStyle(.tertiary)
-							}
-							.padding()
-						}
-						
-						Divider()
-							.padding(.leading, 52)
-						
-						NavigationLink {
-							SigningFrameworksView(
-								app: app,
-								options: $_temporaryOptions.optional()
-							)
-						} label: {
-							HStack {
-								Label(.localized("Frameworks & Plugins"), systemImage: "cube.box")
-								Spacer()
-								Image(systemName: "chevron.right")
-									.font(.caption)
-									.foregroundStyle(.tertiary)
-							}
-							.padding()
-						}
-						
-						#if NIGHTLY || DEBUG
-						Divider()
-							.padding(.leading, 52)
-						
-						NavigationLink {
-							SigningEntitlementsView(
-								bindingValue: $_temporaryOptions.appEntitlementsFile
-							)
-						} label: {
-							HStack {
-								Label(.localized("Entitlements") + " (BETA)", systemImage: "lock.shield")
-								Spacer()
-								Image(systemName: "chevron.right")
-									.font(.caption)
-									.foregroundStyle(.tertiary)
-							}
-							.padding()
-						}
-						#endif
-						
-						Divider()
-							.padding(.leading, 52)
-						
-						NavigationLink {
-							SigningTweaksView(
-								options: $_temporaryOptions
-							)
-						} label: {
-							HStack {
-								Label(.localized("Tweaks"), systemImage: "wrench.and.screwdriver")
-								Spacer()
-								Image(systemName: "chevron.right")
-									.font(.caption)
-									.foregroundStyle(.tertiary)
-							}
-							.padding()
-						}
-					}
-                },
-                label: {
-					HStack {
-						Label(.localized("Modify"), systemImage: "hammer")
-						Spacer()
-					}
-					.padding()
-                }
-            )
-			.tint(.primary)
-			
-			Divider()
-			
+		Section(.localized("Advanced")) {
+            NavigationLink {
+                SigningDylibView(
+                    app: app,
+                    options: $_temporaryOptions.optional()
+                )
+            } label: {
+                Label(.localized("Existing Dylibs"), systemImage: "puzzlepiece")
+            }
+
+            NavigationLink {
+                SigningFrameworksView(
+                    app: app,
+                    options: $_temporaryOptions.optional()
+                )
+            } label: {
+                Label(.localized("Frameworks & Plugins"), systemImage: "cube.box")
+            }
+
+            #if NIGHTLY || DEBUG
+            NavigationLink {
+                SigningEntitlementsView(
+                    bindingValue: $_temporaryOptions.appEntitlementsFile
+                )
+            } label: {
+                Label(.localized("Entitlements") + " (BETA)", systemImage: "lock.shield")
+            }
+            #endif
+
+            NavigationLink {
+                SigningTweaksView(
+                    options: $_temporaryOptions
+                )
+            } label: {
+                Label(.localized("Tweaks"), systemImage: "wrench.and.screwdriver")
+            }
+
 			NavigationLink {
 				Form { SigningOptionsView(
 					options: $_temporaryOptions,
 					temporaryOptions: _optionsManager.options
 				)}
-            .scrollContentBackground(.hidden)
-				.navigationTitle(.localized("Properties"))
+                .navigationTitle(.localized("Properties"))
 			} label: {
-				HStack {
-					Label(.localized("Properties"), systemImage: "slider.horizontal.3")
-					Spacer()
-					Image(systemName: "chevron.right")
-						.font(.caption)
-						.foregroundStyle(.tertiary)
-				}
-				.padding()
+                Label(.localized("Properties"), systemImage: "slider.horizontal.3")
             }
-			}
-			.background(Color.clear)
-			.clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 		}
 	}
 	
 	@ViewBuilder
 	private func _infoCell(_ title: String, desc: String?, icon: String, action: @escaping () -> Void) -> some View {
 		Button(action: action) {
-			HStack(spacing: 12) {
-				Image(systemName: icon)
-					.font(.body)
-					.foregroundStyle(.secondary)
-					.frame(width: 28)
-				
-				Text(title)
-					.font(.body)
-					.foregroundStyle(.primary)
-				
+			HStack {
+				Label(title, systemImage: icon)
 				Spacer()
-				
 				Text(desc ?? .localized("Unknown"))
-					.font(.subheadline)
 					.foregroundStyle(.secondary)
-					.lineLimit(1)
-				
-				Image(systemName: "chevron.right")
-					.font(.caption)
-					.foregroundStyle(.tertiary)
 			}
-			.padding()
 		}
-		.buttonStyle(.plain)
+		.foregroundStyle(.primary)
 	}
 }
 

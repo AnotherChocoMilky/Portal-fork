@@ -253,100 +253,51 @@ struct BatchSigningView: View {
     }
 
     private var actionSection: some View {
-        Button {
-            startBatchSigning()
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "signature")
-                    .font(.title3.bold())
+        VStack(spacing: 0) {
+            Divider()
+            Button {
+                startBatchSigning()
+            } label: {
                 Text("Sign Selected Apps (\(selectedApps.count))")
                     .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(selectedApps.isEmpty || certificates.isEmpty || isSigningBatch ? Color.gray : Color.accentColor)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(selectedApps.isEmpty || certificates.isEmpty || isSigningBatch ? Color.gray : Color.accentColor)
-            .foregroundStyle(.white)
-            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .disabled(selectedApps.isEmpty || certificates.isEmpty || isSigningBatch)
+            .padding()
         }
-        .disabled(selectedApps.isEmpty || certificates.isEmpty || isSigningBatch)
-        .padding()
-        .background(.ultraThinMaterial)
+        .background(Color(UIColor.systemBackground))
     }
 
     private var progressOverlay: some View {
         ZStack {
-            Color.black.opacity(0.6)
+            Color(UIColor.systemBackground).opacity(0.8)
                 .ignoresSafeArea()
-                .transition(.opacity)
 
-            VStack(spacing: 24) {
-                // Animated Icon
-                ZStack {
-                    Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.accentColor.opacity(0.5), Color.accentColor.opacity(0.2)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 100, height: 100)
-                        .blur(radius: 10)
-
-                    Image(systemName: currentPhase == .signing ? "signature" : "arrow.down.circle.fill")
-                        .font(.system(size: 40, weight: .bold))
-                        .foregroundStyle(.white)
-                        .pulseEffect(true)
-                }
-
-                VStack(spacing: 16) {
-                    Text(currentPhase == .signing ? "Signing Apps" : "Installing Apps")
-                        .font(.title2.weight(.bold))
-                        .foregroundStyle(.white)
-
-                    Text(currentSigningApp)
-                        .font(.headline)
-                        .foregroundStyle(.white.opacity(0.9))
-                        .lineLimit(1)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: 280)
-
-                    // Progress Bar
+            VStack(spacing: 20) {
+                ProgressView(value: batchProgress) {
                     VStack(spacing: 10) {
-                        GeometryReader { geometry in
-                            ZStack(alignment: .leading) {
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color.white.opacity(0.2))
-
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [.accentColor, .accentColor.opacity(0.8)],
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                    )
-                                    .frame(width: geometry.size.width * batchProgress)
-                                    .animation(.spring(), value: batchProgress)
-                            }
-                        }
-                        .frame(height: 12)
-
-                        Text("\(Int(batchProgress * 100))%")
-                            .font(.system(.body, design: .monospaced).bold())
-                            .foregroundStyle(.white)
+                        Text(currentPhase == .signing ? "Signing Apps..." : "Installing Apps...")
+                            .font(.headline)
+                        Text(currentSigningApp)
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
-                    .padding(.horizontal, 30)
                 }
+                .progressViewStyle(.circular)
+
+                Text("\(Int(batchProgress * 100))%")
+                    .font(.caption.monospaced().bold())
             }
-            .padding(40)
-            .background(
-                RoundedRectangle(cornerRadius: 32, style: .continuous)
-                    .fill(.ultraThinMaterial)
-            )
-            .padding(20)
-            .transition(.scale.combined(with: .opacity))
+            .padding(30)
+            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .shadow(radius: 10)
         }
+        .transition(.opacity)
     }
 
     // MARK: - Logic
@@ -475,8 +426,6 @@ struct BatchSigningView: View {
                 batchProgress = 1.0
                 isSigningBatch = false
                 selectedApps.removeAll()
-                HapticsManager.shared.success()
-                ToastManager.shared.show("✅ Batch Signing Completed", type: .success)
             }
         }
     }

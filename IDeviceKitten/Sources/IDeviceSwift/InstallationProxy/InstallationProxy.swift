@@ -115,7 +115,7 @@ public class InstallationProxy: Identifiable, ObservableObject {
 				
 				if suspend {
 					DispatchQueue.main.async {
-						UIApplication.shared.perform(#selector(NSXPCConnection.suspend))
+						UIApplication.shared.perform(Selector(("suspend")))
 					}
 				}
 				
