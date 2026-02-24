@@ -107,14 +107,17 @@ struct CertificatesAddView: View {
                         .padding(.top, 8)
                     }
                 }
-                .blur(radius: _showSuccessCard ? 10 : 0)
-                .disabled(_showSuccessCard)
-
-                if _showSuccessCard, let cert = _addedCertInfo {
-                    successOverlay(cert: cert)
-                }
             }
             .navigationBarHidden(true)
+            .sheet(isPresented: $_showSuccessCard, onDismiss: {
+                dismiss()
+            }) {
+                if let cert = _addedCertInfo {
+                    CertificateSuccessSheet(cert: cert)
+                        .presentationDetents([.medium, .large])
+                        .presentationDragIndicator(.visible)
+                }
+            }
             .sheet(isPresented: $_isImportingP12Presenting) {
                 p12ImportSheet
             }
@@ -291,80 +294,6 @@ struct CertificatesAddView: View {
         }
         .disabled(saveButtonDisabled || _isSaving)
         .animation(.spring(), value: _isSaving)
-    }
-
-    // MARK: - Success Card
-    @ViewBuilder
-    private func successOverlay(cert: Certificate) -> some View {
-        ZStack {
-            Color.black.opacity(0.4)
-                .ignoresSafeArea()
-                .onTapGesture {
-                    dismiss()
-                }
-
-            VStack(spacing: 0) {
-                // Success Header
-                VStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(Color.green.opacity(0.1))
-                            .frame(width: 80, height: 80)
-
-                        Image(systemName: "checkmark.seal.fill")
-                            .font(.system(size: 40))
-                            .foregroundStyle(.green.gradient)
-                            .bounceEffect(true)
-                    }
-
-                    Text("Certificate Added!")
-                        .font(.system(.title2, design: .rounded).bold())
-
-                    Text("Your certificate has been imported successfully.")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                }
-                .padding(.top, 32)
-                .padding(.bottom, 24)
-
-                // Info Card
-                VStack(spacing: 16) {
-                    infoRow(title: "Team Name", value: cert.TeamName, icon: "person.2.fill")
-                    Divider()
-                    infoRow(title: "Team ID", value: cert.TeamIdentifier.first ?? "Unknown", icon: "number")
-                    Divider()
-                    infoRow(title: "Devices", value: cert.ProvisionsAllDevices == true ? "All (Enterprise)" : "\(cert.ProvisionedDevices?.count ?? 0) Devices", icon: "iphone")
-                    Divider()
-                    infoRow(title: "Expiry", value: cert.ExpirationDate.formatted(date: .abbreviated, time: .omitted), icon: "calendar")
-                    Divider()
-                    infoRow(title: "PPQ Status", value: cert.PPQCheck == true ? "Protected" : "None", icon: "shield.checkered", valueColor: cert.PPQCheck == true ? .green : .secondary)
-                }
-                .padding(20)
-                .background(Color(UIColor.secondarySystemGroupedBackground).opacity(0.5))
-                .clipShape(RoundedRectangle(cornerRadius: 20))
-                .padding(.horizontal, 24)
-
-                Button {
-                    dismiss()
-                } label: {
-                    Text("Done")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color.accentColor)
-                        .foregroundStyle(.white)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                }
-                .padding(24)
-            }
-            .background(.ultraThinMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
-            .shadow(color: .black.opacity(0.2), radius: 30, x: 0, y: 15)
-            .padding(24)
-            .transition(.scale.combined(with: .opacity))
-        }
     }
 
     private func infoRow(title: String, value: String, icon: String, valueColor: Color = .primary) -> some View {
@@ -664,6 +593,93 @@ extension CertificatesAddView {
 			)
 		}
 	}
+}
+
+// MARK: - Success Sheet
+struct CertificateSuccessSheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let cert: Certificate
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Success Header
+            VStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.green.opacity(0.1))
+                        .frame(width: 80, height: 80)
+
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 40))
+                        .foregroundStyle(.green.gradient)
+                        .bounceEffect(true)
+                }
+
+                Text("Certificate Added!")
+                    .font(.system(.title2, design: .rounded).bold())
+
+                Text("Your certificate has been imported successfully.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+            }
+            .padding(.top, 32)
+            .padding(.bottom, 24)
+
+            // Info Card
+            VStack(spacing: 16) {
+                infoRow(title: "Team Name", value: cert.TeamName, icon: "person.2.fill")
+                Divider()
+                infoRow(title: "Team ID", value: cert.TeamIdentifier.first ?? "Unknown", icon: "number")
+                Divider()
+                infoRow(title: "Devices", value: cert.ProvisionsAllDevices == true ? "All (Enterprise)" : "\(cert.ProvisionedDevices?.count ?? 0) Devices", icon: "iphone")
+                Divider()
+                infoRow(title: "Expiry", value: cert.ExpirationDate.formatted(date: .abbreviated, time: .omitted), icon: "calendar")
+                Divider()
+                infoRow(title: "PPQ Status", value: cert.PPQCheck == true ? "Protected" : "None", icon: "shield.checkered", valueColor: cert.PPQCheck == true ? .green : .secondary)
+            }
+            .padding(20)
+            .background(Color(UIColor.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .padding(.horizontal, 24)
+
+            Spacer()
+
+            Button {
+                dismiss()
+            } label: {
+                Text("Done")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.accentColor)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .padding(24)
+        }
+        .background(Color(UIColor.systemGroupedBackground))
+    }
+
+    private func infoRow(title: String, value: String, icon: String, valueColor: Color = .primary) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundStyle(.secondary)
+                .frame(width: 20)
+
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Spacer()
+
+            Text(value)
+                .font(.subheadline.bold())
+                .foregroundStyle(valueColor)
+        }
+    }
 }
 
 // MARK: - Certificate Import Errors
