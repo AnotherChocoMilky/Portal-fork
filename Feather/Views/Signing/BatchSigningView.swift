@@ -63,6 +63,7 @@ struct BatchSigningView: View {
                         resultsSection
                     }
                 }
+                .listStyle(.insetGrouped)
                 .navigationTitle("Batch Signing")
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -171,6 +172,7 @@ struct BatchSigningView: View {
                             }
                         }
                         .buttonStyle(.plain)
+                        .padding(.vertical, 4)
 
                         Spacer()
 
@@ -208,48 +210,94 @@ struct BatchSigningView: View {
     }
 
     private var resultsSection: some View {
-        Section("Signing Results") {
+        Section {
             ForEach(batchResults) { result in
-                HStack(spacing: 12) {
-                    Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.circle.fill")
-                        .foregroundStyle(result.success ? .green : .red)
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(result.appName)
-                            .font(.subheadline.weight(.medium))
-                        Text(result.message)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-
-                    Spacer()
-
-                    if result.success, let link = result.installLink {
-                        Button("Install") {
-                            if let url = URL(string: link) {
-                                UIApplication.shared.open(url)
-                            }
-                        }
-                        .buttonStyle(.borderedProminent)
-                        .buttonBorderShape(.capsule)
-                        .controlSize(.small)
-                    }
-                }
+                resultRow(for: result)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
             }
 
             if batchResults.contains(where: { $0.success && $0.installLink != nil }) {
                 Button {
                     installAllSigned()
                 } label: {
-                    Label("Install All Signed", systemImage: "arrow.down.circle.fill")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
+                    HStack {
+                        Image(systemName: "arrow.down.circle.fill")
+                        Text("Install All Signed")
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.borderedProminent)
                 .tint(.accentColor)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+            }
+        } header: {
+            Text("Signing Results")
+                .font(.subheadline.bold())
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func resultRow(for result: BatchSignResult) -> some View {
+        HStack(spacing: 16) {
+            if let app = result.app {
+                FRAppIconView(app: app, size: 40)
+                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+            } else {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(Color(UIColor.tertiarySystemFill))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: "app.badge.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(result.appName)
+                    .font(.subheadline.bold())
+                    .lineLimit(1)
+
+                HStack(spacing: 4) {
+                    Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .font(.caption2)
+                        .foregroundStyle(result.success ? .green : .red)
+
+                    Text(result.message)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+
+            Spacer()
+
+            if result.success, let link = result.installLink {
+                Button {
+                    if let url = URL(string: link) {
+                        UIApplication.shared.open(url)
+                    }
+                } label: {
+                    Text("Install")
+                        .font(.caption.bold())
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Color.accentColor)
+                        .foregroundStyle(.white)
+                        .clipShape(Capsule())
+                }
+                .buttonStyle(.plain)
             }
         }
+        .padding(12)
+        .background(Color(UIColor.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
     }
 
     private var actionSection: some View {
@@ -258,46 +306,71 @@ struct BatchSigningView: View {
             Button {
                 startBatchSigning()
             } label: {
-                Text("Sign Selected Apps (\(selectedApps.count))")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(selectedApps.isEmpty || certificates.isEmpty || isSigningBatch ? Color.gray : Color.accentColor)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                HStack(spacing: 12) {
+                    Image(systemName: "signature")
+                    Text("Sign Selected Apps (\(selectedApps.count))")
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(selectedApps.isEmpty || certificates.isEmpty || isSigningBatch ? Color.gray : Color.accentColor)
+                .foregroundStyle(.white)
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .shadow(color: (selectedApps.isEmpty || certificates.isEmpty || isSigningBatch) ? .clear : Color.accentColor.opacity(0.3), radius: 10, y: 5)
             }
             .disabled(selectedApps.isEmpty || certificates.isEmpty || isSigningBatch)
             .padding()
         }
-        .background(Color(UIColor.systemBackground))
+        .background(.ultraThinMaterial)
     }
 
     private var progressOverlay: some View {
         ZStack {
-            Color(UIColor.systemBackground).opacity(0.8)
+            Color.black.opacity(0.4)
                 .ignoresSafeArea()
 
-            VStack(spacing: 20) {
-                ProgressView(value: batchProgress) {
-                    VStack(spacing: 10) {
-                        Text(currentPhase == .signing ? "Signing Apps..." : "Installing Apps...")
-                            .font(.headline)
-                        Text(currentSigningApp)
-                            .font(.subheadline)
+            VStack(spacing: 24) {
+                ZStack {
+                    Circle()
+                        .stroke(Color.accentColor.opacity(0.1), lineWidth: 8)
+                        .frame(width: 100, height: 100)
+
+                    Circle()
+                        .trim(from: 0, to: batchProgress)
+                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                        .frame(width: 100, height: 100)
+                        .rotationEffect(.degrees(-90))
+
+                    VStack(spacing: 2) {
+                        Text("\(Int(batchProgress * 100))%")
+                            .font(.system(.title3, design: .rounded).bold())
+                        Text(currentPhase == .signing ? "Signing" : "Installing")
+                            .font(.system(size: 10, weight: .semibold))
+                            .textCase(.uppercase)
                             .foregroundStyle(.secondary)
                     }
                 }
-                .progressViewStyle(.circular)
+                .shadow(color: Color.accentColor.opacity(0.3), radius: 10)
 
-                Text("\(Int(batchProgress * 100))%")
-                    .font(.caption.monospaced().bold())
+                VStack(spacing: 8) {
+                    Text(currentSigningApp)
+                        .font(.headline)
+                        .multilineTextAlignment(.center)
+                        .lineLimit(2)
+
+                    Text(currentPhase == .signing ? "Signing Apps..." : "Installing Apps...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
             }
-            .padding(30)
-            .background(Color(UIColor.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 20))
-            .shadow(radius: 10)
+            .padding(32)
+            .frame(width: 280)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+            .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
         }
         .transition(.opacity)
+        .animation(.spring(), value: batchProgress)
     }
 
     // MARK: - Logic
