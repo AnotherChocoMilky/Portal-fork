@@ -54,26 +54,29 @@ struct BatchSigningView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(UIColor.systemGroupedBackground)
-                    .ignoresSafeArea()
+                List {
+                    certificateSection
+                    optionsSection
+                    appSelectionSection
 
-                ScrollView {
-                    VStack(spacing: 20) {
-                        headerSection
-
-                        certificateSection
-
-                        optionsSection
-
-                        appSelectionSection
-
-                        if !batchResults.isEmpty {
-                            resultsSection
-                        }
-
-                        actionSection
-                            .padding(.bottom, 30)
+                    if !batchResults.isEmpty {
+                        resultsSection
                     }
+                }
+                .navigationTitle("Batch Signing")
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                    }
+                }
+                .safeAreaInset(edge: .bottom) {
+                    actionSection
                 }
 
                 // Progress Overlay
@@ -81,7 +84,6 @@ struct BatchSigningView: View {
                     progressOverlay
                 }
             }
-            .navigationBarHidden(true)
             .sheet(isPresented: $showEditSheet) {
                 if let appId = editingAppId,
                    let app = apps.first(where: { $0.uuid == appId }) {
@@ -102,205 +104,150 @@ struct BatchSigningView: View {
 
     // MARK: - Subviews
 
-    private var headerSection: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Batch Signing")
-                    .font(.system(.largeTitle, design: .rounded).bold())
-                Text("Sign multiple apps at once")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.title)
-                    .foregroundStyle(.secondary)
-                    .symbolRenderingMode(.hierarchical)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.horizontal)
-        .padding(.top, 20)
-    }
-
     private var certificateSection: some View {
-        BatchCard(title: "Signing Certificate", icon: "checkmark.seal.fill", iconColor: .blue) {
+        Section("Signing Certificate") {
             if certificates.isEmpty {
-                HStack(spacing: 12) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.orange)
-                    Text("No Certificates Available")
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                }
+                Label("No Certificates Available", systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.secondary)
             } else {
-                Menu {
+                Picker("Certificate", selection: $selectedCertificateIndex) {
                     ForEach(Array(certificates.enumerated()), id: \.element.uuid) { index, cert in
-                        Button {
-                            selectedCertificateIndex = index
-                        } label: {
-                            HStack {
-                                if selectedCertificateIndex == index {
-                                    Image(systemName: "checkmark")
-                                }
-                                Text(cert.nickname ?? "Certificate \(index + 1)")
-                            }
-                        }
-                    }
-                } label: {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(certificates[selectedCertificateIndex].nickname ?? "Certificate \(selectedCertificateIndex + 1)")
-                                .font(.headline)
-                                .foregroundStyle(.primary)
-                            Text("Tap to change")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Image(systemName: "chevron.up.chevron.down")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        Text(cert.nickname ?? "Certificate \(index + 1)").tag(index)
                     }
                 }
+                .pickerStyle(.navigationLink)
             }
         }
     }
 
     private var optionsSection: some View {
-        BatchCard(title: "Batch Options", icon: "gearshape.fill", iconColor: .gray) {
-            VStack(alignment: .leading, spacing: 12) {
-                Toggle(isOn: $autoInstall) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Auto Install")
-                            .font(.headline)
-                        Text("Install apps automatically after signing")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .tint(.accentColor)
-
-                Divider()
-
-                HStack {
-                    Image(systemName: "info.circle")
+        Section("Batch Options") {
+            Toggle(isOn: $autoInstall) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Auto Install")
+                        .font(.headline)
+                    Text("Install apps automatically after signing")
                         .font(.caption)
-                    Text("Apps will be signed using the selected certificate and global signing options unless customized.")
-                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
-                .foregroundStyle(.secondary)
             }
+            .tint(.accentColor)
+
+            Text("Apps will be signed using the selected certificate and global signing options unless customized.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 
     private var appSelectionSection: some View {
-        BatchCard(title: "Select Apps (\(selectedApps.count))", icon: "app.badge.checkmark.fill", iconColor: .green) {
-            VStack(spacing: 0) {
-                HStack {
-                    Spacer()
-                    Button(selectedApps.count == apps.count ? "Deselect All" : "Select All") {
-                        withAnimation {
-                            if selectedApps.count == apps.count {
-                                selectedApps.removeAll()
-                            } else {
-                                selectedApps = Set(apps.compactMap { $0.uuid })
-                            }
-                        }
-                    }
-                    .font(.caption.bold())
-                }
-                .padding(.bottom, 8)
+        Section {
+            if apps.isEmpty {
+                Text("No Apps Available")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 20)
+            } else {
+                ForEach(apps, id: \.uuid) { app in
+                    HStack(spacing: 12) {
+                        Button {
+                            toggleAppSelection(app)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: selectedApps.contains(app.uuid ?? "") ? "checkmark.circle.fill" : "circle")
+                                    .font(.title3)
+                                    .foregroundStyle(selectedApps.contains(app.uuid ?? "") ? Color.accentColor : Color.secondary)
 
-                if apps.isEmpty {
-                    Text("No Apps Available")
-                        .foregroundStyle(.secondary)
-                        .padding(.vertical, 20)
-                } else {
-                    VStack(spacing: 12) {
-                        ForEach(apps, id: \.uuid) { app in
-                            BatchAppRowModern(
-                                app: app,
-                                isSelected: selectedApps.contains(app.uuid ?? ""),
-                                hasCustomOptions: appOptions[app.uuid ?? ""] != nil,
-                                onToggle: {
-                                    toggleAppSelection(app)
-                                },
-                                onEdit: {
-                                    editingAppId = app.uuid
-                                    showEditSheet = true
+                                FRAppIconView(app: app, size: 40)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(app.name ?? "Unknown App")
+                                        .font(.subheadline.bold())
+
+                                    Text(app.identifier ?? "Unknown Bundle ID")
+                                        .font(.caption.monospaced())
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
                                 }
-                            )
-
-                            if app.uuid != apps.last?.uuid {
-                                Divider()
                             }
+                        }
+                        .buttonStyle(.plain)
+
+                        Spacer()
+
+                        Button {
+                            editingAppId = app.uuid
+                            showEditSheet = true
+                        } label: {
+                            Image(systemName: "slider.horizontal.3")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(appOptions[app.uuid ?? ""] != nil ? .white : .accentColor)
+                                .padding(8)
+                                .background(appOptions[app.uuid ?? ""] != nil ? Color.orange : Color.accentColor.opacity(0.1), in: Circle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        } header: {
+            HStack {
+                Text("Select Apps (\(selectedApps.count))")
+                Spacer()
+                Button(selectedApps.count == apps.count ? "Deselect All" : "Select All") {
+                    withAnimation {
+                        if selectedApps.count == apps.count {
+                            selectedApps.removeAll()
+                        } else {
+                            selectedApps = Set(apps.compactMap { $0.uuid })
                         }
                     }
                 }
+                .font(.caption.bold())
+                .textCase(nil)
             }
         }
     }
 
     private var resultsSection: some View {
-        BatchCard(title: "Signing Results", icon: "checklist", iconColor: .purple) {
-            VStack(spacing: 12) {
-                ForEach(batchResults) { result in
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 12) {
-                            Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.circle.fill")
-                                .font(.title3)
-                                .foregroundStyle(result.success ? .green : .red)
+        Section("Signing Results") {
+            ForEach(batchResults) { result in
+                HStack(spacing: 12) {
+                    Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.circle.fill")
+                        .foregroundStyle(result.success ? .green : .red)
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(result.appName)
-                                    .font(.subheadline.weight(.medium))
-                                Text(result.message)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(result.appName)
+                            .font(.subheadline.weight(.medium))
+                        Text(result.message)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
 
-                            Spacer()
+                    Spacer()
 
-                            if result.success, let link = result.installLink {
-                                Button {
-                                    if let url = URL(string: link) {
-                                        UIApplication.shared.open(url)
-                                    }
-                                } label: {
-                                    Text("Install")
-                                        .font(.caption.bold())
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(Color.accentColor)
-                                        .foregroundStyle(.white)
-                                        .clipShape(Capsule())
-                                }
+                    if result.success, let link = result.installLink {
+                        Button("Install") {
+                            if let url = URL(string: link) {
+                                UIApplication.shared.open(url)
                             }
                         }
+                        .buttonStyle(.borderedProminent)
+                        .buttonBorderShape(.capsule)
+                        .controlSize(.small)
                     }
+                }
+            }
 
-                    if result.id != batchResults.last?.id {
-                        Divider()
-                    }
+            if batchResults.contains(where: { $0.success && $0.installLink != nil }) {
+                Button {
+                    installAllSigned()
+                } label: {
+                    Label("Install All Signed", systemImage: "arrow.down.circle.fill")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
                 }
-                
-                if batchResults.contains(where: { $0.success && $0.installLink != nil }) {
-                    Button {
-                        installAllSigned()
-                    } label: {
-                        Label("Install All Signed", systemImage: "arrow.down.circle.fill")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 10)
-                            .background(Color.accentColor.opacity(0.1))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    .padding(.top, 8)
-                }
+                .buttonStyle(.bordered)
+                .tint(.accentColor)
+                .listRowBackground(Color.clear)
             }
         }
     }
@@ -320,10 +267,10 @@ struct BatchSigningView: View {
             .background(selectedApps.isEmpty || certificates.isEmpty || isSigningBatch ? Color.gray : Color.accentColor)
             .foregroundStyle(.white)
             .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .shadow(color: Color.accentColor.opacity(0.3), radius: 10, y: 5)
         }
         .disabled(selectedApps.isEmpty || certificates.isEmpty || isSigningBatch)
-        .padding(.horizontal)
+        .padding()
+        .background(.ultraThinMaterial)
     }
 
     private var progressOverlay: some View {
@@ -598,84 +545,6 @@ struct BatchSigningView: View {
     }
 }
 
-// MARK: - Batch Card
-struct BatchCard<Content: View>: View {
-    let title: LocalizedStringKey
-    let icon: String
-    let iconColor: Color
-    @ViewBuilder let content: () -> Content
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.footnote.bold())
-                    .foregroundStyle(.white)
-                    .padding(6)
-                    .background(iconColor, in: Circle())
-                
-                Text(title)
-                    .font(.system(.subheadline, design: .rounded).bold())
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.horizontal, 4)
-
-            content()
-                .padding(16)
-                .background(Color(UIColor.secondarySystemGroupedBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .shadow(color: .black.opacity(0.03), radius: 5, x: 0, y: 2)
-        }
-        .padding(.horizontal)
-    }
-}
-
-// MARK: - Modern App Row
-struct BatchAppRowModern: View {
-    let app: AppInfoPresentable
-    let isSelected: Bool
-    let hasCustomOptions: Bool
-    let onToggle: () -> Void
-    let onEdit: () -> Void
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Button(action: onToggle) {
-                HStack(spacing: 12) {
-                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                        .font(.title3)
-                        .foregroundStyle(isSelected ? Color.accentColor : Color.secondary)
-                        .bounceEffect(isSelected)
-                    
-                    FRAppIconView(app: app, size: 45)
-                    
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(app.name ?? "Unknown App")
-                            .font(.system(.subheadline, design: .rounded).bold())
-                            .foregroundStyle(.primary)
-                        
-                        Text(app.identifier ?? "Unknown Bundle ID")
-                            .font(.system(.caption, design: .monospaced))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                }
-            }
-            .buttonStyle(.plain)
-            
-            Spacer()
-            
-            Button(action: onEdit) {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(hasCustomOptions ? .white : .accentColor)
-                    .padding(8)
-                    .background(hasCustomOptions ? Color.orange : Color.accentColor.opacity(0.1), in: Circle())
-            }
-            .buttonStyle(.plain)
-        }
-    }
-}
 
 // MARK: - Batch App Edit Sheet
 struct BatchAppEditSheet: View {
@@ -690,156 +559,79 @@ struct BatchAppEditSheet: View {
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 20) {
-                    header
-                    
-                    appInfoSection
-                    
-                    modificationSection
+            Form {
+                Section {
+                    VStack(spacing: 16) {
+                        FRAppIconView(app: app, size: 80)
+                            .shadow(radius: 5)
 
-                    tweakSection
-
-                    actionButtons
+                        VStack(spacing: 4) {
+                            Text(app.name ?? "Unknown")
+                                .font(.headline)
+                            Text(app.identifier ?? "Unknown")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical)
                 }
-                .padding(.vertical)
+                .listRowBackground(Color.clear)
+
+                Section("General") {
+                    TextField("App Name", text: $editedName)
+                    TextField("Bundle ID", text: $editedBundleId)
+                    TextField("Version", text: $editedVersion)
+                }
+
+                Section("Tweaks & Files") {
+                    NavigationLink {
+                        SigningTweaksView(options: $options)
+                    } label: {
+                        Label {
+                            Text("Injection Options")
+                        } icon: {
+                            Image(systemName: "wrench.and.screwdriver.fill")
+                                .foregroundStyle(.green)
+                        }
+                        .badge(options.injectionFiles.count > 0 ? "\(options.injectionFiles.count) Files" : "")
+                    }
+                }
+
+                Section {
+                    Button {
+                        saveAndDismiss()
+                    } label: {
+                        Text("Apply Changes")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .alignmentGuide(.leading) { _ in 0 }
+                    }
+                    .tint(.accentColor)
+
+                    Button(role: .destructive) {
+                        dismiss()
+                    } label: {
+                        Text("Discard")
+                            .frame(maxWidth: .infinity)
+                    }
+                }
             }
-            .background(Color(UIColor.systemGroupedBackground))
-            .navigationBarHidden(true)
+            .navigationTitle("Customize App")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Done") {
+                        saveAndDismiss()
+                    }
+                }
+            }
             .onAppear {
                 editedName = options.appName ?? app.name ?? ""
                 editedBundleId = options.appIdentifier ?? app.identifier ?? ""
                 editedVersion = options.appVersion ?? app.version ?? ""
             }
         }
-    }
-
-    private var header: some View {
-        HStack {
-            Text("Customize App")
-                .font(.system(.title2, design: .rounded).bold())
-            Spacer()
-            Button("Done") {
-                saveAndDismiss()
-            }
-            .font(.headline)
-        }
-        .padding(.horizontal)
-    }
-
-    private var appInfoSection: some View {
-        VStack(spacing: 16) {
-            FRAppIconView(app: app, size: 80)
-                .shadow(radius: 10)
-
-            VStack(spacing: 4) {
-                Text(app.name ?? "Unknown")
-                    .font(.headline)
-                Text(app.identifier ?? "Unknown")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .padding()
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        .padding(.horizontal)
-    }
-
-    private var modificationSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("General")
-                .font(.caption.bold())
-                .foregroundStyle(.secondary)
-                .padding(.leading)
-
-            VStack(spacing: 0) {
-                customTextField(title: "App Name", text: $editedName)
-                Divider().padding(.leading)
-                customTextField(title: "Bundle ID", text: $editedBundleId)
-                Divider().padding(.leading)
-                customTextField(title: "Version", text: $editedVersion)
-            }
-            .background(Color(UIColor.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .padding(.horizontal)
-        }
-    }
-
-    private var tweakSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Tweaks & Files")
-                .font(.caption.bold())
-                .foregroundStyle(.secondary)
-                .padding(.leading)
-
-            NavigationLink {
-                SigningTweaksView(options: $options)
-            } label: {
-                HStack {
-                    Image(systemName: "wrench.and.screwdriver.fill")
-                        .foregroundStyle(.green)
-                    Text("Injection Options")
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    if !options.injectionFiles.isEmpty {
-                        Text("\(options.injectionFiles.count) Files")
-                            .font(.caption.bold())
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.green.opacity(0.1), in: Capsule())
-                            .foregroundStyle(.green)
-                    }
-                    Image(systemName: "chevron.right")
-                        .font(.caption.bold())
-                        .foregroundStyle(.secondary)
-                }
-                .padding()
-                .background(Color(UIColor.secondarySystemGroupedBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                .padding(.horizontal)
-            }
-        }
-    }
-
-    private var actionButtons: some View {
-        VStack(spacing: 12) {
-            Button {
-                saveAndDismiss()
-            } label: {
-                Text("Apply Changes")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color.accentColor)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 16))
-            }
-
-            Button {
-                dismiss()
-            } label: {
-                Text("Discard")
-                    .font(.subheadline.bold())
-                    .foregroundStyle(.red)
-            }
-        }
-        .padding(.horizontal)
-        .padding(.top, 10)
-    }
-
-    private func customTextField(title: String, text: Binding<String>) -> some View {
-        HStack {
-            Text(title)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(width: 80, alignment: .leading)
-
-            TextField(title, text: text)
-                .font(.subheadline)
-        }
-        .padding()
     }
 
     private func saveAndDismiss() {
