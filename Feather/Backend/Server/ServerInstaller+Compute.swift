@@ -43,7 +43,7 @@ extension ServerInstaller {
 	}
 
 	var iTunesLink: String {
-		_iTunesLink(with: plistEndpoint.absoluteString)
+		_iTunesLink(with: externalServerLink)
 	}
 	
 	var iTunesLinkExternal: String {
