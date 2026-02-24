@@ -23,9 +23,6 @@ struct CertificatesAddView: View {
     @State private var _isImportingZipPresenting = false
     @State private var _isImportingPortalCertPresenting = false
     
-    @State private var _showSuccessCard = false
-    @State private var _addedCertInfo: Certificate? = nil
-
     var saveButtonDisabled: Bool {
         _p12URL == nil || _provisionURL == nil
     }
@@ -42,17 +39,15 @@ struct CertificatesAddView: View {
                         Text("Add Certificate")
                             .font(.system(.title, design: .rounded).bold())
                         Spacer()
-                        if !_showSuccessCard {
-                            Button {
-                                dismiss()
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .font(.title2)
-                                    .foregroundStyle(.secondary)
-                                    .symbolRenderingMode(.hierarchical)
-                            }
-                            .buttonStyle(.plain)
+                        Button {
+                            dismiss()
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.title2)
+                                .foregroundStyle(.secondary)
+                                .symbolRenderingMode(.hierarchical)
                         }
+                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 24)
@@ -60,54 +55,49 @@ struct CertificatesAddView: View {
 
                     ScrollView {
                         VStack(spacing: 24) {
-                            if _showSuccessCard, let cert = _addedCertInfo {
-                                successCard(cert: cert)
-                                    .transition(.asymmetric(insertion: .move(edge: .trailing).combined(with: .opacity), removal: .move(edge: .leading).combined(with: .opacity)))
-                            } else {
-                                // Method Picker
-                                HStack(spacing: 0) {
-                                    methodButton(title: "Manual", icon: "hand.tap.fill", tag: 0)
-                                    methodButton(title: "Portal Cert", icon: "shippingbox.fill", tag: 1, disabled: !usePortalCert)
-                                    methodButton(title: "ZIP File", icon: "doc.zipper", tag: 2)
-                                }
-                                .padding(4)
-                                .background(Color(UIColor.secondarySystemGroupedBackground))
-                                .clipShape(Capsule())
-                                .padding(.horizontal)
-
-                                if _selectedMethod == 0 {
-                                    manualFilesSection
-                                        .transition(.move(edge: .leading).combined(with: .opacity))
-                                } else if _selectedMethod == 1 {
-                                    portalCertSection
-                                        .transition(.opacity)
-                                } else {
-                                    zipSection
-                                        .transition(.move(edge: .trailing).combined(with: .opacity))
-                                }
-
-                                VStack(alignment: .leading, spacing: 16) {
-                                    Text("Configuration")
-                                        .font(.subheadline.bold())
-                                        .foregroundStyle(.secondary)
-                                        .padding(.leading, 8)
-
-                                    VStack(spacing: 0) {
-                                        passwordFieldSection
-                                        Divider().padding(.leading, 40)
-                                        nicknameFieldSection
-                                        Divider().padding(.leading, 40)
-                                        defaultSection
-                                    }
-                                    .background(Color(UIColor.secondarySystemGroupedBackground))
-                                    .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-                                }
-                                .padding(.horizontal)
-
-                                saveButton
-                                    .padding(.horizontal)
-                                    .padding(.bottom, 40)
+                            // Method Picker
+                            HStack(spacing: 0) {
+                                methodButton(title: "Manual", icon: "hand.tap.fill", tag: 0)
+                                methodButton(title: "Portal Cert", icon: "shippingbox.fill", tag: 1, disabled: !usePortalCert)
+                                methodButton(title: "ZIP File", icon: "doc.zipper", tag: 2)
                             }
+                            .padding(4)
+                            .background(Color(UIColor.secondarySystemGroupedBackground))
+                            .clipShape(Capsule())
+                            .padding(.horizontal)
+
+                            if _selectedMethod == 0 {
+                                manualFilesSection
+                                    .transition(.move(edge: .leading).combined(with: .opacity))
+                            } else if _selectedMethod == 1 {
+                                portalCertSection
+                                    .transition(.opacity)
+                            } else {
+                                zipSection
+                                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                            }
+
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("Configuration")
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(.secondary)
+                                    .padding(.leading, 8)
+
+                                VStack(spacing: 0) {
+                                    passwordFieldSection
+                                    Divider().padding(.leading, 40)
+                                    nicknameFieldSection
+                                    Divider().padding(.leading, 40)
+                                    defaultSection
+                                }
+                                .background(Color(UIColor.secondarySystemGroupedBackground))
+                                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            }
+                            .padding(.horizontal)
+
+                            saveButton
+                                .padding(.horizontal)
+                                .padding(.bottom, 40)
                         }
                         .padding(.top, 8)
                     }
@@ -292,25 +282,6 @@ struct CertificatesAddView: View {
         .animation(.spring(), value: _isSaving)
     }
 
-    private func infoRow(title: String, value: String, icon: String, valueColor: Color = .primary) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 14))
-                .foregroundStyle(.secondary)
-                .frame(width: 20)
-
-            Text(title)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-
-            Spacer()
-
-            Text(value)
-                .font(.subheadline.bold())
-                .foregroundStyle(valueColor)
-        }
-    }
-
     // MARK: - Helper Views
     private func methodButton(title: String, icon: String, tag: Int, disabled: Bool = false) -> some View {
         let isSelected = _selectedMethod == tag
@@ -341,60 +312,6 @@ struct CertificatesAddView: View {
         .buttonStyle(.plain)
         .disabled(disabled)
         .opacity(disabled ? 0.5 : 1.0)
-    }
-
-    @ViewBuilder
-    private func successCard(cert: Certificate) -> some View {
-        VStack(spacing: 24) {
-            VStack(spacing: 12) {
-                ZStack {
-                    Circle()
-                        .fill(Color.green.opacity(0.1))
-                        .frame(width: 80, height: 80)
-
-                    Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 40))
-                        .foregroundStyle(.green.gradient)
-                }
-
-                Text("Certificate Added!")
-                    .font(.system(.title2, design: .rounded).bold())
-
-                Text("Your certificate has been imported successfully.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal)
-            }
-            .padding(.top, 8)
-
-            VStack(spacing: 0) {
-                infoRow(title: "Team Name", value: cert.TeamName, icon: "person.2.fill")
-                    .padding()
-                Divider().padding(.leading, 44)
-                infoRow(title: "Team ID", value: cert.TeamIdentifier.first ?? "Unknown", icon: "number")
-                    .padding()
-                Divider().padding(.leading, 44)
-                infoRow(title: "Expiry", value: cert.ExpirationDate.formatted(date: .abbreviated, time: .omitted), icon: "calendar")
-                    .padding()
-            }
-            .background(Color(UIColor.secondarySystemGroupedBackground))
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-
-            Button {
-                dismiss()
-            } label: {
-                Text("Done")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color.accentColor)
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                    .shadow(color: Color.accentColor.opacity(0.3), radius: 10, y: 5)
-            }
-        }
-        .padding(.horizontal)
     }
 
     private func fileRowModern(title: String, subtitle: String?, icon: String, color: Color, action: @escaping () -> Void) -> some View {
@@ -554,16 +471,8 @@ extension CertificatesAddView {
 			isDefault: _isDefault
 		) { error in
             if error == nil {
-                // Read cert info for success card using state variable to ensure scope
-                if let url = _provisionURL {
-                    let reader = CertificateReader(url)
-                    _addedCertInfo = reader.decoded
-                }
-
-                withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
-                    _showSuccessCard = true
-                }
                 HapticsManager.shared.success()
+                dismiss()
             } else {
                 UIAlertController.showAlertWithOk(title: "Error", message: error?.localizedDescription ?? "Unknown error")
             }
