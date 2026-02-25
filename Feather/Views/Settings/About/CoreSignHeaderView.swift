@@ -102,6 +102,10 @@ struct CoreSignHeaderView: View {
                     )
             }
 
+            Text("\(UIDevice.current.humanReadableModelName) • \(UIDevice.current.systemVersion) • \(Bundle.main.bundleIdentifier ?? "com.feather.portal")")
+                .font(.system(size: 10, weight: .medium, design: .monospaced))
+                .foregroundStyle(Color.accentColor.opacity(0.5))
+
             Text(currentSubtitle)
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
