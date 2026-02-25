@@ -1,6 +1,7 @@
 import SwiftUI
 import NimbleViews
 import UniformTypeIdentifiers
+import CoreTransferable
 
 struct RepoMeta: Codable {
     var repoName: String
@@ -165,10 +166,16 @@ struct SavedRepoSource: Codable, Identifiable {
     var source: RepoSource
 }
 
-struct SourceDocument: FileDocument, Identifiable {
+struct SourceDocument: FileDocument, Transferable, Identifiable {
     var id = UUID()
     static var readableContentTypes: [UTType] = [.json]
     var text: String
+
+    static var transferRepresentation: some TransferRepresentation {
+        DataRepresentation(exportedContentType: .json) { document in
+            document.text.data(using: .utf8)!
+        }
+    }
 
     init(text: String) {
         self.text = text
@@ -270,6 +277,7 @@ struct RepoBuilder: View {
     @State private var showingAddApp = false
     @State private var showingGuide = false
     @State private var showingImportPicker = false
+    @State private var showingExportDialog = false
     @State private var exportDocument: SourceDocument?
     @State private var editingApp: RepoApp?
 
@@ -280,7 +288,7 @@ struct RepoBuilder: View {
         get {
             (try? JSONDecoder().decode([SavedRepoSource].self, from: savedSourcesData)) ?? []
         }
-        set {
+        nonmutating set {
             if let data = try? JSONEncoder().encode(newValue) {
                 savedSourcesData = data
             }
@@ -372,6 +380,7 @@ struct RepoBuilder: View {
 
                             Button {
                                 exportDocument = SourceDocument(text: generatedJSON)
+                                showingExportDialog = true
                             } label: {
                                 Label(String.localized("Export"), systemImage: "square.and.arrow.up")
                             }
@@ -455,7 +464,8 @@ struct RepoBuilder: View {
                 .ignoresSafeArea()
             }
             .fileExporter(
-                item: $exportDocument,
+                isPresented: $showingExportDialog,
+                item: exportDocument,
                 contentTypes: [.json],
                 defaultFilename: "\(repoName.isEmpty ? "repo" : repoName).json"
             ) { result in
