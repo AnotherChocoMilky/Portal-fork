@@ -67,7 +67,7 @@ struct ConflictResolverView: View {
                         Image(systemName: "exclamationmark.shield.fill")
                             .font(.system(size: 50))
                             .foregroundStyle(.orange)
-                            .ifAvailableiOS18SymbolPulse()
+                            .ifAvailableiOS17SymbolPulse()
                     }
                     
                     VStack(spacing: 8) {

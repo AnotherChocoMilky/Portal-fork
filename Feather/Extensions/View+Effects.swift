@@ -43,9 +43,7 @@ extension View {
 
     @ViewBuilder
     func bounceEffect() -> some View {
-        if #available(iOS 18.0, *) {
-            self.symbolEffect(.bounce, options: .repeating)
-        } else if #available(iOS 17.0, *) {
+        if #available(iOS 17.0, *) {
             self.symbolEffect(.bounce)
         } else {
             self
@@ -61,8 +59,8 @@ extension View {
     }
 
     @ViewBuilder
-    func ifAvailableiOS18SymbolPulse() -> some View {
-        if #available(iOS 18, *) {
+    func ifAvailableiOS17SymbolPulse() -> some View {
+        if #available(iOS 17.0, *) {
             self.symbolEffect(.pulse)
         } else {
             self

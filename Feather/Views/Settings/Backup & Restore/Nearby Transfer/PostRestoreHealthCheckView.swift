@@ -69,7 +69,7 @@ struct PostRestoreHealthCheckView: View {
                                 Image(systemName: viewModel.healthIcon)
                                     .font(.system(size: 50))
                                     .foregroundStyle(viewModel.healthColor)
-                                    .ifAvailableiOS18SymbolPulse()
+                                    .ifAvailableiOS17SymbolPulse()
                             }
 
                             VStack(spacing: 6) {
