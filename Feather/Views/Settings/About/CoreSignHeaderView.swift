@@ -88,8 +88,7 @@ struct CoreSignHeaderView: View {
                 .background(Color.primary.opacity(0.05))
                 .clipShape(Capsule())
 
-                // Release Label (Modern capsule badge)
-                Text("RELEASE")
+                Text("Release")
                     .font(.system(size: 10, weight: .bold))
                     .kerning(1.0)
                     .padding(.horizontal, 10)
@@ -103,7 +102,6 @@ struct CoreSignHeaderView: View {
                     )
             }
 
-            // Subtexts (Secondary Text)
             Text(currentSubtitle)
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
@@ -111,7 +109,6 @@ struct CoreSignHeaderView: View {
                 .id(currentSubtitleIndex)
                 .padding(.top, 4)
             
-            // Action Buttons
             if !hideAboutButton {
                 creditsButton
                     .padding(.top, 4)
@@ -128,7 +125,6 @@ struct CoreSignHeaderView: View {
         )
     }
     
-    // MARK: - App Icon
     @ViewBuilder
     private var appIcon: some View {
         ZStack {
@@ -157,7 +153,6 @@ struct CoreSignHeaderView: View {
         )
     }
     
-    // MARK: - Credits Button
     private var creditsButton: some View {
         Button {
             showCredits = true
@@ -178,7 +173,6 @@ struct CoreSignHeaderView: View {
         }
     }
 
-    // MARK: - Lifecycle Observers
     private func setupLifecycleObservers() {
         NotificationCenter.default.addObserver(
             forName: UIApplication.didBecomeActiveNotification,
@@ -189,7 +183,6 @@ struct CoreSignHeaderView: View {
         }
     }
 
-    // MARK: - Subtitle Rotation
     private func rotateSubtitle() {
         let subtitles = HeaderSubtitle.allSubtitles
         guard !subtitles.isEmpty else { return }
@@ -209,7 +202,6 @@ struct CoreSignHeaderView: View {
         }
     }
 
-    /// Public method to trigger subtitle rotation (call this when tab changes)
     func onTabChange() {
         rotateSubtitle()
     }
@@ -217,7 +209,6 @@ struct CoreSignHeaderView: View {
 
 // MARK: - easy to add header subtitles because i cbf to find the localizedstrings lmao
 enum HeaderSubtitle {
-    /// Default subtitle shown if array is empty
     static let defaultSubtitle = "the modern signer"
 
     static var allSubtitles: [String] = [
@@ -264,25 +255,21 @@ enum HeaderSubtitle {
         "other forgotten signers",
     ]
     
-    /// Add a new subtitle at runtime
     static func add(_ subtitle: String) {
         allSubtitles.append(subtitle)
     }
-    
-    /// Remove a subtitle at runtime
+
     static func remove(_ subtitle: String) {
         allSubtitles.removeAll { $0 == subtitle }
     }
 }
 
-// MARK: - Safe Array Access
 private extension Array {
     subscript(safe index: Int) -> Element? {
         indices.contains(index) ? self[index] : nil
     }
 }
 
-// MARK: - Preview
 #Preview {
     CoreSignHeaderView()
         .padding()

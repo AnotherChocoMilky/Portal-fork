@@ -1425,8 +1425,8 @@ struct InfoPlistEntriesView: View {
                         color: .gray
                     ) {
                         PresetButton(
-                            title: .localized("Enable JIT"),
-                            subtitle: .localized("Allow Just-In-Time compilation. Requires a Developer certificate so the get-task entitlement can be present."),
+                            title: .localized("Enable JIT (Beta) "),
+                            subtitle: .localized("Allow Just-In-Time compilation. Requires a Developer certificate so the get-task-allow entitlement can be present when signing."),
                             icon: "bolt.fill",
                             color: .orange
                         ) {

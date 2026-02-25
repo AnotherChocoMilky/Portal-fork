@@ -317,7 +317,7 @@ struct RepoBuilder: View {
                         VStack(alignment: .leading) {
                             Text(String.localized("Create AltSource"))
                                 .bold()
-                            Text(String.localized("Generate a standard AltStore compatible source without Feather metadata."))
+                            Text(String.localized("Generate a standard AltStore compatible source."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -401,7 +401,7 @@ struct RepoBuilder: View {
                             Menu {
                                 Button {
                                     UIPasteboard.general.string = generatedJSON
-                                    ToastManager.shared.show(String.localized("Copied to clipboard!"), type: .success)
+                                    ToastManager.shared.show(String.localized("Copied To Clipboard!"), type: .success)
                                 } label: {
                                     Label(String.localized("Copy"), systemImage: "doc.on.doc")
                                 }
@@ -460,7 +460,7 @@ struct RepoBuilder: View {
 
                                 Button {
                                     UIPasteboard.general.string = encodeSource(saved.source)
-                                    ToastManager.shared.show(String.localized("Copied to clipboard!"), type: .success)
+                                    ToastManager.shared.show(String.localized("Copied To Clipboard!"), type: .success)
                                 } label: {
                                     Label(String.localized("Copy"), systemImage: "doc.on.doc")
                                 }

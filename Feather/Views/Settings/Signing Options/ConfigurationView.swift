@@ -17,7 +17,7 @@ struct ConfigurationView: View {
                 Button {
                     showInstallationOptions = true
                 } label: {
-                    Label("Installation Options", systemImage: "arrow.down.app.fill")
+                    Label("Installation Options", systemImage: "tray.and.arrow.down.fill")
                 }
                 .foregroundStyle(.primary)
                 

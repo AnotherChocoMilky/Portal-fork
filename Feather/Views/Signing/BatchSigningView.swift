@@ -127,7 +127,7 @@ struct BatchSigningView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Auto Install")
                         .font(.headline)
-                    Text("Install apps automatically after signing")
+                    Text("Install apps automatically after signing all selected apps.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

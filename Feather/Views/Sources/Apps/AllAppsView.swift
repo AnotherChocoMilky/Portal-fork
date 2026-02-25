@@ -188,7 +188,7 @@ struct AllAppsView: View {
                     ProgressView()
                         .scaleEffect(1.5)
                         .padding()
-                    Text("Searching...")
+                    Text("Loading...")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -795,7 +795,7 @@ struct AllAppsRowView: View {
 		if app.beta ?? false {
 			return "Beta"
 		} else if let _ = app.developer {
-			return "Official"
+			return "Public"
 		}
 		return ""
 	}

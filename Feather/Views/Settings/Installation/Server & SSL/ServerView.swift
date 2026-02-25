@@ -63,7 +63,7 @@ extension ServerView {
 			switch self {
 			case .fullyLocal: return "iphone"
 			case .semiLocal: return "cloud"
-			case .semiLocalBackground: return "cloud.fill"
+			case .semiLocalBackground: return "externaldrive.badge.icloud"
 			}
 		}
 		
@@ -163,7 +163,7 @@ struct ServerView: View {
 								.fill(Color.orange.opacity(0.15))
 								.frame(width: 32, height: 32)
 							
-							Image(systemName: "lifepreserver")
+							Image(systemName: "extrernaldrive.fill.badge.checkmark")
 								.font(.system(size: 14, weight: .semibold))
 								.foregroundStyle(.orange)
 						}

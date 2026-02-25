@@ -272,7 +272,7 @@ struct SourcesAddView: View {
 			
 			VStack(alignment: .leading, spacing: 6) {
 				Label(.localized("Only AltStore repositories are supported."), systemImage: "info.circle.fill")
-				Label(.localized("Supports AltStore, MapleSign, and ESign imports."), systemImage: "arrow.triangle.2.circlepath")
+				Label(.localized("Supports AltStore and ESign imports."), systemImage: "arrow.triangle.2.circlepath")
 			}
 			.font(.system(size: 12, weight: .semibold, design: .rounded))
 			.foregroundStyle(.secondary.opacity(0.8))
@@ -298,8 +298,6 @@ struct SourcesAddView: View {
 		}
 		.buttonStyle(.plain)
 	}
-	// KravaShit lmaoo
-	// MARK: - Featured Sources Section
 	@ViewBuilder
 	private var _featuredSourcesSection: some View {
 		if _isFetchingRecommended {

@@ -111,7 +111,7 @@ struct SettingsView: View {
                                 Text("Refreshing Sources")
                                     .font(.system(size: 16, weight: .bold, design: .rounded))
 
-                                Text(sourcesViewModel.fetchProgress < 1.0 ? "Downloading repository data..." : "Finalizing updates...")
+                                Text(sourcesViewModel.fetchProgress < 1.0 ? "Downloading Repository Data..." : "Finalizing Updates...")
                                     .font(.system(size: 12))
                                     .foregroundStyle(.secondary)
                             }
@@ -132,7 +132,7 @@ struct SettingsView: View {
                             Label("\(sourcesViewModel.sources.count) Loaded", systemImage: "tray.full.fill")
                             Spacer()
                             if sourcesViewModel.fetchProgress < 1.0 {
-                                Text("Step \(Int(sourcesViewModel.fetchProgress * Double(_sources.count))) of \(_sources.count)")
+                                Text("Step \(Int(sourcesViewModel.fetchProgress * Double(_sources.count))) Of \(_sources.count)")
                             }
                         }
                         .font(.system(size: 11, weight: .medium))
@@ -198,7 +198,7 @@ struct SettingsView: View {
                 SettingsRow(icon: "folder.fill", title: String.localized("Files"), color: .accentColor, destination: FilesSettingsView())
             }
             if !hideManager.isHidden("settings.addSource") {
-                SettingsActionRow(icon: "plus.circle.fill", title: String.localized("Add Source"), color: .accentColor) {
+                SettingsActionRow(icon: "binoculars.circle.fill", title: String.localized("Sources"), color: .accentColor) {
                     _showAddSource = true
                 }
             }
@@ -210,11 +210,11 @@ struct SettingsView: View {
                 SettingsRow(icon: "externaldrive.fill.badge.timemachine", title: String.localized("Backup & Restore"), color: .accentColor, destination: BackupRestoreView())
             }
             if !hideManager.isHidden("settings.logs") {
-                SettingsRow(icon: "terminal.fill", title: String.localized("Logs"), color: .accentColor, destination: AppLogsView())
+                SettingsRow(icon: "ecg.text.page", title: String.localized("Logs"), color: .accentColor, destination: AppLogsView())
             }
 
             if !hideManager.isHidden("settings.repoBuilder") {
-                SettingsRow(icon: "hammer.fill", title: String.localized("Repository Builder"), color: .accentColor, destination: RepoBuilder())
+                SettingsRow(icon: "list.star", title: String.localized("Repository Builder"), color: .accentColor, destination: RepoBuilder())
             }
 
             if !hideManager.isHidden("settings.fetchData") {
@@ -240,7 +240,7 @@ struct SettingsView: View {
                 HStack(spacing: 8) {
                     SettingsRowContent(icon: "person.text.rectangle.fill", title: String.localized("Save Data To Device"), color: .accentColor)
 
-                    Text("BETA")
+                    Text("Beta")
                         .font(.system(size: 8, weight: .bold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 6)
