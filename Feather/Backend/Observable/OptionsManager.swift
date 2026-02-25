@@ -134,6 +134,8 @@ struct Options: Codable, Equatable {
 	var cloneApp: Bool
 	/// Random string for app cloning
 	var cloneString: String
+	/// Support for large applications (3GB+)
+	var supportBigApps: Bool
 	
 	// MARK: Experiments
 	
@@ -155,7 +157,7 @@ struct Options: Codable, Equatable {
 		case removeProvisioning, changeLanguageFilesForCustomDisplayName, customInfoPlistEntries, customInfoPlistFile
 		case removedCapabilities, customURLSchemes, cloneApp, cloneString
 		case experiment_supportLiquidGlass, experiment_replaceSubstrateWithEllekit
-		case post_installAppAfterSigned, post_deleteAppAfterSigned
+		case post_installAppAfterSigned, post_deleteAppAfterSigned, supportBigApps
 	}
 
 	init(from decoder: Decoder) throws {
@@ -191,6 +193,7 @@ struct Options: Codable, Equatable {
 		customURLSchemes = try container.decode([String].self, forKey: .customURLSchemes)
 		cloneApp = try container.decodeIfPresent(Bool.self, forKey: .cloneApp) ?? false
 		cloneString = try container.decodeIfPresent(String.self, forKey: .cloneString) ?? Options.randomCloneString()
+		supportBigApps = try container.decodeIfPresent(Bool.self, forKey: .supportBigApps) ?? false
 		experiment_supportLiquidGlass = try container.decode(Bool.self, forKey: .experiment_supportLiquidGlass)
 		experiment_replaceSubstrateWithEllekit = try container.decode(Bool.self, forKey: .experiment_replaceSubstrateWithEllekit)
 		post_installAppAfterSigned = try container.decode(Bool.self, forKey: .post_installAppAfterSigned)
@@ -207,6 +210,7 @@ struct Options: Codable, Equatable {
 		removeURLScheme: Bool = false, removeProvisioning: Bool = false, changeLanguageFilesForCustomDisplayName: Bool = false,
 		customInfoPlistEntries: [String: AnyCodable] = [:], customInfoPlistFile: URL? = nil, removedCapabilities: [String] = [],
 		customURLSchemes: [String] = [], cloneApp: Bool = false, cloneString: String = randomCloneString(),
+		supportBigApps: Bool = false,
 		experiment_supportLiquidGlass: Bool = false, experiment_replaceSubstrateWithEllekit: Bool = false,
 		post_installAppAfterSigned: Bool = false, post_deleteAppAfterSigned: Bool = false
 	) {
@@ -241,6 +245,7 @@ struct Options: Codable, Equatable {
 		self.customURLSchemes = customURLSchemes
 		self.cloneApp = cloneApp
 		self.cloneString = cloneString
+		self.supportBigApps = supportBigApps
 		self.experiment_supportLiquidGlass = experiment_supportLiquidGlass
 		self.experiment_replaceSubstrateWithEllekit = experiment_replaceSubstrateWithEllekit
 		self.post_installAppAfterSigned = post_installAppAfterSigned
@@ -282,6 +287,7 @@ struct Options: Codable, Equatable {
 		customURLSchemes: [],
 		cloneApp: false,
 		cloneString: randomCloneString(),
+		supportBigApps: false,
 		
 		// MARK: Experiments
 		

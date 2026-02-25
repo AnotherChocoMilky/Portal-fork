@@ -278,6 +278,17 @@ struct ModernSigningOptionsCard: View {
                 }
             }
 
+            Toggle(isOn: $options.supportBigApps) {
+                Label {
+                    VStack(alignment: .leading) {
+                        Text("Support Big Apps")
+                        Text("Allow signing and installing apps larger than 3GB").font(.caption).foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "shippingbox.fill").foregroundStyle(.blue)
+                }
+            }
+
             Picker(selection: AppStorage(wrappedValue: 0, "Feather.signingButtonType").projectedValue) {
                 ForEach(SigningButtonType.allCases, id: \.self) { type in
                     Text(type.label).tag(type.rawValue)

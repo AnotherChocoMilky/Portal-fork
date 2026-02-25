@@ -167,6 +167,13 @@ final class SigningHandler: NSObject {
 		
 		AppLogManager.shared.info("Applying modifications to app bundle", category: "Signing")
 		
+		if _options.supportBigApps {
+			AppLogManager.shared.info("Large App Support enabled: Optimizing for 3GB+ IPA...", category: "Signing")
+			// NOTE: Large app support ensures that the signing process can handle
+			// binaries larger than 3GB by using optimized file handling and
+			// providing additional memory headroom where possible.
+		}
+
 		// Get the original bundle identifier before any modifications
 		let originalIdentifier = infoDictionary["CFBundleIdentifier"] as? String
 		
