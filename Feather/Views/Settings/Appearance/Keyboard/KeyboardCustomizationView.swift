@@ -251,6 +251,60 @@ struct KeyboardCustomizationView: View {
 
                 Section {
                     VStack(alignment: .leading, spacing: 8) {
+                        AppearanceRowLabel(icon: "rectangle.3.group", title: "Layout Density", color: .indigo)
+                        Text("Adjust how tightly the keys are packed together.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Slider(value: $manager.layoutDensity, in: 0...1)
+                    }
+                    .padding(.vertical, 4)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        AppearanceRowLabel(icon: "square.dashed", title: "Key Corner Radius: \(Int(manager.keyCornerRadius))", color: .orange)
+                        Text("Change the roundness of individual keyboard keys.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Slider(value: $manager.keyCornerRadius, in: 0...20)
+                    }
+                    .padding(.vertical, 4)
+
+                    Picker(selection: $manager.fontWeight) {
+                        Text("Regular").tag("Regular")
+                        Text("Medium").tag("Medium")
+                        Text("Semibold").tag("Semibold")
+                        Text("Bold").tag("Bold")
+                    } label: {
+                        AppearanceRowLabel(icon: "textformat", title: "Font Weight", color: .blue)
+                    }
+                } header: {
+                    AppearanceSectionHeader(title: "Keyboard Layout", icon: "keyboard")
+                }
+
+                Section {
+                    ColorPicker(selection: Binding(
+                        get: { Color(hex: manager.accentColor) },
+                        set: { manager.accentColor = $0.toHex() ?? "#007AFF" }
+                    )) {
+                        AppearanceRowLabel(icon: "paintpalette.fill", title: "Accent Color", color: .pink)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        AppearanceRowLabel(icon: "speedometer", title: "Animation Intensity: \(String(format: "%.1f", manager.animationIntensity))", color: .red)
+                        Text("Control the strength of background motion and shifts.")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Slider(value: $manager.animationIntensity, in: 0...2, step: 0.1)
+                    }
+                    .padding(.vertical, 4)
+
+                    Toggle(isOn: $manager.hapticEnabled) {
+                        AppearanceRowLabel(icon: "waveform.path.ecg", title: "Haptic Feedback", color: .green)
+                    }
+                } header: {
+                    AppearanceSectionHeader(title: "Advanced Settings", icon: "slider.horizontal.3")
+                }
+                Section {
+                    VStack(alignment: .leading, spacing: 8) {
                         AppearanceRowLabel(icon: "drop", title: "Opacity: \(Int(manager.opacity * 100))%", color: .blue)
                         Text("Set the overall transparency of the keyboard backdrop layer.")
                             .font(.caption2)
