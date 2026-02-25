@@ -163,6 +163,7 @@ struct RepoApp: Codable, Identifiable {
 struct SavedRepoSource: Codable, Identifiable {
     var id = UUID()
     var date = Date()
+    var name: String?
     var source: RepoSource
 }
 
@@ -284,6 +285,11 @@ struct RepoBuilder: View {
     @State private var generatedJSON = ""
     @State private var showingSuccessAlert = false
 
+    @State private var selectedSavedSource: SavedRepoSource?
+    @State private var showingSaveNameAlert = false
+    @State private var saveName = ""
+    @State private var showingEditWarning = false
+
     var savedSources: [SavedRepoSource] {
         get {
             (try? JSONDecoder().decode([SavedRepoSource].self, from: savedSourcesData)) ?? []
@@ -314,6 +320,33 @@ struct RepoBuilder: View {
                             Text(String.localized("Generate a standard AltStore compatible source without Feather metadata."))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+
+                if let selected = selectedSavedSource {
+                    Section(header: Text(String.localized("Saved Source JSON"))) {
+                        TextEditor(text: .constant(encodeSource(selected.source)))
+                            .font(.system(.caption, design: .monospaced))
+                            .frame(minHeight: 200)
+
+                        HStack {
+                            Button {
+                                showingEditWarning = true
+                            } label: {
+                                Label(String.localized("Edit"), systemImage: "pencil")
+                            }
+                            .buttonStyle(.bordered)
+
+                            Spacer()
+
+                            Button {
+                                withAnimation {
+                                    selectedSavedSource = nil
+                                }
+                            } label: {
+                                Text(String.localized("Close"))
+                            }
                         }
                     }
                 }
@@ -363,28 +396,33 @@ struct RepoBuilder: View {
                             .frame(minHeight: 200)
 
                         HStack {
-                            Button {
-                                UIPasteboard.general.string = generatedJSON
-                                ToastManager.shared.show(String.localized("Copied to clipboard!"), type: .success)
-                            } label: {
-                                Label(String.localized("Copy"), systemImage: "doc.on.doc")
-                            }
-                            .buttonStyle(.bordered)
-
                             Spacer()
 
-                            Button(action: saveCurrentToSavedSources) {
-                                Label(String.localized("Save"), systemImage: "tray.and.arrow.down")
-                            }
-                            .buttonStyle(.bordered)
+                            Menu {
+                                Button {
+                                    UIPasteboard.general.string = generatedJSON
+                                    ToastManager.shared.show(String.localized("Copied to clipboard!"), type: .success)
+                                } label: {
+                                    Label(String.localized("Copy"), systemImage: "doc.on.doc")
+                                }
 
-                            Button {
-                                exportDocument = SourceDocument(text: generatedJSON)
-                                showingExportDialog = true
+                                Button {
+                                    saveName = repoName
+                                    showingSaveNameAlert = true
+                                } label: {
+                                    Label(String.localized("Save"), systemImage: "tray.and.arrow.down")
+                                }
+
+                                Button {
+                                    exportDocument = SourceDocument(text: generatedJSON)
+                                    showingExportDialog = true
+                                } label: {
+                                    Label(String.localized("Export"), systemImage: "square.and.arrow.up")
+                                }
                             } label: {
-                                Label(String.localized("Export"), systemImage: "square.and.arrow.up")
+                                Label(String.localized("Options"), systemImage: "ellipsis.circle")
+                                    .font(.title3)
                             }
-                            .buttonStyle(.bordered)
                         }
                     }
                 }
@@ -393,10 +431,16 @@ struct RepoBuilder: View {
                     Section(header: Text(String.localized("Saved Sources"))) {
                         ForEach(savedSources) { saved in
                             Button {
-                                loadSource(saved.source)
+                                withAnimation {
+                                    if selectedSavedSource?.id == saved.id {
+                                        selectedSavedSource = nil
+                                    } else {
+                                        selectedSavedSource = saved
+                                    }
+                                }
                             } label: {
                                 VStack(alignment: .leading) {
-                                    Text(saved.source.name)
+                                    Text(saved.name ?? saved.source.name)
                                         .font(.headline)
                                         .foregroundStyle(.primary)
                                     Text(saved.source.identifier)
@@ -475,6 +519,26 @@ struct RepoBuilder: View {
                 Button(String.localized("Done"), role: .cancel) { }
             } message: {
                 Text(String.localized("The source JSON has been generated and copied to your clipboard. You can now host it on GitHub or any other service."))
+            }
+            .alert(String.localized("Save Source"), isPresented: $showingSaveNameAlert) {
+                TextField(String.localized("Source Name"), text: $saveName)
+                Button(String.localized("Save")) {
+                    saveCurrentToSavedSources(withName: saveName)
+                }
+                Button(String.localized("Cancel"), role: .cancel) { }
+            } message: {
+                Text(String.localized("Enter a name for this saved source."))
+            }
+            .alert(String.localized("Overwrite Current Data?"), isPresented: $showingEditWarning) {
+                Button(String.localized("Overwrite"), role: .destructive) {
+                    if let selected = selectedSavedSource {
+                        loadSource(selected.source)
+                        selectedSavedSource = nil
+                    }
+                }
+                Button(String.localized("Cancel"), role: .cancel) { }
+            } message: {
+                Text(String.localized("This will replace all current information in the builder with the data from the saved source."))
             }
         }
     }
@@ -575,10 +639,10 @@ struct RepoBuilder: View {
         }
     }
 
-    private func saveCurrentToSavedSources() {
+    private func saveCurrentToSavedSources(withName name: String) {
         let source = constructSource()
         var currentSaved = savedSources
-        let newSaved = SavedRepoSource(source: source)
+        let newSaved = SavedRepoSource(name: name, source: source)
 
         if let index = currentSaved.firstIndex(where: { $0.source.identifier == source.identifier }) {
             currentSaved[index] = newSaved
@@ -643,11 +707,21 @@ struct AddRepoAppView: View {
     @State private var converterValue: String = ""
     @State private var converterUnit: String = "MB"
     @State private var editableScreenshots: [IdentifiableURL]
+    @State private var versionDateValue: Date = Date()
     var onAdd: (RepoApp) -> Void
 
     init(app: RepoApp = RepoApp(), onAdd: @escaping (RepoApp) -> Void) {
         self._app = State(initialValue: app)
         self._editableScreenshots = State(initialValue: app.screenshots.map { IdentifiableURL(value: $0) })
+
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        if let date = formatter.date(from: app.versionDate) {
+            self._versionDateValue = State(initialValue: date)
+        } else {
+            self._versionDateValue = State(initialValue: Date())
+        }
+
         self.onAdd = onAdd
     }
 
@@ -666,7 +740,10 @@ struct AddRepoAppView: View {
         NavigationView {
             Form {
                 Section(header: Text(String.localized("Size Converter"))) {
-                    HStack {
+                    HStack(spacing: 12) {
+                        Image(systemName: "scalemass")
+                            .foregroundStyle(.blue)
+
                         TextField(String.localized("Value"), text: $converterValue)
                             .keyboardType(.decimalPad)
 
@@ -674,17 +751,21 @@ struct AddRepoAppView: View {
                             Text("MB").tag("MB")
                             Text("GB").tag("GB")
                         }
-                        .pickerStyle(.segmented)
-                        .frame(width: 100)
+                        .pickerStyle(.menu)
+                        .labelsHidden()
 
                         Button(String.localized("Apply")) {
                             applyConversion()
                         }
                         .buttonStyle(.borderedProminent)
+                        .controlSize(.small)
                     }
-                    Text(String.localized("Result: \(app.size) bytes"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+
+                    if !app.size.isEmpty && app.size != "0" {
+                        Text(String.localized("Result: \(app.size) bytes"))
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 Section(header: Text(String.localized("App Details"))) {
@@ -694,7 +775,14 @@ struct AddRepoAppView: View {
                     TextField(String.localized("Subtitle"), text: $app.subtitle)
                     TextField(String.localized("Category"), text: $app.category)
                     TextField(String.localized("Version"), text: $app.version)
-                    TextField(String.localized("Version Date (YYYY-MM-DD)"), text: $app.versionDate)
+
+                    DatePicker(String.localized("Version Date"), selection: $versionDateValue, displayedComponents: .date)
+                        .onChange(of: versionDateValue) { newValue in
+                            let formatter = DateFormatter()
+                            formatter.dateFormat = "yyyy-MM-dd"
+                            app.versionDate = formatter.string(from: newValue)
+                        }
+
                     TextField(String.localized("Size (Bytes)"), text: $app.size)
                         .keyboardType(.numberPad)
 
@@ -713,36 +801,47 @@ struct AddRepoAppView: View {
                     TextField(String.localized("Icon URL"), text: $app.iconURL)
                     TextField(String.localized("Download URL (.ipa)"), text: $app.downloadURL)
 
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 12) {
                         HStack {
-                            Text(String.localized("Screenshots URLs"))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                            Label(String.localized("Screenshots"), systemImage: "photo.on.rectangle.angled")
+                                .font(.subheadline)
+                                .bold()
+
                             Spacer()
+
                             Button {
-                                editableScreenshots.append(IdentifiableURL(value: ""))
+                                withAnimation {
+                                    editableScreenshots.append(IdentifiableURL(value: ""))
+                                }
                             } label: {
                                 Image(systemName: "plus.circle.fill")
-                                    .foregroundStyle(.blue)
+                                    .font(.title3)
                             }
                         }
 
                         ForEach($editableScreenshots) { $item in
-                            HStack {
-                                TextField(String.localized("URL"), text: $item.value)
+                            HStack(spacing: 12) {
+                                TextField(String.localized("https://..."), text: $item.value)
+                                    .textFieldStyle(.plain)
+                                    .font(.subheadline)
 
                                 Button(role: .destructive) {
-                                    if let index = editableScreenshots.firstIndex(where: { $0.id == item.id }) {
-                                        editableScreenshots.remove(at: index)
+                                    withAnimation {
+                                        if let index = editableScreenshots.firstIndex(where: { $0.id == item.id }) {
+                                            editableScreenshots.remove(at: index)
+                                        }
                                     }
                                 } label: {
-                                    Image(systemName: "trash")
+                                    Image(systemName: "minus.circle.fill")
                                         .foregroundStyle(.red)
                                 }
                             }
+                            .padding(8)
+                            .background(Color.secondary.opacity(0.1))
+                            .cornerRadius(8)
                         }
                     }
-                    .padding(.vertical, 4)
+                    .padding(.vertical, 8)
                 }
 
                 Section(header: Text(String.localized("Descriptions"))) {
@@ -788,6 +887,10 @@ struct AddRepoAppView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(String.localized("Add")) {
+                        let formatter = DateFormatter()
+                        formatter.dateFormat = "yyyy-MM-dd"
+                        app.versionDate = formatter.string(from: versionDateValue)
+
                         app.screenshots = editableScreenshots.map { $0.value }.filter { !$0.isEmpty }
                         onAdd(app)
                         dismiss()
