@@ -18,6 +18,11 @@ struct CertificatesAddView: View {
     @State private var _isDefault = false
     @State private var _isSaving = false
     
+    @State private var _p12Done = false
+    @State private var _provisionDone = false
+    @State private var _zipDone = false
+    @State private var _portalDone = false
+
     @State private var _isImportingP12Presenting = false
     @State private var _isImportingMobileProvisionPresenting = false
     @State private var _isImportingZipPresenting = false
@@ -34,25 +39,6 @@ struct CertificatesAddView: View {
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
-                    // Header
-                    HStack {
-                        Text("Add Certificate")
-                            .font(.system(.title, design: .rounded).bold())
-                        Spacer()
-                        Button {
-                            dismiss()
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.title2)
-                                .foregroundStyle(.secondary)
-                                .symbolRenderingMode(.hierarchical)
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    .padding(.horizontal, 24)
-                    .padding(.top, 24)
-                    .padding(.bottom, 16)
-
                     ScrollView {
                         VStack(spacing: 24) {
                             // Method Picker
@@ -103,7 +89,21 @@ struct CertificatesAddView: View {
                     }
                 }
             }
-            .navigationBarHidden(true)
+            .navigationTitle("Add Certificate")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
             .sheet(isPresented: $_isImportingP12Presenting) {
                 p12ImportSheet
             }
@@ -128,11 +128,11 @@ struct CertificatesAddView: View {
                 .padding(.leading, 8)
 
             VStack(spacing: 0) {
-                fileRowModern(title: "Certificate (.p12)", subtitle: _p12URL?.lastPathComponent, icon: "key.fill", color: .orange) {
+                fileRowModern(title: "Certificate (.p12)", subtitle: _p12URL?.lastPathComponent, icon: "key.fill", color: .orange, isDone: _p12Done) {
                     _isImportingP12Presenting = true
                 }
                 Divider().padding(.leading, 56)
-                fileRowModern(title: "Provisioning Profile", subtitle: _provisionURL?.lastPathComponent, icon: "doc.badge.gearshape.fill", color: .blue) {
+                fileRowModern(title: "Provisioning Profile", subtitle: _provisionURL?.lastPathComponent, icon: "doc.badge.gearshape.fill", color: .blue, isDone: _provisionDone) {
                     _isImportingMobileProvisionPresenting = true
                 }
             }
@@ -150,7 +150,7 @@ struct CertificatesAddView: View {
                 .padding(.leading, 8)
 
             if usePortalCert {
-                fileRowModern(title: "Import .portalcert", subtitle: _p12URL != nil ? "Certificate Loaded" : nil, icon: "shippingbox.fill", color: .purple) {
+                fileRowModern(title: "Import .portalcert", subtitle: _p12URL != nil ? "Certificate Loaded" : nil, icon: "shippingbox.fill", color: .purple, isDone: _portalDone) {
                     _isImportingPortalCertPresenting = true
                 }
                 .background(Color(UIColor.secondarySystemGroupedBackground))
@@ -185,7 +185,7 @@ struct CertificatesAddView: View {
                 .foregroundStyle(.secondary)
                 .padding(.leading, 8)
 
-            fileRowModern(title: "Import ZIP", subtitle: _p12URL != nil ? "Files Extracted" : "Contains .p12 & .mobileprovision", icon: "doc.zipper", color: .green) {
+            fileRowModern(title: "Import ZIP", subtitle: _p12URL != nil ? "Files Extracted" : "Contains .p12 & .mobileprovision", icon: "doc.zipper", color: .green, isDone: _zipDone) {
                 _isImportingZipPresenting = true
             }
             .background(Color(UIColor.secondarySystemGroupedBackground))
@@ -314,7 +314,7 @@ struct CertificatesAddView: View {
         .opacity(disabled ? 0.5 : 1.0)
     }
 
-    private func fileRowModern(title: String, subtitle: String?, icon: String, color: Color, action: @escaping () -> Void) -> some View {
+    private func fileRowModern(title: String, subtitle: String?, icon: String, color: Color, isDone: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 16) {
                 ZStack {
@@ -347,13 +347,22 @@ struct CertificatesAddView: View {
 
                 Spacer()
 
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 20))
-                    .foregroundStyle(.secondary.opacity(0.3))
+                if isDone {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.green)
+                        .transition(.scale.combined(with: .opacity))
+                } else {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(.secondary.opacity(0.3))
+                        .transition(.opacity)
+                }
             }
             .padding(12)
         }
         .buttonStyle(.plain)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDone)
         .animation(.spring(), value: subtitle)
     }
 
@@ -380,6 +389,8 @@ struct CertificatesAddView: View {
                 if let nickname = metadata.nickname {
                     _certificateName = nickname
                 }
+
+                _portalDone = true
             }
             
             HapticsManager.shared.success()
@@ -403,6 +414,7 @@ struct CertificatesAddView: View {
                 guard let selectedFileURL = urls.first else { return }
                 withAnimation {
                     self._p12URL = selectedFileURL
+                    self._p12Done = true
                 }
                 HapticsManager.shared.softImpact()
             }
@@ -417,6 +429,7 @@ struct CertificatesAddView: View {
                 guard let selectedFileURL = urls.first else { return }
                 withAnimation {
                     self._provisionURL = selectedFileURL
+                    self._provisionDone = true
                 }
                 HapticsManager.shared.softImpact()
             }
@@ -450,36 +463,42 @@ struct CertificatesAddView: View {
 // MARK: - Extension: View (import)
 extension CertificatesAddView {
 	private func _saveCertificate() {
-		guard
-			let p12URL = _p12URL,
-			let provisionURL = _provisionURL,
-			FR.checkPasswordForCertificate(for: p12URL, with: _p12Password, using: provisionURL)
-		else {
-            withAnimation { _isSaving = false }
-			UIAlertController.showAlertWithOk(
-				title: .localized("Error"),
-				message: .localized("The password you entered is wrong, please try again to add this certificate. If the password from this certificate is WSF, restart Portal and try again.")
-			)
-			return
-		}
-		
-		FR.handleCertificateFiles(
-			p12URL: p12URL,
-			provisionURL: provisionURL,
-			p12Password: _p12Password,
-			certificateName: _certificateName,
-			isDefault: _isDefault
-		) { error in
-            Task { @MainActor in
-                if error == nil {
-                    HapticsManager.shared.success()
-                    dismiss()
-                } else {
-                    UIAlertController.showAlertWithOk(title: "Error", message: error?.localizedDescription ?? "Unknown error")
+        guard let p12URL = _p12URL, let provisionURL = _provisionURL else { return }
+
+        Task {
+            // Perform password check in background
+            let isPasswordCorrect = FR.checkPasswordForCertificate(for: p12URL, with: _p12Password, using: provisionURL)
+
+            await MainActor.run {
+                if !isPasswordCorrect {
+                    withAnimation { _isSaving = false }
+                    UIAlertController.showAlertWithOk(
+                        title: .localized("Error"),
+                        message: .localized("The password you entered is wrong, please try again to add this certificate. If the password from this certificate is WSF, restart Portal and try again.")
+                    )
+                    return
                 }
-                _isSaving = false
+
+                // Continue with saving
+                FR.handleCertificateFiles(
+                    p12URL: p12URL,
+                    provisionURL: provisionURL,
+                    p12Password: _p12Password,
+                    certificateName: _certificateName,
+                    isDefault: _isDefault
+                ) { error in
+                    Task { @MainActor in
+                        if error == nil {
+                            HapticsManager.shared.success()
+                            dismiss()
+                        } else {
+                            UIAlertController.showAlertWithOk(title: "Error", message: error?.localizedDescription ?? "Unknown error")
+                        }
+                        _isSaving = false
+                    }
+                }
             }
-		}
+        }
 	}
 	
 	private func _handleZipImport(_ zipURL: URL) {
@@ -535,6 +554,7 @@ extension CertificatesAddView {
 			withAnimation {
                 _p12URL = newP12URL
                 _provisionURL = newProvisionURL
+                _zipDone = true
             }
 			
 			try? FileManager.default.removeItem(at: tempDir)

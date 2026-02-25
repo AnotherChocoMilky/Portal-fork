@@ -262,6 +262,14 @@ struct LibraryView: View {
                                           let downloadId = userInfo["downloadId"] as? String,
                                           downloadId == _currentDownloadId else { return }
                                 
+                                // Check for large app support (3GB+)
+                                if let latestApp = Storage.shared.getLatestImportedApp(),
+                                   latestApp.size > 3 * 1024 * 1024 * 1024 {
+                                    AppLogManager.shared.info("Large app detected (>3GB): \(latestApp.name ?? "Unknown"), enabling supportBigApps.", category: "Library")
+                                    OptionsManager.shared.options.supportBigApps = true
+                                    OptionsManager.shared.saveOptions()
+                                }
+
                                 // Auto-sign logic
                                 if _shouldAutoSignNext {
                                     _shouldAutoSignNext = false
@@ -305,6 +313,16 @@ struct LibraryView: View {
                                           downloadId == _currentDownloadId,
                                           let progress = userInfo["progress"] as? Double else { return }
                                 
+                                // Check for large download (3GB+)
+                                if let totalBytes = userInfo["totalBytes"] as? Int64,
+                                   totalBytes > 3 * 1024 * 1024 * 1024 {
+                                    if !OptionsManager.shared.options.supportBigApps {
+                                        AppLogManager.shared.info("Large download detected (>3GB), enabling supportBigApps.", category: "Library")
+                                        OptionsManager.shared.options.supportBigApps = true
+                                        OptionsManager.shared.saveOptions()
+                                    }
+                                }
+
                                 _downloadProgress = progress
                                 
                                 // Switch to processing status when download is complete (progress >= 0.99)
