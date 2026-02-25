@@ -598,14 +598,14 @@ struct BatchAppEditSheet: View {
                 }
 
                 Section("Identifier & Build") {
-                    TextField("App Name", text: )
-                    TextField("Bundle ID", text: )
-                    TextField("Version", text: )
+                    TextField("App Name", text: $editedName)
+                    TextField("Bundle ID", text: $editedBundleId)
+                    TextField("Version", text: $editedVersion)
                 }
 
                 Section("Tweaks & Files") {
                     NavigationLink {
-                        SigningTweaksView(options: )
+                        SigningTweaksView(options: $options)
                     } label: {
                         Label {
                             Text("Injection Options")
