@@ -103,7 +103,7 @@ struct CategoryInfoDialog: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(Color.clear)
+                    .fill(Color(UIColor.systemBackground))
                     .shadow(color: .black.opacity(0.2), radius: 40, x: 0, y: 20)
             )
             .padding(.horizontal, 20)
@@ -160,284 +160,8 @@ private struct CategoryInfoCard: View {
         .padding(14)
         .background(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.clear)
+                .fill(Color(UIColor.secondarySystemBackground))
         )
-    }
-}
-
-// MARK: - Preview Dialog
-struct FeedbackPreviewDialog: View {
-    @Binding var isPresented: Bool
-    let title: String
-    let message: String
-    let category: FeedbackView.FeedbackCategory
-    let includeDeviceInfo: Bool
-    let includeLogs: Bool
-    let includeCode: Bool
-    let codeSnippet: String
-    let onSubmit: () -> Void
-    let onEdit: () -> Void
-    
-    @State private var appearAnimation: Bool = false
-    
-    var body: some View {
-        ZStack {
-            Color.black.opacity(appearAnimation ? 0.5 : 0)
-                .ignoresSafeArea()
-                .onTapGesture { onEdit(); dismissDialog() }
-            
-            VStack(spacing: 0) {
-                // Header
-                VStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(category.color.opacity(0.15))
-                            .frame(width: 72, height: 72)
-                        
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [category.color, category.color.opacity(0.8)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 56, height: 56)
-                            .shadow(color: category.color.opacity(0.3), radius: 12, x: 0, y: 6)
-                        
-                        Image(systemName: "eye.fill")
-                            .font(.system(size: 24, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
-                    .scaleEffect(appearAnimation ? 1 : 0.5)
-                    
-                    Text("Preview Your Feedback")
-                        .font(.system(size: 22, weight: .bold, design: .rounded))
-                    
-                    Text("Here is a preview of your Feedback Report, proceed?")
-                        .font(.system(size: 14))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.top, 28)
-                .padding(.horizontal, 20)
-                .padding(.bottom, 20)
-                .opacity(appearAnimation ? 1 : 0)
-                .offset(y: appearAnimation ? 0 : 10)
-                
-                // Preview Content
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        // Category Badge
-                        HStack(spacing: 8) {
-                            Image(systemName: category.icon)
-                                .font(.system(size: 12, weight: .semibold))
-                            Text(category.rawValue)
-                                .font(.system(size: 13, weight: .semibold))
-                        }
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule()
-                                .fill(category.color)
-                        )
-                        
-                        // Title
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Title")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.secondary)
-                            Text(title)
-                                .font(.system(size: 16, weight: .semibold))
-                        }
-                        
-                        Divider()
-                        
-                        // Description with rendered markdown
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text("Description")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.secondary)
-                            
-                            MarkdownTextView(text: message)
-                        }
-                        
-                        // Attachments Info
-                        if includeDeviceInfo || includeLogs || includeCode {
-                            Divider()
-                            
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Attachments")
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundStyle(.secondary)
-                                
-                                HStack(spacing: 8) {
-                                    if includeDeviceInfo {
-                                        AttachmentBadge(icon: "iphone", text: "Device Info", color: .blue)
-                                    }
-                                    if includeLogs {
-                                        AttachmentBadge(icon: "doc.text.fill", text: "Logs", color: .orange)
-                                    }
-                                    if includeCode {
-                                        AttachmentBadge(icon: "curlybraces", text: "Code", color: .purple)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .padding(16)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(Color.clear)
-                    )
-                    .padding(.horizontal, 20)
-                }
-                .frame(maxHeight: 300)
-                .opacity(appearAnimation ? 1 : 0)
-                .offset(y: appearAnimation ? 0 : 20)
-                
-                // Buttons
-                HStack(spacing: 12) {
-                    Button {
-                        onEdit()
-                        dismissDialog()
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "pencil")
-                                .font(.system(size: 14, weight: .semibold))
-                            Text("Edit")
-                                .font(.system(size: 16, weight: .semibold))
-                        }
-                        .foregroundStyle(category.color)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .fill(category.color.opacity(0.15))
-                        )
-                    }
-                    
-                    Button {
-                        onSubmit()
-                        dismissDialog()
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "paperplane.fill")
-                                .font(.system(size: 14, weight: .semibold))
-                            Text("Submit")
-                                .font(.system(size: 16, weight: .semibold))
-                        }
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(
-                            LinearGradient(
-                                colors: [category.color, category.color.opacity(0.8)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .shadow(color: category.color.opacity(0.3), radius: 10, x: 0, y: 5)
-                    }
-                }
-                .padding(.horizontal, 20)
-                .padding(.top, 20)
-                .padding(.bottom, 24)
-                .opacity(appearAnimation ? 1 : 0)
-                .offset(y: appearAnimation ? 0 : 20)
-            }
-            .background(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(Color.clear)
-                    .shadow(color: .black.opacity(0.2), radius: 40, x: 0, y: 20)
-            )
-            .padding(.horizontal, 16)
-            .scaleEffect(appearAnimation ? 1 : 0.9)
-            .opacity(appearAnimation ? 1 : 0)
-        }
-        .onAppear {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-                appearAnimation = true
-            }
-        }
-    }
-    
-    private func dismissDialog() {
-        withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-            appearAnimation = false
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            isPresented = false
-        }
-    }
-}
-
-// MARK: - Attachment Badge
-private struct AttachmentBadge: View {
-    let icon: String
-    let text: String
-    let color: Color
-    
-    var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: icon)
-                .font(.system(size: 10, weight: .semibold))
-            Text(text)
-                .font(.system(size: 11, weight: .medium))
-        }
-        .foregroundStyle(color)
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(
-            Capsule()
-                .fill(color.opacity(0.15))
-        )
-    }
-}
-
-// MARK: - Markdown Text View
-struct MarkdownTextView: View {
-    let text: String
-    
-    var body: some View {
-        Text(renderMarkdown(text))
-            .font(.system(size: 15))
-            .foregroundStyle(.primary)
-    }
-    
-    private func renderMarkdown(_ input: String) -> AttributedString {
-        var result = input
-        
-        result = result.replacingOccurrences(of: "\\*\\*(.+?)\\*\\*", with: "$1", options: .regularExpression)
-        result = result.replacingOccurrences(of: "__(.+?)__", with: "$1", options: .regularExpression)
-        
-        result = result.replacingOccurrences(of: "\\*(.+?)\\*", with: "$1", options: .regularExpression)
-        result = result.replacingOccurrences(of: "_(.+?)_", with: "$1", options: .regularExpression)
-        
-        result = result.replacingOccurrences(of: "~~(.+?)~~", with: "$1", options: .regularExpression)
-        
-        result = result.replacingOccurrences(of: "`(.+?)`", with: "$1", options: .regularExpression)
-        
-        result = result.replacingOccurrences(of: "\\[(.+?)\\]\\(.+?\\)", with: "$1", options: .regularExpression)
-        
-        result = result.replacingOccurrences(of: "^#{1,6}\\s*", with: "", options: .regularExpression)
-        
-        if let regex = try? NSRegularExpression(pattern: "^>\\s*", options: [.anchorsMatchLines]) {
-            result = regex.stringByReplacingMatches(in: result, options: [], range: NSRange(result.startIndex..., in: result), withTemplate: "")
-        }
-        
-        if let regex = try? NSRegularExpression(pattern: "^-\\s*", options: [.anchorsMatchLines]) {
-            result = regex.stringByReplacingMatches(in: result, options: [], range: NSRange(result.startIndex..., in: result), withTemplate: "• ")
-        }
-        
-        do {
-            return try AttributedString(markdown: input, options: AttributedString.MarkdownParsingOptions(interpretedSyntax: .inlineOnlyPreservingWhitespace))
-        } catch {
-            return AttributedString(result)
-        }
     }
 }
 
@@ -515,7 +239,7 @@ struct LinkInsertDialog: View {
                         .padding(14)
                         .background(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color.clear)
+                                .fill(Color(UIColor.secondarySystemBackground))
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -550,7 +274,7 @@ struct LinkInsertDialog: View {
                         .padding(14)
                         .background(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                                .fill(Color.clear)
+                                .fill(Color(UIColor.secondarySystemBackground))
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12, style: .continuous)
@@ -606,7 +330,7 @@ struct LinkInsertDialog: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color.clear)
+                    .fill(Color(UIColor.systemBackground))
                     .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
             )
             .padding(.horizontal, 24)
@@ -671,7 +395,7 @@ struct ScreenshotErrorDialog: View {
                     Text("Image Upload Unavailable")
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                     
-                    Text("Due to API constraints, you cannot upload images directly. Please upload your images to a file hoster like Catbox and then share the link in your feedback description.")
+                    Text("Due to GitHub constraints, you cannot upload images directly via this form. Please upload your images to a hoster like Catbox or Imgur and then share the link in your description.")
                         .font(.system(size: 14))
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -734,7 +458,7 @@ struct ScreenshotErrorDialog: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(Color.clear)
+                    .fill(Color(UIColor.systemBackground))
                     .shadow(color: .black.opacity(0.15), radius: 30, x: 0, y: 10)
             )
             .padding(.horizontal, 24)
@@ -1077,271 +801,40 @@ private struct ModernFormatButton: View {
     }
 }
 
-// MARK: - GitHub Feedback Service
-actor GitHubFeedbackService {
-    static let shared = GitHubFeedbackService()
-    
-    private let tokenEndpoint = "http://194.41.112.28:3000/token"
-    private let githubAPIBase = "https://api.github.com"
-    private let repoOwner = "dylans2010"
-    private let repoName = "Portal"
-    
-    private var cachedToken: String?
-    private var tokenExpiry: Date?
-    
-    struct GitHubIssueResponse: Codable {
-        let id: Int
-        let number: Int
-        let html_url: String
-        let title: String
-        let state: String
-    }
-    
-    struct GitHubIssueDetail: Codable, Identifiable {
-        let id: Int
-        let number: Int
-        let html_url: String
-        let title: String
-        let body: String?
-        let state: String
-        let created_at: String
-        let updated_at: String
-        let labels: [GitHubLabel]
-        let user: GitHubUser?
-        let comments: Int
-        
-        var createdDate: Date? {
-            let formatter = ISO8601DateFormatter()
-            return formatter.date(from: created_at)
-        }
-        
-        var categoryFromLabels: FeedbackView.FeedbackCategory {
-            for label in labels {
-                switch label.name.lowercased() {
-                case "bug": return .bug
-                case "enhancement": return .suggestion
-                case "feature-request": return .feature
-                case "question": return .question
-                case "crash": return .crash
-                default: continue
-                }
-            }
-            return .other
-        }
-    }
-    
-    struct GitHubLabel: Codable {
-        let id: Int
-        let name: String
-        let color: String
-    }
-    
-    struct GitHubUser: Codable {
-        let login: String
-        let avatar_url: String
-    }
-    
-    struct TokenResponse: Codable {
-        let token: String
-        let expiresIn: Int?
-    }
-    
-    func fetchToken() async throws -> String {
-        if let token = cachedToken, let expiry = tokenExpiry, Date() < expiry {
-            return token
-        }
-        
-        guard let url = URL(string: tokenEndpoint) else {
-            throw FeedbackError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.timeoutInterval = 15
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse,
-              (200...299).contains(httpResponse.statusCode) else {
-            throw FeedbackError.tokenFetchFailed
-        }
-        
-        let tokenResponse = try JSONDecoder().decode(TokenResponse.self, from: data)
-        cachedToken = tokenResponse.token
-        tokenExpiry = Date().addingTimeInterval(TimeInterval(tokenResponse.expiresIn ?? 3600))
-        
-        return tokenResponse.token
-    }
-    
-    func createIssue(title: String, body: String, labels: [String]) async throws -> GitHubIssueResponse {
-        let token = try await fetchToken()
-        
-        guard let url = URL(string: "\(githubAPIBase)/repos/\(repoOwner)/\(repoName)/issues") else {
-            throw FeedbackError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.timeoutInterval = 30
-        
-        let issueBody: [String: Any] = [
-            "title": title,
-            "body": body,
-            "labels": labels
-        ]
-        
-        request.httpBody = try JSONSerialization.data(withJSONObject: issueBody)
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw FeedbackError.invalidResponse
-        }
-        
-        guard (200...299).contains(httpResponse.statusCode) else {
-            if let errorBody = String(data: data, encoding: .utf8) {
-                throw FeedbackError.githubAPIError(statusCode: httpResponse.statusCode, message: errorBody)
-            }
-            throw FeedbackError.serverError(statusCode: httpResponse.statusCode)
-        }
-        
-        return try JSONDecoder().decode(GitHubIssueResponse.self, from: data)
-    }
-    
-    func fetchIssues(state: String = "all", labels: String = "app-feedback", perPage: Int = 30) async throws -> [GitHubIssueDetail] {
-        let token = try await fetchToken()
-        
-        guard let url = URL(string: "\(githubAPIBase)/repos/\(repoOwner)/\(repoName)/issues?state=\(state)&labels=\(labels)&per_page=\(perPage)&sort=created&direction=desc") else {
-            throw FeedbackError.invalidURL
-        }
-        
-        var request = URLRequest(url: url)
-        request.httpMethod = "GET"
-        request.setValue("application/vnd.github+json", forHTTPHeaderField: "Accept")
-        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-        request.timeoutInterval = 30
-        
-        let (data, response) = try await URLSession.shared.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse else {
-            throw FeedbackError.invalidResponse
-        }
-        
-        guard (200...299).contains(httpResponse.statusCode) else {
-            if let errorBody = String(data: data, encoding: .utf8) {
-                throw FeedbackError.githubAPIError(statusCode: httpResponse.statusCode, message: errorBody)
-            }
-            throw FeedbackError.serverError(statusCode: httpResponse.statusCode)
-        }
-        
-        return try JSONDecoder().decode([GitHubIssueDetail].self, from: data)
-    }
-}
-
-// MARK: - Local Feedback Storage
-class LocalFeedbackStorage {
-    static let shared = LocalFeedbackStorage()
-    private let userDefaultsKey = "Portal.SubmittedFeedback"
-    
-    struct SubmittedFeedback: Codable, Identifiable {
-        let id: String
-        let issueNumber: Int
-        let issueURL: String
-        let title: String
-        let category: String
-        let submittedAt: Date
-        
-        var categoryEnum: FeedbackView.FeedbackCategory {
-            FeedbackView.FeedbackCategory.allCases.first { $0.rawValue == category } ?? .other
-        }
-    }
-    
-    func saveFeedback(_ feedback: SubmittedFeedback) {
-        var feedbacks = getFeedbacks()
-        feedbacks.insert(feedback, at: 0)
-        if let data = try? JSONEncoder().encode(feedbacks) {
-            UserDefaults.standard.set(data, forKey: userDefaultsKey)
-        }
-    }
-    
-    func getFeedbacks() -> [SubmittedFeedback] {
-        guard let data = UserDefaults.standard.data(forKey: userDefaultsKey),
-              let feedbacks = try? JSONDecoder().decode([SubmittedFeedback].self, from: data) else {
-            return []
-        }
-        return feedbacks
-    }
-    
-    func deleteFeedback(id: String) {
-        var feedbacks = getFeedbacks()
-        feedbacks.removeAll { $0.id == id }
-        if let data = try? JSONEncoder().encode(feedbacks) {
-            UserDefaults.standard.set(data, forKey: userDefaultsKey)
-        }
-    }
-}
-
 // MARK: - Modern Feedback View
 struct FeedbackView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.openURL) private var openURL
     
+    // Constants
+    private let repoOwner = "dylans2010"
+    private let repoName = "Portal"
+
     @State private var githubAccount: String = ""
     @State private var feedbackTitle: String = ""
     @State private var feedbackMessage: String = ""
     @State private var codeSnippet: String = ""
     @State private var feedbackCategory: FeedbackCategory = .suggestion
     @State private var isSubmitting: Bool = false
-    @State private var submissionStep: String = ""
-    @State private var showSuccessSheet: Bool = false
-    @State private var showErrorSheet: Bool = false
-    @State private var errorMessage: String = ""
     @State private var appearAnimation: Bool = false
     @State private var includeLogs: Bool = false
     @State private var includeDeviceInfo: Bool = true
-    @State private var includeScreenshots: Bool = false
     @State private var includeCode: Bool = false
-    @State private var selectedImages: [UIImage] = []
-    @State private var showImagePicker: Bool = false
-    @State private var selectedPhotoItems: [PhotosPickerItem] = []
     @State private var showCodeEditor: Bool = false
-    @State private var createdIssueURL: String = ""
-    @State private var createdIssueNumber: Int = 0
     @State private var showLinkDialog: Bool = false
     @State private var showScreenshotError: Bool = false
     @State private var showCategoryInfo: Bool = false
-    @State private var showPreview: Bool = false
     
-    // New state for feedback sections
-    @State private var selectedTab: FeedbackTab = .submit
-    @State private var recentFeedbacks: [GitHubFeedbackService.GitHubIssueDetail] = []
-    @State private var myFeedbacks: [LocalFeedbackStorage.SubmittedFeedback] = []
-    @State private var isLoadingRecentFeedback: Bool = false
-    @State private var recentFeedbackError: String? = nil
-    @State private var selectedIssue: GitHubFeedbackService.GitHubIssueDetail? = nil
+    // Validation state
+    @State private var showTitleError = false
+    @State private var showMessageError = false
+    @State private var showConfirmation = false
     
     @FocusState private var focusedField: FocusedField?
     
     enum FocusedField {
         case title, message
-    }
-    
-    enum FeedbackTab: String, CaseIterable {
-        case submit = "Submit"
-        case recent = "Recent Feedback"
-        case myFeedback = "My Feedback"
-        
-        var icon: String {
-            switch self {
-            case .submit: return "paperplane.fill"
-            case .recent: return "bubble.left.and.bubble.right.fill"
-            case .myFeedback: return "person.crop.circle.fill"
-            }
-        }
     }
     
     enum FeedbackCategory: String, CaseIterable {
@@ -1371,17 +864,6 @@ struct FeedbackView: View {
             case .question: return .blue
             case .crash: return .pink
             case .other: return .gray
-            }
-        }
-        
-        var githubLabel: String {
-            switch self {
-            case .bug: return "bug"
-            case .suggestion: return "enhancement"
-            case .feature: return "feature-request"
-            case .question: return "question"
-            case .crash: return "crash"
-            case .other: return "feedback"
             }
         }
     }
@@ -1427,39 +909,16 @@ struct FeedbackView: View {
     var body: some View {
         ZStack {
             VStack(spacing: 0) {
-                // Tab Selector
-                feedbackTabSelector
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                
-                // Content based on selected tab
-                switch selectedTab {
-                case .submit:
-                    mainScrollView
-                case .recent:
-                    recentFeedbackView
-                case .myFeedback:
-                    myFeedbackView
-                }
+                mainScrollView
             }
             .background(Color.clear)
             .navigationTitle("Feedback")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 animateAppearance()
-                loadMyFeedbacks()
             }
             .sheet(isPresented: $showCodeEditor) {
                 CodeEditorSheet(code: $codeSnippet)
-            }
-            .sheet(isPresented: $showSuccessSheet) {
-                FeedbackSuccessSheet(issueNumber: createdIssueNumber, issueURL: createdIssueURL, onDismiss: { dismiss() })
-            }
-            .sheet(isPresented: $showErrorSheet) {
-                FeedbackErrorSheet(errorMessage: errorMessage, onRetry: { submitFeedback() }, onDismiss: { showErrorSheet = false })
-            }
-            .sheet(item: $selectedIssue) { issue in
-                FeedbackDetailSheet(issue: issue)
             }
             .toolbar {
                 ToolbarItemGroup(placement: .keyboard) {
@@ -1467,6 +926,14 @@ struct FeedbackView: View {
                         ModernFormattingToolbar(text: $feedbackMessage, showLinkDialog: $showLinkDialog)
                     }
                 }
+            }
+            .alert("Submit Feedback", isPresented: $showConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Submit") {
+                    performSubmission()
+                }
+            } message: {
+                Text("You are about to be redirected to GitHub to submit your feedback. Do you want to continue?")
             }
             
             // Link Dialog Overlay
@@ -1490,244 +957,31 @@ struct FeedbackView: View {
                     .zIndex(100)
             }
             
-            // Preview Dialog Overlay
-            if showPreview {
-                FeedbackPreviewDialog(
-                    isPresented: $showPreview,
-                    title: feedbackTitle,
-                    message: feedbackMessage,
-                    category: feedbackCategory,
-                    includeDeviceInfo: includeDeviceInfo,
-                    includeLogs: includeLogs,
-                    includeCode: includeCode,
-                    codeSnippet: codeSnippet,
-                    onSubmit: { submitFeedback() },
-                    onEdit: { /* Just close the preview */ }
-                )
-                .transition(AnyTransition.opacity.combined(with: .scale(scale: 0.95)))
-                .zIndex(100)
+            if isSubmitting {
+                ZStack {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .tint(.white)
+                            .scaleEffect(1.5)
+                        Text("Preparing...")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                    }
+                    .padding(32)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(20)
+                }
+                .transition(.opacity)
+                .zIndex(200)
             }
         }
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showLinkDialog)
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showScreenshotError)
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showCategoryInfo)
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showPreview)
-        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: selectedTab)
-    }
-    
-    // MARK: - Tab Selector
-    private var feedbackTabSelector: some View {
-        HStack(spacing: 8) {
-            ForEach(FeedbackTab.allCases, id: \.self) { tab in
-                Button {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) {
-                        selectedTab = tab
-                    }
-                    if tab == .recent && recentFeedbacks.isEmpty {
-                        loadRecentFeedback()
-                    }
-                    HapticsManager.shared.softImpact()
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: tab.icon)
-                            .font(.system(size: 12, weight: .semibold))
-                        Text(tab.rawValue)
-                            .font(.system(size: 12, weight: .semibold))
-                            .lineLimit(1)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .frame(maxWidth: .infinity)
-                    .background(
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .fill(selectedTab == tab ? Color.accentColor : Color.clear)
-                    )
-                    .foregroundStyle(selectedTab == tab ? .white : .primary)
-                }
-                .buttonStyle(.plain)
-            }
-        }
-        .padding(.bottom, 8)
-    }
-    
-    // MARK: - Recent Feedback View
-    private var recentFeedbackView: some View {
-        ScrollView {
-            LazyVStack(spacing: 16) {
-                if isLoadingRecentFeedback {
-                    VStack(spacing: 20) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.accentColor.opacity(0.1))
-                                .frame(width: 80, height: 80)
-                            ProgressView()
-                                .scaleEffect(1.3)
-                                .tint(.accentColor)
-                        }
-                        Text("Please Wait")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(.secondary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 80)
-                } else if let error = recentFeedbackError {
-                    VStack(spacing: 20) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.orange.opacity(0.1))
-                                .frame(width: 80, height: 80)
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.system(size: 32))
-                                .foregroundStyle(.orange)
-                        }
-                        VStack(spacing: 6) {
-                            Text("Unable To Load")
-                                .font(.system(size: 18, weight: .semibold))
-                            Text(error)
-                                .font(.system(size: 14))
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        Button {
-                            loadRecentFeedback()
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "arrow.clockwise")
-                                    .font(.system(size: 14, weight: .semibold))
-                                Text("Try Again")
-                                    .font(.system(size: 15, weight: .semibold))
-                            }
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(Color.accentColor)
-                            .clipShape(Capsule())
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 60)
-                } else if recentFeedbacks.isEmpty {
-                    VStack(spacing: 20) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.secondary.opacity(0.1))
-                                .frame(width: 80, height: 80)
-                            Image(systemName: "bubble.left.and.bubble.right.fill")
-                                .font(.system(size: 32))
-                                .foregroundStyle(.secondary)
-                        }
-                        VStack(spacing: 6) {
-                            Text("No Feedback Yet")
-                                .font(.system(size: 18, weight: .semibold))
-                            Text("Be the first to share your thoughts!")
-                                .font(.system(size: 14))
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 80)
-                } else {
-                    ForEach(recentFeedbacks) { issue in
-                        ModernRecentFeedbackCard(issue: issue) {
-                            selectedIssue = issue
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 16)
-        }
-        .refreshable {
-            await refreshRecentFeedback()
-        }
-    }
-    
-    // MARK: - My Feedback View
-    private var myFeedbackView: some View {
-        ScrollView {
-            LazyVStack(spacing: 12) {
-                if myFeedbacks.isEmpty {
-                    VStack(spacing: 16) {
-                        Image(systemName: "person.crop.circle.badge.questionmark")
-                            .font(.system(size: 50))
-                            .foregroundStyle(.secondary)
-                        Text("No Submissions Yet")
-                            .font(.system(size: 16, weight: .semibold))
-                        Text("Your submitted feedback will appear here.")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
-                        Button {
-                            withAnimation {
-                                selectedTab = .submit
-                            }
-                        } label: {
-                            HStack(spacing: 6) {
-                                Image(systemName: "plus.circle.fill")
-                                Text("Submit Feedback")
-                            }
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 10)
-                            .background(Color.accentColor)
-                            .clipShape(Capsule())
-                        }
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 60)
-                } else {
-                    ForEach(myFeedbacks) { feedback in
-                        MyFeedbackCard(feedback: feedback) {
-                            if let url = URL(string: feedback.issueURL) {
-                                openURL(url)
-                            }
-                        } onDelete: {
-                            withAnimation {
-                                LocalFeedbackStorage.shared.deleteFeedback(id: feedback.id)
-                                loadMyFeedbacks()
-                            }
-                        }
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-        }
-    }
-    
-    private func loadRecentFeedback() {
-        isLoadingRecentFeedback = true
-        recentFeedbackError = nil
-        
-        Task {
-            do {
-                let issues = try await GitHubFeedbackService.shared.fetchIssues()
-                await MainActor.run {
-                    recentFeedbacks = issues
-                    isLoadingRecentFeedback = false
-                }
-            } catch {
-                await MainActor.run {
-                    recentFeedbackError = error.localizedDescription
-                    isLoadingRecentFeedback = false
-                }
-            }
-        }
-    }
-    
-    private func refreshRecentFeedback() async {
-        do {
-            let issues = try await GitHubFeedbackService.shared.fetchIssues()
-            await MainActor.run {
-                recentFeedbacks = issues
-            }
-        } catch {
-            // Silently fail on refresh
-        }
-    }
-    
-    private func loadMyFeedbacks() {
-        myFeedbacks = LocalFeedbackStorage.shared.getFeedbacks()
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isSubmitting)
     }
     
     private var mainScrollView: some View {
@@ -1741,7 +995,17 @@ struct FeedbackView: View {
                 }
                 .pickerStyle(.menu)
             } header: {
-                Text("Category")
+                HStack {
+                    Text("Category")
+                    Spacer()
+                    Button {
+                        showCategoryInfo = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 14))
+                    }
+                    .buttonStyle(.plain)
+                }
             } footer: {
                 Text("Choose the right category for your feedback so I can assist you better.")
             }
@@ -1757,16 +1021,32 @@ struct FeedbackView: View {
             }
 
             Section {
-                TextField("Title", text: $feedbackTitle)
-                    .focused($focusedField, equals: .title)
+                VStack(alignment: .leading, spacing: 4) {
+                    TextField("Title", text: $feedbackTitle)
+                        .focused($focusedField, equals: .title)
+
+                    if showTitleError && feedbackTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Text("Title is required")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
             } header: {
                 Text("Title")
             }
 
             Section {
-                TextEditor(text: $feedbackMessage)
-                    .frame(minHeight: 150)
-                    .focused($focusedField, equals: .message)
+                VStack(alignment: .leading, spacing: 4) {
+                    TextEditor(text: $feedbackMessage)
+                        .frame(minHeight: 150)
+                        .focused($focusedField, equals: .message)
+
+                    if showMessageError && feedbackMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        Text("Description is required")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
             } header: {
                 Text(descriptionHeader)
             } footer: {
@@ -1789,25 +1069,19 @@ struct FeedbackView: View {
 
             Section {
                 Button {
-                    focusedField = nil
-                    showPreview = true
+                    submitFeedback()
                 } label: {
                     HStack {
                         Spacer()
-                        if isSubmitting {
-                            ProgressView().padding(.trailing, 8)
-                        }
-                        Text(isSubmitting ? submissionStep : "Preview & Submit")
+                        Text("Submit Feedback")
                             .fontWeight(.bold)
                         Spacer()
                     }
                 }
-                .disabled(!isFormValid || isSubmitting)
             }
         }
-            .scrollContentBackground(.hidden)
+        .scrollContentBackground(.hidden)
     }
-    
     
     private func animateAppearance() {
         withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
@@ -1815,69 +1089,69 @@ struct FeedbackView: View {
         }
     }
     
-    
     // MARK: - Submit Feedback
     private func submitFeedback() {
-        guard isFormValid else { return }
-        
         focusedField = nil
+
+        withAnimation {
+            showTitleError = feedbackTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            showMessageError = feedbackMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        }
+
+        guard !showTitleError && !showMessageError else {
+            HapticsManager.shared.error()
+            return
+        }
+
+        showConfirmation = true
+    }
+
+    private func performSubmission() {
         isSubmitting = true
-        submissionStep = "Preparing Feedback"
         HapticsManager.shared.softImpact()
         
         Task {
-            do {
-                submissionStep = "Fetching Authentication"
-                
-                let issueBody = buildIssueBody()
-                let labels = [feedbackCategory.githubLabel, "app-feedback"]
-                let trimmedTitle = feedbackTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-                
-                submissionStep = "Creating GitHub Issue"
-                
-                let response = try await GitHubFeedbackService.shared.createIssue(
-                    title: "[\(feedbackCategory.rawValue)] \(trimmedTitle)",
-                    body: issueBody,
-                    labels: labels
-                )
-                
-                await MainActor.run {
-                    isSubmitting = false
-                    createdIssueURL = response.html_url
-                    createdIssueNumber = response.number
+            // Short loading delay for smoother UX
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+
+            let url = buildGitHubURL()
+
+            await MainActor.run {
+                if let url = url {
+                    UIApplication.shared.open(url)
                     
-                    // Save to local storage
-                    let localFeedback = LocalFeedbackStorage.SubmittedFeedback(
-                        id: UUID().uuidString,
-                        issueNumber: response.number,
-                        issueURL: response.html_url,
-                        title: trimmedTitle,
-                        category: feedbackCategory.rawValue,
-                        submittedAt: Date()
-                    )
-                    LocalFeedbackStorage.shared.saveFeedback(localFeedback)
-                    loadMyFeedbacks()
-                    
-                    HapticsManager.shared.success()
-                    showSuccessSheet = true
+                    // Clear form after submission
+                    feedbackTitle = ""
+                    feedbackMessage = ""
+                    codeSnippet = ""
+                    githubAccount = ""
+                    showTitleError = false
+                    showMessageError = false
                 }
-            } catch {
-                await MainActor.run {
-                    isSubmitting = false
-                    errorMessage = error.localizedDescription
-                    HapticsManager.shared.error()
-                    showErrorSheet = true
-                }
+                isSubmitting = false
             }
         }
     }
     
-    private func buildIssueBody() -> String {
-        var body = "User \(githubAccount.isEmpty ? "Anonymous" : githubAccount) submitted this issue\n\n"
-        body += "## Description\n\(feedbackMessage.trimmingCharacters(in: .whitespacesAndNewlines))\n\n"
+    private func buildGitHubURL() -> URL? {
+        let title = "[\(feedbackCategory.rawValue)] \(feedbackTitle.trimmingCharacters(in: .whitespacesAndNewlines))"
+        let body = buildMarkdownBody()
+
+        let encodedTitle = title.addingPercentEncoding(withAllowedCharacters: .githubQueryAllowed) ?? ""
+        let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .githubQueryAllowed) ?? ""
+
+        let urlString = "https://github.com/\(repoOwner)/\(repoName)/issues/new?title=\(encodedTitle)&body=\(encodedBody)"
+        return URL(string: urlString)
+    }
+
+    private func buildMarkdownBody() -> String {
+        var body = "## Category\n\(feedbackCategory.rawValue)\n\n"
+        body += "## Submitted By\n\(githubAccount.isEmpty ? "Anonymous" : githubAccount)\n\n"
+        body += "## Title\n\(feedbackTitle.trimmingCharacters(in: .whitespacesAndNewlines))\n\n"
+        body += "## Suggestion Details\n\(feedbackMessage.trimmingCharacters(in: .whitespacesAndNewlines))\n\n"
         
         if includeCode && !codeSnippet.isEmpty {
-            body += "\n## Code Snippet\n```\n\(codeSnippet)\n```\n\n"
+            body += "## Code Snippet\n```\n\(codeSnippet)\n```\n\n"
         }
         
         if includeDeviceInfo {
@@ -1886,59 +1160,34 @@ struct FeedbackView: View {
             let device = UIDevice.current.modelName
             let iosVersion = UIDevice.current.systemVersion
             
-            body += "\n## Device Information\n"
-            body += "| Property | Value |\n"
-            body += "|----------|-------|\n"
-            body += "| App Version | \(version) (\(build)) |\n"
-            body += "| Device | \(device) |\n"
-            body += "| iOS Version | \(iosVersion) |\n\n"
+            body += "## Device Info\n"
+            body += "- **App Version:** \(version) (\(build))\n"
+            body += "- **iOS Version:** \(iosVersion)\n"
+            body += "- **Device Model:** \(device)\n"
+            body += "- **Timestamp:** \(timestamp)\n\n"
         }
         
         if includeLogs {
             let logs = AppLogManager.shared.exportLogs()
             if !logs.isEmpty {
-                body += "\n## App Logs\n"
+                body += "## App Logs\n"
                 body += "<details>\n"
-                body += "<summary>Available Logs</summary>\n\n"
-                body += "```\n\(logs.prefix(10000))\n```\n\n"
-                body += "</details>\n\n"
+                body += "<summary>View Logs</summary>\n\n"
+                body += "```\n\(logs.prefix(8000))\n```\n\n"
+                body += "</details>\n"
             }
         }
         
-        if includeScreenshots && !selectedImages.isEmpty {
-            body += "\n## Screenshots\n"
-            body += "_\(selectedImages.count) screenshot(s) were attached but cannot be uploaded via Feedback API._\n\n"
-        }
-        
-        body += "\n---\n_Submitted via Portal Feedback API_"
+        body += "\n---\n_Submitted via Portal Feedback Form_"
         
         return body
     }
-}
-
-// MARK: - Category Chip
-struct FeedbackCategoryChip: View {
-    let category: FeedbackView.FeedbackCategory
-    let isSelected: Bool
-    let action: () -> Void
     
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 6) {
-                Image(systemName: category.icon)
-                    .font(.system(size: 12, weight: .semibold))
-                Text(category.rawValue)
-                    .font(.system(size: 13, weight: .medium))
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 10)
-            .background(
-                Capsule()
-                    .fill(isSelected ? category.color : Color.clear)
-            )
-            .foregroundStyle(isSelected ? Color.white : Color.primary)
-        }
-        .buttonStyle(.plain)
+    private var timestamp: String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: Date())
     }
 }
 
@@ -2318,293 +1567,6 @@ private struct StatPill: View {
     }
 }
 
-// MARK: - Success Sheet with Modern Animation
-struct FeedbackSuccessSheet: View {
-    let issueNumber: Int
-    let issueURL: String
-    let onDismiss: () -> Void
-    
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
-    @State private var showCheckmark = false
-    @State private var showContent = false
-    @State private var pulseAnimation = false
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            
-            // Animated Success Icon
-            ZStack {
-                // Pulse rings
-                ForEach(0..<3) { i in
-                    Circle()
-                        .stroke(Color.green.opacity(0.2 - Double(i) * 0.05), lineWidth: 2)
-                        .frame(width: 120 + CGFloat(i) * 40, height: 120 + CGFloat(i) * 40)
-                        .scaleEffect(pulseAnimation ? 1.1 : 1.0)
-                        .opacity(pulseAnimation ? 0 : 1)
-                        .animation(
-                            .easeOut(duration: 1.5)
-                            .repeatForever(autoreverses: false)
-                            .delay(Double(i) * 0.3),
-                            value: pulseAnimation
-                        )
-                }
-                
-                Circle()
-                    .fill(Color.green.opacity(0.15))
-                    .frame(width: 120, height: 120)
-                    .scaleEffect(showCheckmark ? 1 : 0.5)
-                    .opacity(showCheckmark ? 1 : 0)
-                
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [.green, .green.opacity(0.8)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 80, height: 80)
-                    .shadow(color: .green.opacity(0.4), radius: 16, x: 0, y: 8)
-                    .scaleEffect(showCheckmark ? 1 : 0)
-                
-                Image(systemName: "checkmark")
-                    .font(.system(size: 36, weight: .bold))
-                    .foregroundStyle(.white)
-                    .scaleEffect(showCheckmark ? 1 : 0)
-                    .rotationEffect(.degrees(showCheckmark ? 0 : -90))
-            }
-            .animation(.spring(response: 0.6, dampingFraction: 0.6), value: showCheckmark)
-            
-            Spacer().frame(height: 32)
-            
-            // Content
-            VStack(spacing: 12) {
-                Text("Feedback Submitted!")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
-                    .opacity(showContent ? 1 : 0)
-                    .offset(y: showContent ? 0 : 20)
-                
-                Text("Issue #\(issueNumber) has been created successfully.")
-                    .font(.system(size: 16))
-                    .foregroundStyle(.secondary)
-                    .opacity(showContent ? 1 : 0)
-                    .offset(y: showContent ? 0 : 20)
-                
-                Text("Thank you for helping us improve Portal! We'll review your feedback shortly.")
-                    .font(.system(size: 14))
-                    .foregroundStyle(.tertiary)
-                    .opacity(showContent ? 1 : 0)
-                    .offset(y: showContent ? 0 : 20)
-            }
-            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.3), value: showContent)
-            
-            Spacer()
-            
-            // Buttons
-            VStack(spacing: 12) {
-                Button {
-                    if let url = URL(string: issueURL) {
-                        openURL(url)
-                    }
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "safari")
-                        Text("View On GitHub")
-                    }
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        LinearGradient(
-                            colors: [.green, .green.opacity(0.8)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .shadow(color: .green.opacity(0.3), radius: 12, x: 0, y: 6)
-                }
-                
-                Button {
-                    dismiss()
-                    onDismiss()
-                } label: {
-                    Text("Done")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(Color.accentColor)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 24)
-            .opacity(showContent ? 1 : 0)
-            .offset(y: showContent ? 0 : 30)
-            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.5), value: showContent)
-        }
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                showCheckmark = true
-                pulseAnimation = true
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                showContent = true
-            }
-        }
-    }
-}
-
-// MARK: - Error Sheet with Modern Animation
-struct FeedbackErrorSheet: View {
-    let errorMessage: String
-    let onRetry: () -> Void
-    let onDismiss: () -> Void
-    
-    @Environment(\.dismiss) private var dismiss
-    @State private var showIcon = false
-    @State private var showContent = false
-    @State private var shakeAnimation = false
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            
-            // Animated Error Icon
-            ZStack {
-                Circle()
-                    .fill(Color.red.opacity(0.15))
-                    .frame(width: 120, height: 120)
-                    .scaleEffect(showIcon ? 1 : 0.5)
-                    .opacity(showIcon ? 1 : 0)
-                
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [.red, .red.opacity(0.8)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 80, height: 80)
-                    .shadow(color: .red.opacity(0.4), radius: 16, x: 0, y: 8)
-                    .scaleEffect(showIcon ? 1 : 0)
-                
-                Image(systemName: "xmark")
-                    .font(.system(size: 36, weight: .bold))
-                    .foregroundStyle(.white)
-                    .scaleEffect(showIcon ? 1 : 0)
-            }
-            .offset(x: shakeAnimation ? -10 : 0)
-            .animation(.spring(response: 0.6, dampingFraction: 0.6), value: showIcon)
-            
-            Spacer().frame(height: 32)
-            
-            // Content
-            VStack(spacing: 12) {
-                Text("Something Went Wrong")
-                    .font(.system(size: 26, weight: .bold, design: .rounded))
-                    .opacity(showContent ? 1 : 0)
-                    .offset(y: showContent ? 0 : 20)
-                
-                Text(errorMessage)
-                    .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-                    .opacity(showContent ? 1 : 0)
-                    .offset(y: showContent ? 0 : 20)
-            }
-            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.3), value: showContent)
-            
-            Spacer()
-            
-            // Buttons
-            VStack(spacing: 12) {
-                Button {
-                    dismiss()
-                    onRetry()
-                } label: {
-                    HStack(spacing: 8) {
-                        Image(systemName: "arrow.clockwise")
-                        Text("Try Again")
-                    }
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        LinearGradient(
-                            colors: [.red, .red.opacity(0.8)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                    .shadow(color: .red.opacity(0.3), radius: 12, x: 0, y: 6)
-                }
-                
-                Button {
-                    dismiss()
-                    onDismiss()
-                } label: {
-                    Text("Cancel")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 24)
-            .opacity(showContent ? 1 : 0)
-            .offset(y: showContent ? 0 : 30)
-            .animation(.spring(response: 0.5, dampingFraction: 0.8).delay(0.5), value: showContent)
-        }
-        .onAppear {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                showIcon = true
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                showContent = true
-                // Shake animation
-                withAnimation(.default.repeatCount(3, autoreverses: true).speed(6)) {
-                    shakeAnimation = true
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                    shakeAnimation = false
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Error Types
-enum FeedbackError: LocalizedError {
-    case invalidURL
-    case invalidResponse
-    case serverError(statusCode: Int)
-    case tokenFetchFailed
-    case githubAPIError(statusCode: Int, message: String)
-    
-    var errorDescription: String? {
-        switch self {
-        case .invalidURL:
-            return "Invalid Server URL"
-        case .invalidResponse:
-            return "Invalid Response From Server"
-        case .serverError(let statusCode):
-            return "Server Error (Status: \(statusCode))"
-        case .tokenFetchFailed:
-            return "Failed to fetch authentication token (API Error)"
-        case .githubAPIError(let statusCode, let message):
-            return "GitHub API Error (\(statusCode)): \(message)"
-        }
-    }
-}
-
 // MARK: - UIDevice Extension
 extension UIDevice {
     var modelName: String {
@@ -2619,687 +1581,13 @@ extension UIDevice {
     }
 }
 
-// MARK: - Modern Recent Feedback Card
-struct ModernRecentFeedbackCard: View {
-    let issue: GitHubFeedbackService.GitHubIssueDetail
-    let onTap: () -> Void
-    
-    private var relativeDate: String {
-        guard let date = issue.createdDate else { return "" }
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: date, relativeTo: Date())
-    }
-    
-    private var cleanTitle: String {
-        issue.title.replacingOccurrences(of: "\\[.*?\\]\\s*", with: "", options: .regularExpression)
-    }
-    
-    private var cleanBody: String {
-        guard let body = issue.body else { return "" }
-        return body
-            .replacingOccurrences(of: "## Description\n", with: "")
-            .replacingOccurrences(of: "## Device Information\n[\\s\\S]*", with: "", options: .regularExpression)
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-    
-    var body: some View {
-        Button(action: onTap) {
-            HStack(alignment: .top, spacing: 14) {
-                // Category Icon
-                ZStack {
-                    Circle()
-                        .fill(issue.categoryFromLabels.color.opacity(0.12))
-                        .frame(width: 44, height: 44)
-                    Image(systemName: issue.categoryFromLabels.icon)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(issue.categoryFromLabels.color)
-                }
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    // Title and Status
-                    HStack(alignment: .top) {
-                        Text(cleanTitle)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.primary)
-                            .lineLimit(2)
-                            .multilineTextAlignment(.leading)
-                        
-                        Spacer(minLength: 8)
-                        
-                        // Status indicator
-                        Image(systemName: issue.state == "open" ? "circle.fill" : "checkmark.circle.fill")
-                            .font(.system(size: 10))
-                            .foregroundStyle(issue.state == "open" ? .green : .purple)
-                    }
-                    
-                    // Body preview
-                    if !cleanBody.isEmpty {
-                        Text(String(cleanBody.prefix(100)) + (cleanBody.count > 100 ? "..." : ""))
-                            .font(.system(size: 14))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(2)
-                            .multilineTextAlignment(.leading)
-                    }
-                    
-                    // Meta info row
-                    HStack(spacing: 12) {
-                        // Issue number
-                        HStack(spacing: 4) {
-                            Image(systemName: "number")
-                                .font(.system(size: 10, weight: .medium))
-                            Text("\(issue.number)")
-                                .font(.system(size: 12, weight: .medium))
-                        }
-                        .foregroundStyle(.tertiary)
-                        
-                        // Time
-                        HStack(spacing: 4) {
-                            Image(systemName: "clock")
-                                .font(.system(size: 10, weight: .medium))
-                            Text(relativeDate)
-                                .font(.system(size: 12))
-                        }
-                        .foregroundStyle(.tertiary)
-                        
-                        // Comments
-                        if issue.comments > 0 {
-                            HStack(spacing: 4) {
-                                Image(systemName: "bubble.left")
-                                    .font(.system(size: 10, weight: .medium))
-                                Text("\(issue.comments)")
-                                    .font(.system(size: 12, weight: .medium))
-                            }
-                            .foregroundStyle(.tertiary)
-                        }
-                        
-                        Spacer()
-                        
-                        Image(systemName: "chevron.right")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.quaternary)
-                    }
-                }
-            }
-            .padding(16)
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.clear)
-            )
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-// MARK: - Legacy Recent Feedback Card (kept for compatibility)
-struct RecentFeedbackCard: View {
-    let issue: GitHubFeedbackService.GitHubIssueDetail
-    let onTap: () -> Void
-    
-    var body: some View {
-        ModernRecentFeedbackCard(issue: issue, onTap: onTap)
-    }
-}
-
-// MARK: - My Feedback Card
-struct MyFeedbackCard: View {
-    let feedback: LocalFeedbackStorage.SubmittedFeedback
-    let onTap: () -> Void
-    let onDelete: () -> Void
-    
-    private var relativeDate: String {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .abbreviated
-        return formatter.localizedString(for: feedback.submittedAt, relativeTo: Date())
-    }
-    
-    var body: some View {
-        HStack(spacing: 14) {
-            // Category icon
-            ZStack {
-                Circle()
-                    .fill(feedback.categoryEnum.color.opacity(0.15))
-                    .frame(width: 44, height: 44)
-                Image(systemName: feedback.categoryEnum.icon)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(feedback.categoryEnum.color)
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(feedback.title)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                
-                HStack(spacing: 8) {
-                    Text("#\(feedback.issueNumber)")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.secondary)
-                    
-                    Text("•")
-                        .foregroundStyle(.tertiary)
-                    
-                    Text(relativeDate)
-                        .font(.system(size: 12))
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            
-            Spacer()
-            
-            // Actions
-            HStack(spacing: 8) {
-                Button(action: onTap) {
-                    Image(systemName: "arrow.up.right.square")
-                        .font(.system(size: 18))
-                        .foregroundStyle(Color.accentColor)
-                }
-                
-                Button(action: onDelete) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 16))
-                        .foregroundStyle(.red)
-                }
-            }
-        }
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(Color.clear)
-        )
-    }
-}
-
-// MARK: - Feedback Detail Sheet
-struct FeedbackDetailSheet: View {
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
-    @Environment(\.colorScheme) private var colorScheme
-    let issue: GitHubFeedbackService.GitHubIssueDetail
-    
-    private var relativeDate: String {
-        guard let date = issue.createdDate else { return "" }
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .full
-        return formatter.localizedString(for: date, relativeTo: Date())
-    }
-    
-    private var cleanTitle: String {
-        issue.title.replacingOccurrences(of: "\\[.*?\\]\\s*", with: "", options: .regularExpression)
-    }
-    
-    var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    // Modern Header
-                    VStack(spacing: 16) {
-                        // Status and meta row
-                        HStack {
-                            HStack(spacing: 6) {
-                                Image(systemName: "number")
-                                    .font(.system(size: 12, weight: .medium))
-                                Text("\(issue.number)")
-                                    .font(.system(size: 14, weight: .semibold))
-                            }
-                            .foregroundStyle(.secondary)
-                            
-                            Text("•")
-                                .foregroundStyle(.quaternary)
-                            
-                            Text(relativeDate)
-                                .font(.system(size: 13))
-                                .foregroundStyle(.secondary)
-                            
-                            Spacer()
-                            
-                            // Status pill
-                            HStack(spacing: 5) {
-                                Image(systemName: issue.state == "open" ? "circle.fill" : "checkmark.circle.fill")
-                                    .font(.system(size: 8))
-                                Text(issue.state.capitalized)
-                                    .font(.system(size: 12, weight: .semibold))
-                            }
-                            .foregroundStyle(issue.state == "open" ? .green : .purple)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
-                            .background(
-                                Capsule()
-                                    .fill((issue.state == "open" ? Color.green : Color.purple).opacity(0.12))
-                            )
-                        }
-                        
-                        // Title
-                        Text(cleanTitle)
-                            .font(.system(size: 22, weight: .bold))
-                            .foregroundStyle(.primary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        
-                        // Category badge
-                        HStack(spacing: 8) {
-                            Image(systemName: issue.categoryFromLabels.icon)
-                                .font(.system(size: 12, weight: .semibold))
-                            Text(issue.categoryFromLabels.rawValue)
-                                .font(.system(size: 13, weight: .medium))
-                        }
-                        .foregroundStyle(issue.categoryFromLabels.color)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(
-                            Capsule()
-                                .fill(issue.categoryFromLabels.color.opacity(0.12))
-                        )
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .padding(20)
-                    
-                    Divider()
-                        .padding(.horizontal, 20)
-                    
-                    // Labels
-                    if !issue.labels.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "tag.fill")
-                                    .font(.system(size: 12))
-                                Text("Labels")
-                                    .font(.system(size: 14, weight: .semibold))
-                            }
-                            .foregroundStyle(.secondary)
-                            
-                            FlowLayout(spacing: 8) {
-                                ForEach(issue.labels, id: \.id) { label in
-                                    Text(label.name)
-                                        .font(.system(size: 12, weight: .medium))
-                                        .padding(.horizontal, 10)
-                                        .padding(.vertical, 5)
-                                        .background(
-                                            Capsule()
-                                                .fill(Color(hex: label.color).opacity(0.15))
-                                        )
-                                        .foregroundStyle(Color(hex: label.color))
-                                }
-                            }
-                        }
-                        .padding(20)
-                        
-                        Divider()
-                            .padding(.horizontal, 20)
-                    }
-                    
-                    // Body with Full Markdown Support
-                    if let body = issue.body, !body.isEmpty {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "doc.text.fill")
-                                    .font(.system(size: 12))
-                                Text("Description")
-                                    .font(.system(size: 14, weight: .semibold))
-                            }
-                            .foregroundStyle(.secondary)
-                            
-                            GitHubMarkdownView(markdown: body)
-                        }
-                        .padding(20)
-                    }
-                    
-                    // Open in GitHub button
-                    Button {
-                        if let url = URL(string: issue.html_url) {
-                            openURL(url)
-                        }
-                    } label: {
-                        HStack(spacing: 8) {
-                            Image(systemName: "arrow.up.right.square.fill")
-                            Text("View On GitHub")
-                        }
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(Color.accentColor)
-                        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 16)
-                }
-            }
-            .background(Color.clear)
-            .navigationTitle("Feedback Details")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                    .font(.system(size: 16, weight: .medium))
-                }
-            }
-        }
-    }
-}
-
-// MARK: - GitHub Markdown View (Full Support)
-struct GitHubMarkdownView: View {
-    let markdown: String
-    @Environment(\.colorScheme) private var colorScheme
-    @State private var contentHeight: CGFloat = 100
-    
-    var body: some View {
-        GitHubMarkdownWebView(markdown: markdown, colorScheme: colorScheme, contentHeight: $contentHeight)
-            .frame(height: contentHeight)
-    }
-}
-
-// MARK: - GitHub Markdown WebView
-struct GitHubMarkdownWebView: UIViewRepresentable {
-    let markdown: String
-    let colorScheme: ColorScheme
-    @Binding var contentHeight: CGFloat
-    
-    func makeUIView(context: Context) -> WKWebView {
-        let webView = WKWebView()
-        webView.navigationDelegate = context.coordinator
-        webView.scrollView.isScrollEnabled = false
-        webView.isOpaque = false
-        webView.backgroundColor = .clear
-        webView.scrollView.backgroundColor = .clear
-        return webView
-    }
-    
-    func updateUIView(_ webView: WKWebView, context: Context) {
-        let html = generateHTML()
-        webView.loadHTMLString(html, baseURL: nil)
-    }
-    
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-    
-    private func generateHTML() -> String {
-        let isDark = colorScheme == .dark
-        let textColor = isDark ? "#FFFFFF" : "#000000"
-        let secondaryColor = isDark ? "#8E8E93" : "#6C6C70"
-        _ = isDark ? "#1C1C1E" : "#FFFFFF"
-        let codeBgColor = isDark ? "#2C2C2E" : "#F2F2F7"
-        let borderColor = isDark ? "#38383A" : "#E5E5EA"
-        let linkColor = "#007AFF"
-        
-        return """
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-            <style>
-                * { box-sizing: border-box; margin: 0; padding: 0; }
-                body {
-                    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif;
-                    font-size: 15px;
-                    line-height: 1.6;
-                    color: \(textColor);
-                    background-color: transparent;
-                    padding: 0;
-                    word-wrap: break-word;
-                    -webkit-text-size-adjust: 100%;
-                }
-                h1, h2, h3, h4, h5, h6 {
-                    font-weight: 600;
-                    margin-top: 20px;
-                    margin-bottom: 10px;
-                    line-height: 1.3;
-                }
-                h1 { font-size: 24px; }
-                h2 { font-size: 20px; }
-                h3 { font-size: 18px; }
-                h4 { font-size: 16px; }
-                p { margin-bottom: 12px; }
-                a { color: \(linkColor); text-decoration: none; }
-                strong { font-weight: 600; }
-                em { font-style: italic; }
-                del { text-decoration: line-through; color: \(secondaryColor); }
-                code {
-                    font-family: 'SF Mono', Menlo, monospace;
-                    font-size: 13px;
-                    background-color: \(codeBgColor);
-                    padding: 2px 6px;
-                    border-radius: 4px;
-                }
-                pre {
-                    background-color: \(codeBgColor);
-                    padding: 12px;
-                    border-radius: 8px;
-                    overflow-x: auto;
-                    overflow-y: auto;
-                    max-height: 400px;
-                    margin: 12px 0;
-                }
-                pre code {
-                    background: none;
-                    padding: 0;
-                    font-size: 13px;
-                    line-height: 1.5;
-                }
-                blockquote {
-                    border-left: 3px solid \(linkColor);
-                    padding-left: 12px;
-                    margin: 12px 0;
-                    color: \(secondaryColor);
-                }
-                ul, ol {
-                    padding-left: 24px;
-                    margin: 12px 0;
-                }
-                li { margin-bottom: 6px; }
-                li input[type="checkbox"] {
-                    margin-right: 8px;
-                    transform: scale(1.1);
-                }
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin: 12px 0;
-                    font-size: 14px;
-                }
-                th, td {
-                    border: 1px solid \(borderColor);
-                    padding: 8px 12px;
-                    text-align: left;
-                }
-                th {
-                    background-color: \(codeBgColor);
-                    font-weight: 600;
-                }
-                hr {
-                    border: none;
-                    border-top: 1px solid \(borderColor);
-                    margin: 16px 0;
-                }
-                details {
-                    background-color: \(codeBgColor);
-                    border-radius: 8px;
-                    padding: 12px;
-                    margin: 12px 0;
-                }
-                summary {
-                    font-weight: 600;
-                    cursor: pointer;
-                    padding: 4px 0;
-                }
-                details[open] summary {
-                    margin-bottom: 8px;
-                }
-                img {
-                    max-width: 100%;
-                    height: auto;
-                    border-radius: 8px;
-                    margin: 8px 0;
-                }
-                .task-list-item {
-                    list-style-type: none;
-                    margin-left: -20px;
-                }
-            </style>
-        </head>
-        <body>
-            \(convertMarkdownToHTML(markdown))
-            <script>
-                document.addEventListener('DOMContentLoaded', function() {
-                    setTimeout(function() {
-                        window.webkit.messageHandlers.heightHandler.postMessage(document.body.scrollHeight);
-                    }, 100);
-                });
-            </script>
-        </body>
-        </html>
-        """
-    }
-    
-    private func convertMarkdownToHTML(_ markdown: String) -> String {
-        var html = markdown
-        
-        // Escape HTML entities first (but preserve markdown syntax)
-        html = html.replacingOccurrences(of: "&", with: "&amp;")
-        html = html.replacingOccurrences(of: "<(?!details|summary|/details|/summary)", with: "&lt;", options: .regularExpression)
-        html = html.replacingOccurrences(of: "(?<!details|summary|/details|/summary)>", with: "&gt;", options: .regularExpression)
-        
-        // Headers
-        html = html.replacingOccurrences(of: "(?m)^###### (.+)$", with: "<h6>$1</h6>", options: .regularExpression)
-        html = html.replacingOccurrences(of: "(?m)^##### (.+)$", with: "<h5>$1</h5>", options: .regularExpression)
-        html = html.replacingOccurrences(of: "(?m)^#### (.+)$", with: "<h4>$1</h4>", options: .regularExpression)
-        html = html.replacingOccurrences(of: "(?m)^### (.+)$", with: "<h3>$1</h3>", options: .regularExpression)
-        html = html.replacingOccurrences(of: "(?m)^## (.+)$", with: "<h2>$1</h2>", options: .regularExpression)
-        html = html.replacingOccurrences(of: "(?m)^# (.+)$", with: "<h1>$1</h1>", options: .regularExpression)
-        
-        // Code blocks (must be before inline code)
-        html = html.replacingOccurrences(of: "```([\\s\\S]*?)```", with: "<pre><code>$1</code></pre>", options: .regularExpression)
-        
-        // Inline code
-        html = html.replacingOccurrences(of: "`([^`]+)`", with: "<code>$1</code>", options: .regularExpression)
-        
-        // Bold and italic
-        html = html.replacingOccurrences(of: "\\*\\*\\*(.+?)\\*\\*\\*", with: "<strong><em>$1</em></strong>", options: .regularExpression)
-        html = html.replacingOccurrences(of: "\\*\\*(.+?)\\*\\*", with: "<strong>$1</strong>", options: .regularExpression)
-        html = html.replacingOccurrences(of: "\\*(.+?)\\*", with: "<em>$1</em>", options: .regularExpression)
-        html = html.replacingOccurrences(of: "__(.+?)__", with: "<strong>$1</strong>", options: .regularExpression)
-        html = html.replacingOccurrences(of: "_(.+?)_", with: "<em>$1</em>", options: .regularExpression)
-        
-        // Strikethrough
-        html = html.replacingOccurrences(of: "~~(.+?)~~", with: "<del>$1</del>", options: .regularExpression)
-        
-        // Links
-        html = html.replacingOccurrences(of: "\\[([^\\]]+)\\]\\(([^)]+)\\)", with: "<a href=\"$2\">$1</a>", options: .regularExpression)
-        
-        // Images
-        html = html.replacingOccurrences(of: "!\\[([^\\]]*?)\\]\\(([^)]+)\\)", with: "<img src=\"$2\" alt=\"$1\">", options: .regularExpression)
-        
-        // Blockquotes
-        html = html.replacingOccurrences(of: "(?m)^> (.+)$", with: "<blockquote>$1</blockquote>", options: .regularExpression)
-        
-        // Horizontal rules
-        html = html.replacingOccurrences(of: "(?m)^---+$", with: "<hr>", options: .regularExpression)
-        html = html.replacingOccurrences(of: "(?m)^\\*\\*\\*+$", with: "<hr>", options: .regularExpression)
-        
-        // Task lists
-        html = html.replacingOccurrences(of: "(?m)^- \\[x\\] (.+)$", with: "<li class=\"task-list-item\"><input type=\"checkbox\" checked disabled> $1</li>", options: .regularExpression)
-        html = html.replacingOccurrences(of: "(?m)^- \\[ \\] (.+)$", with: "<li class=\"task-list-item\"><input type=\"checkbox\" disabled> $1</li>", options: .regularExpression)
-        
-        // Unordered lists
-        html = html.replacingOccurrences(of: "(?m)^[*-] (.+)$", with: "<li>$1</li>", options: .regularExpression)
-        
-        // Ordered lists
-        html = html.replacingOccurrences(of: "(?m)^\\d+\\. (.+)$", with: "<li>$1</li>", options: .regularExpression)
-        
-        // Wrap consecutive list items
-        html = html.replacingOccurrences(of: "(<li[^>]*>.*?</li>\\n?)+", with: "<ul>$0</ul>", options: .regularExpression)
-        
-        // Paragraphs (lines not already wrapped)
-        let lines = html.components(separatedBy: "\n")
-        var result: [String] = []
-        for line in lines {
-            let trimmed = line.trimmingCharacters(in: .whitespaces)
-            if trimmed.isEmpty {
-                result.append("")
-            } else if trimmed.hasPrefix("<") {
-                result.append(line)
-            } else {
-                result.append("<p>\(line)</p>")
-            }
-        }
-        html = result.joined(separator: "\n")
-        
-        return html
-    }
-    
-    class Coordinator: NSObject, WKNavigationDelegate {
-        var parent: GitHubMarkdownWebView
-        
-        init(_ parent: GitHubMarkdownWebView) {
-            self.parent = parent
-        }
-        
-        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            webView.evaluateJavaScript("document.body.scrollHeight") { [weak self] result, error in
-                if let height = result as? CGFloat {
-                    DispatchQueue.main.async {
-                        self?.parent.contentHeight = max(height + 20, 100)
-                    }
-                }
-            }
-        }
-    }
-}
-
-import WebKit
-
-// MARK: - Full Markdown View (Legacy - kept for compatibility)
-struct FullMarkdownView: View {
-    let text: String
-    
-    var body: some View {
-        GitHubMarkdownView(markdown: text)
-    }
-}
-
-// MARK: - Flow Layout for Labels
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 8
-    
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let result = FlowResult(in: proposal.width ?? 0, subviews: subviews, spacing: spacing)
-        return result.size
-    }
-    
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let result = FlowResult(in: bounds.width, subviews: subviews, spacing: spacing)
-        for (index, subview) in subviews.enumerated() {
-            subview.place(at: CGPoint(x: bounds.minX + result.positions[index].x, y: bounds.minY + result.positions[index].y), proposal: .unspecified)
-        }
-    }
-    
-    struct FlowResult {
-        var size: CGSize = .zero
-        var positions: [CGPoint] = []
-        
-        init(in maxWidth: CGFloat, subviews: Subviews, spacing: CGFloat) {
-            var x: CGFloat = 0
-            var y: CGFloat = 0
-            var rowHeight: CGFloat = 0
-            
-            for subview in subviews {
-                let size = subview.sizeThatFits(.unspecified)
-                if x + size.width > maxWidth && x > 0 {
-                    x = 0
-                    y += rowHeight + spacing
-                    rowHeight = 0
-                }
-                positions.append(CGPoint(x: x, y: y))
-                rowHeight = max(rowHeight, size.height)
-                x += size.width + spacing
-                self.size.width = max(self.size.width, x)
-            }
-            self.size.height = y + rowHeight
-        }
-    }
+// MARK: - CharacterSet Extension
+extension CharacterSet {
+    static let githubQueryAllowed: CharacterSet = {
+        var cs = CharacterSet.urlQueryAllowed
+        cs.remove(charactersIn: "&+=")
+        return cs
+    }()
 }
 
 // MARK: - Preview
