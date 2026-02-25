@@ -90,6 +90,24 @@ class KeyboardCustomizeManager: ObservableObject {
     @Published var dynamicGradientMeshComplexity: Int {
         didSet { UserDefaults.standard.set(dynamicGradientMeshComplexity, forKey: "Feather.keyboard.dynamicGradientMeshComplexity") }
     }
+    @Published var layoutDensity: Double {
+        didSet { UserDefaults.standard.set(layoutDensity, forKey: "Feather.keyboard.layoutDensity") }
+    }
+    @Published var keyCornerRadius: Double {
+        didSet { UserDefaults.standard.set(keyCornerRadius, forKey: "Feather.keyboard.keyCornerRadius") }
+    }
+    @Published var accentColor: String {
+        didSet { UserDefaults.standard.set(accentColor, forKey: "Feather.keyboard.accentColor") }
+    }
+    @Published var animationIntensity: Double {
+        didSet { UserDefaults.standard.set(animationIntensity, forKey: "Feather.keyboard.animationIntensity") }
+    }
+    @Published var hapticEnabled: Bool {
+        didSet { UserDefaults.standard.set(hapticEnabled, forKey: "Feather.keyboard.hapticEnabled") }
+    }
+    @Published var fontWeight: String {
+        didSet { UserDefaults.standard.set(fontWeight, forKey: "Feather.keyboard.fontWeight") }
+    }
 
     @Published var keyboardHeight: CGFloat = 0
     @Published var isKeyboardVisible: Bool = false
@@ -106,6 +124,12 @@ class KeyboardCustomizeManager: ObservableObject {
         self.useGradient = UserDefaults.standard.object(forKey: "Feather.keyboard.useGradient") as? Bool ?? true
         self.showAnimatedOrbs = UserDefaults.standard.object(forKey: "Feather.keyboard.showAnimatedOrbs") as? Bool ?? true
         self.orbCount = UserDefaults.standard.object(forKey: "Feather.keyboard.orbCount") as? Int ?? 3
+        self.layoutDensity = UserDefaults.standard.object(forKey: "Feather.keyboard.layoutDensity") as? Double ?? 0.5
+        self.keyCornerRadius = UserDefaults.standard.object(forKey: "Feather.keyboard.keyCornerRadius") as? Double ?? 10.0
+        self.accentColor = UserDefaults.standard.string(forKey: "Feather.keyboard.accentColor") ?? "#007AFF"
+        self.animationIntensity = UserDefaults.standard.object(forKey: "Feather.keyboard.animationIntensity") as? Double ?? 1.0
+        self.hapticEnabled = UserDefaults.standard.object(forKey: "Feather.keyboard.hapticEnabled") as? Bool ?? true
+        self.fontWeight = UserDefaults.standard.string(forKey: "Feather.keyboard.fontWeight") ?? "Semibold"
         self.orbSpeed = UserDefaults.standard.object(forKey: "Feather.keyboard.orbSpeed") as? Double ?? 5.0
         self.backgroundColor = UserDefaults.standard.string(forKey: "Feather.keyboard.backgroundColor") ?? "#1A1A1A"
         self.backgroundImageData = UserDefaults.standard.data(forKey: "Feather.keyboard.backgroundImageData")
@@ -124,6 +148,12 @@ class KeyboardCustomizeManager: ObservableObject {
         self.dynamicGradientContrast = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientContrast") as? Double ?? 1.0
         self.dynamicGradientBrightness = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientBrightness") as? Double ?? 0.0
         self.dynamicGradientMeshComplexity = UserDefaults.standard.object(forKey: "Feather.keyboard.dynamicGradientMeshComplexity") as? Int ?? 3
+        self.layoutDensity = UserDefaults.standard.object(forKey: "Feather.keyboard.layoutDensity") as? Double ?? 0.5
+        self.keyCornerRadius = UserDefaults.standard.object(forKey: "Feather.keyboard.keyCornerRadius") as? Double ?? 10.0
+        self.accentColor = UserDefaults.standard.string(forKey: "Feather.keyboard.accentColor") ?? "#007AFF"
+        self.animationIntensity = UserDefaults.standard.object(forKey: "Feather.keyboard.animationIntensity") as? Double ?? 1.0
+        self.hapticEnabled = UserDefaults.standard.object(forKey: "Feather.keyboard.hapticEnabled") as? Bool ?? true
+        self.fontWeight = UserDefaults.standard.string(forKey: "Feather.keyboard.fontWeight") ?? "Semibold"
 
         let savedColors = UserDefaults.standard.stringArray(forKey: "Feather.keyboard.dynamicGradientColors") ?? []
         var colors = savedColors

@@ -221,26 +221,32 @@ struct CheckForUpdatesView: View {
                     VStack(spacing: 20) {
                         HStack(spacing: 16) {
                             ZStack {
-                                Circle()
-                                    .fill(Color.green.opacity(0.12))
+                                MetalIntegratedStateView(state: $updateManager.metalState)
                                     .frame(width: 60, height: 60)
-                                
-                                Image(systemName: "arrow.down.circle.fill")
-                                    .font(.system(size: 30))
-                                    .foregroundStyle(.green)
+                                    .clipShape(Circle())
+
+                                if updateManager.metalState == .idle || updateManager.metalState == .success {
+                                    Circle()
+                                        .fill(Color.green.opacity(0.12))
+                                        .frame(width: 60, height: 60)
+
+                                    Image(systemName: "arrow.down.circle.fill")
+                                        .font(.system(size: 30))
+                                        .foregroundStyle(.green)
+                                }
                             }
-                            
+
                             VStack(alignment: .leading, spacing: 4) {
                                 Text("New Version Found!")
                                     .font(.system(.headline, design: .rounded))
-                                
+
                                 Text("Version \(release.tagName.replacingOccurrences(of: "v", with: ""))")
                                     .font(.system(.subheadline, design: .monospaced))
                                     .foregroundStyle(.secondary)
                             }
-                            
+
                             Spacer()
-                            
+
                             Text("NEW")
                                 .font(.system(size: 10, weight: .black))
                                 .foregroundStyle(.white)
@@ -248,97 +254,113 @@ struct CheckForUpdatesView: View {
                                 .padding(.vertical, 4)
                                 .background(Capsule().fill(Color.green))
                         }
-                        
-                        Button {
-                            updateManager.downloadUpdate()
-                        } label: {
-                            HStack(spacing: 12) {
-                                if updateManager.isDownloading {
-                                    ZStack {
-                                        Image(systemName: "arrow.down.circle.fill")
-                                            .font(.system(size: 20))
-                                            .rotationEffect(.degrees(updateManager.isDownloading ? 360 : 0))
-                                            .animation(.linear(duration: 2).repeatForever(autoreverses: false), value: updateManager.isDownloading)
 
-                                        CircularProgressView(progress: updateManager.downloadProgress, color: .white, size: 24, lineWidth: 3)
-                                    }
+                        VStack(spacing: 12) {
+                            Button {
+                                if updateManager.isPaused {
+                                    updateManager.resumeDownload()
+                                } else if updateManager.isDownloading {
+                                    updateManager.pauseDownload()
                                 } else {
-                                    Image(systemName: "arrow.down.to.line.circle.fill")
-                                        .font(.system(size: 20))
+                                    updateManager.downloadUpdate()
                                 }
-                                
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(updateManager.isDownloading ? "Downloading Update..." : "Download & Install")
-                                        .font(.system(size: 16, weight: .bold, design: .rounded))
-
+                            } label: {
+                                HStack(spacing: 12) {
                                     if updateManager.isDownloading {
-                                        Text("\(Int(updateManager.downloadProgress * 100))% Complete")
-                                            .font(.system(size: 10, weight: .black, design: .monospaced))
-                                            .opacity(0.8)
+                                        ZStack {
+                                            Image(systemName: updateManager.isPaused ? "play.circle.fill" : "pause.circle.fill")
+                                                .font(.system(size: 20))
+
+                                            CircularProgressView(progress: updateManager.downloadProgress, color: .white, size: 24, lineWidth: 3)
+                                        }
+                                    } else {
+                                        Image(systemName: "arrow.down.to.line.circle.fill")
+                                            .font(.system(size: 20))
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        let titleText: String = {
+                                            if updateManager.isPaused { return "Download Paused" }
+                                            if updateManager.isDownloading { return "Downloading Update..." }
+                                            return "Download & Install"
+                                        }()
+                                        Text(titleText)
+                                            .font(.system(size: 16, weight: .bold, design: .rounded))
+
+                                        if updateManager.isDownloading {
+                                            Text("\(Int(updateManager.downloadProgress * 100))% Complete")
+                                                .font(.system(size: 10, weight: .black, design: .monospaced))
+                                                .opacity(0.8)
+                                        }
                                     }
                                 }
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                ZStack(alignment: .leading) {
-                                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [Color.green, Color(hex: "#27AE60")],
-                                                startPoint: .leading,
-                                                endPoint: .trailing
-                                            )
-                                        )
-                                    
-                                    if updateManager.isDownloading {
-                                        GeometryReader { geo in
-                                            ZStack(alignment: .leading) {
-                                                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                                    .fill(.black.opacity(0.15))
-                                                    .frame(width: geo.size.width * updateManager.downloadProgress)
-
-                                                // Glass shimmer effect
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(
+                                    ZStack(alignment: .leading) {
+                                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                            .fill(
                                                 LinearGradient(
-                                                    colors: [.clear, .white.opacity(0.2), .clear],
+                                                    colors: [Color.green, Color(hex: "#27AE60")],
                                                     startPoint: .leading,
                                                     endPoint: .trailing
                                                 )
-                                                .frame(width: 100)
-                                                .offset(x: -100 + (geo.size.width + 200) * updateManager.downloadProgress)
+                                            )
+
+                                        if updateManager.isDownloading {
+                                            GeometryReader { geo in
+                                                ZStack(alignment: .leading) {
+                                                    RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                                        .fill(.black.opacity(0.15))
+                                                        .frame(width: geo.size.width * updateManager.downloadProgress)
+
+                                                    // Glass shimmer effect
+                                                    LinearGradient(
+                                                        colors: [.clear, .white.opacity(0.2), .clear],
+                                                        startPoint: .leading,
+                                                        endPoint: .trailing
+                                                    )
+                                                    .frame(width: 100)
+                                                    .offset(x: -100 + (geo.size.width + 200) * updateManager.downloadProgress)
+                                                }
                                             }
+                                            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                                         }
-                                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
                                     }
-                                }
-                            )
-                            .foregroundStyle(.white)
-                            .shadow(color: Color.green.opacity(0.3), radius: 10, x: 0, y: 5)
+                                )
+                                .foregroundStyle(.white)
+                                .shadow(color: Color.green.opacity(0.3), radius: 10, x: 0, y: 5)
+                            }
                         }
-                        .disabled(updateManager.isDownloading)
                     }
                 } else {
                     // Up to Date
                     HStack(spacing: 16) {
                         ZStack {
-                            Circle()
-                                .fill(Color.blue.opacity(0.1))
+                            MetalIntegratedStateView(state: $updateManager.metalState)
                                 .frame(width: 56, height: 56)
-                            
-                            Image(systemName: "checkmark.seal.fill")
-                                .font(.system(size: 26))
-                                .foregroundStyle(.blue)
+                                .clipShape(Circle())
+
+                            if updateManager.metalState == .idle {
+                                Circle()
+                                    .fill(Color.blue.opacity(0.1))
+                                    .frame(width: 56, height: 56)
+
+                                Image(systemName: "checkmark.seal.fill")
+                                    .font(.system(size: 26))
+                                    .foregroundStyle(.blue)
+                            }
                         }
-                        
+
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Fully Updated")
                                 .font(.system(.headline, design: .rounded))
-                            
+
                             Text("You're running the latest version.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
-                        
+
                         Spacer()
                     }
                     .ifAvailableIOS26Glass()
@@ -346,8 +368,9 @@ struct CheckForUpdatesView: View {
             } else {
                 HStack(spacing: 16) {
                     ZStack {
-                        Circle()
-                            .fill(Color.primary.opacity(0.05))
+                        MetalIntegratedStateView(state: .constant(.loading))
+                            .frame(width: 56, height: 56)
+                            .clipShape(Circle())
                             .frame(width: 56, height: 56)
                         
                         Image(systemName: "sparkles")
@@ -440,119 +463,62 @@ struct CheckForUpdatesView: View {
     
     // MARK: - Previous Releases Section
     private var previousReleasesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Previous Releases")
-                .font(.title3.bold())
-                .padding(.horizontal, 4)
-            
-            previousReleasesListContent
-        }
-    }
-    
-    private var previousReleasesListContent: some View {
-        let releases = Array(updateManager.allReleases.dropFirst().prefix(5))
-        
-        return VStack(spacing: 12) {
-            ForEach(Array(releases.enumerated()), id: \.element.id) { index, release in
-                previousReleaseRow(release: release, index: index, totalCount: releases.count)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Text("Previous Releases")
+                    .font(.system(size: 18, weight: .bold, design: .rounded))
+                Spacer()
+                viewAllReleasesButton
             }
-            
-            viewAllReleasesButton
+            .padding(.horizontal, 4)
+
+            VStack(spacing: 12) {
+                let releases = Array(updateManager.allReleases.dropFirst().prefix(3))
+                ForEach(releases) { release in
+                    previousReleaseRow(release: release)
+                }
+            }
         }
     }
-    
-    private func previousReleaseRow(release: GitHubRelease, index: Int, totalCount: Int) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .top) {
+
+    private func previousReleaseRow(release: GitHubRelease) -> some View {
+        Button {
+            selectedReleaseForNotes = release
+        } label: {
+            HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 8) {
                         Text(release.tagName)
-                            .font(.system(.headline, design: .rounded).bold())
-                            .foregroundStyle(.primary)
+                            .font(.system(size: 15, weight: .bold, design: .monospaced))
+                            .foregroundColor(.primary)
 
                         if release.prerelease {
                             betaBadge
                         }
                     }
-                    
-                    if let date = release.publishedAt {
-                        Text("Released on \(date.formatted(date: .long, time: .omitted))")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
-                    }
 
-                    if let ipaAsset = release.assets.first(where: { $0.name.hasSuffix(".ipa") }) {
-                        Text(formatFileSize(ipaAsset.size))
-                            .font(.system(size: 11, weight: .medium, design: .monospaced))
+                    if let date = release.publishedAt {
+                        Text(date.formatted(date: .abbreviated, time: .omitted))
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.secondary)
-                            .padding(.top, 2)
                     }
                 }
-                
+
                 Spacer()
 
-                HStack(spacing: 12) {
-                    // GitHub Button
-                    Button {
-                        if let url = URL(string: release.htmlUrl) {
-                            UIApplication.shared.open(url)
-                        }
-                        HapticsManager.shared.softImpact()
-                    } label: {
-                        Image(systemName: "safari.fill")
-                            .font(.system(size: 20))
-                            .foregroundStyle(.secondary)
-                    }
-
-                    // Release Notes Button
-                    Button {
-                        selectedReleaseForNotes = release
-                        HapticsManager.shared.softImpact()
-                    } label: {
-                        Image(systemName: "doc.text.fill")
-                            .font(.system(size: 20))
-                            .foregroundStyle(.secondary)
-                    }
-
-                    // Download Button / Animation
-                    Button {
-                        updateManager.downloadRelease(release)
-                        HapticsManager.shared.softImpact()
-                    } label: {
-                        if updateManager.downloadingReleaseID == release.id && updateManager.isDownloading {
-                            CircularProgressView(progress: updateManager.downloadProgress, color: Color.accentColor, size: 28, lineWidth: 3)
-                        } else {
-                            Image(systemName: "arrow.down.circle.fill")
-                                .font(.system(size: 28))
-                                .foregroundStyle(Color.accentColor)
-                                .symbolRenderingMode(.hierarchical)
-                        }
-                    }
-                    .disabled(updateManager.isDownloading)
-                }
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(.tertiary)
             }
-            
-            if let body = release.body, !body.isEmpty {
-                Text(body)
-                    .font(.system(size: 13, design: .rounded))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(2)
-            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
+                    .shadow(color: .black.opacity(0.02), radius: 4)
+            )
         }
-        .padding(16)
-        .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .fill(Color.clear)
-                .shadow(color: .black.opacity(0.03), radius: 10, x: 0, y: 5)
-        )
+        .buttonStyle(.plain)
     }
-
-    private func formatFileSize(_ bytes: Int) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.countStyle = .file
-        return formatter.string(fromByteCount: Int64(bytes))
-    }
-    
     private var betaBadge: some View {
         Text("Beta")
             .font(.system(size: 9, weight: .bold))
@@ -824,6 +790,7 @@ struct FullReleaseNotesView: View {
 class UpdateManager: ObservableObject {
     @Published var isCheckingUpdates = false
     @Published var isDownloading = false
+    @Published var isPaused = false
     @Published var downloadProgress: Double = 0.0
     @Published var downloadingReleaseID: Int? = nil
     @Published var latestRelease: GitHubRelease?
@@ -840,6 +807,7 @@ class UpdateManager: ObservableObject {
     private let repoName = "Portal"
     private var downloadTask: URLSessionDownloadTask?
     private var downloadSession: URLSession?
+    private var resumeData: Data?
     
     var currentVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.2"
@@ -1011,6 +979,36 @@ class UpdateManager: ObservableObject {
         downloadTask?.resume()
     }
     
+    func pauseDownload() {
+        guard isDownloading && !isPaused else {
+            return
+        }
+
+        downloadTask?.cancel { [weak self] data in
+            DispatchQueue.main.async {
+                self?.resumeData = data
+                self?.isPaused = true
+                AppLogManager.shared.info("Download paused", category: "Updates")
+            }
+        }
+    }
+
+    func resumeDownload() {
+        guard isDownloading && isPaused else {
+            return
+        }
+
+        if let resumeData = resumeData {
+            downloadTask = downloadSession?.downloadTask(withResumeData: resumeData)
+            downloadTask?.resume()
+            isPaused = false
+            AppLogManager.shared.info("Download resumed", category: "Updates")
+        } else {
+            // If resume data is missing, restart download
+            downloadUpdate()
+        }
+    }
+
     func updateDownloadProgress(_ progress: Double) {
         DispatchQueue.main.async {
             self.downloadProgress = progress

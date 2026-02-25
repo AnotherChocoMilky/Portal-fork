@@ -24,7 +24,7 @@ struct BatchSigningView: View {
     @State private var batchProgress: Double = 0
     @State private var currentSigningApp: String = ""
     @State private var batchResults: [BatchSignResult] = []
-    @State private var autoInstall = true
+    @AppStorage("Feather.batchSigning.autoInstall") private var autoInstall = true
     @State private var currentPhase: BatchPhase = .signing
     @State private var signedAppsForInstall: [AppInfoPresentable] = []
     
@@ -243,35 +243,37 @@ struct BatchSigningView: View {
     }
 
     private func resultRow(for result: BatchSignResult) -> some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 12) {
             if let app = result.app {
-                FRAppIconView(app: app, size: 40)
+                FRAppIconView(app: app, size: 44)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                     .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
             } else {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(Color(UIColor.tertiarySystemFill))
-                        .frame(width: 40, height: 40)
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color(UIColor.secondarySystemFill))
+                        .frame(width: 44, height: 44)
                     Image(systemName: "app.badge.fill")
                         .font(.system(size: 20))
                         .foregroundStyle(.secondary)
                 }
             }
 
-            VStack(alignment: .leading, spacing: 2) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(result.appName)
-                    .font(.subheadline.bold())
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
                     .lineLimit(1)
 
                 HStack(spacing: 4) {
-                    Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.octagon.fill")
                         .font(.caption2)
                         .foregroundStyle(result.success ? .green : .red)
 
                     Text(result.message)
-                        .font(.caption)
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.secondary)
-                        .lineLimit(1)
+                        .lineLimit(2)
                 }
             }
 
@@ -279,27 +281,24 @@ struct BatchSigningView: View {
 
             if result.success, let link = result.installLink {
                 Button {
-                    if let url = URL(string: link) {
-                        UIApplication.shared.open(url)
-                    }
+                    if let url = URL(string: link) { UIApplication.shared.open(url) }
                 } label: {
-                    Text("Install")
-                        .font(.caption.bold())
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(Color.accentColor)
-                        .foregroundStyle(.white)
-                        .clipShape(Capsule())
+                    Image(systemName: "arrow.down.to.line.circle.fill")
+                        .font(.system(size: 22, weight: .medium))
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.blue)
                 }
                 .buttonStyle(.plain)
             }
         }
         .padding(12)
-        .background(Color(UIColor.secondarySystemGroupedBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .shadow(color: .black.opacity(0.05), radius: 5, x: 0, y: 2)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
+                .shadow(color: .black.opacity(0.03), radius: 8, x: 0, y: 4)
+        )
+        .transition(.asymmetric(insertion: .push(from: .bottom).combined(with: .opacity), removal: .opacity))
     }
-
     private var actionSection: some View {
         VStack(spacing: 0) {
             Divider()
@@ -574,41 +573,39 @@ struct BatchAppEditSheet: View {
     let app: AppInfoPresentable
     @Binding var options: Options
     let onDismiss: () -> Void
-    
+
     @State private var editedName: String = ""
     @State private var editedBundleId: String = ""
     @State private var editedVersion: String = ""
-    
+
     var body: some View {
         NavigationStack {
             Form {
                 Section {
-                    VStack(spacing: 16) {
-                        FRAppIconView(app: app, size: 80)
-                            .shadow(radius: 5)
+                    HStack(spacing: 16) {
+                        FRAppIconView(app: app, size: 64)
+                            .shadow(color: .black.opacity(0.1), radius: 5, y: 2)
 
-                        VStack(spacing: 4) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text(app.name ?? "Unknown")
-                                .font(.headline)
+                                .font(.system(size: 17, weight: .bold, design: .rounded))
                             Text(app.identifier ?? "Unknown")
-                                .font(.caption)
+                                .font(.system(size: 13, weight: .medium, design: .monospaced))
                                 .foregroundStyle(.secondary)
                         }
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical)
+                    .padding(.vertical, 8)
                 }
-                .listRowBackground(Color.clear)
 
-                Section("General") {
-                    TextField("App Name", text: $editedName)
-                    TextField("Bundle ID", text: $editedBundleId)
-                    TextField("Version", text: $editedVersion)
+                Section("Identifier & Build") {
+                    TextField("App Name", text: )
+                    TextField("Bundle ID", text: )
+                    TextField("Version", text: )
                 }
 
                 Section("Tweaks & Files") {
                     NavigationLink {
-                        SigningTweaksView(options: $options)
+                        SigningTweaksView(options: )
                     } label: {
                         Label {
                             Text("Injection Options")
@@ -621,22 +618,20 @@ struct BatchAppEditSheet: View {
                 }
 
                 Section {
-                    Button {
-                        saveAndDismiss()
-                    } label: {
+                    Button(action: saveAndDismiss) {
                         Text("Apply Changes")
                             .font(.headline)
                             .frame(maxWidth: .infinity)
-                            .alignmentGuide(.leading) { _ in 0 }
                     }
-                    .tint(.accentColor)
+                    .buttonStyle(.borderedProminent)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
 
-                    Button(role: .destructive) {
-                        dismiss()
-                    } label: {
+                    Button(role: .destructive, action: { dismiss() }) {
                         Text("Discard")
                             .frame(maxWidth: .infinity)
                     }
+                    .listRowBackground(Color.clear)
                 }
             }
             .navigationTitle("Customize App")
