@@ -174,7 +174,7 @@ struct PreflightCheckView: View {
                 Image(systemName: viewModel.hasIssues ? "exclamationmark.shield.fill" : "checkmark.shield.fill")
                     .font(.system(size: 50))
                     .foregroundStyle(viewModel.hasIssues ? .orange : .green)
-                    .ifAvailableiOS18SymbolPulse()
+                    .ifAvailableiOS17SymbolPulse()
             }
 
             VStack(spacing: 6) {

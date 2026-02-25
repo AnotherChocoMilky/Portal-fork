@@ -23,7 +23,7 @@ struct RestoreOptionsView: View {
                             Image(systemName: "checkmark.shield.fill")
                                 .font(.system(size: 50))
                                 .foregroundStyle(.green)
-                                .ifAvailableiOS18SymbolPulse()
+                                .ifAvailableiOS17SymbolPulse()
                         }
 
                         VStack(spacing: 8) {

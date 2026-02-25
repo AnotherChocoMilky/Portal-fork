@@ -463,19 +463,7 @@ struct RepoBuilder: View {
                 }
                 .ignoresSafeArea()
             }
-            .fileExporter(
-                isPresented: $showingExportDialog,
-                item: exportDocument,
-                contentTypes: [.json],
-                defaultFilename: "\(repoName.isEmpty ? "repo" : repoName).json"
-            ) { result in
-                switch result {
-                case .success(let url):
-                    ToastManager.shared.show(String.localized("Saved to \(url.lastPathComponent)"), type: .success)
-                case .failure(let error):
-                    ToastManager.shared.show(String.localized("Failed to export: \(error.localizedDescription)"), type: .error)
-                }
-            }
+            .repoFileExporter(isPresented: $showingExportDialog, item: exportDocument, repoName: repoName)
             .sheet(isPresented: $showingGuide) {
                 RepoBuilderGuideView()
             }
@@ -606,6 +594,41 @@ struct RepoBuilder: View {
         var currentSaved = savedSources
         currentSaved.removeAll(where: { $0.id == saved.id })
         savedSources = currentSaved
+    }
+}
+
+extension View {
+    @ViewBuilder
+    func repoFileExporter(isPresented: Binding<Bool>, item: SourceDocument?, repoName: String) -> some View {
+        if #available(iOS 17.0, *) {
+            self.fileExporter(
+                isPresented: isPresented,
+                item: item,
+                contentTypes: [.json],
+                defaultFilename: "\(repoName.isEmpty ? "repo" : repoName).json"
+            ) { result in
+                switch result {
+                case .success(let url):
+                    ToastManager.shared.show(String.localized("Saved to \(url.lastPathComponent)"), type: .success)
+                case .failure(let error):
+                    ToastManager.shared.show(String.localized("Failed to export: \(error.localizedDescription)"), type: .error)
+                }
+            }
+        } else {
+            self.fileExporter(
+                isPresented: isPresented,
+                document: item,
+                contentType: .json,
+                defaultFilename: "\(repoName.isEmpty ? "repo" : repoName).json"
+            ) { result in
+                switch result {
+                case .success(let url):
+                    ToastManager.shared.show(String.localized("Saved to \(url.lastPathComponent)"), type: .success)
+                case .failure(let error):
+                    ToastManager.shared.show(String.localized("Failed to export: \(error.localizedDescription)"), type: .error)
+                }
+            }
+        }
     }
 }
 
