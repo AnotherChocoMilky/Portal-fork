@@ -36,7 +36,7 @@ struct AppearanceView: View {
             Section {
                 NavigationLink(destination: ColorCustomizationView()) {
                     Label("Customization", systemImage: "paintpalette.fill")
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(Color.accentColor)
                 }
             } header: {
                 Label("Color", systemImage: "paintpalette.fill")
@@ -47,7 +47,7 @@ struct AppearanceView: View {
                 Section {
                     Toggle(isOn: $_shouldTintIcons) {
                         Label("Tint App Icons", systemImage: "paintpalette")
-                            .foregroundStyle(.pink)
+                            .foregroundStyle(Color.accentColor)
                     }
                 } header: {
                     Label("Tint Icons", systemImage: "paintpalette")
@@ -60,11 +60,11 @@ struct AppearanceView: View {
             Section {
                 Toggle(isOn: $showIconsInAppearance) {
                     Label("Show Icons", systemImage: "square.grid.2x2")
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(Color.accentColor)
                 }
                 Toggle(isOn: $showNews) {
                     Label("Show News", systemImage: "newspaper")
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(Color.accentColor)
                 }
             } header: {
                 Label("Display", systemImage: "eye.fill")
@@ -74,7 +74,7 @@ struct AppearanceView: View {
             Section {
                 Toggle(isOn: $hapticsManager.isEnabled) {
                     Label("Enable Haptics", systemImage: "iphone.radiowaves.left.and.right")
-                        .foregroundStyle(.purple)
+                        .foregroundStyle(Color.accentColor)
                 }
 
                 if hapticsManager.isEnabled {
@@ -96,7 +96,7 @@ struct AppearanceView: View {
             Section {
                 HStack {
                     Label("Your Name", systemImage: "person.fill")
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Color.accentColor)
                     Spacer()
                     TextField("Enter Name", text: $greetingsName)
                         .multilineTextAlignment(.trailing)
@@ -112,25 +112,25 @@ struct AppearanceView: View {
             Section {
                 NavigationLink(destination: AllAppsCustomizationView()) {
                     Label("All Apps", systemImage: "square.grid.2x2.fill")
-                        .foregroundStyle(.blue)
+                        .foregroundStyle(Color.accentColor)
                 }
                 NavigationLink(destination: AppHideElementsView()) {
                     Label("Hide UI Elements", systemImage: "eye.slash.fill")
-                        .foregroundStyle(.red)
+                        .foregroundStyle(Color.accentColor)
                 }
                 NavigationLink(destination: StatusBarCustomizationView()) {
                     Label("Status Bar", systemImage: "rectangle.topthird.inset.filled")
-                        .foregroundStyle(.cyan)
+                        .foregroundStyle(Color.accentColor)
                 }
                 NavigationLink(destination: TabBarCustomizationView()) {
                     Label("Tab Bar", systemImage: "dock.rectangle")
-                        .foregroundStyle(.indigo)
+                        .foregroundStyle(Color.accentColor)
                 }
 
                 if ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 16 {
                     NavigationLink(destination: KeyboardCustomizationView()) {
                         Label("Keyboard Backdrop", systemImage: "keyboard")
-                            .foregroundStyle(.purple)
+                            .foregroundStyle(Color.accentColor)
                     }
                 }
             } header: {
@@ -142,7 +142,7 @@ struct AppearanceView: View {
                 Section {
                     Toggle(isOn: $ignoreSolariumLinkedOnCheck) {
                         Label("Enable Liquid Glass", systemImage: "sparkles")
-                            .foregroundStyle(.pink)
+                            .foregroundStyle(Color.accentColor)
                     }
                 } header: {
                     Label("Liquid Glass", systemImage: "sparkle")

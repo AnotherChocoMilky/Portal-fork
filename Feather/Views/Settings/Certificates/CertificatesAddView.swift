@@ -470,13 +470,15 @@ extension CertificatesAddView {
 			certificateName: _certificateName,
 			isDefault: _isDefault
 		) { error in
-            if error == nil {
-                HapticsManager.shared.success()
-                dismiss()
-            } else {
-                UIAlertController.showAlertWithOk(title: "Error", message: error?.localizedDescription ?? "Unknown error")
+            Task { @MainActor in
+                if error == nil {
+                    HapticsManager.shared.success()
+                    dismiss()
+                } else {
+                    UIAlertController.showAlertWithOk(title: "Error", message: error?.localizedDescription ?? "Unknown error")
+                }
+                _isSaving = false
             }
-            _isSaving = false
 		}
 	}
 	

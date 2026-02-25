@@ -304,28 +304,67 @@ struct RepoBuilder: View {
     var body: some View {
         NBNavigationView(String.localized("Repository Builder")) {
             Form {
-                Section(header: Text(String.localized("Source Information"))) {
-                    TextField(String.localized("Source Name"), text: $repoName)
-                    TextField(String.localized("Source Identifier"), text: $repoIdentifier)
-                    TextField(String.localized("Source URL"), text: $sourceURL)
-                    TextField(String.localized("Icon URL"), text: $iconURL)
-                    TextField(String.localized("Website (Optional)"), text: $website)
-                    TextField(String.localized("Subtitle (Optional)"), text: $subtitle)
-                    TextField(String.localized("Description (Optional)"), text: $description)
+                Section(header: Label(String.localized("Source Information"), systemImage: "info.circle.fill")) {
+                    HStack {
+                        Image(systemName: "pencil")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("Source Name"), text: $repoName)
+                    }
+                    HStack {
+                        Image(systemName: "barcode")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("Source Identifier"), text: $repoIdentifier)
+                    }
+                    HStack {
+                        Image(systemName: "link")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("Source URL"), text: $sourceURL)
+                    }
+                    HStack {
+                        Image(systemName: "photo")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("Icon URL"), text: $iconURL)
+                    }
+                    HStack {
+                        Image(systemName: "globe")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("Website (Optional)"), text: $website)
+                    }
+                    HStack {
+                        Image(systemName: "text.alignleft")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("Subtitle (Optional)"), text: $subtitle)
+                    }
+                    HStack {
+                        Image(systemName: "doc.text")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("Description (Optional)"), text: $description)
+                    }
 
                     Toggle(isOn: $isAltSource) {
-                        VStack(alignment: .leading) {
-                            Text(String.localized("Create AltSource"))
-                                .bold()
-                            Text(String.localized("Generate a standard AltStore compatible source."))
-                                .font(.caption)
+                        HStack(spacing: 12) {
+                            Image(systemName: "gearshape")
                                 .foregroundStyle(.secondary)
+                            VStack(alignment: .leading) {
+                                Text(String.localized("Create AltSource"))
+                                    .bold()
+                                Text(String.localized("Generate a standard AltStore compatible source."))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
                 }
 
                 if let selected = selectedSavedSource {
-                    Section(header: Text(String.localized("Saved Source JSON"))) {
+                    Section(header: Label(String.localized("Saved Source JSON"), systemImage: "curlybraces")) {
                         TextEditor(text: .constant(encodeSource(selected.source)))
                             .font(.system(.caption, design: .monospaced))
                             .frame(minHeight: 200)
@@ -351,7 +390,7 @@ struct RepoBuilder: View {
                     }
                 }
 
-                Section(header: Text(String.localized("Apps (\(apps.count))"))) {
+                Section(header: Label(String.localized("Apps (\(apps.count))"), systemImage: "square.grid.2x2.fill")) {
                     ForEach(apps) { app in
                         Button {
                             editingApp = app
@@ -390,7 +429,7 @@ struct RepoBuilder: View {
                 }
 
                 if !generatedJSON.isEmpty {
-                    Section(header: Text(String.localized("New Source"))) {
+                    Section(header: Label(String.localized("New Source"), systemImage: "doc.text.fill")) {
                         TextEditor(text: $generatedJSON)
                             .font(.system(.caption, design: .monospaced))
                             .frame(minHeight: 200)
@@ -428,7 +467,7 @@ struct RepoBuilder: View {
                 }
 
                 if !savedSources.isEmpty {
-                    Section(header: Text(String.localized("Saved Sources"))) {
+                    Section(header: Label(String.localized("Saved Sources"), systemImage: "archivebox.fill")) {
                         ForEach(savedSources) { saved in
                             Button {
                                 withAnimation {
@@ -768,13 +807,43 @@ struct AddRepoAppView: View {
                     }
                 }
 
-                Section(header: Text(String.localized("App Details"))) {
-                    TextField(String.localized("App Name"), text: $app.name)
-                    TextField(String.localized("Bundle ID"), text: $app.bundleIdentifier)
-                    TextField(String.localized("Developer Name"), text: $app.developerName)
-                    TextField(String.localized("Subtitle"), text: $app.subtitle)
-                    TextField(String.localized("Category"), text: $app.category)
-                    TextField(String.localized("Version"), text: $app.version)
+                Section(header: Label(String.localized("App Details"), systemImage: "app.badge.fill")) {
+                    HStack {
+                        Image(systemName: "app")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("App Name"), text: $app.name)
+                    }
+                    HStack {
+                        Image(systemName: "id.badge.plus")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("Bundle ID"), text: $app.bundleIdentifier)
+                    }
+                    HStack {
+                        Image(systemName: "person")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("Developer Name"), text: $app.developerName)
+                    }
+                    HStack {
+                        Image(systemName: "text.alignleft")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("Subtitle"), text: $app.subtitle)
+                    }
+                    HStack {
+                        Image(systemName: "square.grid.2x2")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("Category"), text: $app.category)
+                    }
+                    HStack {
+                        Image(systemName: "number")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("Version"), text: $app.version)
+                    }
 
                     DatePicker(String.localized("Version Date"), selection: $versionDateValue, displayedComponents: .date)
                         .onChange(of: versionDateValue) { newValue in
@@ -797,9 +866,19 @@ struct AddRepoAppView: View {
                     }
                 }
 
-                Section(header: Text(String.localized("Content & Media"))) {
-                    TextField(String.localized("Icon URL"), text: $app.iconURL)
-                    TextField(String.localized("Download URL (.ipa)"), text: $app.downloadURL)
+                Section(header: Label(String.localized("Content & Media"), systemImage: "photo.on.rectangle.fill")) {
+                    HStack {
+                        Image(systemName: "photo")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("Icon URL"), text: $app.iconURL)
+                    }
+                    HStack {
+                        Image(systemName: "link")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("Download URL (.ipa)"), text: $app.downloadURL)
+                    }
 
                     VStack(alignment: .leading, spacing: 12) {
                         HStack {
@@ -844,9 +923,9 @@ struct AddRepoAppView: View {
                     .padding(.vertical, 8)
                 }
 
-                Section(header: Text(String.localized("Descriptions"))) {
+                Section(header: Label(String.localized("Descriptions"), systemImage: "text.justify.left")) {
                     VStack(alignment: .leading) {
-                        Text(String.localized("Version Description"))
+                        Label(String.localized("Version Description"), systemImage: "text.badge.plus")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         TextEditor(text: $app.versionDescription)
@@ -859,7 +938,7 @@ struct AddRepoAppView: View {
                     .padding(.vertical, 4)
 
                     VStack(alignment: .leading) {
-                        Text(String.localized("Localized Description"))
+                        Label(String.localized("Localized Description"), systemImage: "text.alignleft")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                         TextEditor(text: $app.localizedDescription)
@@ -872,10 +951,25 @@ struct AddRepoAppView: View {
                     .padding(.vertical, 4)
                 }
 
-                Section(header: Text(String.localized("News / Changelog"))) {
-                    TextField(String.localized("News Title"), text: $app.newsTitle)
-                    TextField(String.localized("News Content"), text: $app.newsCaption)
-                    TextField(String.localized("News Image URL"), text: $app.newsImageURL)
+                Section(header: Label(String.localized("News / Changelog"), systemImage: "newspaper.fill")) {
+                    HStack {
+                        Image(systemName: "newspaper")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("News Title"), text: $app.newsTitle)
+                    }
+                    HStack {
+                        Image(systemName: "text.bubble")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("News Content"), text: $app.newsCaption)
+                    }
+                    HStack {
+                        Image(systemName: "photo")
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24)
+                        TextField(String.localized("News Image URL"), text: $app.newsImageURL)
+                    }
                 }
             }
             .navigationTitle(String.localized("Add App"))

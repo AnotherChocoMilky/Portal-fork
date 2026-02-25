@@ -173,8 +173,15 @@ struct SourcesAddView: View {
 			}
 		} else {
 			ToolbarItem(placement: .cancellationAction) {
-				Button(.localized("Cancel")) {
+				Button {
 					dismiss()
+				} label: {
+					Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .padding(8)
+                        .background(Color.primary.opacity(0.05))
+                        .clipShape(Circle())
 				}
 			}
 			
@@ -182,16 +189,6 @@ struct SourcesAddView: View {
 				HStack(spacing: 8) {
 					if _isImporting {
 						ProgressView()
-					} else {
-						Button {
-							FR.handleSource(_sourceURL) {
-								dismiss()
-							}
-						} label: {
-							Text(.localized("Save"))
-								.fontWeight(.bold)
-						}
-						.disabled(_sourceURL.isEmpty)
 					}
 
 					Menu {
@@ -255,6 +252,11 @@ struct SourcesAddView: View {
 						.keyboardType(.URL)
 						.textInputAutocapitalization(.never)
 						.font(.system(.body, design: .rounded, weight: .medium))
+                        .onSubmit {
+                            FR.handleSource(_sourceURL) {
+                                dismiss()
+                            }
+                        }
 					
 					if !_sourceURL.isEmpty {
 						Button {
