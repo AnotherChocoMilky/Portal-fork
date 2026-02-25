@@ -63,6 +63,16 @@ struct RepoSource: Codable {
         case name, identifier, sourceURL, iconURL, website, subtitle, apps, META
     }
 
+    init(name: String, identifier: String, sourceURL: String, iconURL: String, website: String = "", subtitle: String = "", apps: [RepoApp]) {
+        self.name = name
+        self.identifier = identifier
+        self.sourceURL = sourceURL
+        self.iconURL = iconURL
+        self.website = website
+        self.subtitle = subtitle
+        self.apps = apps
+    }
+
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         name = try container.decode(String.self, forKey: .name)
