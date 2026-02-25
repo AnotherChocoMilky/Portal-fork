@@ -633,7 +633,7 @@ struct RepoBuilder: View {
             let decoder = JSONDecoder()
             let source = try decoder.decode(RepoSource.self, from: data)
             loadSource(source)
-            ToastManager.shared.show(String.localized("Source imported!"), type: .success)
+            ToastManager.shared.show(String.localized("Source Imported!"), type: .success)
         } catch {
             ToastManager.shared.show(String.localized("Failed to import JSON: \(error.localizedDescription)"), type: .error)
         }
@@ -673,7 +673,7 @@ extension View {
             ) { result in
                 switch result {
                 case .success(let url):
-                    ToastManager.shared.show(String.localized("Saved to \(url.lastPathComponent)"), type: .success)
+                    ToastManager.shared.show(String.localized("Saved To \(url.lastPathComponent)"), type: .success)
                 case .failure(let error):
                     ToastManager.shared.show(String.localized("Failed to export: \(error.localizedDescription)"), type: .error)
                 }
@@ -928,9 +928,9 @@ struct RepoBuilderGuideView: View {
                     )
 
                     guideSection(
-                        title: String.localized("AltSource vs Feather Source"),
+                        title: String.localized("AltSource vs Other Source"),
                         content: [
-                            String.localized("• Feather Source: Includes extra 'META' information used by Feather and E-Sign for better repository identification."),
+                            String.localized("• Other Sources: Includes extra 'META' information used by Feather, ESign and other signers for better repository identification."),
                             String.localized("• AltSource: A pure AltStore-compatible format that works with AltStore, SideStore, and other similar installers without any extra fields.")
                         ]
                     )
