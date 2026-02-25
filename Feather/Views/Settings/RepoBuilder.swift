@@ -1,5 +1,6 @@
 import SwiftUI
 import NimbleViews
+import UniformTypeIdentifiers
 
 struct RepoMeta: Codable {
     var repoName: String
@@ -158,7 +159,38 @@ struct RepoApp: Codable, Identifiable {
     }
 }
 
-struct RepoSource: Codable {
+struct SavedRepoSource: Codable, Identifiable {
+    var id = UUID()
+    var date = Date()
+    var source: RepoSource
+}
+
+struct SourceDocument: FileDocument, Identifiable {
+    var id = UUID()
+    static var readableContentTypes: [UTType] = [.json]
+    var text: String
+
+    init(text: String) {
+        self.text = text
+    }
+
+    init(configuration: ReadConfiguration) throws {
+        if let data = configuration.file.regularFileContents {
+            text = String(data: data, encoding: .utf8) ?? ""
+        } else {
+            text = ""
+        }
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        let data = text.data(using: .utf8)!
+        return FileWrapper(regularFileWithContents: data)
+    }
+}
+
+struct RepoSource: Codable, Identifiable {
+    var id: String { identifier }
+
     var name: String
     var identifier: String
     var sourceURL: String
@@ -199,6 +231,8 @@ struct RepoSource: Codable {
         description = (try? container.decode(String.self, forKey: .description)) ?? ""
         apps = try container.decode([RepoApp].self, forKey: .apps)
         news = (try? container.decode([RepoNews].self, forKey: .news)) ?? []
+
+        isAltSource = !container.contains(.META)
     }
 
     func encode(to encoder: Encoder) throws {
@@ -220,6 +254,8 @@ struct RepoSource: Codable {
 }
 
 struct RepoBuilder: View {
+    @AppStorage("Feather.repoBuilder.savedSources") private var savedSourcesData: Data = Data()
+
     @State private var repoName = ""
     @State private var repoIdentifier = ""
     @State private var sourceURL = ""
@@ -229,12 +265,27 @@ struct RepoBuilder: View {
     @State private var description = ""
     @State private var isAltSource = false
     @State private var apps: [RepoApp] = []
+    @State private var news: [RepoNews] = []
 
     @State private var showingAddApp = false
     @State private var showingGuide = false
+    @State private var showingImportPicker = false
+    @State private var exportDocument: SourceDocument?
+    @State private var editingApp: RepoApp?
 
     @State private var generatedJSON = ""
     @State private var showingSuccessAlert = false
+
+    var savedSources: [SavedRepoSource] {
+        get {
+            (try? JSONDecoder().decode([SavedRepoSource].self, from: savedSourcesData)) ?? []
+        }
+        set {
+            if let data = try? JSONEncoder().encode(newValue) {
+                savedSourcesData = data
+            }
+        }
+    }
 
     var body: some View {
         NBNavigationView(String.localized("Repository Builder")) {
@@ -261,12 +312,17 @@ struct RepoBuilder: View {
 
                 Section(header: Text(String.localized("Apps (\(apps.count))"))) {
                     ForEach(apps) { app in
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(app.name)
-                                .font(.headline)
-                            Text(app.bundleIdentifier)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                        Button {
+                            editingApp = app
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(app.name)
+                                    .font(.headline)
+                                    .foregroundStyle(.primary)
+                                Text(app.bundleIdentifier)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
                     .onDelete { indices in
@@ -291,20 +347,123 @@ struct RepoBuilder: View {
                     .listRowBackground(Color.clear)
                     .listRowInsets(EdgeInsets())
                 }
+
+                if !generatedJSON.isEmpty {
+                    Section(header: Text(String.localized("New Source"))) {
+                        TextEditor(text: $generatedJSON)
+                            .font(.system(.caption, design: .monospaced))
+                            .frame(minHeight: 200)
+
+                        HStack {
+                            Button {
+                                UIPasteboard.general.string = generatedJSON
+                                ToastManager.shared.show(String.localized("Copied to clipboard!"), type: .success)
+                            } label: {
+                                Label(String.localized("Copy"), systemImage: "doc.on.doc")
+                            }
+                            .buttonStyle(.bordered)
+
+                            Spacer()
+
+                            Button(action: saveCurrentToSavedSources) {
+                                Label(String.localized("Save"), systemImage: "tray.and.arrow.down")
+                            }
+                            .buttonStyle(.bordered)
+
+                            Button {
+                                exportDocument = SourceDocument(text: generatedJSON)
+                            } label: {
+                                Label(String.localized("Export"), systemImage: "square.and.arrow.up")
+                            }
+                            .buttonStyle(.bordered)
+                        }
+                    }
+                }
+
+                if !savedSources.isEmpty {
+                    Section(header: Text(String.localized("Saved Sources"))) {
+                        ForEach(savedSources) { saved in
+                            Button {
+                                loadSource(saved.source)
+                            } label: {
+                                VStack(alignment: .leading) {
+                                    Text(saved.source.name)
+                                        .font(.headline)
+                                        .foregroundStyle(.primary)
+                                    Text(saved.source.identifier)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    Text(saved.date, style: .date)
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                }
+                            }
+                            .swipeActions {
+                                Button(role: .destructive) {
+                                    deleteSavedSource(saved)
+                                } label: {
+                                    Label(String.localized("Delete"), systemImage: "trash")
+                                }
+
+                                Button {
+                                    UIPasteboard.general.string = encodeSource(saved.source)
+                                    ToastManager.shared.show(String.localized("Copied to clipboard!"), type: .success)
+                                } label: {
+                                    Label(String.localized("Copy"), systemImage: "doc.on.doc")
+                                }
+                                .tint(.blue)
+                            }
+                        }
+                    }
+                }
             }
             .scrollContentBackground(.hidden)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showingGuide = true
-                    } label: {
-                        Image(systemName: "questionmark.circle")
+                    HStack(spacing: 12) {
+                        Button {
+                            showingImportPicker = true
+                        } label: {
+                            Image(systemName: "square.and.arrow.down")
+                        }
+
+                        Button {
+                            showingGuide = true
+                        } label: {
+                            Image(systemName: "questionmark.circle")
+                        }
                     }
                 }
             }
             .sheet(isPresented: $showingAddApp) {
                 AddRepoAppView { newApp in
                     apps.append(newApp)
+                }
+            }
+            .sheet(item: $editingApp) { appToEdit in
+                AddRepoAppView(app: appToEdit) { updatedApp in
+                    if let index = apps.firstIndex(where: { $0.id == appToEdit.id }) {
+                        apps[index] = updatedApp
+                    }
+                }
+            }
+            .sheet(isPresented: $showingImportPicker) {
+                FileImporterRepresentableView(allowedContentTypes: [.json]) { urls in
+                    guard let url = urls.first else { return }
+                    importJSON(from: url)
+                }
+                .ignoresSafeArea()
+            }
+            .fileExporter(
+                item: $exportDocument,
+                contentTypes: [.json],
+                defaultFilename: "\(repoName.isEmpty ? "repo" : repoName).json"
+            ) { result in
+                switch result {
+                case .success(let url):
+                    ToastManager.shared.show(String.localized("Saved to \(url.lastPathComponent)"), type: .success)
+                case .failure(let error):
+                    ToastManager.shared.show(String.localized("Failed to export: \(error.localizedDescription)"), type: .error)
                 }
             }
             .sheet(isPresented: $showingGuide) {
@@ -323,7 +482,16 @@ struct RepoBuilder: View {
     }
 
     private func generateSource() {
-        var allNews: [RepoNews] = []
+        let source = constructSource()
+        generatedJSON = encodeSource(source)
+        UIPasteboard.general.string = generatedJSON
+        showingSuccessAlert = true
+        ToastManager.shared.show(String.localized("Source JSON copied to clipboard!"), type: .success)
+        HapticsManager.shared.success()
+    }
+
+    private func constructSource() -> RepoSource {
+        var finalNews = news
 
         for app in apps {
             if !app.newsTitle.isEmpty || !app.newsCaption.isEmpty {
@@ -335,11 +503,18 @@ struct RepoBuilder: View {
                     notify: true,
                     appID: app.bundleIdentifier
                 )
-                allNews.append(newsItem)
+
+                if let index = finalNews.firstIndex(where: { $0.appID == app.bundleIdentifier && $0.title == app.newsTitle }) {
+                    finalNews[index] = newsItem
+                } else if let index = finalNews.firstIndex(where: { $0.appID == app.bundleIdentifier }) {
+                    finalNews[index] = newsItem
+                } else {
+                    finalNews.insert(newsItem, at: 0)
+                }
             }
         }
 
-        let source = RepoSource(
+        return RepoSource(
             name: repoName,
             identifier: repoIdentifier,
             sourceURL: sourceURL,
@@ -348,26 +523,79 @@ struct RepoBuilder: View {
             subtitle: subtitle,
             description: description,
             apps: apps,
-            news: allNews,
+            news: finalNews,
             isAltSource: isAltSource
         )
+    }
 
+    private func encodeSource(_ source: RepoSource) -> String {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes]
+        if let data = try? encoder.encode(source), let string = String(data: data, encoding: .utf8) {
+            return string
+        }
+        return ""
+    }
+
+    private func loadSource(_ source: RepoSource) {
+        repoName = source.name
+        repoIdentifier = source.identifier
+        sourceURL = source.sourceURL
+        iconURL = source.iconURL
+        website = source.website
+        subtitle = source.subtitle
+        description = source.description
+        isAltSource = source.isAltSource
+
+        var loadedApps = source.apps
+        for i in 0..<loadedApps.count {
+            if let newsItem = source.news.first(where: { $0.appID == loadedApps[i].bundleIdentifier }) {
+                loadedApps[i].newsTitle = newsItem.title
+                loadedApps[i].newsCaption = newsItem.caption
+                loadedApps[i].newsImageURL = newsItem.imageURL
+            }
+        }
+        apps = loadedApps
+        news = source.news
+
+        generatedJSON = encodeSource(source)
+        HapticsManager.shared.impact(.light)
+    }
+
+    private func importJSON(from url: URL) {
+        let isSecurityScoped = url.startAccessingSecurityScopedResource()
+        defer { if isSecurityScoped { url.stopAccessingSecurityScopedResource() } }
 
         do {
-            let data = try encoder.encode(source)
-            if let jsonString = String(data: data, encoding: .utf8) {
-                generatedJSON = jsonString
-                UIPasteboard.general.string = jsonString
-                showingSuccessAlert = true
-                ToastManager.shared.show(String.localized("Source JSON copied to clipboard!"), type: .success)
-                HapticsManager.shared.success()
-            }
+            let data = try Data(contentsOf: url)
+            let decoder = JSONDecoder()
+            let source = try decoder.decode(RepoSource.self, from: data)
+            loadSource(source)
+            ToastManager.shared.show(String.localized("Source imported!"), type: .success)
         } catch {
-            print("Encoding error: \(error)")
-            ToastManager.shared.show(String.localized("Failed to generate JSON: \(error.localizedDescription)"), type: .error)
+            ToastManager.shared.show(String.localized("Failed to import JSON: \(error.localizedDescription)"), type: .error)
         }
+    }
+
+    private func saveCurrentToSavedSources() {
+        let source = constructSource()
+        var currentSaved = savedSources
+        let newSaved = SavedRepoSource(source: source)
+
+        if let index = currentSaved.firstIndex(where: { $0.source.identifier == source.identifier }) {
+            currentSaved[index] = newSaved
+        } else {
+            currentSaved.insert(newSaved, at: 0)
+        }
+
+        savedSources = currentSaved
+        ToastManager.shared.show(String.localized("Source saved!"), type: .success)
+    }
+
+    private func deleteSavedSource(_ saved: SavedRepoSource) {
+        var currentSaved = savedSources
+        currentSaved.removeAll(where: { $0.id == saved.id })
+        savedSources = currentSaved
     }
 }
 
@@ -378,11 +606,17 @@ struct IdentifiableURL: Identifiable {
 
 struct AddRepoAppView: View {
     @Environment(\.dismiss) var dismiss
-    @State private var app = RepoApp()
+    @State private var app: RepoApp
     @State private var converterValue: String = ""
     @State private var converterUnit: String = "MB"
-    @State private var editableScreenshots: [IdentifiableURL] = []
+    @State private var editableScreenshots: [IdentifiableURL]
     var onAdd: (RepoApp) -> Void
+
+    init(app: RepoApp = RepoApp(), onAdd: @escaping (RepoApp) -> Void) {
+        self._app = State(initialValue: app)
+        self._editableScreenshots = State(initialValue: app.screenshots.map { IdentifiableURL(value: $0) })
+        self.onAdd = onAdd
+    }
 
     private func applyConversion() {
         guard let value = Double(converterValue) else { return }
