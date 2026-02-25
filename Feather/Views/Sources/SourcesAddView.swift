@@ -3,6 +3,7 @@ import NimbleViews
 import AltSourceKit
 import NimbleJSON
 import OSLog
+import CoreData
 
 // MARK: - Import Result Model
 struct ImportedSource: Identifiable {
@@ -17,6 +18,11 @@ struct ImportedSource: Identifiable {
 struct SourcesAddView: View {
 	typealias RepositoryDataHandler = Result<ASRepository, Error>
 	@Environment(\.dismiss) var dismiss
+
+	@FetchRequest(
+		entity: AltSource.entity(),
+		sortDescriptors: [NSSortDescriptor(keyPath: \AltSource.order, ascending: true)]
+	) private var _sources: FetchedResults<AltSource>
 
 	private let _dataService = NBFetchService()
 	
@@ -64,6 +70,7 @@ struct SourcesAddView: View {
 	@State private var _selectedSourcesForExport: Set<String> = []
 	@State private var _showPortalExport = false
 	@State private var _portalExportData = ""
+	@State private var _showManageSources = false
 	
 	// MARK: Body
 	var body: some View {
@@ -83,6 +90,16 @@ struct SourcesAddView: View {
 			}
 			.sheet(isPresented: $_showPortalExport) {
 				PortalTransferView(exportData: $_portalExportData)
+			}
+			.sheet(isPresented: $_showManageSources) {
+				EditSourcesView(sources: _sources)
+					.presentationDetents([.large])
+					.presentationDragIndicator(.visible)
+			}
+			.onChange(of: _showManageSources) { newValue in
+				if !newValue {
+					_refreshFilteredRecommendedSourcesData()
+				}
 			}
 		}
 	}
@@ -178,6 +195,12 @@ struct SourcesAddView: View {
 					}
 
 					Menu {
+						Button {
+							_showManageSources = true
+						} label: {
+							Label(.localized("Manage Sources"), systemImage: "list.bullet.rectangle.portrait")
+						}
+
 						Button {
 							_isImporting = true
 							_fetchImportedRepositories(UIPasteboard.general.string) { }
