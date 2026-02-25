@@ -320,15 +320,55 @@ struct RepoBuilder: View {
     }
 }
 
+struct IdentifiableURL: Identifiable {
+    let id = UUID()
+    var value: String
+}
+
 struct AddRepoAppView: View {
     @Environment(\.dismiss) var dismiss
     @State private var app = RepoApp()
-    @State private var screenshotsText = ""
+    @State private var converterValue: String = ""
+    @State private var converterUnit: String = "MB"
+    @State private var editableScreenshots: [IdentifiableURL] = []
     var onAdd: (RepoApp) -> Void
+
+    private func applyConversion() {
+        guard let value = Double(converterValue) else { return }
+        let bytes: Int64
+        if converterUnit == "MB" {
+            bytes = Int64(value * 1024 * 1024)
+        } else {
+            bytes = Int64(value * 1024 * 1024 * 1024)
+        }
+        app.size = String(bytes)
+    }
 
     var body: some View {
         NavigationView {
             Form {
+                Section(header: Text(String.localized("Size Converter"))) {
+                    HStack {
+                        TextField(String.localized("Value"), text: $converterValue)
+                            .keyboardType(.decimalPad)
+
+                        Picker("", selection: $converterUnit) {
+                            Text("MB").tag("MB")
+                            Text("GB").tag("GB")
+                        }
+                        .pickerStyle(.segmented)
+                        .frame(width: 100)
+
+                        Button(String.localized("Apply")) {
+                            applyConversion()
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
+                    Text(String.localized("Result: \(app.size) bytes"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
                 Section(header: Text(String.localized("App Details"))) {
                     TextField(String.localized("App Name"), text: $app.name)
                     TextField(String.localized("Bundle ID"), text: $app.bundleIdentifier)
@@ -355,16 +395,34 @@ struct AddRepoAppView: View {
                     TextField(String.localized("Icon URL"), text: $app.iconURL)
                     TextField(String.localized("Download URL (.ipa)"), text: $app.downloadURL)
 
-                    VStack(alignment: .leading) {
-                        Text(String.localized("Screenshots URLs (One per line)"))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        TextEditor(text: $screenshotsText)
-                            .frame(minHeight: 80)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 8)
-                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
-                            )
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text(String.localized("Screenshots URLs"))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button {
+                                editableScreenshots.append(IdentifiableURL(value: ""))
+                            } label: {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundStyle(.blue)
+                            }
+                        }
+
+                        ForEach($editableScreenshots) { $item in
+                            HStack {
+                                TextField(String.localized("URL"), text: $item.value)
+
+                                Button(role: .destructive) {
+                                    if let index = editableScreenshots.firstIndex(where: { $0.id == item.id }) {
+                                        editableScreenshots.remove(at: index)
+                                    }
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .foregroundStyle(.red)
+                                }
+                            }
+                        }
                     }
                     .padding(.vertical, 4)
                 }
@@ -412,7 +470,7 @@ struct AddRepoAppView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(String.localized("Add")) {
-                        app.screenshots = screenshotsText.components(separatedBy: .newlines).filter { !$0.isEmpty }
+                        app.screenshots = editableScreenshots.map { $0.value }.filter { !$0.isEmpty }
                         onAdd(app)
                         dismiss()
                     }
