@@ -6,32 +6,69 @@ struct RepoMeta: Codable {
     var iconURL: String
 }
 
+struct RepoVersion: Codable, Identifiable {
+    var id = UUID()
+    var version: String = ""
+    var date: String = ""
+    var localizedDescription: String = ""
+    var downloadURL: String = ""
+    var size: String = ""
+
+    enum CodingKeys: String, CodingKey {
+        case version, date, localizedDescription, downloadURL, size
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(version, forKey: .version)
+        try container.encode(date, forKey: .date)
+        try container.encode(localizedDescription, forKey: .localizedDescription)
+        try container.encode(downloadURL, forKey: .downloadURL)
+        let sizeValue = Int64(size.filter { "0123456789".contains($0) }) ?? 0
+        try container.encode(sizeValue, forKey: .size)
+    }
+}
+
+struct RepoNews: Codable, Identifiable {
+    var id = UUID().uuidString
+    var title: String = ""
+    var caption: String = ""
+    var date: String = ""
+    var imageURL: String = ""
+    var notify: Bool = false
+    var appID: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id = "identifier"
+        case title, caption, date, imageURL, notify, appID
+    }
+}
+
 struct RepoApp: Codable, Identifiable {
     var id = UUID()
     var name: String = ""
     var bundleIdentifier: String = ""
     var developerName: String = ""
-    var news: String = ""
-    var size: String = ""
-    var version: String = ""
+    var subtitle: String = ""
     var localizedDescription: String = ""
+    var version: String = ""
     var versionDate: String = ""
+    var versionDescription: String = ""
+    var size: String = ""
     var iconURL: String = ""
     var downloadURL: String = ""
     var type: Int = 1
+    var category: String = ""
+    var beta: Bool = false
+    var screenshots: [String] = []
+
+    // For News aggregation in the builder
+    var newsTitle: String = ""
+    var newsCaption: String = ""
+    var newsImageURL: String = ""
 
     enum CodingKeys: String, CodingKey {
-        case name
-        case bundleIdentifier
-        case developerName
-        case news
-        case size
-        case version
-        case localizedDescription
-        case versionDate
-        case iconURL
-        case downloadURL
-        case type
+        case name, bundleIdentifier, developerName, subtitle, localizedDescription, version, versionDate, versionDescription, size, iconURL, downloadURL, type, category, beta, screenshots, versions
     }
 
     func encode(to encoder: Encoder) throws {
@@ -39,14 +76,34 @@ struct RepoApp: Codable, Identifiable {
         try container.encode(name, forKey: .name)
         try container.encode(bundleIdentifier, forKey: .bundleIdentifier)
         try container.encode(developerName, forKey: .developerName)
-        try container.encode(news, forKey: .news)
-        try container.encode(Int(size) ?? 0, forKey: .size)
-        try container.encode(version, forKey: .version)
+        try container.encode(subtitle, forKey: .subtitle)
         try container.encode(localizedDescription, forKey: .localizedDescription)
+        try container.encode(version, forKey: .version)
         try container.encode(versionDate, forKey: .versionDate)
+        try container.encode(versionDescription, forKey: .versionDescription)
+
+        let sizeValue = Int64(size.filter { "0123456789".contains($0) }) ?? 0
+        try container.encode(sizeValue, forKey: .size)
+
         try container.encode(iconURL, forKey: .iconURL)
         try container.encode(downloadURL, forKey: .downloadURL)
         try container.encode(type, forKey: .type)
+        try container.encode(category, forKey: .category)
+        try container.encode(beta, forKey: .beta)
+
+        if !screenshots.isEmpty {
+            try container.encode(screenshots, forKey: .screenshots)
+        }
+
+        // Also include in versions array for AltStore compatibility
+        let currentVersion = RepoVersion(
+            version: version,
+            date: versionDate,
+            localizedDescription: versionDescription,
+            downloadURL: downloadURL,
+            size: size
+        )
+        try container.encode([currentVersion], forKey: .versions)
     }
 }
 
@@ -57,20 +114,27 @@ struct RepoSource: Codable {
     var iconURL: String
     var website: String = ""
     var subtitle: String = ""
+    var description: String = ""
     var apps: [RepoApp]
+    var news: [RepoNews] = []
+
+    var isAltSource: Bool = false
 
     enum CodingKeys: String, CodingKey {
-        case name, identifier, sourceURL, iconURL, website, subtitle, apps, META
+        case name, identifier, sourceURL, iconURL, website, subtitle, description, apps, news, META
     }
 
-    init(name: String, identifier: String, sourceURL: String, iconURL: String, website: String = "", subtitle: String = "", apps: [RepoApp]) {
+    init(name: String, identifier: String, sourceURL: String, iconURL: String, website: String = "", subtitle: String = "", description: String = "", apps: [RepoApp], news: [RepoNews] = [], isAltSource: Bool = false) {
         self.name = name
         self.identifier = identifier
         self.sourceURL = sourceURL
         self.iconURL = iconURL
         self.website = website
         self.subtitle = subtitle
+        self.description = description
         self.apps = apps
+        self.news = news
+        self.isAltSource = isAltSource
     }
 
     init(from decoder: Decoder) throws {
@@ -81,7 +145,9 @@ struct RepoSource: Codable {
         iconURL = try container.decode(String.self, forKey: .iconURL)
         website = (try? container.decode(String.self, forKey: .website)) ?? ""
         subtitle = (try? container.decode(String.self, forKey: .subtitle)) ?? ""
+        description = (try? container.decode(String.self, forKey: .description)) ?? ""
         apps = try container.decode([RepoApp].self, forKey: .apps)
+        news = (try? container.decode([RepoNews].self, forKey: .news)) ?? []
     }
 
     func encode(to encoder: Encoder) throws {
@@ -92,8 +158,13 @@ struct RepoSource: Codable {
         try container.encode(iconURL, forKey: .iconURL)
         if !website.isEmpty { try container.encode(website, forKey: .website) }
         if !subtitle.isEmpty { try container.encode(subtitle, forKey: .subtitle) }
+        if !description.isEmpty { try container.encode(description, forKey: .description) }
         try container.encode(apps, forKey: .apps)
-        try container.encode(RepoMeta(repoName: name, iconURL: iconURL), forKey: .META)
+        if !news.isEmpty { try container.encode(news, forKey: .news) }
+
+        if !isAltSource {
+            try container.encode(RepoMeta(repoName: name, iconURL: iconURL), forKey: .META)
+        }
     }
 }
 
@@ -104,10 +175,15 @@ struct RepoBuilder: View {
     @State private var iconURL = ""
     @State private var website = ""
     @State private var subtitle = ""
+    @State private var description = ""
+    @State private var isAltSource = false
     @State private var apps: [RepoApp] = []
 
     @State private var showingAddApp = false
     @State private var showingGuide = false
+
+    @State private var generatedJSON = ""
+    @State private var showingSuccessAlert = false
 
     var body: some View {
         NBNavigationView(String.localized("Repository Builder")) {
@@ -119,6 +195,17 @@ struct RepoBuilder: View {
                     TextField(String.localized("Icon URL"), text: $iconURL)
                     TextField(String.localized("Website (Optional)"), text: $website)
                     TextField(String.localized("Subtitle (Optional)"), text: $subtitle)
+                    TextField(String.localized("Description (Optional)"), text: $description)
+
+                    Toggle(isOn: $isAltSource) {
+                        VStack(alignment: .leading) {
+                            Text(String.localized("Create AltSource"))
+                                .bold()
+                            Text(String.localized("Generate a standard AltStore compatible source without Feather metadata."))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
 
                 Section(header: Text(String.localized("Apps (\(apps.count))"))) {
@@ -172,10 +259,35 @@ struct RepoBuilder: View {
             .sheet(isPresented: $showingGuide) {
                 RepoBuilderGuideView()
             }
+            .alert(String.localized("Source Generated!"), isPresented: $showingSuccessAlert) {
+                Button(String.localized("Copy JSON"), action: {
+                    UIPasteboard.general.string = generatedJSON
+                    ToastManager.shared.show(String.localized("Copied to clipboard!"), type: .success)
+                })
+                Button(String.localized("Done"), role: .cancel) { }
+            } message: {
+                Text(String.localized("The source JSON has been generated and copied to your clipboard. You can now host it on GitHub or any other service."))
+            }
         }
     }
 
     private func generateSource() {
+        var allNews: [RepoNews] = []
+
+        for app in apps {
+            if !app.newsTitle.isEmpty || !app.newsCaption.isEmpty {
+                let newsItem = RepoNews(
+                    title: app.newsTitle,
+                    caption: app.newsCaption,
+                    date: app.versionDate,
+                    imageURL: app.newsImageURL,
+                    notify: true,
+                    appID: app.bundleIdentifier
+                )
+                allNews.append(newsItem)
+            }
+        }
+
         let source = RepoSource(
             name: repoName,
             identifier: repoIdentifier,
@@ -183,21 +295,27 @@ struct RepoBuilder: View {
             iconURL: iconURL,
             website: website,
             subtitle: subtitle,
-            apps: apps
+            description: description,
+            apps: apps,
+            news: allNews,
+            isAltSource: isAltSource
         )
 
         let encoder = JSONEncoder()
-        encoder.outputFormatting = .prettyPrinted
+        encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes]
 
         do {
             let data = try encoder.encode(source)
             if let jsonString = String(data: data, encoding: .utf8) {
+                generatedJSON = jsonString
                 UIPasteboard.general.string = jsonString
+                showingSuccessAlert = true
                 ToastManager.shared.show(String.localized("Source JSON copied to clipboard!"), type: .success)
                 HapticsManager.shared.success()
             }
         } catch {
-            ToastManager.shared.show(String.localized("Failed to generate JSON"), type: .error)
+            print("Encoding error: \(error)")
+            ToastManager.shared.show(String.localized("Failed to generate JSON: \(error.localizedDescription)"), type: .error)
         }
     }
 }
@@ -205,6 +323,7 @@ struct RepoBuilder: View {
 struct AddRepoAppView: View {
     @Environment(\.dismiss) var dismiss
     @State private var app = RepoApp()
+    @State private var screenshotsText = ""
     var onAdd: (RepoApp) -> Void
 
     var body: some View {
@@ -214,10 +333,15 @@ struct AddRepoAppView: View {
                     TextField(String.localized("App Name"), text: $app.name)
                     TextField(String.localized("Bundle ID"), text: $app.bundleIdentifier)
                     TextField(String.localized("Developer Name"), text: $app.developerName)
+                    TextField(String.localized("Subtitle"), text: $app.subtitle)
+                    TextField(String.localized("Category"), text: $app.category)
                     TextField(String.localized("Version"), text: $app.version)
                     TextField(String.localized("Version Date (YYYY-MM-DD)"), text: $app.versionDate)
                     TextField(String.localized("Size (Bytes)"), text: $app.size)
                         .keyboardType(.numberPad)
+
+                    Toggle(String.localized("Is Beta"), isOn: $app.beta)
+
                     Stepper(value: $app.type, in: 1...10) {
                         HStack {
                             Text(String.localized("Type"))
@@ -227,10 +351,37 @@ struct AddRepoAppView: View {
                     }
                 }
 
-                Section(header: Text(String.localized("Content"))) {
+                Section(header: Text(String.localized("Content & Media"))) {
                     TextField(String.localized("Icon URL"), text: $app.iconURL)
                     TextField(String.localized("Download URL (.ipa)"), text: $app.downloadURL)
-                    TextField(String.localized("News"), text: $app.news)
+
+                    VStack(alignment: .leading) {
+                        Text(String.localized("Screenshots URLs (One per line)"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        TextEditor(text: $screenshotsText)
+                            .frame(minHeight: 80)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                            )
+                    }
+                    .padding(.vertical, 4)
+                }
+
+                Section(header: Text(String.localized("Descriptions"))) {
+                    VStack(alignment: .leading) {
+                        Text(String.localized("Version Description"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        TextEditor(text: $app.versionDescription)
+                            .frame(minHeight: 80)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                            )
+                    }
+                    .padding(.vertical, 4)
 
                     VStack(alignment: .leading) {
                         Text(String.localized("Localized Description"))
@@ -245,6 +396,12 @@ struct AddRepoAppView: View {
                     }
                     .padding(.vertical, 4)
                 }
+
+                Section(header: Text(String.localized("News / Changelog"))) {
+                    TextField(String.localized("News Title"), text: $app.newsTitle)
+                    TextField(String.localized("News Content"), text: $app.newsCaption)
+                    TextField(String.localized("News Image URL"), text: $app.newsImageURL)
+                }
             }
             .navigationTitle(String.localized("Add App"))
             .toolbar {
@@ -255,10 +412,10 @@ struct AddRepoAppView: View {
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(String.localized("Add")) {
+                        app.screenshots = screenshotsText.components(separatedBy: .newlines).filter { !$0.isEmpty }
                         onAdd(app)
                         dismiss()
                     }
-                    .disabled(app.name.isEmpty || app.bundleIdentifier.isEmpty)
                 }
             }
         }
@@ -282,10 +439,20 @@ struct RepoBuilderGuideView: View {
                             String.localized("• Website/Subtitle: Optional metadata for your repository."),
                             String.localized("• App Name: The name of the application."),
                             String.localized("• Bundle ID: The unique identifier of the app (e.g., com.apple.Stocks)."),
-                            String.localized("• News: What's new in this specific version."),
+                            String.localized("• News: What's new in this specific version. This will also appear in the global news section."),
                             String.localized("• Size: The size of the IPA file in bytes."),
-                            String.localized("• Version Date: The release date of the version."),
-                            String.localized("• Type: The app type (usually 1 for normal apps).")
+                            String.localized("• Version Date: The release date of the version (YYYY-MM-DD)."),
+                            String.localized("• Type: The app type (usually 1 for normal apps)."),
+                            String.localized("• Is Beta: Mark this app as a beta version."),
+                            String.localized("• Screenshots: Add links to images showing your app. Put each link on a new line.")
+                        ]
+                    )
+
+                    guideSection(
+                        title: String.localized("AltSource vs Feather Source"),
+                        content: [
+                            String.localized("• Feather Source: Includes extra 'META' information used by Feather and E-Sign for better repository identification."),
+                            String.localized("• AltSource: A pure AltStore-compatible format that works with AltStore, SideStore, and other similar installers without any extra fields.")
                         ]
                     )
 
@@ -293,10 +460,20 @@ struct RepoBuilderGuideView: View {
                         title: String.localized("How to host the repository?"),
                         content: [
                             String.localized("1. Generate the JSON using this tool."),
-                            String.localized("2. Create a new repository on GitHub."),
+                            String.localized("2. Create a new repository on GitHub (or use GitHub Pages)."),
                             String.localized("3. Upload the generated JSON (e.g., as 'repo.json')."),
                             String.localized("4. Click on the file, then click 'Raw' to get the direct link."),
-                            String.localized("5. This Raw link is what users will add as a Source.")
+                            String.localized("5. This Raw link is what users will add as a Source."),
+                            String.localized("TIP: You can also use services like Vercel, Netlify, or even a Discord message link (though less recommended).")
+                        ]
+                    )
+
+                    guideSection(
+                        title: String.localized("Common Mistakes"),
+                        content: [
+                            String.localized("• Invalid URLs: Make sure all URLs start with https:// and point directly to the file."),
+                            String.localized("• Bundle ID Mismatch: If the Bundle ID doesn't match the IPA, some installers might fail to show the icon."),
+                            String.localized("• Size: Always use bytes for the size (e.g., 1048576 for 1MB).")
                         ]
                     )
                 }
