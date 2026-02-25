@@ -18,6 +18,28 @@ struct RepoVersion: Codable, Identifiable {
         case version, date, localizedDescription, downloadURL, size
     }
 
+    init(version: String = "", date: String = "", localizedDescription: String = "", downloadURL: String = "", size: String = "") {
+        self.version = version
+        self.date = date
+        self.localizedDescription = localizedDescription
+        self.downloadURL = downloadURL
+        self.size = size
+    }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        version = try container.decode(String.self, forKey: .version)
+        date = try container.decode(String.self, forKey: .date)
+        localizedDescription = try container.decode(String.self, forKey: .localizedDescription)
+        downloadURL = try container.decode(String.self, forKey: .downloadURL)
+
+        if let intSize = try? container.decode(Int64.self, forKey: .size) {
+            size = String(intSize)
+        } else {
+            size = (try? container.decode(String.self, forKey: .size)) ?? ""
+        }
+    }
+
     func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(version, forKey: .version)
@@ -61,6 +83,7 @@ struct RepoApp: Codable, Identifiable {
     var category: String = ""
     var beta: Bool = false
     var screenshots: [String] = []
+    var versions: [RepoVersion]? = nil
 
     // For News aggregation in the builder
     var newsTitle: String = ""
@@ -69,6 +92,34 @@ struct RepoApp: Codable, Identifiable {
 
     enum CodingKeys: String, CodingKey {
         case name, bundleIdentifier, developerName, subtitle, localizedDescription, version, versionDate, versionDescription, size, iconURL, downloadURL, type, category, beta, screenshots, versions
+    }
+
+    init() {}
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        name = try container.decode(String.self, forKey: .name)
+        bundleIdentifier = try container.decode(String.self, forKey: .bundleIdentifier)
+        developerName = try container.decode(String.self, forKey: .developerName)
+        subtitle = try container.decode(String.self, forKey: .subtitle)
+        localizedDescription = try container.decode(String.self, forKey: .localizedDescription)
+        version = try container.decode(String.self, forKey: .version)
+        versionDate = try container.decode(String.self, forKey: .versionDate)
+        versionDescription = try container.decode(String.self, forKey: .versionDescription)
+
+        if let intSize = try? container.decode(Int64.self, forKey: .size) {
+            size = String(intSize)
+        } else {
+            size = (try? container.decode(String.self, forKey: .size)) ?? ""
+        }
+
+        iconURL = try container.decode(String.self, forKey: .iconURL)
+        downloadURL = try container.decode(String.self, forKey: .downloadURL)
+        type = try container.decode(Int.self, forKey: .type)
+        category = try container.decode(String.self, forKey: .category)
+        beta = try container.decode(Bool.self, forKey: .beta)
+        screenshots = (try? container.decode([String].self, forKey: .screenshots)) ?? []
+        versions = try? container.decode([RepoVersion].self, forKey: .versions)
     }
 
     func encode(to encoder: Encoder) throws {
