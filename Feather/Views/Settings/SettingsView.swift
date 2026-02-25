@@ -213,6 +213,10 @@ struct SettingsView: View {
                 SettingsRow(icon: "terminal.fill", title: String.localized("Logs"), color: .accentColor, destination: AppLogsView())
             }
 
+            if !hideManager.isHidden("settings.repoBuilder") {
+                SettingsRow(icon: "hammer.fill", title: String.localized("Repository Builder"), color: .accentColor, destination: RepoBuilder())
+            }
+
             if !hideManager.isHidden("settings.fetchData") {
                 SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: _isFetchingFullData ? String.localized("Fetching Source Data...") : String.localized("Fetch Full Data"), color: .accentColor, isLoading: _isFetchingFullData) {
                     Task {
