@@ -439,10 +439,14 @@ struct AllAppsView: View {
                             isLast: index == _filteredApps.count - 1
                         )
                         .onTapGesture(count: 2) {
-                             GestureManager.shared.performAction(for: .doubleTap, in: .allApps, context: entry.app)
+                            Task {
+                                await GestureManager.shared.performAction(for: .doubleTap, in: .allApps, context: entry.app)
+                            }
                         }
                         .onLongPressGesture {
-                             GestureManager.shared.performAction(for: .longPress, in: .allApps, context: entry.app)
+                            Task {
+                                await GestureManager.shared.performAction(for: .longPress, in: .allApps, context: entry.app)
+                            }
                         }
                     }
                 }
@@ -461,10 +465,14 @@ struct AllAppsView: View {
                         )
                         .padding(.horizontal, _rowHorizontalPadding)
                         .onTapGesture(count: 2) {
-                             GestureManager.shared.performAction(for: .doubleTap, in: .allApps, context: entry.app)
+                            Task {
+                                await GestureManager.shared.performAction(for: .doubleTap, in: .allApps, context: entry.app)
+                            }
                         }
                         .onLongPressGesture {
-                             GestureManager.shared.performAction(for: .longPress, in: .allApps, context: entry.app)
+                            Task {
+                                await GestureManager.shared.performAction(for: .longPress, in: .allApps, context: entry.app)
+                            }
                         }
                     }
                 }

@@ -715,10 +715,14 @@ struct FilesView: View {
                         handleFileTap(file)
                     }
                     .onTapGesture(count: 2) {
-                        GestureManager.shared.performAction(for: .doubleTap, in: .files, context: file)
+                        Task {
+                            await GestureManager.shared.performAction(for: .doubleTap, in: .files, context: file)
+                        }
                     }
                     .onLongPressGesture {
-                        GestureManager.shared.performAction(for: .longPress, in: .files, context: file)
+                        Task {
+                            await GestureManager.shared.performAction(for: .longPress, in: .files, context: file)
+                        }
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
@@ -844,10 +848,14 @@ struct FilesView: View {
                             handleFileTap(file)
                         }
                         .onTapGesture(count: 2) {
-                            GestureManager.shared.performAction(for: .doubleTap, in: .files, context: file)
+                            Task {
+                                await GestureManager.shared.performAction(for: .doubleTap, in: .files, context: file)
+                            }
                         }
                         .onLongPressGesture {
-                            GestureManager.shared.performAction(for: .longPress, in: .files, context: file)
+                            Task {
+                                await GestureManager.shared.performAction(for: .longPress, in: .files, context: file)
+                            }
                         }
                         .contextMenu {
                             fileContextMenu(for: file)

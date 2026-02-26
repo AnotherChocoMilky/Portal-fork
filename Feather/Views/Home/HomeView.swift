@@ -203,7 +203,9 @@ struct HomeView: View {
             LongPressGesture(minimumDuration: 3.0)
                 .sequenced(before: LongPressGesture(minimumDuration: 0.1))
                 .onEnded { _ in
-                    GestureManager.shared.performAction(for: .longPress, in: .dashboard)
+                    Task {
+                        await GestureManager.shared.performAction(for: .longPress, in: .dashboard)
+                    }
                 }
         )
         .onAppear {
@@ -362,7 +364,9 @@ struct HomeView: View {
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.secondary)
                         .onTapGesture {
-                            GestureManager.shared.performAction(for: .doubleTap, in: .dashboard)
+                            Task {
+                                await GestureManager.shared.performAction(for: .doubleTap, in: .dashboard)
+                            }
                         }
                 }
             }
@@ -1038,7 +1042,9 @@ struct HomeView: View {
             }
             .padding(_compactMode ? 12 : 16)
             .onTapGesture {
-                GestureManager.shared.performAction(for: .doubleTap, in: .dashboard)
+                Task {
+                    await GestureManager.shared.performAction(for: .doubleTap, in: .dashboard)
+                }
             }
         }
         .opacity(_appearAnimation ? 1 : 0)

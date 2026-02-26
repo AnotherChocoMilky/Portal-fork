@@ -134,21 +134,29 @@ struct LibraryView: View {
                                 )
                                 .padding(.horizontal, 16)
                                 .onTapGesture(count: 2) {
-                                    GestureManager.shared.performAction(for: .doubleTap, in: .library, context: app)
+                                    Task {
+                                        await GestureManager.shared.performAction(for: .doubleTap, in: .library, context: app)
+                                    }
                                 }
                                 .onLongPressGesture {
-                                    GestureManager.shared.performAction(for: .longPress, in: .library, context: app)
+                                    Task {
+                                        await GestureManager.shared.performAction(for: .longPress, in: .library, context: app)
+                                    }
                                 }
                                 .swipeActions(edge: .trailing) {
                                     Button(role: .destructive) {
-                                        GestureManager.shared.performAction(for: .leftSwipe, in: .library, context: app)
+                                        Task {
+                                            await GestureManager.shared.performAction(for: .leftSwipe, in: .library, context: app)
+                                        }
                                     } label: {
                                         Label("Action", systemImage: "hand.tap")
                                     }
                                 }
                                 .swipeActions(edge: .leading) {
                                     Button {
-                                        GestureManager.shared.performAction(for: .rightSwipe, in: .library, context: app)
+                                        Task {
+                                            await GestureManager.shared.performAction(for: .rightSwipe, in: .library, context: app)
+                                        }
                                     } label: {
                                         Label("Action", systemImage: "hand.tap")
                                     }
