@@ -173,8 +173,10 @@ struct AllAppsView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .gestureOpenDetails)) { notification in
             if let app = notification.object as? ASRepository.App {
-                 // In a real app, find source and set _selectedRoute
-                 AppLogManager.shared.info("Gesture: Open Details for \(app.name ?? "")", category: "Gestures")
+                 // Find the source for this app
+                 if let entry = _allApps.first(where: { $0.app.currentUniqueId == app.currentUniqueId }) {
+                     _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
+                 }
             }
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)

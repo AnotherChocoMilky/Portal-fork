@@ -31,6 +31,12 @@ enum GestureAction: String, CaseIterable, Codable, Identifiable {
     case showHomeInfo = "Show Home Info"
     case toggleInversion = "Toggle Inversion"
     case authenticateDeveloper = "Authenticate Developer"
+    case rename = "Rename"
+    case duplicate = "Duplicate"
+    case move = "Move"
+    case viewPermissions = "View Permissions"
+    case exportEntitlements = "Export Entitlements"
+    case select = "Select"
 
     var id: String { rawValue }
 
@@ -157,6 +163,14 @@ class GestureManager: ObservableObject {
                 NotificationCenter.default.post(name: .gestureOpenDetails, object: app)
             } else if let source = context as? AltSource {
                 NotificationCenter.default.post(name: .gestureOpenSourceDetails, object: source)
+            } else if let app = context as? ASRepository.App {
+                NotificationCenter.default.post(name: .gestureOpenDetails, object: app)
+            } else if let file = context as? FileItem {
+                NotificationCenter.default.post(name: .gestureOpenFileDetails, object: file)
+            } else if let guide = context as? Guide {
+                NotificationCenter.default.post(name: .gestureOpenGuideDetails, object: guide)
+            } else if let cert = context as? CertificatePair {
+                NotificationCenter.default.post(name: .gestureOpenCertDetails, object: cert)
             } else if section == .dashboard {
                  NotificationCenter.default.post(name: .gestureShowHomeInfo, object: nil)
             }
@@ -171,6 +185,8 @@ class GestureManager: ObservableObject {
         case .shareApp:
             if let app = context as? AppInfoPresentable {
                 NotificationCenter.default.post(name: .gestureShareApp, object: app)
+            } else if let file = context as? FileItem {
+                NotificationCenter.default.post(name: .gestureShareFile, object: file)
             }
         case .openRepository:
              if let source = context as? AltSource {
@@ -186,6 +202,30 @@ class GestureManager: ObservableObject {
             if let source = context as? AltSource {
                 UIPasteboard.general.string = source.sourceURL?.absoluteString
                 HapticsManager.shared.success()
+            }
+        case .rename:
+            if let file = context as? FileItem {
+                NotificationCenter.default.post(name: .gestureRenameFile, object: file)
+            }
+        case .duplicate:
+            if let file = context as? FileItem {
+                NotificationCenter.default.post(name: .gestureDuplicateFile, object: file)
+            }
+        case .move:
+            if let file = context as? FileItem {
+                NotificationCenter.default.post(name: .gestureMoveFile, object: file)
+            }
+        case .viewPermissions:
+            if let file = context as? FileItem {
+                NotificationCenter.default.post(name: .gestureViewFilePermissions, object: file)
+            }
+        case .exportEntitlements:
+            if let cert = context as? CertificatePair {
+                NotificationCenter.default.post(name: .gestureExportCertEntitlements, object: cert)
+            }
+        case .select:
+            if let cert = context as? CertificatePair {
+                NotificationCenter.default.post(name: .gestureSelectCert, object: cert)
             }
         case .unlockSourceMaster:
             ToastManager.shared.show("🛠️ Source Master Unlocked!", type: .success)
@@ -218,4 +258,14 @@ extension NSNotification.Name {
     static let gestureRotateTip = NSNotification.Name("Feather.gesture.rotateTip")
     static let gestureShowHomeInfo = NSNotification.Name("Feather.gesture.showHomeInfo")
     static let gestureAuthenticateDeveloper = NSNotification.Name("Feather.gesture.authenticateDeveloper")
+    static let gestureOpenFileDetails = NSNotification.Name("Feather.gesture.openFileDetails")
+    static let gestureRenameFile = NSNotification.Name("Feather.gesture.renameFile")
+    static let gestureDuplicateFile = NSNotification.Name("Feather.gesture.duplicateFile")
+    static let gestureMoveFile = NSNotification.Name("Feather.gesture.moveFile")
+    static let gestureShareFile = NSNotification.Name("Feather.gesture.shareFile")
+    static let gestureViewFilePermissions = NSNotification.Name("Feather.gesture.viewFilePermissions")
+    static let gestureOpenGuideDetails = NSNotification.Name("Feather.gesture.openGuideDetails")
+    static let gestureOpenCertDetails = NSNotification.Name("Feather.gesture.openCertDetails")
+    static let gestureExportCertEntitlements = NSNotification.Name("Feather.gesture.exportCertEntitlements")
+    static let gestureSelectCert = NSNotification.Name("Feather.gesture.selectCert")
 }

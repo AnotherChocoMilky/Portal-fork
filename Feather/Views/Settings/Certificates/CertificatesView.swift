@@ -106,6 +106,35 @@ struct CertificatesView: View {
 				Storage.shared.updateWidgetData(certName: cert.nickname ?? "Unknown", expiryDate: cert.expiration)
 			}
 		}
+		.onReceive(NotificationCenter.default.publisher(for: .gestureOpenCertDetails)) { notification in
+			if let cert = notification.object as? CertificatePair {
+				_isSelectedInfoPresenting = cert
+			}
+		}
+		.onReceive(NotificationCenter.default.publisher(for: .gestureExportCertEntitlements)) { notification in
+			if let cert = notification.object as? CertificatePair {
+				_exportEntitlements(for: cert)
+			}
+		}
+		.onReceive(NotificationCenter.default.publisher(for: .gestureSelectCert)) { notification in
+			if let cert = notification.object as? CertificatePair {
+				if let index = _certificates.firstIndex(where: { $0.uuid == cert.uuid }) {
+					withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
+						_selectedCertBinding.wrappedValue = index
+					}
+					HapticsManager.shared.softImpact()
+				}
+			}
+		}
+		.onReceive(NotificationCenter.default.publisher(for: .gestureRequireConfirmation)) { notification in
+			guard let userInfo = notification.userInfo,
+				  let action = userInfo["action"] as? GestureAction,
+				  action == .deleteApp,
+				  let cert = userInfo["context"] as? CertificatePair else { return }
+
+			Storage.shared.deleteCertificate(for: cert)
+			HapticsManager.shared.success()
+		}
 	}
 	
 	// MARK: - Certificate Type Card
@@ -196,6 +225,9 @@ struct CertificatesView: View {
 		let isSelected = _selectedCertBinding.wrappedValue == index
 		
 		Button {
+			Task {
+				await GestureManager.shared.performAction(for: .singleTap, in: .certificates, context: cert)
+			}
 			withAnimation(.spring(response: 0.35, dampingFraction: 0.7)) {
 				_selectedCertBinding.wrappedValue = index
 			}
@@ -277,6 +309,16 @@ struct CertificatesView: View {
 			.scaleEffect(isSelected ? 1.02 : 1.0)
 			.animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
 			.contentShape(Rectangle())
+			.onTapGesture(count: 2) {
+				Task {
+					await GestureManager.shared.performAction(for: .doubleTap, in: .certificates, context: cert)
+				}
+			}
+			.onLongPressGesture {
+				Task {
+					await GestureManager.shared.performAction(for: .longPress, in: .certificates, context: cert)
+				}
+			}
 			.contextMenu {
 				_contextActions(for: cert)
 				if cert.isDefault != true {

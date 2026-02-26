@@ -3,6 +3,7 @@ import NimbleViews
 
 // MARK: - GuidesView
 struct GuidesView: View {
+    @State private var selectedGuide: Guide?
     @AppStorage("forceShowGuides") private var forceShowGuides = false
     @StateObject private var hideManager = GuidesHideManager.shared
     @State private var guides: [Guide] = []
@@ -21,6 +22,14 @@ struct GuidesView: View {
                         placeholderView
                     }
                 }
+            }
+        }
+        .sheet(item: $selectedGuide) { guide in
+            GuideDetailView(guide: guide)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureOpenGuideDetails)) { notification in
+            if let guide = notification.object as? Guide {
+                selectedGuide = guide
             }
         }
         .task {
@@ -135,6 +144,40 @@ struct GuidesView: View {
                                     }
                                 }
                                 .padding(.vertical, 4)
+                            }
+                            .onTapGesture {
+                                Task {
+                                    await GestureManager.shared.performAction(for: .singleTap, in: .guides, context: guide)
+                                }
+                            }
+                            .onTapGesture(count: 2) {
+                                Task {
+                                    await GestureManager.shared.performAction(for: .doubleTap, in: .guides, context: guide)
+                                }
+                            }
+                            .onLongPressGesture {
+                                Task {
+                                    await GestureManager.shared.performAction(for: .longPress, in: .guides, context: guide)
+                                }
+                            }
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    Task {
+                                        await GestureManager.shared.performAction(for: .leftSwipe, in: .guides, context: guide)
+                                    }
+                                } label: {
+                                    Label("Action", systemImage: "hand.tap")
+                                }
+                            }
+                            .swipeActions(edge: .leading) {
+                                Button {
+                                    Task {
+                                        await GestureManager.shared.performAction(for: .rightSwipe, in: .guides, context: guide)
+                                    }
+                                } label: {
+                                    Label("Action", systemImage: "hand.tap")
+                                }
+                                .tint(.accentColor)
                             }
                         }
                     } header: {
