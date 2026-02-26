@@ -171,6 +171,12 @@ struct AllAppsView: View {
                 .presentationDragIndicator(.visible)
                 .compatPresentationRadius(24)
         }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureOpenDetails)) { notification in
+            if let app = notification.object as? ASRepository.App {
+                 // In a real app, find source and set _selectedRoute
+                 AppLogManager.shared.info("Gesture: Open Details for \(app.name ?? "")", category: "Gestures")
+            }
+        }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: _useGrid)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: _searchBarFloating)
@@ -432,6 +438,12 @@ struct AllAppsView: View {
                             },
                             isLast: index == _filteredApps.count - 1
                         )
+                        .onTapGesture(count: 2) {
+                             GestureManager.shared.performAction(for: .doubleTap, in: .allApps, context: entry.app)
+                        }
+                        .onLongPressGesture {
+                             GestureManager.shared.performAction(for: .longPress, in: .allApps, context: entry.app)
+                        }
                     }
                 }
                 .padding(.horizontal, 20)
@@ -448,6 +460,12 @@ struct AllAppsView: View {
                             isLast: index == _filteredApps.count - 1
                         )
                         .padding(.horizontal, _rowHorizontalPadding)
+                        .onTapGesture(count: 2) {
+                             GestureManager.shared.performAction(for: .doubleTap, in: .allApps, context: entry.app)
+                        }
+                        .onLongPressGesture {
+                             GestureManager.shared.performAction(for: .longPress, in: .allApps, context: entry.app)
+                        }
                     }
                 }
             }

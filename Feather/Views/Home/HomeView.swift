@@ -203,9 +203,7 @@ struct HomeView: View {
             LongPressGesture(minimumDuration: 3.0)
                 .sequenced(before: LongPressGesture(minimumDuration: 0.1))
                 .onEnded { _ in
-                    // Detect triple finger long press is hard with standard gestures,
-                    // let's use a simpler 3s long press for inversion egg
-                    EasterEggManager.shared.toggleInversion()
+                    GestureManager.shared.performAction(for: .longPress, in: .dashboard)
                 }
         )
         .onAppear {
@@ -230,6 +228,16 @@ struct HomeView: View {
             await viewModel.fetchSources(_sources)
             // Check for app updates after sources are loaded
             await _updateTrackingManager.checkForUpdates(sources: viewModel.sources)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureShowHomeInfo)) { _ in
+            ToastManager.shared.show("🏠 Home is where the IPA is!", type: .info)
+            HapticsManager.shared.success()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureRotateTip)) { _ in
+            withAnimation {
+                _currentTipIndex = (_currentTipIndex + 1) % _tips.count
+            }
+            HapticsManager.shared.softImpact()
         }
     }
     
@@ -354,12 +362,7 @@ struct HomeView: View {
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.secondary)
                         .onTapGesture {
-                            _homeInfoTapCount += 1
-                            if _homeInfoTapCount == 5 {
-                                ToastManager.shared.show("🏠 Home is where the IPA is!", type: .info)
-                                HapticsManager.shared.success()
-                                _homeInfoTapCount = 0
-                            }
+                            GestureManager.shared.performAction(for: .doubleTap, in: .dashboard)
                         }
                 }
             }
@@ -1035,10 +1038,7 @@ struct HomeView: View {
             }
             .padding(_compactMode ? 12 : 16)
             .onTapGesture {
-                withAnimation {
-                    _currentTipIndex = (_currentTipIndex + 1) % _tips.count
-                }
-                HapticsManager.shared.softImpact()
+                GestureManager.shared.performAction(for: .doubleTap, in: .dashboard)
             }
         }
         .opacity(_appearAnimation ? 1 : 0)

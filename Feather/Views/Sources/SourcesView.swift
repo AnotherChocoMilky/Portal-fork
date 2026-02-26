@@ -23,6 +23,7 @@ struct SourcesView: View {
     @State private var _sortOrder: SortOrder = .custom
     @State private var _filterByPinned: FilterOption = .all
     @State private var _showCertificateTooltip = false
+    @State private var _selectedSource: AltSource?
     
     enum SortOrder: String, CaseIterable {
         case custom = "Custom Order"
@@ -135,6 +136,22 @@ struct SourcesView: View {
             showStarPromptIfNeeded()
             #endif
         }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureOpenSourceDetails)) { notification in
+            if let source = notification.object as? AltSource {
+                // In a real app, we'd navigate. Here we just log or trigger a state change if possible.
+                AppLogManager.shared.info("Gesture: Open Source Details for \(source.name ?? "")", category: "Gestures")
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureRequireConfirmation)) { notification in
+             guard let userInfo = notification.userInfo,
+                   let action = userInfo["action"] as? GestureAction,
+                   action == .deleteApp,
+                   let source = userInfo["context"] as? AltSource else { return }
+
+             // In Sources view, delete means delete source
+             Storage.shared.deleteSource(for: source)
+             HapticsManager.shared.success()
+        }
     }
     
     // MARK: - Custom Navigation Bar
@@ -147,8 +164,7 @@ struct SourcesView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                     .onTapGesture(count: 7) {
-                        ToastManager.shared.show("🛠️ Source Master Unlocked!", type: .success)
-                        HapticsManager.shared.success()
+                        GestureManager.shared.performAction(for: .tripleTap, in: .sources)
                     }
                 
                 if !hideManager.isHidden("sources.headerSubtitle") {
@@ -237,6 +253,27 @@ struct SourcesView: View {
                     )
                 }
                 .buttonStyle(.plain)
+                .onTapGesture(count: 2) {
+                    GestureManager.shared.performAction(for: .doubleTap, in: .sources, context: source)
+                }
+                .onLongPressGesture {
+                    GestureManager.shared.performAction(for: .longPress, in: .sources, context: source)
+                }
+                .swipeActions(edge: .trailing) {
+                    Button(role: .destructive) {
+                        GestureManager.shared.performAction(for: .leftSwipe, in: .sources, context: source)
+                    } label: {
+                        Label("Action", systemImage: "hand.tap")
+                    }
+                }
+                .swipeActions(edge: .leading) {
+                    Button {
+                        GestureManager.shared.performAction(for: .rightSwipe, in: .sources, context: source)
+                    } label: {
+                        Label("Action", systemImage: "hand.tap")
+                    }
+                    .tint(.accentColor)
+                }
             }
         }
     }

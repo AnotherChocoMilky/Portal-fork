@@ -29,6 +29,8 @@ struct LibraryView: View {
     @State private var _selectedApps: Set<String?> = []
     @State private var _showBatchSigningSheet = false
     @State private var _showBatchDeleteConfirmation = false
+    @State private var _showGestureDeleteConfirmation = false
+    @State private var _appToDelete: AppInfoPresentable?
     
     enum ImportStatus {
         case loading
@@ -131,6 +133,27 @@ struct LibraryView: View {
                                     editMode: $_editMode
                                 )
                                 .padding(.horizontal, 16)
+                                .onTapGesture(count: 2) {
+                                    GestureManager.shared.performAction(for: .doubleTap, in: .library, context: app)
+                                }
+                                .onLongPressGesture {
+                                    GestureManager.shared.performAction(for: .longPress, in: .library, context: app)
+                                }
+                                .swipeActions(edge: .trailing) {
+                                    Button(role: .destructive) {
+                                        GestureManager.shared.performAction(for: .leftSwipe, in: .library, context: app)
+                                    } label: {
+                                        Label("Action", systemImage: "hand.tap")
+                                    }
+                                }
+                                .swipeActions(edge: .leading) {
+                                    Button {
+                                        GestureManager.shared.performAction(for: .rightSwipe, in: .library, context: app)
+                                    } label: {
+                                        Label("Action", systemImage: "hand.tap")
+                                    }
+                                    .tint(.accentColor)
+                                }
                                 .contextMenu {
                                     Button {
                                         _selectedInfoAppPresenting = AnyApp(base: app)
@@ -256,6 +279,19 @@ struct LibraryView: View {
             } message: {
                 Text("Are you sure you want to delete \(_selectedApps.count) selected app(s)?")
             }
+            .alert("Delete App", isPresented: $_showGestureDeleteConfirmation) {
+                Button("Cancel", role: .cancel) { }
+                Button("Delete", role: .destructive) {
+                    if let app = _appToDelete {
+                        Storage.shared.deleteApp(for: app)
+                        HapticsManager.shared.success()
+                    }
+                }
+            } message: {
+                if let app = _appToDelete {
+                    Text("Are you sure you want to delete \(app.name ?? "this app")?")
+                }
+            }
                         // Listen for import success notifications
                         .onReceive(NotificationCenter.default.publisher(for: DownloadManager.importDidSucceedNotification)) { notification in
                                 guard let userInfo = notification.userInfo,
@@ -339,6 +375,35 @@ struct LibraryView: View {
                                 if let app = notification.object as? AppInfoPresentable {
                                         _selectedSigningAppPresenting = AnyApp(base: app)
                                 }
+                        }
+                        .onReceive(NotificationCenter.default.publisher(for: .gestureOpenDetails)) { notification in
+                            if let app = notification.object as? AppInfoPresentable {
+                                _selectedInfoAppPresenting = AnyApp(base: app)
+                            }
+                        }
+                        .onReceive(NotificationCenter.default.publisher(for: .gestureSignApp)) { notification in
+                            if let app = notification.object as? AppInfoPresentable {
+                                _selectedSigningAppPresenting = AnyApp(base: app)
+                            }
+                        }
+                        .onReceive(NotificationCenter.default.publisher(for: .gestureInstallApp)) { notification in
+                            if let app = notification.object as? AppInfoPresentable {
+                                _selectedInstallAppPresenting = AnyApp(base: app)
+                            }
+                        }
+                        .onReceive(NotificationCenter.default.publisher(for: .gestureShareApp)) { notification in
+                            if let app = notification.object as? AppInfoPresentable {
+                                exportApp(app)
+                            }
+                        }
+                        .onReceive(NotificationCenter.default.publisher(for: .gestureRequireConfirmation)) { notification in
+                            guard let userInfo = notification.userInfo,
+                                  let action = userInfo["action"] as? GestureAction,
+                                  action == .deleteApp,
+                                  let app = userInfo["context"] as? AppInfoPresentable else { return }
+
+                            _appToDelete = app
+                            _showGestureDeleteConfirmation = true
                         }
                 }
         }

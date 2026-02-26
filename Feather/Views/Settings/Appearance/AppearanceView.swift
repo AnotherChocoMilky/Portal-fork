@@ -126,6 +126,10 @@ struct AppearanceView: View {
                     Label("Tab Bar", systemImage: "dock.rectangle")
                         .foregroundStyle(Color.accentColor)
                 }
+                NavigationLink(destination: GesturesView()) {
+                    Label("Gestures", systemImage: "hand.tap.fill")
+                        .foregroundStyle(Color.accentColor)
+                }
 
                 if ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 16 {
                     NavigationLink(destination: KeyboardCustomizationView()) {
