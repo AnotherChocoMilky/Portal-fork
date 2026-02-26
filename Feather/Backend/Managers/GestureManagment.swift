@@ -136,7 +136,7 @@ class GestureManager: ObservableObject {
         let action = getAction(for: gesture, in: section)
         execute(action: action, in: section, context: context)
     }
-
+@MainActor
     func execute(action: GestureAction, in section: AppSection? = nil, context: Any? = nil) {
         guard action != .none else { return }
 
