@@ -230,14 +230,14 @@ struct CheckForUpdatesView: View {
                                         .fill(Color.green.opacity(0.12))
                                         .frame(width: 60, height: 60)
 
-                                    Image(systemName: "arrow.down.circle.fill")
+                                    Image(systemName: "arrow.down.to.line.circle.fill")
                                         .font(.system(size: 30))
                                         .foregroundStyle(.green)
                                 }
                             }
 
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("New Version Found!")
+                                Text("Update Available!")
                                     .font(.system(.headline, design: .rounded))
 
                                 Text("Version \(release.tagName.replacingOccurrences(of: "v", with: ""))")
@@ -247,7 +247,7 @@ struct CheckForUpdatesView: View {
 
                             Spacer()
 
-                            Text("NEW")
+                            Text("New")
                                 .font(.system(size: 10, weight: .black))
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 8)
@@ -346,17 +346,17 @@ struct CheckForUpdatesView: View {
                                     .fill(Color.blue.opacity(0.1))
                                     .frame(width: 56, height: 56)
 
-                                Image(systemName: "checkmark.seal.fill")
+                                Image(systemName: "gear.badge.checkmark")
                                     .font(.system(size: 26))
                                     .foregroundStyle(.blue)
                             }
                         }
 
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Fully Updated")
+                            Text("No Updates Found")
                                 .font(.system(.headline, design: .rounded))
 
-                            Text("You're running the latest version.")
+                            Text("You're running the latest Portal version, keep looking for updates later.")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
@@ -373,16 +373,16 @@ struct CheckForUpdatesView: View {
                             .clipShape(Circle())
                             .frame(width: 56, height: 56)
                         
-                        Image(systemName: "sparkles")
+                        Image(systemName: "gear.circle")
                             .font(.system(size: 24))
                             .foregroundStyle(.secondary)
                     }
                     
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("Search for Updates")
+                        Text("Searching For Updates")
                             .font(.system(.headline, design: .rounded))
                         
-                        Text("Tap the button above to start.")
+                        Text("Portal is checking for any updates...")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }

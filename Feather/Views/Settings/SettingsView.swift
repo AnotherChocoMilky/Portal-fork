@@ -150,7 +150,7 @@ struct SettingsView: View {
                 SettingsRow(icon: "house.fill", title: String.localized("Home"), color: .accentColor, destination: HomeSettingsView())
             }
             if !hideManager.isHidden("settings.appearance") {
-                SettingsRow(icon: "paintbrush.fill", title: String.localized("Appearance"), color: .accentColor, destination: AppearanceView())
+                SettingsRow(icon: "gear.badge", title: String.localized("Display & Interface"), color: .accentColor, destination: AppearanceView())
             }
             if !hideManager.isHidden("settings.liveActivities") {
                 SettingsRow(icon: "widget.small.badge.plus", title: String.localized("Live Activities"), color: .accentColor, destination: LiveActivitySettingsView())
