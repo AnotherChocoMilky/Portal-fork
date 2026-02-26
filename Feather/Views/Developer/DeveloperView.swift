@@ -178,7 +178,9 @@ struct DeveloperAuthView: View {
             Text("Developer Mode")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .onTapGesture(count: 3) {
-                    GestureManager.shared.performAction(for: .tripleTap, in: .settings)
+                    Task {
+                        await GestureManager.shared.performAction(for: .tripleTap, in: .settings)
+                    }
                 }
                 .foregroundStyle(
                     LinearGradient(

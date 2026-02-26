@@ -164,7 +164,9 @@ struct SourcesView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
                     .onTapGesture(count: 7) {
-                        GestureManager.shared.performAction(for: .tripleTap, in: .sources)
+                        Task {
+                            await GestureManager.shared.performAction(for: .tripleTap, in: .sources)
+                        }
                     }
                 
                 if !hideManager.isHidden("sources.headerSubtitle") {
@@ -254,21 +256,29 @@ struct SourcesView: View {
                 }
                 .buttonStyle(.plain)
                 .onTapGesture(count: 2) {
-                    GestureManager.shared.performAction(for: .doubleTap, in: .sources, context: source)
+                    Task {
+                        await GestureManager.shared.performAction(for: .doubleTap, in: .sources, context: source)
+                    }
                 }
                 .onLongPressGesture {
-                    GestureManager.shared.performAction(for: .longPress, in: .sources, context: source)
+                    Task {
+                        await GestureManager.shared.performAction(for: .longPress, in: .sources, context: source)
+                    }
                 }
                 .swipeActions(edge: .trailing) {
                     Button(role: .destructive) {
-                        GestureManager.shared.performAction(for: .leftSwipe, in: .sources, context: source)
+                        Task {
+                            await GestureManager.shared.performAction(for: .leftSwipe, in: .sources, context: source)
+                        }
                     } label: {
                         Label("Action", systemImage: "hand.tap")
                     }
                 }
                 .swipeActions(edge: .leading) {
                     Button {
-                        GestureManager.shared.performAction(for: .rightSwipe, in: .sources, context: source)
+                        Task {
+                            await GestureManager.shared.performAction(for: .rightSwipe, in: .sources, context: source)
+                        }
                     } label: {
                         Label("Action", systemImage: "hand.tap")
                     }

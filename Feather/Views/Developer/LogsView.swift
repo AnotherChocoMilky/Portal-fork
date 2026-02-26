@@ -164,7 +164,9 @@ struct AppLogsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: searchText) { newValue in
             if newValue == "dev=True" {
-                GestureManager.shared.performAction(for: .tripleTap, in: .settings)
+                Task {
+                    await GestureManager.shared.performAction(for: .tripleTap, in: .settings)
+                }
             }
         }
         .sheet(isPresented: $showInfo) {

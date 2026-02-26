@@ -132,9 +132,9 @@ class GestureManager: ObservableObject {
         return mappings[section]?[gesture] ?? .none
     }
 
-    func performAction(for gesture: GestureType, in section: AppSection, context: Any? = nil) {
+    func performAction(for gesture: GestureType, in section: AppSection, context: Any? = nil) async {
         let action = getAction(for: gesture, in: section)
-        execute(action: action, in: section, context: context)
+        await execute(action: action, in: section, context: context)
     }
 @MainActor
     func execute(action: GestureAction, in section: AppSection? = nil, context: Any? = nil) {
