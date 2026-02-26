@@ -339,8 +339,8 @@ struct ModernSigningView: View {
     @ViewBuilder
     private var modernBackground: some View {
         ZStack {
-            // Subtle system-appropriate background
-            Color.clear
+            // Dark base for better glass contrast
+            Color(UIColor.systemBackground)
                 .ignoresSafeArea()
 
             if #available(iOS 17.0, *) {
@@ -348,24 +348,24 @@ struct ModernSigningView: View {
                     Canvas { context, size in
                         let time = timeline.date.timeIntervalSinceReferenceDate
 
-                        // Draw moving gradients
-                        context.addFilter(.blur(radius: 60))
+                        context.addFilter(.blur(radius: 80))
 
-                        for i in 0..<3 {
-                            let speed = Double(i + 1) * 0.2
-                            let motionOffset = CGFloat(i + 1) * 15
-                            let x = (sin(time * speed) + 1) / 2 * size.width + (_motionManager.roll * motionOffset)
-                            let y = (cos(time * speed * 0.7) + 1) / 2 * size.height + (_motionManager.pitch * motionOffset)
+                        for i in 0..<4 {
+                            let speed = Double(i + 1) * 0.15
+                            let motionOffset = CGFloat(i + 1) * 20
+                            let x = (sin(time * speed + Double(i)) + 1) / 2 * size.width + (_motionManager.roll * motionOffset)
+                            let y = (cos(time * speed * 0.8 + Double(i)) + 1) / 2 * size.height + (_motionManager.pitch * motionOffset)
 
-                            let color = i == 0 ? Color.accentColor : (i == 1 ? Color.purple : Color.cyan)
+                            let colors: [Color] = [.accentColor, .purple, .cyan, .indigo]
+                            let color = colors[i % colors.count]
 
                             context.fill(
-                                Path(ellipseIn: CGRect(x: x - 150, y: y - 150, width: 300, height: 300)),
+                                Path(ellipseIn: CGRect(x: x - 180, y: y - 180, width: 360, height: 360)),
                                 with: .radialGradient(
-                                    Gradient(colors: [color.opacity(0.15), .clear]),
+                                    Gradient(colors: [color.opacity(0.2), .clear]),
                                     center: CGPoint(x: x, y: y),
                                     startRadius: 0,
-                                    endRadius: 150
+                                    endRadius: 180
                                 )
                             )
                         }
@@ -376,66 +376,14 @@ struct ModernSigningView: View {
                 // Fallback for older iOS
                 LinearGradient(
                     colors: [
-                        Color.accentColor.opacity(colorScheme == .dark ? 0.05 : 0.08),
+                        Color.accentColor.opacity(0.1),
+                        Color.purple.opacity(0.05),
                         Color.clear
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
                 .ignoresSafeArea()
-                
-                // Animated floating orbs with refined effects
-                GeometryReader { geo in
-                    // Primary accent orb
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    Color.accentColor.opacity(colorScheme == .dark ? 0.12 : 0.15),
-                                    Color.accentColor.opacity(0.05),
-                                    Color.clear
-                                ],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 160
-                            )
-                        )
-                        .frame(width: 320, height: 320)
-                        .blur(radius: 70)
-                        .offset(
-                            x: (_floatingAnimation ? -40 : 40) + (_motionManager.roll * 20),
-                            y: (_floatingAnimation ? -25 : 25) + (_motionManager.pitch * 20)
-                        )
-                        .position(x: geo.size.width * 0.15, y: geo.size.height * 0.12)
-
-                    // Secondary purple orb
-                    Circle()
-                        .fill(
-                            RadialGradient(
-                                colors: [
-                                    Color.purple.opacity(colorScheme == .dark ? 0.08 : 0.1),
-                                    Color.purple.opacity(0.03),
-                                    Color.clear
-                                ],
-                                center: .center,
-                                startRadius: 0,
-                                endRadius: 130
-                            )
-                        )
-                        .frame(width: 260, height: 260)
-                        .blur(radius: 55)
-                        .offset(
-                            x: (_floatingAnimation ? 35 : -35) + (_motionManager.roll * -15),
-                            y: (_floatingAnimation ? 15 : -15) + (_motionManager.pitch * -15)
-                        )
-                        .position(x: geo.size.width * 0.88, y: geo.size.height * 0.65)
-                }
-                .ignoresSafeArea()
-            }
-        }
-        .onAppear {
-            withAnimation(.easeInOut(duration: 8).repeatForever(autoreverses: true)) {
-                _floatingAnimation = true
             }
         }
     }
@@ -536,7 +484,7 @@ struct ModernSigningView: View {
                         let info = CapabilityMapper.getInfo(for: cap)
                         HStack(spacing: 14) {
                             ZStack {
-                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                Circle()
                                     .fill(Color.accentColor.opacity(0.12))
                                     .frame(width: 32, height: 32)
                                 Image(systemName: info.icon)
@@ -574,9 +522,12 @@ struct ModernSigningView: View {
                         }
                     }
                 }
-                .background(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color.clear.opacity(0.4))
+                .padding(4)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.primary.opacity(0.05), lineWidth: 1)
                 )
             }
             .padding(.horizontal, 20)
@@ -671,9 +622,12 @@ struct ModernSigningView: View {
                         .transition(.move(edge: .top).combined(with: .opacity))
                     }
                 }
-                .background(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color.clear.opacity(0.4))
+                .padding(4)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.primary.opacity(0.05), lineWidth: 1)
                 )
             }
             
@@ -726,9 +680,12 @@ struct ModernSigningView: View {
                         cleanNavigationRow(title: "Custom Info.plist Entries", icon: "doc.badge.gearshape.fill", color: .indigo)
                     }
                 }
-                .background(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color.clear.opacity(0.4))
+                .padding(4)
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.primary.opacity(0.05), lineWidth: 1)
                 )
             }
             
@@ -792,7 +749,7 @@ struct ModernSigningView: View {
     private func cleanNavigationRow(title: String, icon: String, color: Color) -> some View {
         HStack(spacing: 14) {
             ZStack {
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                Circle()
                     .fill(color.opacity(0.12))
                     .frame(width: 32, height: 32)
                 Image(systemName: icon)
@@ -874,9 +831,11 @@ struct ModernSigningView: View {
                         .foregroundStyle(.quaternary)
                 }
                 .padding(14)
-                .background(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color.clear.opacity(0.4))
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.primary.opacity(0.05), lineWidth: 1)
                 )
             }
         } else {
@@ -905,305 +864,15 @@ struct ModernSigningView: View {
                         .foregroundStyle(Color.accentColor)
                 }
                 .padding(14)
-                .background(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color.clear.opacity(0.4))
+                .background(.ultraThinMaterial)
+                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                        .stroke(Color.primary.opacity(0.05), lineWidth: 1)
                 )
             }
             .buttonStyle(.plain)
         }
-    }
-    
-    private func modernInfoRow(title: String, value: String?, icon: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [color.opacity(0.3), color.opacity(0.15)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .frame(width: 40, height: 40)
-                    Image(systemName: icon)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(color)
-                }
-                
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(title)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    Text(value ?? "Not Set")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right.circle.fill")
-                    .font(.system(size: 18))
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(14)
-        }
-    }
-    
-    // MARK: - Signing Tab
-    @ViewBuilder
-    private var signingTab: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                if let cert = _selectedCert() {
-                    NavigationLink {
-                        CertificatesView(selectedCert: $_temporaryCertificate)
-                    } label: {
-                        HStack(spacing: 14) {
-                            ZStack {
-                                // Animated glow
-                                Circle()
-                                    .fill(Color.green.opacity(0.3))
-                                    .frame(width: 50, height: 50)
-                                    .blur(radius: 8)
-                                
-                                Circle()
-                                    .fill(
-                                        LinearGradient(
-                                            colors: [Color.green.opacity(0.3), Color.green.opacity(0.15)],
-                                            startPoint: .topLeading,
-                                            endPoint: .bottomTrailing
-                                        )
-                                    )
-                                    .frame(width: 48, height: 48)
-                                Image(systemName: "checkmark.seal.fill")
-                                    .font(.system(size: 20))
-                                    .foregroundStyle(.green)
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(cert.nickname ?? "Certificate")
-                                    .font(.headline)
-                                    .foregroundStyle(.primary)
-                                if let expiration = cert.expiration {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "calendar")
-                                            .font(.caption2)
-                                        Text("Expires On \(expiration, style: .date)")
-                                            .font(.caption)
-                                    }
-                                    .foregroundStyle(.secondary)
-                                } else {
-                                    Text("View Details")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                            
-                            Spacer()
-                            
-                            Image(systemName: "chevron.right.circle.fill")
-                                .font(.system(size: 20))
-                                .foregroundStyle(.tertiary)
-                        }
-                        .padding(16)
-                        .background(
-                            RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                .fill(Color.clear.opacity(0.4))
-                        )
-                    }
-                } else {
-                    // No certificate - modern glass card
-                    VStack(spacing: 20) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.orange.opacity(0.2))
-                                .frame(width: 70, height: 70)
-                                .blur(radius: 10)
-                            
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [Color.orange.opacity(0.3), Color.orange.opacity(0.15)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 64, height: 64)
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.title2)
-                                .foregroundStyle(.orange)
-                        }
-                        
-                        VStack(spacing: 6) {
-                            Text("No Certificate")
-                                .font(.headline)
-                            Text("Add a certificate to sign apps.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .multilineTextAlignment(.center)
-                        }
-                        
-                        Button {
-                            _isAddingCertificatePresenting = true
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "plus.circle.fill")
-                                Text("Add Certificate")
-                            }
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(
-                                LinearGradient(
-                                    colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-                            .shadow(color: Color.accentColor.opacity(0.4), radius: 10, x: 0, y: 5)
-                        }
-                    }
-                    .padding(24)
-                    .background(
-                        RoundedRectangle(cornerRadius: 28, style: .continuous)
-                            .fill(Color.clear.opacity(0.4))
-                    )
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-        }
-    }
-    
-    // MARK: - Advanced Tab
-    @ViewBuilder
-    private var advancedTab: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                // Section Header
-                HStack {
-                    Text("Modify")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .textCase(.uppercase)
-                        .tracking(0.5)
-                    Spacer()
-                }
-                .padding(.horizontal, 4)
-                
-                // Modern glass card container
-                VStack(spacing: 2) {
-                    NavigationLink {
-                        ModernSigningOptionsView(options: $_temporaryOptions)
-                    } label: {
-                        modernAdvancedRow(title: "Signing Options", subtitle: "Configure signing behavior", icon: "slider.horizontal.3", color: .accentColor, isFirst: true)
-                    }
-                    
-                    NavigationLink {
-                        AppTweaksView(app: app, options: $_temporaryOptions)
-                    } label: {
-                        modernAdvancedRow(title: "App Tweaks", subtitle: "Manage Frameworks & Bundles", icon: "cube.fill", color: .blue)
-                    }
-                    
-                    NavigationLink {
-                        SigningTweaksView(options: $_temporaryOptions)
-                    } label: {
-                        modernAdvancedRow(title: "Inject Tweaks", subtitle: "Add Custom Modifications or Frameworks.", icon: "wrench.and.screwdriver.fill", color: .green, isLast: true)
-                    }
-                }
-                .background(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color.clear.opacity(0.4))
-                )
-                
-                // Entitlements Section
-                HStack {
-                    Text("Experimental")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                        .textCase(.uppercase)
-                        .tracking(0.5)
-                    Spacer()
-                }
-                .padding(.horizontal, 4)
-                .padding(.top, 8)
-                
-                NavigationLink {
-                    SigningEntitlementsView(bindingValue: $_temporaryOptions.appEntitlementsFile)
-                } label: {
-                    modernAdvancedRow(title: "Entitlements", subtitle: "Edit App Entitlements", icon: "lock.shield.fill", color: .orange, isFirst: true, isLast: true, isBeta: true)
-                }
-                .background(
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                        .fill(Color.clear.opacity(0.4))
-                )
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-        }
-    }
-    
-    @ViewBuilder
-    private func modernAdvancedRow(title: String, subtitle: String, icon: String, color: Color, isFirst: Bool = false, isLast: Bool = false, isBeta: Bool = false) -> some View {
-        HStack(spacing: 14) {
-            ZStack {
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: [color.opacity(0.3), color.opacity(0.15)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 44, height: 44)
-                    .shadow(color: color.opacity(0.3), radius: 6, x: 0, y: 3)
-                
-                Image(systemName: icon)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(color)
-            }
-            
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(title)
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.primary)
-                    
-                    if isBeta {
-                        Text("Beta")
-                            .font(.system(size: 9, weight: .bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
-                            .background(
-                                Capsule()
-                                    .fill(Color.orange)
-                            )
-                    }
-                }
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Spacer()
-            
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(.tertiary)
-                .padding(8)
-                .background(
-                    Circle()
-                        .fill(Color(UIColor.tertiarySystemFill))
-                )
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
     }
     
     // MARK: - Modern Sign Button (Clean Design)
@@ -1234,7 +903,7 @@ struct ModernSigningView: View {
                     )
 
                     // Glass highlight for Liquid Glass effect
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
                         .stroke(
                             LinearGradient(
                                 colors: [.white.opacity(0.5), .clear, .black.opacity(0.1)],
@@ -1245,7 +914,7 @@ struct ModernSigningView: View {
                         )
 
                     // Inner glow
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    RoundedRectangle(cornerRadius: 24, style: .continuous)
                         .fill(
                             RadialGradient(
                                 colors: [.white.opacity(0.2), .clear],
@@ -1256,10 +925,10 @@ struct ModernSigningView: View {
                         )
                 }
             )
-            .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .shadow(color: Color.accentColor.opacity(0.4), radius: _glowAnimation ? 16 : 10, x: 0, y: _glowAnimation ? 8 : 4)
             .overlay(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .stroke(Color.white.opacity(_glowAnimation ? 0.3 : 0), lineWidth: 2)
                     .blur(radius: 4)
             )
@@ -1412,90 +1081,89 @@ struct ModernSigningOptionsView: View {
             
             List {
                 // Protection Section
-                Section {
-                    Toggle(isOn: Binding(
+                modernOptionSection(title: "Protection", icon: "shield.lefthalf.filled", color: .blue) {
+                    modernOptionToggle(title: "PPQ Protection", subtitle: isPPQProtectionForced ? "Required for your certificate." : "Append random string to Bundle IDs to avoid Apple flagging this certificate.", icon: "shield.checkered", color: .blue, isOn: Binding(
                         get: { isPPQProtectionForced ? true : options.ppqProtection },
                         set: { newValue in
                             if !isPPQProtectionForced || newValue {
                                 options.ppqProtection = newValue
                             }
                         }
-                    )) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Label("PPQ Protection", systemImage: "shield.checkered")
-                                .font(.headline)
-                            Text(isPPQProtectionForced ? "Required for your certificate." : "Append random string to Bundle IDs to avoid Apple flagging this certificate.")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-                    .disabled(isPPQProtectionForced)
-                    .tint(.accentColor)
+                    ), disabled: isPPQProtectionForced)
                     
                     Button {
                         showPPQInfo = true
                     } label: {
-                        Label("What is PPQ?", systemImage: "questionmark.circle.fill")
+                        HStack {
+                            Label("What is PPQ?", systemImage: "questionmark.circle.fill")
+                            Spacer()
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
                     }
-                } header: {
-                    Label("Protection", systemImage: "shield.lefthalf.filled")
                 }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
 
                 // General Section
-                Section {
-                    Picker(selection: $options.appAppearance) {
-                        ForEach(Options.AppAppearance.allCases, id: \.self) { appearance in
-                            Text(appearance.localizedDescription).tag(appearance)
-                        }
-                    } label: {
-                        Label("Appearance", systemImage: "paintpalette.fill")
-                    }
+                modernOptionSection(title: "General", icon: "gearshape.2.fill", color: .gray) {
+                    modernOptionPicker(title: "Appearance", icon: "paintpalette.fill", color: .purple, selection: $options.appAppearance, values: Options.AppAppearance.allCases)
                     
-                    Picker(selection: $options.minimumAppRequirement) {
-                        ForEach(Options.MinimumAppRequirement.allCases, id: \.self) { requirement in
-                            Text(requirement.localizedDescription).tag(requirement)
-                        }
-                    } label: {
-                        Label("Minimum Requirement", systemImage: "ruler.fill")
-                    }
-                } header: {
-                    Label("General", systemImage: "gearshape.2.fill")
+                    Divider().padding(.leading, 52)
+
+                    modernOptionPicker(title: "Minimum Requirement", icon: "ruler.fill", color: .blue, selection: $options.minimumAppRequirement, values: Options.MinimumAppRequirement.allCases)
                 }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
 
                 // Signing Section
-                Section {
-                    Picker(selection: $options.signingOption) {
-                        ForEach(Options.SigningOption.allCases, id: \.self) { option in
-                            Text(option.localizedDescription).tag(option)
-                        }
-                    } label: {
-                        Label("Signing Type", systemImage: "pencil.and.scribble")
-                    }
-                } header: {
-                    Label("Signing", systemImage: "signature")
+                modernOptionSection(title: "Signing", icon: "signature", color: .accentColor) {
+                    modernOptionPicker(title: "Signing Type", icon: "pencil.and.scribble", color: .accentColor, selection: $options.signingOption, values: Options.SigningOption.allCases)
                 }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
 
                 // App Features Section
-                Section {
-                    Toggle("File Sharing", isOn: $options.fileSharing)
-                    Toggle("iTunes File Sharing", isOn: $options.itunesFileSharing)
-                    Toggle("ProMotion", isOn: $options.proMotion)
-                    Toggle("Game Mode", isOn: $options.gameMode)
-                    Toggle("iPad Fullscreen", isOn: $options.ipadFullscreen)
-                } header: {
-                    Label("App Features", systemImage: "sparkles")
+                modernOptionSection(title: "App Features", icon: "sparkles", color: .orange) {
+                    modernOptionToggle(title: "File Sharing", icon: "folder.fill", color: .blue, isOn: $options.fileSharing)
+                    Divider().padding(.leading, 52)
+                    modernOptionToggle(title: "iTunes File Sharing", icon: "music.note.list", color: .pink, isOn: $options.itunesFileSharing)
+                    Divider().padding(.leading, 52)
+                    modernOptionToggle(title: "ProMotion", icon: "bolt.fill", color: .yellow, isOn: $options.proMotion)
+                    Divider().padding(.leading, 52)
+                    modernOptionToggle(title: "Game Mode", icon: "gamecontroller.fill", color: .green, isOn: $options.gameMode)
+                    Divider().padding(.leading, 52)
+                    modernOptionToggle(title: "iPad Fullscreen", icon: "ipad.landscape", color: .indigo, isOn: $options.ipadFullscreen)
                 }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
 
                 // Removal Section
-                Section {
-                    Toggle("Remove URL Scheme", isOn: $options.removeURLScheme)
-                    Toggle("Remove Provisioning", isOn: $options.removeProvisioning)
-                } header: {
-                    Label("Removal", systemImage: "trash.slash.fill")
+                modernOptionSection(title: "Removal", icon: "trash.slash.fill", color: .red) {
+                    modernOptionToggle(title: "Remove URL Scheme", icon: "link.badge.plus", color: .blue, isOn: $options.removeURLScheme)
+                    Divider().padding(.leading, 52)
+                    modernOptionToggle(title: "Remove Provisioning", icon: "doc.badge.gearshape", color: .orange, isOn: $options.removeProvisioning)
                 }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
 
                 // URL Schemes Section
-                Section {
+                modernOptionSection(title: "URL Schemes", icon: "link", color: .blue) {
                     ForEach(options.customURLSchemes, id: \.self) { scheme in
                         HStack {
                             Text(scheme + "://")
@@ -1509,6 +1177,10 @@ struct ModernSigningOptionsView: View {
                                 Image(systemName: "minus.circle.fill")
                             }
                         }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+
+                        Divider().padding(.leading, 14)
                     }
                     
                     HStack {
@@ -1529,44 +1201,52 @@ struct ModernSigningOptionsView: View {
                         }
                         .disabled(newURLScheme.isEmpty)
                     }
-                } header: {
-                    Label("URL Schemes", systemImage: "link")
-                } footer: {
-                    Text("This app will respond to the schemes you add here.")
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
                 }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
 
                 // Localization Section
-                Section {
-                    Toggle("Force Localize", isOn: $options.changeLanguageFilesForCustomDisplayName)
-                } header: {
-                    Label("Localization", systemImage: "globe.badge.chevron.backward")
+                modernOptionSection(title: "Localization", icon: "globe.badge.chevron.backward", color: .cyan) {
+                    modernOptionToggle(title: "Force Localize", icon: "character.bubble.fill", color: .cyan, isOn: $options.changeLanguageFilesForCustomDisplayName)
                 }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
 
                 // Post Signing Section
-                Section {
-                    Toggle("Install After Signing", isOn: $options.post_installAppAfterSigned)
-                    Toggle("Delete After Signing", isOn: $options.post_deleteAppAfterSigned)
-                } header: {
-                    Label("Post Signing", systemImage: "clock.arrow.circlepath")
+                modernOptionSection(title: "Post Signing", icon: "clock.arrow.circlepath", color: .green) {
+                    modernOptionToggle(title: "Install After Signing", icon: "arrow.down.app.fill", color: .green, isOn: $options.post_installAppAfterSigned)
+                    Divider().padding(.leading, 52)
+                    modernOptionToggle(title: "Delete After Signing", icon: "trash.fill", color: .red, isOn: $options.post_deleteAppAfterSigned)
                 }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
 
                 // Experiments Section
-                Section {
-                    Toggle("Replace Substrate", isOn: $options.experiment_replaceSubstrateWithEllekit)
-                    Toggle("Liquid Glass", isOn: $options.experiment_supportLiquidGlass)
-                } header: {
-                    HStack {
-                        Label("Experiments", systemImage: "flask.fill")
-                        Text("BETA")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 5)
-                            .padding(.vertical, 2)
-                            .background(Capsule().fill(Color.purple))
-                    }
+                modernOptionSection(title: "Experiments", icon: "flask.fill", color: .purple, isBeta: true) {
+                    modernOptionToggle(title: "Replace Substrate", icon: "square.2.layers.3d.bottom.filled", color: .purple, isOn: $options.experiment_replaceSubstrateWithEllekit)
+                    Divider().padding(.leading, 52)
+                    modernOptionToggle(title: "Liquid Glass", icon: "drop.fill", color: .blue, isOn: $options.experiment_supportLiquidGlass)
                 }
+                .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 8)
             }
+            .listStyle(.plain)
             .scrollContentBackground(.hidden)
+            .hideScrollContentBackground()
         }
         .navigationTitle("Signing Options")
         .navigationBarTitleDisplayMode(.inline)
@@ -1589,7 +1269,7 @@ struct ModernSigningOptionsView: View {
     @ViewBuilder
     private var modernOptionsBackground: some View {
         ZStack {
-            Color.clear
+            Color(UIColor.systemBackground)
                 .ignoresSafeArea()
             
             GeometryReader { geo in
@@ -1631,7 +1311,7 @@ struct ModernSigningOptionsView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(spacing: 8) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    Circle()
                         .fill(
                             LinearGradient(
                                 colors: [color.opacity(0.3), color.opacity(0.15)],
@@ -1666,9 +1346,12 @@ struct ModernSigningOptionsView: View {
             VStack(spacing: 2) {
                 content()
             }
-            .background(
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
-                    .fill(Color.clear.opacity(0.4))
+            .padding(4)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .stroke(Color.primary.opacity(0.05), lineWidth: 1)
             )
         }
     }
@@ -1678,7 +1361,7 @@ struct ModernSigningOptionsView: View {
     private func modernOptionToggle(title: String, subtitle: String? = nil, icon: String, color: Color, isOn: Binding<Bool>, disabled: Bool = false) -> some View {
         HStack(spacing: 14) {
             ZStack {
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                Circle()
                     .fill(
                         LinearGradient(
                             colors: [color.opacity(0.25), color.opacity(0.1)],
@@ -1719,7 +1402,7 @@ struct ModernSigningOptionsView: View {
     private func modernOptionPicker<T: Hashable & LocalizedDescribable>(title: String, icon: String, color: Color, selection: Binding<T>, values: [T]) -> some View {
         HStack(spacing: 14) {
             ZStack {
-                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                Circle()
                     .fill(
                         LinearGradient(
                             colors: [color.opacity(0.25), color.opacity(0.1)],
@@ -1771,8 +1454,12 @@ struct SwipeToSign: View {
             ZStack(alignment: .leading) {
                 // Track with waiting animation
                 Capsule()
-                    .fill(Color.clear.opacity(0.4))
+                    .fill(.ultraThinMaterial)
                     .frame(height: 60)
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                    )
                     .overlay(
                         ZStack {
                             if isWaiting && !isCompleted && offset == 0 {
@@ -1896,8 +1583,12 @@ struct HoldToSign: View {
     var body: some View {
         ZStack {
             Capsule()
-                .fill(Color.clear.opacity(0.4))
+                .fill(.ultraThinMaterial)
                 .frame(height: 60)
+                .overlay(
+                    Capsule()
+                        .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                )
 
             // Progress Fill
             GeometryReader { geo in
@@ -1969,9 +1660,12 @@ struct SlideToConfirm: View {
             let width = geo.size.width
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color.clear)
+                    .fill(.ultraThinMaterial)
                     .frame(height: 60)
-                    .shadow(color: .black.opacity(0.05), radius: 5)
+                    .overlay(
+                        Capsule()
+                            .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                    )
 
                 Text("Slide To Confirm")
                     .font(.subheadline.bold())
@@ -2071,10 +1765,10 @@ struct DoubleTapToSign: View {
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity)
             .frame(height: 64)
-            .background(Color.clear.opacity(0.4))
-            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
                     .stroke(isCompleted ? Color.green.opacity(0.3) : Color.accentColor.opacity(0.3), lineWidth: 1)
             )
             .contentShape(Rectangle())
@@ -2202,10 +1896,10 @@ struct ModernEditSheet: View {
                             .padding(14)
                             .background(
                                 ZStack {
-                                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                        .fill(Color.clear.opacity(0.4))
+                                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                        .fill(.ultraThinMaterial)
                                     
-                                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                                    RoundedRectangle(cornerRadius: 24, style: .continuous)
                                         .fill(
                                             LinearGradient(
                                                 colors: isFocused ? [iconColor.opacity(0.05), .clear] : [.clear, .clear],
@@ -2216,7 +1910,7 @@ struct ModernEditSheet: View {
                                 }
                             )
                             .overlay(
-                                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                                RoundedRectangle(cornerRadius: 24, style: .continuous)
                                     .strokeBorder(
                                         LinearGradient(
                                             colors: isFocused ? [iconColor.opacity(0.6), iconColor.opacity(0.3)] : [Color.clear, Color.clear],
@@ -2241,11 +1935,11 @@ struct ModernEditSheet: View {
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 12)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 28, style: .continuous)
-                                        .fill(Color.clear.opacity(0.4))
+                                    RoundedRectangle(cornerRadius: 24, style: .continuous)
+                                        .fill(.ultraThinMaterial)
                                 )
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                                    RoundedRectangle(cornerRadius: 24, style: .continuous)
                                         .stroke(.white.opacity(0.1), lineWidth: 1)
                                 )
                         }
@@ -2266,7 +1960,7 @@ struct ModernEditSheet: View {
                                         endPoint: .bottomTrailing
                                     )
                                 )
-                                .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+                                .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
                                 .shadow(color: iconColor.opacity(0.3), radius: 8, x: 0, y: 4)
                         }
                         .buttonStyle(.plain)

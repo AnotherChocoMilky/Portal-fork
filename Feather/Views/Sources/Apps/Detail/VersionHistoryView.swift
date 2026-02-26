@@ -11,34 +11,24 @@ struct VersionHistoryView: View {
     let versions: [ASRepository.App.Version]
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Header
+        List {
+            // Header Section
+            Section {
                 headerSection
-                
-                // Version List
-                LazyVStack(spacing: 0) {
-                    ForEach(Array(versions.enumerated()), id: \.element.id) { index, version in
-                        VStack(spacing: 0) {
-                            versionCard(version: version, isLatest: index == 0)
-                            
-                            if index < versions.count - 1 {
-                                // Timeline connector
-                                HStack {
-                                    Rectangle()
-                                        .fill(dominantColor.opacity(0.2))
-                                        .frame(width: 2, height: 20)
-                                        .padding(.leading, 33)
-                                    Spacer()
-                                }
-                            }
-                        }
-                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
+            // Version List
+            Section {
+                ForEach(Array(versions.enumerated()), id: \.element.id) { index, version in
+                    versionCard(version: version, isLatest: index == 0)
+                        .listRowInsets(EdgeInsets(top: 0, leading: 16, bottom: 0, trailing: 16))
+                        .listRowBackground(Color.clear)
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 30)
             }
         }
+        .listStyle(.plain)
         .background(
             VStack(spacing: 0) {
                 LinearGradient(
@@ -123,7 +113,7 @@ struct VersionHistoryView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Main Row
             Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
                     if isExpanded {
                         expandedVersions.remove(version.version)
                     } else {
@@ -132,44 +122,40 @@ struct VersionHistoryView: View {
                 }
                 HapticsManager.shared.softImpact()
             } label: {
-                HStack(spacing: 14) {
-                    // Timeline dot
-                    ZStack {
-                        Circle()
-                            .fill(isLatest ? dominantColor : dominantColor.opacity(0.2))
-                            .frame(width: 12, height: 12)
-                        
-                        if isLatest {
-                            Circle()
-                                .stroke(dominantColor.opacity(0.3), lineWidth: 4)
-                                .frame(width: 20, height: 20)
+                HStack(spacing: 16) {
+                    // Modern status indicator
+                    Circle()
+                        .fill(isLatest ? dominantColor : Color.secondary.opacity(0.2))
+                        .frame(width: 8, height: 8)
+                        .overlay {
+                            if isLatest {
+                                Circle()
+                                    .stroke(dominantColor.opacity(0.3), lineWidth: 4)
+                                    .frame(width: 16, height: 16)
+                            }
                         }
-                    }
-                    .frame(width: 24)
+                        .frame(width: 20)
                     
                     // Version Info
                     VStack(alignment: .leading, spacing: 4) {
                         HStack(spacing: 8) {
                             Text("Version \(version.version)")
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(.system(size: 17, weight: .bold, design: .rounded))
                                 .foregroundStyle(.primary)
                             
                             if isLatest {
                                 Text("Latest")
-                                    .font(.system(size: 10, weight: .bold))
+                                    .font(.system(size: 10, weight: .black))
                                     .foregroundStyle(.white)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 3)
-                                    .background(
-                                        Capsule()
-                                            .fill(dominantColor)
-                                    )
+                                    .background(Capsule().fill(dominantColor))
                             }
                         }
                         
                         if let date = version.date?.date {
                             Text(date, style: .date)
-                                .font(.system(size: 13))
+                                .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -177,46 +163,32 @@ struct VersionHistoryView: View {
                     Spacer()
                     
                     // Expand indicator
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.system(size: 12, weight: .semibold))
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(.tertiary)
+                        .rotationEffect(.degrees(isExpanded ? 90 : 0))
                 }
-                .padding(16)
+                .padding(.vertical, 16)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
             
             // Expanded Content
             if isExpanded {
-                VStack(alignment: .leading, spacing: 16) {
-                    Divider()
-                        .padding(.leading, 38)
-                    
+                VStack(alignment: .leading, spacing: 20) {
                     // Release Notes
                     if let description = version.localizedDescription, !description.isEmpty {
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack(spacing: 6) {
-                                Image(systemName: "doc.text")
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(dominantColor)
-                                Text(.localized("Release Notes"))
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding(.leading, 38)
+                        VStack(alignment: .leading, spacing: 10) {
+                            Label("Release Notes", systemImage: "doc.text.fill")
+                                .font(.system(size: 13, weight: .bold))
+                                .foregroundStyle(dominantColor)
                             
                             Text(description)
-                                .font(.system(size: 14))
-                                .foregroundStyle(.primary)
+                                .font(.system(size: 15))
+                                .foregroundStyle(.secondary)
                                 .fixedSize(horizontal: false, vertical: true)
-                                .padding(.leading, 38)
                         }
-                    } else {
-                        Text(.localized("No Release Notes Available"))
-                            .font(.system(size: 14))
-                            .foregroundStyle(.tertiary)
-                            .italic()
-                            .padding(.leading, 38)
+                        .padding(.leading, 36)
                     }
                     
                     // Action Buttons
@@ -230,54 +202,39 @@ struct VersionHistoryView: View {
                                 HapticsManager.shared.success()
                                 dismiss()
                             } label: {
-                                HStack(spacing: 6) {
+                                HStack(spacing: 8) {
                                     Image(systemName: "arrow.down.circle.fill")
-                                        .font(.system(size: 14))
-                                    Text(.localized("Download"))
-                                        .font(.system(size: 14, weight: .semibold))
+                                    Text("Download")
                                 }
+                                .font(.system(size: 14, weight: .bold))
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 10)
-                                .background(
-                                    Capsule()
-                                        .fill(dominantColor)
-                                )
+                                .background(Capsule().fill(dominantColor))
                             }
                             
                             Button {
                                 UIPasteboard.general.string = downloadURL.absoluteString
                                 HapticsManager.shared.success()
                             } label: {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "doc.on.doc")
-                                        .font(.system(size: 14))
-                                    Text(.localized("Copy URL"))
-                                        .font(.system(size: 14, weight: .medium))
-                                }
-                                .foregroundStyle(dominantColor)
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 10)
-                                .background(
-                                    Capsule()
-                                        .stroke(dominantColor, lineWidth: 1.5)
-                                )
+                                Image(systemName: "doc.on.doc")
+                                    .font(.system(size: 14, weight: .bold))
+                                    .foregroundStyle(dominantColor)
+                                    .padding(10)
+                                    .background(Circle().fill(dominantColor.opacity(0.1)))
                             }
                         }
-                        .padding(.leading, 38)
+                        .padding(.leading, 36)
                     }
                 }
-                .padding(.bottom, 16)
+                .padding(.bottom, 24)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+
+            if !isLatest {
+                Divider().padding(.leading, 36)
             }
         }
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.clear)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(isLatest ? dominantColor.opacity(0.3) : Color.clear, lineWidth: 1.5)
-        )
     }
     
     // MARK: - Color Extraction

@@ -103,31 +103,96 @@ struct ColorCustomizationView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // MARK: - Live Preview Header
-                previewHeader
-                    .padding(.horizontal)
-
-                VStack(alignment: .leading, spacing: 20) {
-                    // MARK: - Theme Gallery
-                    themeGallerySection
-
-                    // MARK: - Custom Colors
-                    customColorsSection
-
-                    // MARK: - Advanced Styling
-                    advancedStylingSection
-
-                    // MARK: - Actions
-                    actionsSection
-                }
-                .padding(.horizontal)
+        List {
+            // MARK: - Theme Gallery
+            Section {
+                themeGallerySection
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            } header: {
+                Text("Theme Gallery")
             }
-            .padding(.vertical)
+
+            // MARK: - Custom Colors
+            Section {
+                colorPickerRow(title: "Background", subtext: "Main app background color", color: $backgroundManager.baseColor, icon: "square.fill")
+                colorPickerRow(title: "UI Elements", subtext: "Cards and buttons color", color: $uiElementColor, icon: "app.fill")
+                colorPickerRow(title: "Primary Text", subtext: "Titles and body text color", color: $textColor, icon: "textformat")
+                colorPickerRow(title: "Secondary Text", subtext: "Descriptions and hints color", color: $secondaryTextColor, icon: "textformat.size")
+                colorPickerRow(title: "Accent", subtext: "Interactive elements highlights", color: $tintColor, icon: "sparkles")
+                colorPickerRow(title: "Nav Bar", subtext: "Navigation bar color", color: $navBarColor, icon: "menubar.rectangle")
+                colorPickerRow(title: "Tab Bar", subtext: "Tab bar color", color: $tabBarColor, icon: "dock.rectangle")
+                colorPickerRow(title: "Divider", subtext: "Lines color", color: $dividerColor, icon: "minus")
+                colorPickerRow(title: "Sheet BG", subtext: "Sheet background color", color: $sheetBackgroundColor, icon: "square.stack")
+                colorPickerRow(title: "Success", subtext: "Success indicators color", color: $successColor, icon: "checkmark.circle")
+                colorPickerRow(title: "Warning", subtext: "Warning alerts color", color: $warningColor, icon: "exclamationmark.triangle")
+                colorPickerRow(title: "Error", subtext: "Error messages color", color: $errorColor, icon: "xmark.circle")
+            } header: {
+                Text("Custom Colors")
+            }
+
+            // MARK: - Advanced Styling
+            Section {
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Label("Fonts", systemImage: "text.cursor")
+                        Spacer()
+                        Picker("Design", selection: $fontDesign) {
+                            Text("Default").tag("default")
+                            Text("Rounded").tag("rounded")
+                            Text("Serif").tag("serif")
+                            Text("Monospaced").tag("monospaced")
+                        }
+                        .pickerStyle(.menu)
+                    }
+                }
+                .padding(.vertical, 4)
+
+                advancedSliderRow(title: "Card Corners", value: $cardCornerRadius, range: 0...40, step: 2, unit: "pt", icon: "square.dashed")
+                advancedSliderRow(title: "Button Corners", value: $buttonCornerRadius, range: 0...20, step: 1, unit: "pt", icon: "rectangle.roundedbottom")
+                advancedSliderRow(title: "Shadow Intensity", value: $shadowIntensity, range: 0...20, step: 1, icon: "shadow")
+                advancedSliderRow(title: "Blur Opacity", value: $blurOpacity, range: 0...1, step: 0.05, isPercent: true, icon: "drop.halffull")
+                advancedSliderRow(title: "Glow Intensity", value: $glowIntensity, range: 0...30, step: 1, icon: "sun.max.fill")
+                advancedSliderRow(title: "Border Width", value: $borderWidth, range: 0...5, step: 0.5, unit: "pt", icon: "square.and.line.vertical.and.square")
+                advancedSliderRow(title: "Card Opacity", value: $cardOpacity, range: 0.1...1, step: 0.05, isPercent: true, icon: "square.stack.3d.down.right")
+
+                Toggle(isOn: $animateBackground) {
+                    Label("Animate Background", systemImage: "sparkles")
+                }
+            } header: {
+                Text("Advanced Styling")
+            }
+
+            // MARK: - Actions
+            Section {
+                Button {
+                    showSaveAlert = true
+                } label: {
+                    Label("Save Current Style", systemImage: "plus.circle.fill")
+                        .foregroundStyle(Color.accentColor)
+                }
+                .disabled(appState.isSigning)
+
+                Button(role: .destructive) {
+                    showResetAlert = true
+                } label: {
+                    Label("Reset To Defaults", systemImage: "arrow.counterclockwise")
+                }
+                .disabled(appState.isSigning)
+            }
         }
         .navigationTitle("Appearance")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showAllThemes = true
+                } label: {
+                    Image(systemName: "square.grid.2x2.fill")
+                        .font(.system(size: 14, weight: .bold))
+                }
+            }
+        }
         .onAppear {
             loadColors()
         }
@@ -173,145 +238,21 @@ struct ColorCustomizationView: View {
 
     // MARK: - Component Views
 
-    private var previewHeader: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Live Preview")
-                .font(.system(.subheadline, design: .rounded))
-                .fontWeight(.bold)
-                .foregroundStyle(.secondary)
-                .padding(.leading, 8)
-
-            ZStack {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .fill(backgroundManager.baseColor)
-                    .shadow(color: .black.opacity(shadowIntensity / 100.0), radius: shadowIntensity, x: 0, y: shadowIntensity / 2.0)
-
-                VStack(spacing: 0) {
-                    // Fake Nav Bar
-                    HStack {
-                        Circle().fill(uiElementColor.opacity(0.2)).frame(width: 32, height: 32)
-                        Spacer()
-                        Text("Preview").font(.headline).foregroundStyle(textColor)
-                        Spacer()
-                        Image(systemName: "magnifyingglass").foregroundStyle(uiElementColor)
-                    }
-                    .padding()
-
-                    Divider().background(textColor.opacity(0.1))
-
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            // Fake List Item
-                            HStack(spacing: 16) {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(uiElementColor.opacity(0.1))
-                                    .frame(width: 50, height: 50)
-                                    .overlay(Image(systemName: "app.fill").foregroundStyle(uiElementColor))
-
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("Application Name").font(.headline).foregroundStyle(textColor).applyFontDesign(selectedDesign)
-                                    Text("Version 1.0.0 • 42 MB").font(.caption).foregroundStyle(secondaryTextColor).applyFontDesign(selectedDesign)
-                                }
-                                Spacer()
-                                Button("Open") {}
-                                    .font(.system(size: 12, weight: .bold))
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 6)
-                                    .background(uiElementColor)
-                                    .foregroundStyle(.white)
-                                    .cornerRadius(buttonCornerRadius)
-                            }
-                            .padding()
-                            .background(textColor.opacity(0.05))
-                            .cornerRadius(cardCornerRadius)
-
-                            // Fake Tab Bar
-                            HStack(spacing: 40) {
-                                Image(systemName: "house.fill").foregroundStyle(uiElementColor)
-                                Image(systemName: "square.stack.3d.up.fill").foregroundStyle(textColor.opacity(0.3))
-                                Image(systemName: "person.fill").foregroundStyle(textColor.opacity(0.3))
-                            }
-                            .padding(.top, 8)
-                        }
-                        .padding()
-                    }
-                    .disabled(true)
-                }
-            }
-            .frame(height: 220)
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-        }
-    }
-
     private var themeGallerySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Theme Gallery")
-                    .font(.system(.subheadline, design: .rounded))
-                    .fontWeight(.bold)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Button("View All") {
-                    showAllThemes = true
-                }
-                .font(.caption)
-                .fontWeight(.bold)
-            }
-            .padding(.horizontal, 8)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 16) {
-                    ForEach(allThemes.prefix(8)) { theme in
-                        ModernThemeCard(theme: theme) {
-                            if !appState.isSigning {
-                                applyTheme(theme)
-                            }
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 16) {
+                ForEach(allThemes.prefix(8)) { theme in
+                    ModernThemeCard(theme: theme) {
+                        if !appState.isSigning {
+                            applyTheme(theme)
                         }
-                        .disabled(appState.isSigning)
-                        .opacity(appState.isSigning ? 0.6 : 1.0)
                     }
+                    .disabled(appState.isSigning)
+                    .opacity(appState.isSigning ? 0.6 : 1.0)
                 }
-                .padding(.horizontal, 4)
-                .padding(.bottom, 8)
             }
-        }
-    }
-
-    private var customColorsSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Custom Colors")
-                .font(.system(.subheadline, design: .rounded))
-                .fontWeight(.bold)
-                .foregroundStyle(.secondary)
-                .padding(.leading, 8)
-
-            VStack(spacing: 0) {
-                colorPickerRow(title: "Background", subtext: "The main background color of the application.", color: $backgroundManager.baseColor, icon: "square.fill")
-                Divider().padding(.leading, 44)
-                colorPickerRow(title: "UI Elements", subtext: "Color for cards, buttons, and other interface components.", color: $uiElementColor, icon: "app.fill")
-                Divider().padding(.leading, 44)
-                colorPickerRow(title: "Primary Text", subtext: "Main color for titles and body text.", color: $textColor, icon: "textformat")
-                Divider().padding(.leading, 44)
-                colorPickerRow(title: "Secondary Text", subtext: "Used for descriptions, hints, and less important text.", color: $secondaryTextColor, icon: "textformat.size")
-                Divider().padding(.leading, 44)
-                colorPickerRow(title: "Accent", subtext: "Highlights interactive elements and call-to-actions.", color: $tintColor, icon: "sparkles")
-                Divider().padding(.leading, 44)
-                colorPickerRow(title: "Nav Bar", subtext: "The color of the top navigation bar.", color: $navBarColor, icon: "menubar.rectangle")
-                Divider().padding(.leading, 44)
-                colorPickerRow(title: "Tab Bar", subtext: "The color of the bottom navigation bar.", color: $tabBarColor, icon: "dock.rectangle")
-                Divider().padding(.leading, 44)
-                colorPickerRow(title: "Divider", subtext: "Color for lines separating different sections.", color: $dividerColor, icon: "minus")
-                Divider().padding(.leading, 44)
-                colorPickerRow(title: "Sheet BG", subtext: "Background color for popups and modal sheets.", color: $sheetBackgroundColor, icon: "square.stack")
-                Divider().padding(.leading, 44)
-                colorPickerRow(title: "Success", subtext: "Color used for successful actions and indicators.", color: $successColor, icon: "checkmark.circle")
-                Divider().padding(.leading, 44)
-                colorPickerRow(title: "Warning", subtext: "Color used for warnings and cautionary alerts.", color: $warningColor, icon: "exclamationmark.triangle")
-                Divider().padding(.leading, 44)
-                colorPickerRow(title: "Error", subtext: "Color used for error messages and critical alerts.", color: $errorColor, icon: "xmark.circle")
-            }
-            .background(Color.clear)
-            .cornerRadius(16)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
         }
     }
 
@@ -341,140 +282,19 @@ struct ColorCustomizationView: View {
         .padding(.vertical, 12)
     }
 
-    private var actionsSection: some View {
-        VStack(spacing: 12) {
-            Button {
-                showSaveAlert = true
-            } label: {
-                HStack {
-                    Image(systemName: "plus.circle.fill")
-                    Text("Save Current Style")
-                }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.accentColor)
-                .foregroundStyle(.white)
-                .font(.headline)
-                .cornerRadius(16)
+    @ViewBuilder
+    private func advancedSliderRow(title: String, value: Binding<Double>, range: ClosedRange<Double>, step: Double, unit: String = "", isPercent: Bool = false, icon: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Label(title, systemImage: icon)
+                Spacer()
+                Text(isPercent ? "\(Int(value.wrappedValue * 100))%" : "\(Int(value.wrappedValue))\(unit)")
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.secondary)
             }
-            .disabled(appState.isSigning)
-
-            Button {
-                showResetAlert = true
-            } label: {
-                HStack {
-                    Image(systemName: "arrow.counterclockwise")
-                    Text("Reset To Defaults")
-                }
-                .frame(maxWidth: .infinity)
-                .padding()
-                .background(Color.red.opacity(0.1))
-                .foregroundStyle(.red)
-                .font(.headline)
-                .cornerRadius(16)
-            }
-            .disabled(appState.isSigning)
+            Slider(value: value, in: range, step: step)
         }
-    }
-
-    private var advancedStylingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Advanced Styling")
-                .font(.system(.subheadline, design: .rounded))
-                .fontWeight(.bold)
-                .foregroundStyle(.secondary)
-                .padding(.leading, 8)
-
-            VStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Label("Fonts", systemImage: "text.cursor")
-                        Spacer()
-                        Picker("Design", selection: $fontDesign) {
-                            Text("Default").tag("default")
-                            Text("Rounded").tag("rounded")
-                            Text("Serif").tag("serif")
-                            Text("Monospaced").tag("monospaced")
-                        }
-                        .pickerStyle(.menu)
-                    }
-                }
-
-                Divider()
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Label("Card Corners", systemImage: "square.dashed")
-                        Spacer()
-                        Text("\(Int(cardCornerRadius))pt").font(.caption).foregroundStyle(.secondary)
-                    }
-                    Slider(value: $cardCornerRadius, in: 0...40, step: 2)
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Label("Button Corners", systemImage: "rectangle.roundedbottom")
-                        Spacer()
-                        Text("\(Int(buttonCornerRadius))pt").font(.caption).foregroundStyle(.secondary)
-                    }
-                    Slider(value: $buttonCornerRadius, in: 0...20, step: 1)
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Label("Shadow Intensity", systemImage: "shadow")
-                        Spacer()
-                        Text("\(Int(shadowIntensity))").font(.caption).foregroundStyle(.secondary)
-                    }
-                    Slider(value: $shadowIntensity, in: 0...20, step: 1)
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Label("Blur Opacity", systemImage: "drop.halffull")
-                        Spacer()
-                        Text("\(Int(blurOpacity * 100))%").font(.caption).foregroundStyle(.secondary)
-                    }
-                    Slider(value: $blurOpacity, in: 0...1, step: 0.05)
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Label("Glow Intensity", systemImage: "sun.max.fill")
-                        Spacer()
-                        Text("\(Int(glowIntensity))").font(.caption).foregroundStyle(.secondary)
-                    }
-                    Slider(value: $glowIntensity, in: 0...30, step: 1)
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Label("Border Width", systemImage: "square.and.line.vertical.and.square")
-                        Spacer()
-                        Text(String(format: "%.1fpt", borderWidth)).font(.caption).foregroundStyle(.secondary)
-                    }
-                    Slider(value: $borderWidth, in: 0...5, step: 0.5)
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Label("Card Opacity", systemImage: "square.stack.3d.down.right")
-                        Spacer()
-                        Text("\(Int(cardOpacity * 100))%").font(.caption).foregroundStyle(.secondary)
-                    }
-                    Slider(value: $cardOpacity, in: 0.1...1, step: 0.05)
-                }
-
-                Divider()
-
-                Toggle(isOn: $animateBackground) {
-                    Label("Animate Background", systemImage: "sparkles")
-                }
-            }
-            .padding()
-            .background(Color.clear)
-            .cornerRadius(16)
-        }
+        .padding(.vertical, 8)
     }
 
     private var selectedDesign: Font.Design {

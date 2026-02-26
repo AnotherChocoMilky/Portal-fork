@@ -94,94 +94,79 @@ struct SourceDetailsView: View {
     
     // MARK: - Source Header Card (Modern - Icon at top, info below)
     private var sourceHeaderCard: some View {
-        VStack(spacing: 20) {
-            // Large centered icon
-            ZStack {
-                Circle()
-                    .fill(dominantColor.opacity(0.1))
-                    .frame(width: 120, height: 120)
-                
-                if let iconURL = source.iconURL {
-                    LazyImage(url: iconURL) { state in
-                        if let image = state.image {
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                                .frame(width: 88, height: 88)
-                                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                                .shadow(color: dominantColor.opacity(0.3), radius: 16, x: 0, y: 8)
-                        } else {
-                            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                .fill(dominantColor.opacity(0.2))
-                                .frame(width: 88, height: 88)
-                                .overlay(
-                                    Image(systemName: "globe")
-                                        .font(.system(size: 36, weight: .semibold))
-                                        .foregroundStyle(dominantColor)
-                                )
-                        }
+        VStack(spacing: 24) {
+            // Large centered icon with modern styling
+            if let iconURL = source.iconURL {
+                LazyImage(url: iconURL) { state in
+                    if let image = state.image {
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 100, height: 100)
+                            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                            .shadow(color: dominantColor.opacity(0.3), radius: 20, x: 0, y: 10)
+                    } else {
+                        iconPlaceholder
                     }
-                } else {
-                    RoundedRectangle(cornerRadius: 22, style: .continuous)
-                        .fill(dominantColor.opacity(0.2))
-                        .frame(width: 88, height: 88)
-                        .overlay(
-                            Image(systemName: "globe")
-                                .font(.system(size: 36, weight: .semibold))
-                                .foregroundStyle(dominantColor)
-                        )
                 }
+            } else {
+                iconPlaceholder
             }
             
-            // Source info below icon
-            VStack(spacing: 8) {
+            // Source info
+            VStack(spacing: 6) {
                 Text(source.name ?? String.localized("Unknown"))
-                    .font(.system(size: 24, weight: .bold, design: .rounded))
+                    .font(.system(size: 28, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
-                    .multilineTextAlignment(.center)
                 
                 if let url = source.sourceURL?.host {
                     Text(url)
-                        .font(.system(size: 14, weight: .medium))
+                        .font(.system(size: 15, weight: .medium))
                         .foregroundStyle(.secondary)
                 }
             }
             
             // Stats row
             if let repo = repository {
-                HStack(spacing: 24) {
-                    // Apps count
-                    VStack(spacing: 4) {
-                        Text("\(repo.apps.count)")
-                            .font(.system(size: 22, weight: .bold, design: .rounded))
-                            .foregroundStyle(.primary)
-                        Text("Apps")
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.secondary)
-                    }
+                HStack(spacing: 32) {
+                    statItem(value: "\(repo.apps.count)", label: "Apps")
                     
-                    // Divider
-                    Rectangle()
-                        .fill(Color.primary.opacity(0.1))
-                        .frame(width: 1, height: 36)
-                    
-                    // News count
                     if let news = repo.news, !news.isEmpty {
-                        VStack(spacing: 4) {
-                            Text("\(news.count)")
-                                .font(.system(size: 22, weight: .bold, design: .rounded))
-                                .foregroundStyle(.primary)
-                            Text("News")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.secondary)
-                        }
+                        Divider().frame(height: 24)
+                        statItem(value: "\(news.count)", label: "News")
                     }
                 }
-                .padding(.top, 8)
+                .padding(.top, 4)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 24)
+        .padding(.vertical, 32)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 32, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 32, style: .continuous).stroke(Color.primary.opacity(0.05), lineWidth: 0.5))
+    }
+
+    private var iconPlaceholder: some View {
+        RoundedRectangle(cornerRadius: 24, style: .continuous)
+            .fill(dominantColor.gradient)
+            .frame(width: 100, height: 100)
+            .overlay(
+                Image(systemName: "globe")
+                    .font(.system(size: 40, weight: .bold))
+                    .foregroundStyle(.white)
+            )
+            .shadow(color: dominantColor.opacity(0.3), radius: 20, x: 0, y: 10)
+    }
+
+    private func statItem(value: String, label: String) -> some View {
+        VStack(spacing: 2) {
+            Text(value)
+                .font(.system(size: 20, weight: .bold, design: .rounded))
+                .foregroundStyle(.primary)
+            Text(label)
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.secondary)
+                .textCase(.uppercase)
+        }
     }
     
     // MARK: - Featured News Section (Horizontal Cards)
@@ -189,9 +174,9 @@ struct SourceDetailsView: View {
     private func featuredNewsSection(news: [ASRepository.News]) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("Source News")
+                Text("Latest News")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
@@ -199,22 +184,18 @@ struct SourceDetailsView: View {
                     NavigationLink {
                         SourceNewsListView(news: fullNews, dominantColor: dominantColor)
                     } label: {
-                        HStack(spacing: 4) {
-                            Text("See All")
-                                .font(.system(size: 14, weight: .semibold))
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .semibold))
-                        }
-                        .foregroundStyle(dominantColor)
+                        Text("View All")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(dominantColor)
                     }
                 }
             }
             
             if news.isEmpty {
-                Text("No News Found")
-                    .font(.system(size: 15, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.5))
-                    .frame(maxWidth: .infinity)
+                Text("No news currently available.")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 20)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
@@ -225,69 +206,50 @@ struct SourceDetailsView: View {
                             } label: {
                                 featuredNewsCard(newsItem)
                             }
+                            .buttonStyle(.plain)
                         }
                     }
+                    .padding(.horizontal, 4)
                 }
-                .padding(.horizontal, -20)
-                .padding(.leading, 20)
             }
         }
     }
     
-    // MARK: - Featured News Card (Compact with depth and glow)
+    // MARK: - Featured News Card
     private func featuredNewsCard(_ newsItem: ASRepository.News) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             // Thumbnail
-            ZStack {
-                if let imageURL = newsItem.imageURL {
-                    LazyImage(url: imageURL) { state in
-                        if let image = state.image {
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
-                        } else {
-                            Rectangle()
-                                .fill(dominantColor.opacity(0.3))
-                        }
+            if let imageURL = newsItem.imageURL {
+                LazyImage(url: imageURL) { state in
+                    if let image = state.image {
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    } else {
+                        Rectangle().fill(dominantColor.opacity(0.1))
                     }
-                } else {
-                    Rectangle()
-                        .fill(dominantColor.opacity(0.12))
-                        .overlay(
-                            Image(systemName: "newspaper.fill")
-                                .font(.system(size: 32))
-                                .foregroundStyle(dominantColor.opacity(0.5))
-                        )
                 }
+                .frame(width: 240, height: 140)
+                .clipped()
             }
-            .frame(width: 220, height: 130)
-            .clipped()
             
             // Content
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(newsItem.title)
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                     .lineLimit(2)
                 
                 Text(newsItem.caption)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 13))
                     .foregroundStyle(.secondary)
-                    .lineLimit(2)
+                    .lineLimit(1)
             }
             .padding(14)
-            .frame(width: 220, alignment: .leading)
         }
-        .background(
-            RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color.clear)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 20, style: .continuous)
-                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
-                )
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
+        .frame(width: 240)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Color.primary.opacity(0.05), lineWidth: 0.5))
     }
     
     // MARK: - Apps Vertical Feed
@@ -297,7 +259,7 @@ struct SourceDetailsView: View {
             HStack {
                 Text("Apps")
                     .font(.system(size: 20, weight: .bold, design: .rounded))
-                    .foregroundStyle(.white)
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
@@ -307,13 +269,9 @@ struct SourceDetailsView: View {
                             SourceAppsListView(repository: repo, dominantColor: dominantColor)
                         }
                     } label: {
-                        HStack(spacing: 4) {
-                            Text("See All")
-                                .font(.system(size: 14, weight: .semibold))
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .semibold))
-                        }
-                        .foregroundStyle(dominantColor)
+                        Text("View All")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(dominantColor)
                     }
                 }
             }
@@ -321,14 +279,9 @@ struct SourceDetailsView: View {
             if apps.isEmpty {
                 emptyAppsState
             } else {
-                // Get the 10 most recently updated apps
-                let recentApps = apps.sorted { app1, app2 in
-                    let date1 = app1.currentDate?.date ?? .distantPast
-                    let date2 = app2.currentDate?.date ?? .distantPast
-                    return date1 > date2
-                }.prefix(10)
+                let recentApps = apps.sorted { ($0.currentDate?.date ?? .distantPast) > ($1.currentDate?.date ?? .distantPast) }.prefix(10)
                 
-                VStack(spacing: 14) {
+                VStack(spacing: 0) {
                     ForEach(Array(recentApps), id: \.id) { app in
                         Button {
                             if let repo = repository {
@@ -338,74 +291,82 @@ struct SourceDetailsView: View {
                             appFeedCard(app)
                         }
                         .buttonStyle(.plain)
+
+                        if app.id != recentApps.last?.id {
+                            Divider().padding(.leading, 80)
+                        }
                     }
                 }
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                .overlay(RoundedRectangle(cornerRadius: 24, style: .continuous).stroke(Color.primary.opacity(0.05), lineWidth: 0.5))
             }
         }
     }
     
-    // MARK: - App Feed Card (Clean, no background)
+    // MARK: - App Feed Card
     private func appFeedCard(_ app: ASRepository.App) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 16) {
             // App icon
-            if let iconURL = app.iconURL {
-                LazyImage(url: iconURL) { state in
-                    if let image = state.image {
-                        image
-                            .resizable()
-                            .aspectRatio(contentMode: .fill)
-                            .frame(width: 52, height: 52)
-                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    } else {
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(dominantColor.opacity(0.15))
-                            .frame(width: 52, height: 52)
-                            .overlay(
-                                Image(systemName: "app.fill")
-                                    .font(.system(size: 22))
-                                    .foregroundStyle(dominantColor.opacity(0.5))
-                            )
+            Group {
+                if let iconURL = app.iconURL {
+                    LazyImage(url: iconURL) { state in
+                        if let image = state.image {
+                            image
+                                .resizable()
+                                .aspectRatio(contentMode: .fill)
+                        } else {
+                            appIconPlaceholder
+                        }
                     }
+                } else {
+                    appIconPlaceholder
                 }
-            } else {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(dominantColor.opacity(0.15))
-                    .frame(width: 52, height: 52)
-                    .overlay(
-                        Image(systemName: "app.fill")
-                            .font(.system(size: 22))
-                            .foregroundStyle(dominantColor.opacity(0.5))
-                    )
             }
+            .frame(width: 52, height: 52)
+            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(app.name ?? "Unknown")
-                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
                 
-                if let subtitle = app.subtitle {
-                    Text(subtitle)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                
-                if let version = app.currentVersion {
-                    Text("v\(version)")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(dominantColor)
+                HStack(spacing: 6) {
+                    if let version = app.currentVersion {
+                        Text("v\(version)")
+                            .font(.system(size: 12, weight: .bold, design: .monospaced))
+                            .foregroundStyle(dominantColor)
+                    }
+
+                    if let subtitle = app.subtitle {
+                        Text("•")
+                            .foregroundStyle(.tertiary)
+                        Text(subtitle)
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                    }
                 }
             }
             
             Spacer()
             
             Image(systemName: "chevron.right")
-                .font(.system(size: 12, weight: .semibold))
+                .font(.system(size: 12, weight: .bold))
                 .foregroundStyle(.tertiary)
         }
-        .padding(18)
+        .padding(16)
         .contentShape(Rectangle())
+    }
+
+    private var appIconPlaceholder: some View {
+        RoundedRectangle(cornerRadius: 12, style: .continuous)
+            .fill(dominantColor.opacity(0.1))
+            .overlay(
+                Image(systemName: "app.fill")
+                    .font(.system(size: 22))
+                    .foregroundStyle(dominantColor.opacity(0.5))
+            )
     }
     
     // MARK: - Empty Apps State
