@@ -522,6 +522,12 @@ struct FilesView: View {
             .onAppear {
                 applySettings()
             }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureOpenDetails)) { notification in
+            if let file = notification.object as? FileItem {
+                // In a real app, we'd open a file info view or detail sheet
+                AppLogManager.shared.info("Gesture: Open File Details for \(file.name)", category: "Gestures")
+            }
+        }
             .onChange(of: viewStyleSetting) { _ in
                 applySettings()
             }
@@ -708,6 +714,12 @@ struct FilesView: View {
                     .onTapGesture {
                         handleFileTap(file)
                     }
+                    .onTapGesture(count: 2) {
+                        GestureManager.shared.performAction(for: .doubleTap, in: .files, context: file)
+                    }
+                    .onLongPressGesture {
+                        GestureManager.shared.performAction(for: .longPress, in: .files, context: file)
+                    }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
                             HapticsManager.shared.warning()
@@ -830,6 +842,12 @@ struct FilesView: View {
                     FileGridItemView(file: file, isSelected: selectedFiles.contains(file.id))
                         .onTapGesture {
                             handleFileTap(file)
+                        }
+                        .onTapGesture(count: 2) {
+                            GestureManager.shared.performAction(for: .doubleTap, in: .files, context: file)
+                        }
+                        .onLongPressGesture {
+                            GestureManager.shared.performAction(for: .longPress, in: .files, context: file)
                         }
                         .contextMenu {
                             fileContextMenu(for: file)

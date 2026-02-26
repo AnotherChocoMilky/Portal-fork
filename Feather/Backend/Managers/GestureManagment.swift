@@ -1,0 +1,221 @@
+import SwiftUI
+import Combine
+
+// MARK: - Gesture Types
+enum GestureType: String, CaseIterable, Codable, Identifiable {
+    case singleTap = "Single Tap"
+    case doubleTap = "Double Tap"
+    case tripleTap = "Triple Tap"
+    case longPress = "Long Press"
+    case leftSwipe = "Left Swipe"
+    case rightSwipe = "Right Swipe"
+
+    var id: String { rawValue }
+}
+
+// MARK: - Gesture Actions
+enum GestureAction: String, CaseIterable, Codable, Identifiable {
+    case none = "None"
+    case openDetails = "Open Details"
+    case signApp = "Sign App"
+    case resignApp = "Resign App"
+    case installApp = "Install App"
+    case deleteApp = "Delete App"
+    case shareApp = "Share App"
+    case openRepository = "Open Repository"
+    case refresh = "Refresh"
+    case pin = "Pin/Unpin"
+    case copyURL = "Copy URL"
+    case unlockSourceMaster = "Unlock Source Master"
+    case rotateTip = "Rotate Tip"
+    case showHomeInfo = "Show Home Info"
+    case toggleInversion = "Toggle Inversion"
+    case authenticateDeveloper = "Authenticate Developer"
+
+    var id: String { rawValue }
+
+    var isDestructive: Bool {
+        switch self {
+        case .deleteApp: return true
+        default: return false
+        }
+    }
+}
+
+// MARK: - App Sections
+enum AppSection: String, CaseIterable, Codable, Identifiable {
+    case dashboard = "Home"
+    case sources = "Sources"
+    case library = "Library"
+    case allApps = "All Apps"
+    case files = "Files"
+    case guides = "Guides"
+    case settings = "Settings"
+    case certificates = "Certificates"
+
+    var id: String { rawValue }
+
+    var tabKey: String {
+        switch self {
+        case .dashboard: return "Feather.tabBar.dashboard"
+        case .sources: return "Feather.tabBar.sources"
+        case .library: return "Feather.tabBar.library"
+        case .allApps: return "Feather.tabBar.allApps"
+        case .files: return "Feather.tabBar.files"
+        case .guides: return "Feather.tabBar.guides"
+        case .settings: return "Feather.tabBar.settings"
+        case .certificates: return "Feather.tabBar.certificates"
+        }
+    }
+}
+
+// MARK: - Gesture Manager
+class GestureManager: ObservableObject {
+    static let shared = GestureManager()
+
+    @Published var mappings: [AppSection: [GestureType: GestureAction]] = [:]
+
+    private let storageKey = "Feather.gestureMappings"
+
+    private init() {
+        loadMappings()
+    }
+
+    func loadMappings() {
+        if let data = UserDefaults.standard.data(forKey: storageKey),
+           let decoded = try? JSONDecoder().decode([AppSection: [GestureType: GestureAction]].self, from: data) {
+            mappings = decoded
+        } else {
+            // Default mappings
+            mappings = [
+                .library: [
+                    .singleTap: .openDetails,
+                    .leftSwipe: .deleteApp,
+                    .rightSwipe: .installApp,
+                    .doubleTap: .signApp,
+                    .longPress: .shareApp
+                ],
+                .sources: [
+                    .singleTap: .openDetails,
+                    .leftSwipe: .deleteApp,
+                    .doubleTap: .openRepository,
+                    .longPress: .pin,
+                    .tripleTap: .unlockSourceMaster
+                ],
+                .dashboard: [
+                    .singleTap: .rotateTip,
+                    .doubleTap: .showHomeInfo,
+                    .longPress: .toggleInversion
+                ],
+                .settings: [
+                    .tripleTap: .authenticateDeveloper
+                ]
+            ]
+        }
+    }
+
+    func saveMappings() {
+        if let encoded = try? JSONEncoder().encode(mappings) {
+            UserDefaults.standard.set(encoded, forKey: storageKey)
+        }
+    }
+
+    func setMapping(for gesture: GestureType, in section: AppSection, action: GestureAction) {
+        if mappings[section] == nil {
+            mappings[section] = [:]
+        }
+        mappings[section]?[gesture] = action
+        saveMappings()
+    }
+
+    func getAction(for gesture: GestureType, in section: AppSection) -> GestureAction {
+        return mappings[section]?[gesture] ?? .none
+    }
+
+    func performAction(for gesture: GestureType, in section: AppSection, context: Any? = nil) {
+        let action = getAction(for: gesture, in: section)
+        execute(action: action, in: section, context: context)
+    }
+
+    func execute(action: GestureAction, in section: AppSection? = nil, context: Any? = nil) {
+        guard action != .none else { return }
+
+        // Destructive actions confirmation
+        if action.isDestructive {
+            NotificationCenter.default.post(name: .gestureRequireConfirmation, object: nil, userInfo: [
+                "action": action,
+                "section": section as Any,
+                "context": context as Any
+            ])
+            return
+        }
+
+        // Execute the action
+        switch action {
+        case .openDetails:
+            if let app = context as? AppInfoPresentable {
+                NotificationCenter.default.post(name: .gestureOpenDetails, object: app)
+            } else if let source = context as? AltSource {
+                NotificationCenter.default.post(name: .gestureOpenSourceDetails, object: source)
+            } else if section == .dashboard {
+                 NotificationCenter.default.post(name: .gestureShowHomeInfo, object: nil)
+            }
+        case .signApp, .resignApp:
+            if let app = context as? AppInfoPresentable {
+                NotificationCenter.default.post(name: .gestureSignApp, object: app)
+            }
+        case .installApp:
+            if let app = context as? AppInfoPresentable {
+                NotificationCenter.default.post(name: .gestureInstallApp, object: app)
+            }
+        case .shareApp:
+            if let app = context as? AppInfoPresentable {
+                NotificationCenter.default.post(name: .gestureShareApp, object: app)
+            }
+        case .openRepository:
+             if let source = context as? AltSource {
+                 NotificationCenter.default.post(name: .gestureOpenSourceDetails, object: source)
+             }
+        case .refresh:
+            NotificationCenter.default.post(name: .gestureRefresh, object: nil)
+        case .pin:
+            if let source = context as? AltSource {
+                SourcesViewModel.shared.togglePin(for: source)
+            }
+        case .copyURL:
+            if let source = context as? AltSource {
+                UIPasteboard.general.string = source.sourceURL?.absoluteString
+                HapticsManager.shared.success()
+            }
+        case .unlockSourceMaster:
+            ToastManager.shared.show("🛠️ Source Master Unlocked!", type: .success)
+            HapticsManager.shared.success()
+        case .rotateTip:
+            NotificationCenter.default.post(name: .gestureRotateTip, object: nil)
+        case .showHomeInfo:
+            NotificationCenter.default.post(name: .gestureShowHomeInfo, object: nil)
+        case .toggleInversion:
+            EasterEggManager.shared.toggleInversion()
+        case .authenticateDeveloper:
+            NotificationCenter.default.post(name: .gestureAuthenticateDeveloper, object: nil)
+        default:
+            break
+        }
+
+        HapticsManager.shared.softImpact()
+    }
+}
+
+// MARK: - Notifications
+extension NSNotification.Name {
+    static let gestureOpenDetails = NSNotification.Name("Feather.gesture.openDetails")
+    static let gestureSignApp = NSNotification.Name("Feather.gesture.signApp")
+    static let gestureInstallApp = NSNotification.Name("Feather.gesture.installApp")
+    static let gestureShareApp = NSNotification.Name("Feather.gesture.shareApp")
+    static let gestureOpenSourceDetails = NSNotification.Name("Feather.gesture.openSourceDetails")
+    static let gestureRefresh = NSNotification.Name("Feather.gesture.refresh")
+    static let gestureRequireConfirmation = NSNotification.Name("Feather.gesture.requireConfirmation")
+    static let gestureRotateTip = NSNotification.Name("Feather.gesture.rotateTip")
+    static let gestureShowHomeInfo = NSNotification.Name("Feather.gesture.showHomeInfo")
+    static let gestureAuthenticateDeveloper = NSNotification.Name("Feather.gesture.authenticateDeveloper")
+}

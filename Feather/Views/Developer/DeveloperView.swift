@@ -32,6 +32,12 @@ struct DeveloperView: View {
         .onAppear {
             authManager.checkSessionValidity()
         }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureAuthenticateDeveloper)) { _ in
+            if !authManager.isAuthenticated {
+                ToastManager.shared.show("😏 Nice try, but you need to authenticate!", type: .warning)
+                HapticsManager.shared.error()
+            }
+        }
     }
 }
 
@@ -172,10 +178,7 @@ struct DeveloperAuthView: View {
             Text("Developer Mode")
                 .font(.system(size: 28, weight: .bold, design: .rounded))
                 .onTapGesture(count: 3) {
-                    if !authManager.isAuthenticated {
-                        ToastManager.shared.show("😏 Nice try, but you need to authenticate!", type: .warning)
-                        HapticsManager.shared.error()
-                    }
+                    GestureManager.shared.performAction(for: .tripleTap, in: .settings)
                 }
                 .foregroundStyle(
                     LinearGradient(

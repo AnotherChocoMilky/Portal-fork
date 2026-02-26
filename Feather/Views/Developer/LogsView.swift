@@ -164,13 +164,16 @@ struct AppLogsView: View {
         .navigationBarTitleDisplayMode(.inline)
         .onChange(of: searchText) { newValue in
             if newValue == "dev=True" {
-                UserDefaults.standard.set(true, forKey: "Feather.devModeUnlocked")
-                HapticsManager.shared.success()
-                ToastManager.shared.show("🛠️ Developer Mode Phase 1 Complete!", type: .success)
+                GestureManager.shared.performAction(for: .tripleTap, in: .settings)
             }
         }
         .sheet(isPresented: $showInfo) {
             LogInfoView()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureAuthenticateDeveloper)) { _ in
+            UserDefaults.standard.set(true, forKey: "Feather.devModeUnlocked")
+            HapticsManager.shared.success()
+            ToastManager.shared.show("🛠️ Developer Mode Phase 1 Complete!", type: .success)
         }
         .toolbar {
             ToolbarItemGroup(placement: .topBarTrailing) {
