@@ -98,11 +98,13 @@ struct GesturesView: View {
     @ViewBuilder
     private func gestureIcon(for gesture: GestureType) -> some View {
         switch gesture {
-        case .leftSwipe: Image(systemName: "arrow.left")
-        case .rightSwipe: Image(systemName: "arrow.right")
+        case .singleTap: Image(systemName: "hand.tap")
         case .doubleTap: Image(systemName: "hand.tap.fill")
         case .tripleTap: Image(systemName: "hand.tap.fill")
         case .longPress: Image(systemName: "hand.point.up.braille.fill")
+        case .leftSwipe: Image(systemName: "arrow.left")
+        case .rightSwipe: Image(systemName: "arrow.right")
+        default: Image(systemName: "questionmark.circle")
         }
     }
 }
