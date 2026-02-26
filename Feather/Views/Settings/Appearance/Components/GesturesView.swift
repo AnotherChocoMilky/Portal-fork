@@ -81,7 +81,7 @@ struct GesturesView: View {
         )
 
         Picker(selection: binding) {
-            ForEach(GestureAction.allCases) { action in
+            ForEach(filteredActions(for: section)) { action in
                 Text(action.rawValue).tag(action)
             }
         } label: {
@@ -92,6 +92,29 @@ struct GesturesView: View {
 
                 Text(gesture.rawValue)
             }
+        }
+    }
+
+    private func filteredActions(for section: AppSection) -> [GestureAction] {
+        let commonActions: [GestureAction] = [.none]
+
+        switch section {
+        case .dashboard:
+            return commonActions + [.rotateTip, .showHomeInfo, .toggleInversion, .openDetails]
+        case .sources:
+            return commonActions + [.openDetails, .deleteApp, .openRepository, .pin, .unlockSourceMaster, .copyURL, .refresh]
+        case .library:
+            return commonActions + [.openDetails, .signApp, .resignApp, .installApp, .deleteApp, .shareApp]
+        case .allApps:
+            return commonActions + [.openDetails, .signApp, .installApp, .shareApp]
+        case .files:
+            return commonActions + [.openDetails, .rename, .duplicate, .move, .deleteApp, .shareApp, .viewPermissions]
+        case .guides:
+            return commonActions + [.openDetails]
+        case .certificates:
+            return commonActions + [.openDetails, .select, .exportEntitlements, .deleteApp]
+        case .settings:
+            return commonActions + [.authenticateDeveloper]
         }
     }
 

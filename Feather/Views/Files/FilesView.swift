@@ -522,11 +522,49 @@ struct FilesView: View {
             .onAppear {
                 applySettings()
             }
-        .onReceive(NotificationCenter.default.publisher(for: .gestureOpenDetails)) { notification in
+        .onReceive(NotificationCenter.default.publisher(for: .gestureOpenFileDetails)) { notification in
             if let file = notification.object as? FileItem {
-                // In a real app, we'd open a file info view or detail sheet
-                AppLogManager.shared.info("Gesture: Open File Details for \(file.name)", category: "Gestures")
+                selectedFile = file
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureRenameFile)) { notification in
+            if let file = notification.object as? FileItem {
+                fileToRename = file
+                renameText = file.name
+                showRenameAlert = true
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureDuplicateFile)) { notification in
+            if let file = notification.object as? FileItem {
+                fileManager.duplicateFile(file)
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureMoveFile)) { notification in
+            if let file = notification.object as? FileItem {
+                selectedFiles = [file.id]
+                showMoveSheet = true
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureShareFile)) { notification in
+            if let file = notification.object as? FileItem {
+                shareURLs = [file.url]
+                showShareSheet = true
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureViewFilePermissions)) { notification in
+            if let file = notification.object as? FileItem {
+                selectedFiles = [file.id]
+                showPermissionsSheet = true
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .gestureRequireConfirmation)) { notification in
+            guard let userInfo = notification.userInfo,
+                  let action = userInfo["action"] as? GestureAction,
+                  action == .deleteApp,
+                  let file = userInfo["context"] as? FileItem else { return }
+
+            fileManager.deleteFile(file)
+            HapticsManager.shared.success()
         }
             .onChange(of: viewStyleSetting) { _ in
                 applySettings()
@@ -712,6 +750,9 @@ struct FilesView: View {
                     .listRowBackground(Color.clear)
                     .contentShape(Rectangle())
                     .onTapGesture {
+                        Task {
+                            await GestureManager.shared.performAction(for: .singleTap, in: .files, context: file)
+                        }
                         handleFileTap(file)
                     }
                     .onTapGesture(count: 2) {
@@ -726,36 +767,22 @@ struct FilesView: View {
                     }
                     .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                         Button(role: .destructive) {
-                            HapticsManager.shared.warning()
-                            fileManager.deleteFile(file)
+                            Task {
+                                await GestureManager.shared.performAction(for: .leftSwipe, in: .files, context: file)
+                            }
                         } label: {
-                            Label(.localized("Delete"), systemImage: "trash")
+                            Label("Action", systemImage: "hand.tap")
                         }
-                        
-                        Button {
-                            shareURLs = [file.url]
-                            showShareSheet = true
-                        } label: {
-                            Label(.localized("Share"), systemImage: "square.and.arrow.up")
-                        }
-                        .tint(.blue)
                     }
                     .swipeActions(edge: .leading, allowsFullSwipe: false) {
                         Button {
-                            fileToRename = file
-                            renameText = file.name
-                            showRenameAlert = true
+                            Task {
+                                await GestureManager.shared.performAction(for: .rightSwipe, in: .files, context: file)
+                            }
                         } label: {
-                            Label(.localized("Rename"), systemImage: "pencil")
+                            Label("Action", systemImage: "hand.tap")
                         }
-                        .tint(.orange)
-                        
-                        Button {
-                            fileManager.duplicateFile(file)
-                        } label: {
-                            Label(.localized("Duplicate"), systemImage: "doc.on.doc")
-                        }
-                        .tint(.green)
+                        .tint(.accentColor)
                     }
                     .contextMenu {
                         fileContextMenu(for: file)
@@ -845,6 +872,9 @@ struct FilesView: View {
                 ForEach(filteredFiles) { file in
                     FileGridItemView(file: file, isSelected: selectedFiles.contains(file.id))
                         .onTapGesture {
+                            Task {
+                                await GestureManager.shared.performAction(for: .singleTap, in: .files, context: file)
+                            }
                             handleFileTap(file)
                         }
                         .onTapGesture(count: 2) {
