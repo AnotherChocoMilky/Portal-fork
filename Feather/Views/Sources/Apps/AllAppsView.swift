@@ -828,9 +828,9 @@ struct AllAppsRowView: View {
                 }
             }
 
-			if !useGrid && showDividers && rowStyle == .minimal && !isLast {
+			if !useGrid && showDividers && !isLast {
 				Divider()
-					.padding(.leading, iconSize + iconPadding + infoSpacing + 4)
+					.padding(.leading, iconSize + iconPadding + 20)
 					.opacity(rowDividerOpacity)
 			}
 		}
@@ -844,52 +844,67 @@ struct AllAppsRowView: View {
 
     @ViewBuilder
     private func rowView(showButton: Bool = true) -> some View {
-        VStack(spacing: 12) {
-            HStack(spacing: 14) {
+        VStack(spacing: 0) {
+            HStack(spacing: 16) {
                 // App Icon
-                appIcon
-                    .frame(width: iconSize, height: iconSize)
-                    .overlay(alignment: .bottomLeading) {
-                        if showSourceIcon, let iconURL = source.currentIconURL {
-                            LazyImage(url: iconURL) { state in
-                                if let image = state.image {
-                                    image
-                                        .resizable()
-                                        .aspectRatio(contentMode: .fit)
-                                        .frame(width: iconSize * 0.35, height: iconSize * 0.35)
-                                        .clipShape(Circle())
-                                        .background(Circle().fill(Color.clear))
-                                        .overlay(Circle().stroke(Color.clear, lineWidth: 1.5))
-                                        .offset(x: iconSize * 0.75, y: iconSize * 0.05)
-                                }
+                ZStack {
+                    appIcon
+                        .frame(width: iconSize, height: iconSize)
+
+                    if isDownloading {
+                        Circle()
+                            .trim(from: 0, to: downloadProgress)
+                            .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+                            .frame(width: iconSize + 6, height: iconSize + 6)
+                            .rotationEffect(.degrees(-90))
+                            .animation(.linear(duration: 0.2), value: downloadProgress)
+                    }
+                }
+                .overlay(alignment: .bottomLeading) {
+                    if showSourceIcon, let iconURL = source.currentIconURL {
+                        LazyImage(url: iconURL) { state in
+                            if let image = state.image {
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: iconSize * 0.35, height: iconSize * 0.35)
+                                    .clipShape(Circle())
+                                    .background(Circle().fill(Color(UIColor.systemBackground)))
+                                    .overlay(Circle().stroke(Color.primary.opacity(0.1), lineWidth: 1))
+                                    .offset(x: iconSize * 0.7, y: 0)
                             }
                         }
                     }
-                    .padding(.leading, iconPadding)
+                }
+                .padding(.leading, iconPadding)
 
                 // Center column with app info
-                VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 4) {
                     // App name
                     Text(app.currentName)
                         .font(.system(size: nameFontSize, weight: useBoldTitles ? .bold : .semibold))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
 
-                    // Subtitle (status/developer)
-                    if showStatus && !statusText.isEmpty {
-                        Text(statusText)
-                            .font(.system(size: subtitleFontSize, weight: .medium))
-                            .foregroundStyle(Color.accentColor)
-                            .lineLimit(1)
-                    } else if showDeveloper, let developer = app.developer {
-                        Text(developer)
-                            .font(.system(size: subtitleFontSize))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-
-                    // Version and file size
+                    // Metadata Row
                     HStack(spacing: 6) {
+                        if showStatus && !statusText.isEmpty {
+                            Text(statusText)
+                                .font(.system(size: metadataFontSize, weight: .bold))
+                                .foregroundStyle(Color.accentColor)
+                        } else if showDeveloper, let developer = app.developer {
+                            Text(developer)
+                                .font(.system(size: metadataFontSize))
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+
+                        if (showStatus && !statusText.isEmpty) || (showDeveloper && app.developer != nil) {
+                            Text("•")
+                                .font(.system(size: metadataFontSize))
+                                .foregroundStyle(.tertiary)
+                        }
+
                         if showVersion, let version = app.currentVersion {
                             Text("v\(version)")
                                 .font(.system(size: metadataFontSize))
@@ -897,11 +912,9 @@ struct AllAppsRowView: View {
                         }
 
                         if showSize, !fileSize.isEmpty {
-                            if showVersion && app.currentVersion != nil {
-                                Text("•")
-                                    .font(.system(size: metadataFontSize))
-                                    .foregroundStyle(.secondary)
-                            }
+                            Text("•")
+                                .font(.system(size: metadataFontSize))
+                                .foregroundStyle(.tertiary)
 
                             Text(fileSize)
                                 .font(.system(size: metadataFontSize))
@@ -909,12 +922,16 @@ struct AllAppsRowView: View {
                         }
                     }
 
-                    if showDescription, let description = app.localizedDescription {
+                    if isDownloading {
+                        Text("Downloading \(Int(downloadProgress * 100))%")
+                            .font(.system(size: metadataFontSize, weight: .bold, design: .monospaced))
+                            .foregroundStyle(Color.accentColor)
+                            .transition(.opacity)
+                    } else if showDescription, let description = app.localizedDescription {
                         Text(description)
                             .font(.system(size: metadataFontSize))
                             .foregroundStyle(.secondary)
-                            .lineLimit(descriptionLimit)
-                            .padding(.top, 2)
+                            .lineLimit(1)
                     }
                 }
 
@@ -924,39 +941,12 @@ struct AllAppsRowView: View {
                 if showButton {
                     actionButton
                         .frame(width: 34, height: 34)
-                } else {
-                    Color.clear
-                        .frame(width: 34, height: 34)
                 }
             }
-
-            // Progress bar when downloading
-            if isDownloading {
-                downloadProgressBar
-            }
+            .padding(.vertical, rowVerticalPadding)
+            .padding(.horizontal, 4)
         }
-        .padding(.vertical, rowStyle == .minimal ? rowVerticalPadding : rowVerticalPadding + 4)
-        .padding(.horizontal, rowStyle == .minimal ? 4 : 14)
-        .background(
-            Group {
-                if rowStyle != .minimal {
-                    if useGlassEffects {
-                        Rectangle().fill(.ultraThinMaterial)
-                    } else {
-                        Color.clear
-                    }
-                } else {
-                    Color.clear
-                }
-            }
-            .opacity(cardBackgroundOpacity)
-        )
-        .cornerRadius(rowStyle == .card || rowStyle == .flat ? 16 : 0)
-        .shadow(color: rowStyle == .card ? Color.black.opacity(0.02) : Color.clear, radius: 10, x: 0, y: 5)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.primary.opacity(rowStyle == .flat ? 0.1 : 0), lineWidth: 1)
-        )
+        .background(Color.clear)
     }
 
     @ViewBuilder
@@ -1027,49 +1017,7 @@ struct AllAppsRowView: View {
     }
 
     private var downloadProgressBar: some View {
-        VStack(spacing: 6) {
-            GeometryReader { geometry in
-                ZStack(alignment: .leading) {
-                    // Modern Background
-                    Capsule()
-                        .fill(.ultraThinMaterial)
-                        .frame(height: 6)
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.primary.opacity(0.1), lineWidth: 0.5)
-                        )
-
-                    // Modern Gradient Progress
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [Color.accentColor, Color.blue],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(width: max(6, geometry.size.width * downloadProgress), height: 6)
-                        .shadow(color: Color.accentColor.opacity(0.3), radius: 3, x: 0, y: 1)
-                }
-            }
-            .frame(height: 6)
-
-            // Progress percentage with better font
-            HStack {
-                Text("\(Int(downloadProgress * 100))%")
-                    .font(.system(size: 10, weight: .bold, design: .monospaced))
-                    .foregroundStyle(Color.accentColor)
-
-                Spacer()
-
-                Text(isDownloading ? "Downloading..." : "Complete")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
-            }
-        }
-        .padding(.top, 4)
-        .transition(.asymmetric(insertion: .move(edge: .top).combined(with: .opacity), removal: .opacity))
+        EmptyView()
     }
 	
 	@ViewBuilder

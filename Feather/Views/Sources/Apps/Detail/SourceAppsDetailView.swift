@@ -101,38 +101,26 @@ struct SourceAppsDetailView: View {
             ZStack(alignment: .bottom) {
                 // Background
                 Rectangle()
-                    .fill(
-                        LinearGradient(
-                            colors: [
-                                dominantColor.opacity(colorScheme == .dark ? 0.4 : 0.3),
-                                dominantColor.opacity(colorScheme == .dark ? 0.2 : 0.15),
-                                dominantColor.opacity(colorScheme == .dark ? 0.1 : 0.05)
-                            ],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .overlay(
-                        Rectangle()
-                            .fill(.ultraThinMaterial)
-                            .opacity(0.3)
-                    )
+                    .fill(dominantColor.gradient)
+                    .opacity(colorScheme == .dark ? 0.3 : 0.15)
+                    .overlay(.ultraThinMaterial)
                 
                 // Content
-                VStack(spacing: 16) {
+                VStack(spacing: 20) {
                     appIcon
                         .scaleEffect(minY > 0 ? 1 + (minY / 400.0) : 1)
+                        .shadow(color: dominantColor.opacity(0.2), radius: 20, x: 0, y: 10)
                     
-                    VStack(spacing: 8) {
+                    VStack(spacing: 6) {
                         Text(app.currentName)
-                            .font(.system(size: 26, weight: .bold, design: .rounded))
+                            .font(.system(size: 28, weight: .bold, design: .rounded))
                             .foregroundStyle(.primary)
                             .multilineTextAlignment(.center)
                         
                         if let developer = app.developer {
                             Text(developer)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(dominantColor)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundStyle(.secondary)
                         }
                     }
                     .opacity(minY < -60 ? max(0, 1 + (minY + 60) / 40.0) : 1)
@@ -141,7 +129,7 @@ struct SourceAppsDetailView: View {
                         .padding(.top, 4)
                         .opacity(minY < -100 ? max(0, 1 + (minY + 100) / 40.0) : 1)
                 }
-                .padding(.bottom, 32)
+                .padding(.bottom, 40)
                 .padding(.horizontal, 20)
             }
             .frame(width: geometry.size.width, height: height)
@@ -199,43 +187,41 @@ struct SourceAppsDetailView: View {
     private var minimalInformationSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Information")
-                .font(.system(size: 20, weight: .bold))
+                .font(.system(size: 20, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
             
             VStack(alignment: .leading, spacing: 0) {
                 if let sourceName = source.name {
                     minimalInfoRow(icon: "globe", label: "Source", value: sourceName)
-                    Divider().padding(.leading, 44)
+                    Divider().padding(.leading, 16)
                 }
                 
                 if let developer = app.developer {
                     minimalInfoRow(icon: "person.fill", label: "Developer", value: developer)
-                    Divider().padding(.leading, 44)
+                    Divider().padding(.leading, 16)
                 }
                 
                 if let size = app.size {
                     minimalInfoRow(icon: "arrow.down.circle", label: "Size", value: size.formattedByteCount)
-                    Divider().padding(.leading, 44)
+                    Divider().padding(.leading, 16)
                 }
                 
                 if let category = app.category {
                     minimalInfoRow(icon: "square.grid.2x2", label: "Category", value: category.capitalized)
-                    Divider().padding(.leading, 44)
+                    Divider().padding(.leading, 16)
                 }
                 
                 if let version = app.currentVersion {
                     minimalInfoRow(icon: "number", label: "Version", value: version)
-                    Divider().padding(.leading, 44)
+                    Divider().padding(.leading, 16)
                 }
                 
                 if let bundleId = app.id {
                     minimalInfoRow(icon: "doc.on.doc", label: "Bundle ID", value: bundleId, isCopyable: true)
                 }
             }
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.clear)
-            )
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Color.primary.opacity(0.05), lineWidth: 0.5))
         }
     }
     
@@ -421,12 +407,12 @@ struct SourceAppsDetailView: View {
     private var statisticsRow: some View {
         HStack(spacing: 0) {
             statisticColumn(
-                topLabel: app.versions?.count.description ?? "1",
+                topLabel: "Version",
                 mainValue: app.currentVersion ?? "1.0",
                 bottomContent: AnyView(
-                    Text("Version")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
+                    Text("\(app.versions?.count ?? 1) History")
+                        .font(.system(size: 11, weight: .medium))
+                        .foregroundStyle(dominantColor)
                 )
             )
             
@@ -449,12 +435,11 @@ struct SourceAppsDetailView: View {
             if let category = app.category {
                 statisticColumn(
                     topLabel: "Category",
-                    mainValue: "#\(Int.random(in: 1...50))",
+                    mainValue: category.capitalized,
                     bottomContent: AnyView(
-                        Text(category.capitalized)
+                        Text("App Genre")
                             .font(.system(size: 11))
                             .foregroundStyle(.secondary)
-                            .lineLimit(1)
                     )
                 )
                 
@@ -463,31 +448,18 @@ struct SourceAppsDetailView: View {
             
             statisticColumn(
                 topLabel: "Developer",
-                mainValue: "",
+                mainValue: app.developer?.prefix(1).uppercased() ?? "D",
                 bottomContent: AnyView(
-                    VStack(spacing: 4) {
-                        Circle()
-                            .fill(Color(UIColor.tertiarySystemFill))
-                            .frame(width: 24, height: 24)
-                            .overlay(
-                                Image(systemName: "person.fill")
-                                    .font(.system(size: 12))
-                                    .foregroundStyle(.secondary)
-                            )
-                        Text(app.developer ?? source.name ?? "Developer")
-                            .font(.system(size: 11))
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-                ),
-                hideMainValue: true
+                    Text(app.developer ?? "Developer")
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                )
             )
         }
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.clear)
-        )
+        .padding(.vertical, 20)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Color.primary.opacity(0.05), lineWidth: 0.5))
     }
     
     private func statisticColumn(topLabel: String, mainValue: String, bottomContent: AnyView, hideMainValue: Bool = false) -> some View {
@@ -537,7 +509,7 @@ struct SourceAppsDetailView: View {
                                         RoundedRectangle(cornerRadius: 20, style: .continuous)
                                             .stroke(Color(UIColor.separator).opacity(0.2), lineWidth: 0.5)
                                     )
-                                    .shadow(color: .black.opacity(colorScheme == .dark ? 0.3 : 0.1), radius: 12, x: 0, y: 6)
+                                    .shadow(color: .black.opacity(0.3), radius: 12, x: 0, y: 6)
                                     .onTapGesture {
                                         selectedScreenshotIndex = index
                                         isScreenshotPreviewPresented = true
@@ -562,7 +534,7 @@ struct SourceAppsDetailView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Text("What's New")
-                    .font(.system(size: 22, weight: .bold))
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
                     .foregroundStyle(.primary)
                 
                 Spacer()
@@ -571,16 +543,16 @@ struct SourceAppsDetailView: View {
                     NavigationLink {
                         VersionHistoryView(app: app, versions: versions)
                     } label: {
-                        Text("Version History")
-                            .font(.system(size: 15, weight: .regular))
-                            .foregroundStyle(Color.accentColor)
+                        Image(systemName: "clock.arrow.2.circlepath")
+                            .font(.title3)
+                            .foregroundStyle(dominantColor)
                     }
                 }
             }
             
             HStack {
                 Text("Version \(version)")
-                    .font(.system(size: 15))
+                    .font(.system(size: 15, weight: .bold, design: .monospaced))
                     .foregroundStyle(.secondary)
                 
                 if let date = app.currentDate?.date {
@@ -594,7 +566,7 @@ struct SourceAppsDetailView: View {
             
             ExpandableText(text: description, lineLimit: 3)
                 .font(.system(size: 15))
-                .foregroundStyle(.primary)
+                .foregroundStyle(.secondary)
         }
     }
     
@@ -621,97 +593,61 @@ struct SourceAppsDetailView: View {
     private var informationSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text("Information")
-                .font(.system(size: 22, weight: .bold))
+                .font(.system(size: 22, weight: .bold, design: .rounded))
                 .foregroundStyle(.primary)
             
-            // Horizontal scrollable info cards
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    if let sourceName = source.name {
-                        ModernInfoCard(
-                            icon: "globe",
-                            label: "Source",
-                            value: sourceName,
-                            color: dominantColor
-                        )
-                    }
-                    
-                    if let developer = app.developer {
-                        ModernInfoCard(
-                            icon: "person.fill",
-                            label: "Developer",
-                            value: developer,
-                            color: .blue
-                        )
-                    }
-                    
-                    if let size = app.size {
-                        ModernInfoCard(
-                            icon: "arrow.down.circle.fill",
-                            label: "Size",
-                            value: size.formattedByteCount,
-                            color: .green
-                        )
-                    }
-                    
-                    if let category = app.category {
-                        ModernInfoCard(
-                            icon: "square.grid.2x2.fill",
-                            label: "Category",
-                            value: category.capitalized,
-                            color: .purple
-                        )
-                    }
-                    
-                    if let version = app.currentVersion {
-                        ModernInfoCard(
-                            icon: "number",
-                            label: "Version",
-                            value: version,
-                            color: .orange
-                        )
+            VStack(spacing: 0) {
+                if let sourceName = source.name {
+                    infoSectionRow(label: "Source", value: sourceName)
+                    Divider().padding(.leading, 16)
+                }
+
+                if let developer = app.developer {
+                    infoSectionRow(label: "Developer", value: developer)
+                    Divider().padding(.leading, 16)
+                }
+
+                if let size = app.size {
+                    infoSectionRow(label: "Size", value: size.formattedByteCount)
+                    Divider().padding(.leading, 16)
+                }
+
+                if let category = app.category {
+                    infoSectionRow(label: "Category", value: category.capitalized)
+                    Divider().padding(.leading, 16)
+                }
+
+                if let version = app.currentVersion {
+                    infoSectionRow(label: "Version", value: version)
+                    Divider().padding(.leading, 16)
+                }
+
+                if let bundleId = app.id {
+                    Button {
+                        UIPasteboard.general.string = bundleId
+                        HapticsManager.shared.success()
+                    } label: {
+                        infoSectionRow(label: "Bundle ID", value: bundleId)
                     }
                 }
-                .padding(.horizontal, 4)
             }
-            .padding(.horizontal, -4)
-            
-            // Bundle ID (copyable, full width)
-            if let bundleId = app.id {
-                Button {
-                    UIPasteboard.general.string = bundleId
-                    HapticsManager.shared.success()
-                } label: {
-                    HStack(spacing: 12) {
-                        Image(systemName: "doc.on.doc")
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(.secondary)
-                        
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Bundle ID")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.secondary)
-                            Text(bundleId)
-                                .font(.system(size: 14, weight: .medium, design: .monospaced))
-                                .foregroundStyle(.primary)
-                                .lineLimit(1)
-                        }
-                        
-                        Spacer()
-                        
-                        Text("Copy")
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(.tertiary)
-                    }
-                    .padding(14)
-                    .background(
-                        RoundedRectangle(cornerRadius: 12, style: .continuous)
-                            .fill(Color.clear)
-                    )
-                }
-                .buttonStyle(.plain)
-            }
+            .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).stroke(Color.primary.opacity(0.05), lineWidth: 0.5))
         }
+    }
+
+    private func infoSectionRow(label: String, value: String) -> some View {
+        HStack {
+            Text(label)
+                .font(.system(size: 15))
+                .foregroundStyle(.secondary)
+            Spacer()
+            Text(value)
+                .font(.system(size: 15, weight: .medium))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+        }
+        .padding(16)
     }
     
     // MARK: - App Store Link Section (new)

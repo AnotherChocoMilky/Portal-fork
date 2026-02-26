@@ -18,15 +18,16 @@ struct ScreenshotPreviewView: View {
     
     var body: some View {
         ZStack {
-            VStack {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
                 _headerView()
-                
-                Spacer()
                 
                 _imageScrollView()
             }
         }
-        .background(Color.clear)
     }
 }
 
@@ -34,20 +35,27 @@ extension ScreenshotPreviewView {
     @ViewBuilder
     private func _headerView() -> some View {
         HStack {
-            Button(.localized("Close"), role: .cancel) { dismiss() }
+            Button {
+                dismiss()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.secondary)
+                    .symbolRenderingMode(.hierarchical)
+            }
             
             Spacer()
             
             Text(verbatim: "\(currentIndex + 1) / \(screenshotURLs.count)")
-                .font(.subheadline)
+                .font(.system(.subheadline, design: .monospaced, weight: .bold))
                 .padding(.horizontal, 12)
                 .padding(.vertical, 6)
-                .background(
-                    Capsule()
-                        .fill(.ultraThinMaterial)
-                )
+                .background(.thinMaterial, in: Capsule())
+                .overlay(Capsule().stroke(Color.primary.opacity(0.1), lineWidth: 0.5))
         }
         .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 10)
     }
     
     @ViewBuilder
@@ -59,18 +67,17 @@ extension ScreenshotPreviewView {
                         image
                             .resizable()
                             .aspectRatio(contentMode: .fit)
-                            .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
-                            .overlay {
-                                RoundedRectangle(cornerRadius: 32, style: .continuous)
-                                    .strokeBorder(.gray.opacity(0.3), lineWidth: 1)
-                            }
+                            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                            .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: 10)
+                    } else {
+                        ProgressView()
                     }
                 }
                 .tag(index)
-                .padding(.horizontal)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 40)
             }
         }
         .tabViewStyle(PageTabViewStyle(indexDisplayMode: .never))
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
