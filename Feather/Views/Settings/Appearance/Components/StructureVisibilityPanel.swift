@@ -198,7 +198,7 @@ struct StructureVisibilityPanel: View {
         .alert("Widget Limit Reached", isPresented: $showLimitReachedAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text("You can only enable 2 status bar options at a time. Please disable one of the currently enabled options before enabling '\(attemptedWidget)'.")
+            Text("You can only enable 2 status bar options at a time. Please disable one of the currently enabled options before enabling \(attemptedWidget).")
         }
     }
 }

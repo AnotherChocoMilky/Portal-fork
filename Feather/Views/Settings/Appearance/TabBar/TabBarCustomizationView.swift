@@ -164,7 +164,7 @@ struct TabBarCustomizationView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                     .padding(.horizontal, 16)
 
-                    Text(verbatim: .localized("Choose which tabs appear in the bottom tab bar. Settings cannot be hidden."))
+                    Text(verbatim: .localized("Choose which tabs appear in the bottom tab bar."))
                         .font(.system(size: 12))
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 24)
