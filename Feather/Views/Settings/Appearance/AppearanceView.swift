@@ -4,6 +4,7 @@ import UIKit
 
 // MARK: - Appearance View
 struct AppearanceView: View {
+    @Environment(\.dismiss) private var dismiss
     @AppStorage("Feather.userInterfaceStyle") private var userInterfaceStyle: Int = UIUserInterfaceStyle.unspecified.rawValue
     @AppStorage(UserDefaults.Keys.installTrigger) private var installTrigger: Int = 0 // 0: Manual, 1: Automatic
     @AppStorage("Feather.shouldTintIcons") private var _shouldTintIcons: Bool = false
@@ -128,7 +129,7 @@ struct AppearanceView: View {
                     Label("Tab Bar", systemImage: "dock.rectangle")
                         .foregroundStyle(Color.accentColor)
                 }
-                NavigationLink(destination: AppIconsPageView()) {
+                NavigationLink(destination: LostView(onGoBack: { dismiss() })) {
                     Label("Gestures", systemImage: "hand.tap.fill")
                         .foregroundStyle(Color.accentColor)
                 }
