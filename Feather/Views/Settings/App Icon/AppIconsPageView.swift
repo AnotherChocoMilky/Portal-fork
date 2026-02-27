@@ -22,7 +22,7 @@ struct AppIconsPageView: View {
 							.fontWeight(.semibold)
 							.foregroundColor(.primary)
 						
-						Text("Why are you here? It's rare for you to be here, how did you even get here in the first place.")
+						Text("Why are you here? It's rare for you to be here, you are probably here because you are trying to access a private view or you are trying to access a view for a feature that is still under development.")
 							.font(.subheadline)
 							.foregroundColor(.secondary)
 							.multilineTextAlignment(.center)
