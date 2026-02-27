@@ -157,6 +157,12 @@ struct AppIconView: View {
 	var body: some View {
 		NBList(.localized("App Icons")) {
 			Section {
+				AppIconHeaderView()
+					.listRowInsets(EdgeInsets())
+					.listRowBackground(Color.clear)
+			}
+
+			Section {
 				ForEach(AppIconOption.allCases) { option in
 					Button {
 						setAppIcon(option)

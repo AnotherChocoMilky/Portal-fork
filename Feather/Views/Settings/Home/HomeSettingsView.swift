@@ -319,6 +319,12 @@ struct HomeSettingsView: View {
     
     var body: some View {
         NBList(.localized("Home Settings")) {
+            Section {
+                HomeHeaderView()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
             profilePictureSection
             appearanceSection
             appUpdateSection

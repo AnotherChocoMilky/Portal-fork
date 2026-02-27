@@ -304,6 +304,12 @@ struct RepoBuilder: View {
     var body: some View {
         NBNavigationView(String.localized("Repository Builder")) {
             Form {
+                Section {
+                    RepoBuilderHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
+
                 Section(header: Label(String.localized("Source Information"), systemImage: "info.circle.fill")) {
                     HStack {
                         Image(systemName: "pencil")

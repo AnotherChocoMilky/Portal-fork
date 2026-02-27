@@ -8,6 +8,12 @@ struct InstallationView: View {
     var body: some View {
         NBList(.localized("Installation")) {
             Section {
+                InstallationHeaderView()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
+            Section {
                 Button {
                     _showServerSheet = true
                     HapticsManager.shared.softImpact()

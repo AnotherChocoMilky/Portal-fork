@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct GeneralHeaderView: View {
+struct HomeHeaderView: View {
     // MARK: - Body
     var body: some View {
         headerCard
@@ -10,19 +10,19 @@ struct GeneralHeaderView: View {
     private var headerCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Icon
-            generalIcon
+            homeIcon
 
             // Title
-            Text("General")
+            Text(.localized("Home"))
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
             HStack(spacing: 8) {
                 // Info Row
                 HStack(spacing: 6) {
-                    Image(systemName: "gearshape.fill")
+                    Image(systemName: "house.fill")
                         .font(.system(size: 12))
-                    Text("Core Settings")
+                    Text(.localized("Dashboard"))
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                 }
                 .foregroundStyle(Color.accentColor)
@@ -31,7 +31,7 @@ struct GeneralHeaderView: View {
                 .background(Color.primary.opacity(0.05))
                 .clipShape(Capsule())
 
-                Text("System")
+                Text(.localized("UI"))
                     .font(.system(size: 10, weight: .bold))
                     .kerning(1.0)
                     .padding(.horizontal, 10)
@@ -45,14 +45,14 @@ struct GeneralHeaderView: View {
                     )
             }
 
-            Text("Manage your app experience, certificates, and system logs in one place.")
+            Text(.localized("Configure your home dashboard, featured apps, and news feed."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(24)
-        .background(Color(white: 0.12))
+        .background(Color(UIColor.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .shadow(color: .black.opacity(0.05), radius: 15, x: 0, y: 8)
         .overlay(
@@ -62,11 +62,11 @@ struct GeneralHeaderView: View {
     }
 
     @ViewBuilder
-    private var generalIcon: some View {
+    private var homeIcon: some View {
         ZStack {
             Color.accentColor.opacity(0.15)
 
-            Image(systemName: "gearshape.2.fill")
+            Image(systemName: "house.fill")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 35, height: 35)
@@ -83,6 +83,6 @@ struct GeneralHeaderView: View {
 }
 
 #Preview {
-    GeneralHeaderView()
+    HomeHeaderView()
         .padding()
 }

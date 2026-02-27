@@ -49,7 +49,7 @@ struct CoreSignHeaderView: View {
                 )
             
             // App Name
-            Text("Portal")
+            Text(.localized("Portal"))
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
                 .simultaneousGesture(
@@ -88,7 +88,7 @@ struct CoreSignHeaderView: View {
                 .background(Color.primary.opacity(0.05))
                 .clipShape(Capsule())
 
-                Text("Release")
+                Text(.localized("Release"))
                     .font(.system(size: 10, weight: .bold))
                     .kerning(1.0)
                     .padding(.horizontal, 10)
@@ -120,7 +120,7 @@ struct CoreSignHeaderView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(24)
-        .background(Color(white: 0.12))
+        .background(Color(UIColor.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         .shadow(color: .black.opacity(0.05), radius: 15, x: 0, y: 8)
         .overlay(

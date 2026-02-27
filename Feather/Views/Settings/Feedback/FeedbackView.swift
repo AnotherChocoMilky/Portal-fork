@@ -987,6 +987,12 @@ struct FeedbackView: View {
     private var mainScrollView: some View {
         Form {
             Section {
+                FeedbackHeaderView()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
+            Section {
                 Picker("Category", selection: $feedbackCategory) {
                     ForEach(FeedbackCategory.allCases, id: \.self) { category in
                         Label(category.rawValue, systemImage: category.icon)

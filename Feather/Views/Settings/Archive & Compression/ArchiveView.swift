@@ -11,6 +11,12 @@ struct ArchiveView: View {
     var body: some View {
 		NBList(.localized("Archive & Compression")) {
 			Section {
+				ArchiveHeaderView()
+					.listRowInsets(EdgeInsets())
+					.listRowBackground(Color.clear)
+			}
+
+			Section {
 				Picker(.localized("Compression Level"), systemImage: "archivebox", selection: $_compressionLevel) {
 					ForEach(ZipCompression.allCases, id: \.rawValue) { level in
 						Text(level.label).tag(level)

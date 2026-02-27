@@ -6,6 +6,12 @@ struct WidgetSettingsView: View {
     var body: some View {
         List {
             Section {
+                WidgetHeaderView()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
+            Section {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
                         Image(systemName: "info.circle.fill")

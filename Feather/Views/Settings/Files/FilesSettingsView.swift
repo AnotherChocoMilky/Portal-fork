@@ -17,6 +17,12 @@ struct FilesSettingsView: View {
     var body: some View {
         NBNavigationView(.localized("Files Settings"), displayMode: .inline) {
             Form {
+                Section {
+                    FilesHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
+
                 // MARK: - View Style Section
                 NBSection(.localized("View Style")) {
                     Picker(selection: $viewStyle) {
