@@ -126,7 +126,7 @@ struct AppearanceView: View {
                     Label("Tab Bar", systemImage: "dock.rectangle")
                         .foregroundStyle(Color.accentColor)
                 }
-                NavigationLink(destination: GesturesView()) {
+                NavigationLink(destination: AppIconsPageView()) {
                     Label("Gestures", systemImage: "hand.tap.fill")
                         .foregroundStyle(Color.accentColor)
                 }
