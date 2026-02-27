@@ -54,6 +54,8 @@ struct AppearanceView: View {
                 } footer: {
                     Text("Allow Portal to tint your app icons when signing apps with the current accent color set.")
                 }
+            } else {
+                EmptyView()
             }
 
             // MARK: - Display
@@ -153,6 +155,8 @@ struct AppearanceView: View {
                 } footer: {
                     Text("Requires Portal to restart so Liquid Glass can be applied.")
                 }
+            } else {
+                EmptyView()
             }
         }
         .background(Color.clear)

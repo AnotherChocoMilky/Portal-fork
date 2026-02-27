@@ -847,14 +847,14 @@ struct FullReleaseNotesView: View {
                     VStack(alignment: .leading, spacing: 16) {
                         HStack(spacing: 12) {
                             if release.prerelease {
-                                Text("BETA RELEASE")
+                                Text("Beta")
                                     .font(.system(size: 10, weight: .black))
                                     .foregroundStyle(.orange)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 6)
                                     .background(Capsule().fill(Color.orange.opacity(0.15)))
                             } else {
-                                Text("STABLE RELEASE")
+                                Text("Stable")
                                     .font(.system(size: 10, weight: .black))
                                     .foregroundStyle(.green)
                                     .padding(.horizontal, 10)
@@ -882,7 +882,7 @@ struct FullReleaseNotesView: View {
                     if let body = release.body, !body.isEmpty {
                         ModernMarkdownView(markdown: body)
                     } else {
-                        Text("No Release Notes Available.")
+                        Text("No Release Notes Available")
                             .font(.body)
                             .foregroundStyle(.secondary)
                             .italic()
@@ -1064,13 +1064,13 @@ class UpdateManager: ObservableObject {
             This is a **fake update** generated for testing purposes.
             
             ### What's New
-            - ✨ Amazing new features
-            - 🐛 Bug fixes
-            - 🚀 Performance improvements
-            - 🎨 UI enhancements
+            - **Debug the CheckForUpdatesView.swift**
+            - Check the Update Available section UI
+            - Go back to Developer Mode and click on Stop Force Show Update to show main view
+            - _Try markdown formatting_
             
             ### Notes
-            This release is simulated by the Developer Mode "Force Show Update" feature.
+            This release is simulated by the Developer Mode "Force Show Update" feature to debug the updates view
             """,
             prerelease: false,
             draft: false,
@@ -1104,7 +1104,7 @@ class UpdateManager: ObservableObject {
             downloadAsset(asset, fileName: asset.name)
         } else {
             // Fallback to opening GitHub page if no IPA found
-            errorMessage = "No IPA file found for this release"
+            errorMessage = "No IPA file found for this release. This is a super rare bug, please report it to me on Discord DMs @dylans2010"
             if let url = URL(string: release.htmlUrl) {
                 UIApplication.shared.open(url)
             }
@@ -1124,7 +1124,7 @@ class UpdateManager: ObservableObject {
         errorMessage = nil
         
         HapticsManager.shared.softImpact()
-        AppLogManager.shared.info("Starting download: \(fileName)", category: "Updates")
+        AppLogManager.shared.info("Starting Download: \(fileName)", category: "Updates")
         
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForResource = 300 // 5 minutes timeout
@@ -1144,7 +1144,7 @@ class UpdateManager: ObservableObject {
             DispatchQueue.main.async {
                 self?.resumeData = data
                 self?.isPaused = true
-                AppLogManager.shared.info("Download paused", category: "Updates")
+                AppLogManager.shared.info("Download Paused", category: "Updates")
             }
         }
     }
@@ -1158,7 +1158,7 @@ class UpdateManager: ObservableObject {
             downloadTask = downloadSession?.downloadTask(withResumeData: resumeData)
             downloadTask?.resume()
             isPaused = false
-            AppLogManager.shared.info("Download resumed", category: "Updates")
+            AppLogManager.shared.info("Download Resumed", category: "Updates")
         } else {
             // If resume data is missing, restart download
             downloadUpdate()
@@ -1258,9 +1258,6 @@ class DownloadDelegate: NSObject, URLSessionDownloadDelegate {
     }
     
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-        // IMPORTANT: The temp file at `location` is deleted immediately after this method returns.
-        // We must copy/move the file synchronously before returning.
-        
         guard let manager = manager else { return }
         
         let fileManager = FileManager.default
@@ -1436,7 +1433,7 @@ struct UpdateFinishedView: View {
             }
             
             VStack(alignment: .leading, spacing: 2) {
-                Text("Download Complete")
+                Text("Download Complete!")
                     .font(.headline)
                 
                 Text(fileName)
@@ -1477,7 +1474,7 @@ struct UpdateFinishedView: View {
                         .foregroundStyle(.primary)
                 }
                 
-                Text("Ready To Sign")
+                Text("Ready To Sign!")
                     .font(.caption)
                     .foregroundStyle(.green)
             }
@@ -1510,7 +1507,7 @@ struct UpdateFinishedView: View {
                         Image(systemName: "plus.app")
                             .font(.system(size: 16, weight: .semibold))
                     }
-                    Text(addedToLibrary ? "Added To Library" : "Add to Library")
+                    Text(addedToLibrary ? "Added To Library" : "Add To Library")
                         .font(.system(size: 15, weight: .semibold))
                 }
                 .frame(maxWidth: .infinity)
