@@ -4610,6 +4610,10 @@ struct UILayoutDevView: View {
             
             // Motion & Animations
             Section(header: Text("Motion & Animations")) {
+                NavigationLink(destination: CustomAnimationView()) {
+                    Label("Open Custom Animation View", systemImage: "sparkles")
+                }
+
                 Toggle("Reduced Motion", isOn: $forceReducedMotion)
                 
                 Toggle("Slow Animations", isOn: $slowAnimations)
