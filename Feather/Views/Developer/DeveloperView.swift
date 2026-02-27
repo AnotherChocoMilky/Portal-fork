@@ -4610,7 +4610,13 @@ struct UILayoutDevView: View {
             
             // Motion & Animations
             Section(header: Text("Motion & Animations")) {
-                NavigationLink(destination: CustomAnimationView()) {
+                NavigationLink(destination: CustomAnimationView(
+                    iconName: "wand.and.stars",
+                    title: "Modern UI Experience",
+                    subtitle: "Enjoy a completely redesigned interface with fluid animations, glassmorphism, and depth effects.",
+                    primaryButtonText: "Explore Now",
+                    secondaryButtonText: "Later"
+                )) {
                     Label("Open Custom Animation View", systemImage: "sparkles")
                 }
 

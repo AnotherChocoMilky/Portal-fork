@@ -1,142 +1,288 @@
 import SwiftUI
+import NimbleViews
 
 struct CustomAnimationView: View {
+    // Reusability Parameters
+    var iconName: String = "bell.badge.fill"
+    var title: String = "Enable Notifications"
+    var subtitle: String = "Get notified when your apps are ready to be installed or when updates are available."
+    var primaryButtonText: String? = "Allow Access"
+    var primaryAction: (() -> Void)? = nil
+    var secondaryButtonText: String? = "Maybe Later"
+    var secondaryAction: (() -> Void)? = nil
+
     @State private var isAnimating = false
+    @State private var rotationAngle: Double = 0
+    @ObservedObject private var motion = MotionManager.shared
+    @Environment(\.dismiss) private var dismiss
+
+    // Stable particle data to prevent flickering
+    struct Particle: Identifiable {
+        let id = UUID()
+        let color: Color
+        let size: CGFloat
+        let targetOffset: CGSize
+        let delay: Double
+    }
+
+    @State private var particles: [Particle] = []
 
     var body: some View {
         ZStack {
-            // Full-screen background
-            Color(UIColor.systemBackground)
+            // 1. Modern Background with Glass Effect
+            AnimatedBackgroundView()
+                .blur(radius: 40)
+
+            // Background variable blur for depth
+            NBVariableBlurView()
+                .ignoresSafeArea()
+                .opacity(0.8)
+
+            Rectangle()
+                .fill(.ultraThinMaterial)
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Spacer()
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 28))
+                            .foregroundStyle(.secondary.opacity(0.5))
+                    }
+                    .padding()
+                }
+
                 Spacer()
 
-                // Central Animation Area
+                // 2. Sophisticated Central Animation Area
                 ZStack {
-                    // 1. Large background shape
+                    // Background Glow
                     Circle()
-                        .fill(Color.accentColor.opacity(0.15))
-                        .frame(width: 240, height: 240)
-                        .scaleEffect(isAnimating ? 1.0 : 0.6)
-                        .opacity(isAnimating ? 1.0 : 0.0)
-                        .animation(.spring(response: 0.9, dampingFraction: 0.7).delay(0.1), value: isAnimating)
+                        .fill(
+                            RadialGradient(
+                                colors: [Color.accentColor.opacity(0.4), .clear],
+                                center: .center,
+                                startRadius: 0,
+                                endRadius: 150
+                            )
+                        )
+                        .frame(width: 300, height: 300)
+                        .scaleEffect(isAnimating ? 1.2 : 0.8)
+                        .opacity(isAnimating ? 0.6 : 0)
+                        .animation(.easeInOut(duration: 2).repeatForever(autoreverses: true), value: isAnimating)
 
-                    // 2. Decorative shapes (staggered)
-                    // Top Left
-                    Circle()
-                        .fill(Color.accentColor.opacity(0.3))
-                        .frame(width: 24, height: 24)
-                        .offset(x: isAnimating ? -110 : -160, y: isAnimating ? -90 : -140)
-                        .opacity(isAnimating ? 1 : 0)
-                        .scaleEffect(isAnimating ? 1 : 0.2)
-                        .animation(.spring(response: 0.7, dampingFraction: 0.6).delay(0.4), value: isAnimating)
+                    // Rotating Decorative Rings with modern gradient
+                    ForEach(0..<3) { i in
+                        Circle()
+                            .stroke(
+                                LinearGradient(
+                                    colors: [.accentColor.opacity(0.6), .purple.opacity(0.3), .blue.opacity(0.1), .clear],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                            .frame(width: CGFloat(180 + (i * 40)), height: CGFloat(180 + (i * 40)))
+                            .rotationEffect(.degrees(rotationAngle * Double(i + 1) * 0.5))
+                    }
 
-                    // Top Right
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.blue.opacity(0.3))
-                        .frame(width: 20, height: 20)
-                        .rotationEffect(.degrees(isAnimating ? 45 : 0))
-                        .offset(x: isAnimating ? 100 : 150, y: isAnimating ? -70 : -120)
-                        .opacity(isAnimating ? 1 : 0)
-                        .scaleEffect(isAnimating ? 1 : 0.2)
-                        .animation(.spring(response: 0.7, dampingFraction: 0.6).delay(0.5), value: isAnimating)
+                    // Floating Particles
+                    ForEach(particles) { particle in
+                        Circle()
+                            .fill(particle.color)
+                            .frame(width: particle.size, height: particle.size)
+                            .offset(
+                                x: isAnimating ? particle.targetOffset.width : 0,
+                                y: isAnimating ? particle.targetOffset.height : 0
+                            )
+                            .opacity(isAnimating ? 0.7 : 0)
+                            .scaleEffect(isAnimating ? 1 : 0.1)
+                            .animation(
+                                .spring(response: 2.5, dampingFraction: 0.8)
+                                .delay(particle.delay)
+                                .repeatForever(autoreverses: true),
+                                value: isAnimating
+                            )
+                    }
 
-                    // Bottom Right
-                    Circle()
-                        .fill(Color.purple.opacity(0.3))
-                        .frame(width: 32, height: 32)
-                        .offset(x: isAnimating ? 90 : 140, y: isAnimating ? 100 : 150)
-                        .opacity(isAnimating ? 1 : 0)
-                        .scaleEffect(isAnimating ? 1 : 0.2)
-                        .animation(.spring(response: 0.7, dampingFraction: 0.6).delay(0.6), value: isAnimating)
+                    // Main SF Symbol with Glass Card
+                    ZStack {
+                        // Glass Card with Border
+                        RoundedRectangle(cornerRadius: 36, style: .continuous)
+                            .fill(.ultraThinMaterial)
+                            .frame(width: 150, height: 150)
+                            .shadow(color: .black.opacity(0.15), radius: 25, x: 0, y: 15)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 36, style: .continuous)
+                                    .stroke(
+                                        LinearGradient(
+                                            colors: [.white.opacity(0.5), .white.opacity(0.1), .clear],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        ),
+                                        lineWidth: 1.5
+                                    )
+                            )
 
-                    // Bottom Left
-                    Circle()
-                        .fill(Color.orange.opacity(0.3))
-                        .frame(width: 18, height: 18)
-                        .offset(x: isAnimating ? -90 : -140, y: isAnimating ? 80 : 130)
-                        .opacity(isAnimating ? 1 : 0)
-                        .scaleEffect(isAnimating ? 1 : 0.2)
-                        .animation(.spring(response: 0.7, dampingFraction: 0.6).delay(0.7), value: isAnimating)
-
-                    // 3. Central SF Symbol Icon
-                    Image(systemName: "bell.badge.fill")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 110, height: 110)
-                        .foregroundStyle(Color.accentColor)
-                        .symbolRenderingMode(.hierarchical)
-                        .scaleEffect(isAnimating ? 1.0 : 0.01)
-                        .rotationEffect(.degrees(isAnimating ? 0 : -25))
-                        .opacity(isAnimating ? 1.0 : 0.0)
-                        .animation(.spring(response: 0.6, dampingFraction: 0.5).delay(0.3), value: isAnimating)
+                        // Animated SF Symbol
+                        Image(systemName: iconName)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 75, height: 75)
+                            .foregroundStyle(
+                                LinearGradient(
+                                    colors: [.accentColor, .accentColor.opacity(0.7), .purple.opacity(0.8)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .symbolRenderingMode(.hierarchical)
+                            .applySymbolEffect()
+                    }
+                    .offset(x: CGFloat(motion.roll * 20), y: CGFloat(motion.pitch * 20))
+                    .scaleEffect(isAnimating ? 1.0 : 0.4)
+                    .rotationEffect(.degrees(isAnimating ? 0 : -15))
+                    .opacity(isAnimating ? 1.0 : 0.0)
+                    .animation(.spring(response: 0.9, dampingFraction: 0.65).delay(0.2), value: isAnimating)
                 }
                 .padding(.bottom, 60)
 
-                // 4. Headline Text
-                Text("Enable Notifications")
-                    .font(.system(size: 32, weight: .bold, design: .rounded))
-                    .multilineTextAlignment(.center)
-                    .opacity(isAnimating ? 1.0 : 0.0)
-                    .offset(y: isAnimating ? 0 : 20)
-                    .animation(.easeOut(duration: 0.7).delay(0.8), value: isAnimating)
-                    .padding(.horizontal, 24)
+                // 3. Stylized Content Staggered
+                VStack(spacing: 18) {
+                    Text(title)
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .multilineTextAlignment(.center)
+                        .opacity(isAnimating ? 1.0 : 0.0)
+                        .offset(y: isAnimating ? 0 : 25)
+                        .animation(.spring(response: 0.7).delay(0.4), value: isAnimating)
 
-                // 5. Subtitle Text
-                Text("Get notified when your apps are ready to be installed or when updates are available.")
-                    .font(.system(size: 17, weight: .medium, design: .rounded))
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 12)
-                    .padding(.horizontal, 40)
-                    .opacity(isAnimating ? 1.0 : 0.0)
-                    .offset(y: isAnimating ? 0 : 10)
-                    .animation(.easeOut(duration: 0.8).delay(1.0), value: isAnimating)
+                    Text(subtitle)
+                        .font(.system(size: 18, weight: .medium, design: .rounded))
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                        .opacity(isAnimating ? 1.0 : 0.0)
+                        .offset(y: isAnimating ? 0 : 25)
+                        .animation(.spring(response: 0.7).delay(0.55), value: isAnimating)
+                }
 
                 Spacer()
 
-                // Action Buttons
+                // 4. Modern Buttons
                 VStack(spacing: 16) {
-                    Button(action: {
-                        // Action for granting permission
-                    }) {
-                        Text("Allow Access")
-                            .font(.system(size: 19, weight: .bold, design: .rounded))
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .fill(Color.accentColor)
-                                    .shadow(color: Color.accentColor.opacity(0.3), radius: 10, x: 0, y: 5)
-                            )
-                    }
-                    .padding(.horizontal, 32)
-                    .scaleEffect(isAnimating ? 1.0 : 0.9)
-                    .opacity(isAnimating ? 1.0 : 0.0)
-                    .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(1.2), value: isAnimating)
+                    if let primaryText = primaryButtonText {
+                        Button(action: {
+                            HapticsManager.shared.softImpact()
+                            primaryAction?()
+                            dismiss()
+                        }) {
+                            Text(primaryText)
+                                .font(.system(size: 20, weight: .bold, design: .rounded))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 18)
+                                .background(
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [Color.accentColor, Color.accentColor.opacity(0.8)],
+                                                    startPoint: .top,
+                                                    endPoint: .bottom
+                                                )
+                                            )
 
-                    Button(action: {
-                        // Action for skipping
-                    }) {
-                        Text("Maybe Later")
-                            .font(.system(size: 17, weight: .semibold, design: .rounded))
-                            .foregroundColor(.secondary)
+                                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [.white.opacity(0.25), .clear],
+                                                    startPoint: .topLeading,
+                                                    endPoint: .bottomTrailing
+                                                )
+                                            )
+                                    }
+                                    .shadow(color: Color.accentColor.opacity(0.4), radius: 15, x: 0, y: 10)
+                                )
+                        }
+                        .padding(.horizontal, 32)
+                        .scaleEffect(isAnimating ? 1.0 : 0.85)
+                        .opacity(isAnimating ? 1.0 : 0.0)
+                        .animation(.spring(response: 0.7, dampingFraction: 0.7).delay(0.75), value: isAnimating)
                     }
-                    .opacity(isAnimating ? 1.0 : 0.0)
-                    .animation(.easeOut(duration: 0.6).delay(1.4), value: isAnimating)
+
+                    if let secondaryText = secondaryButtonText {
+                        Button(action: {
+                            HapticsManager.shared.softImpact()
+                            secondaryAction?()
+                            dismiss()
+                        }) {
+                            Text(secondaryText)
+                                .font(.system(size: 17, weight: .semibold, design: .rounded))
+                                .foregroundColor(.secondary)
+                                .padding(.vertical, 8)
+                        }
+                        .opacity(isAnimating ? 1.0 : 0.0)
+                        .animation(.spring(response: 0.7).delay(0.9), value: isAnimating)
+                    }
                 }
                 .padding(.bottom, 40)
             }
         }
         .onAppear {
-            // Trigger animation sequence
+            setupParticles()
             isAnimating = true
+            withAnimation(.linear(duration: 25).repeatForever(autoreverses: false)) {
+                rotationAngle = 360
+            }
+            motion.start()
+        }
+        .onDisappear {
+            motion.stop()
+        }
+    }
+
+    private func setupParticles() {
+        var newParticles: [Particle] = []
+        let colors: [Color] = [.accentColor, .purple, .blue, .cyan]
+
+        for i in 0..<15 {
+            let particle = Particle(
+                color: colors[i % colors.count],
+                size: CGFloat.random(in: 3...7),
+                targetOffset: CGSize(
+                    width: CGFloat.random(in: -150...150),
+                    height: CGFloat.random(in: -150...150)
+                ),
+                delay: Double.random(in: 0...0.8)
+            )
+            newParticles.append(particle)
+        }
+        particles = newParticles
+    }
+}
+
+// Helper to handle iOS 17 symbol effects
+extension View {
+    @ViewBuilder
+    func applySymbolEffect() -> some View {
+        if #available(iOS 17.0, *) {
+            self.symbolEffect(.bounce, options: .repeating)
+        } else {
+            self
         }
     }
 }
 
 #Preview {
-    CustomAnimationView()
+    CustomAnimationView(
+        iconName: "wand.and.stars",
+        title: "Modern UI Experience",
+        subtitle: "Enjoy a completely redesigned interface with fluid animations, glassmorphism, and depth effects.",
+        primaryButtonText: "Explore Now",
+        secondaryButtonText: "Later"
+    )
 }
