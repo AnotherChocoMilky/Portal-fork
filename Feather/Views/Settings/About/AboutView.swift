@@ -27,6 +27,13 @@ struct AboutView: View {
 	// MARK: Body
 	var body: some View {
 		NBList(.localized("About")) {
+			Section {
+				AboutHeaderView()
+					.listRowInsets(EdgeInsets())
+					.listRowBackground(Color.clear)
+			}
+			.listRowBackground(Color.clear)
+
 			if !isLoading {
 				Section {
 					VStack {

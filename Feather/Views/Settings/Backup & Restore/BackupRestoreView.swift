@@ -43,7 +43,12 @@ struct BackupRestoreView: View {
     // MARK: Body
     var body: some View {
         List {
-            _headerSection
+            Section {
+                BackupRestoreHeaderView()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
             if newBackupOptions {
                 _healthStatusSection
             }
@@ -193,26 +198,6 @@ struct BackupRestoreView: View {
                 }
             }
             .padding(.vertical, 8)
-        }
-    }
-
-    @ViewBuilder
-    private var _headerSection: some View {
-        Section {
-            VStack(spacing: 12) {
-                Image(systemName: "arrow.counterclockwise.icloud.fill")
-                    .font(.system(size: 40))
-                    .foregroundStyle(Color.accentColor)
-                    .padding(.top, 10)
-
-                Text(.localized("Secure your data by creating a backup of your apps and settings."))
-                    .font(.subheadline)
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(.secondary)
-                    .padding(.bottom, 10)
-            }
-            .frame(maxWidth: .infinity)
-            .listRowBackground(Color.clear)
         }
     }
 
@@ -369,21 +354,20 @@ struct BackupRestoreView: View {
         isRestoring = true
         Task {
             let tempRestoreDir = FileManager.default.temporaryDirectory.appendingPathComponent("Restore_\(UUID().uuidString)")
-            let fileManager = FileManager.default
 
             do {
-                try fileManager.createDirectory(at: tempRestoreDir, withIntermediateDirectories: true)
-                try fileManager.unzipItem(at: url, to: tempRestoreDir)
+                try FileManager.default.createDirectory(at: tempRestoreDir, withIntermediateDirectories: true)
+                try FileManager.default.unzipItem(at: url, to: tempRestoreDir)
 
                 // 1. Validate Backup
                 let markers = ["PORTAL_BACKUP_MARKER.txt", "FEATHER_BACKUP_MARKER.txt", "PORTAL_BACKUP_CHECKER.txt"]
                 let hasMarker = markers.contains { marker in
-                    fileManager.fileExists(atPath: tempRestoreDir.appendingPathComponent(marker).path)
+                    FileManager.default.fileExists(atPath: tempRestoreDir.appendingPathComponent(marker).path)
                 }
-                let hasSettings = fileManager.fileExists(atPath: tempRestoreDir.appendingPathComponent("settings.plist").path)
+                let hasSettings = FileManager.default.fileExists(atPath: tempRestoreDir.appendingPathComponent("settings.plist").path)
 
                 guard hasMarker && hasSettings else {
-                    try? fileManager.removeItem(at: tempRestoreDir)
+                    try? FileManager.default.removeItem(at: tempRestoreDir)
                     await MainActor.run {
                         isRestoring = false
                         showInvalidBackupError = true
@@ -393,7 +377,7 @@ struct BackupRestoreView: View {
 
                 // 2. Restore UserDefaults (App Group)
                 let settingsURL = tempRestoreDir.appendingPathComponent("settings.plist")
-                if fileManager.fileExists(atPath: settingsURL.path) {
+                if FileManager.default.fileExists(atPath: settingsURL.path) {
                     if let data = try? Data(contentsOf: settingsURL),
                        let dict = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
                         if let userDefaults = UserDefaults(suiteName: Storage.appGroupID) {
@@ -407,7 +391,7 @@ struct BackupRestoreView: View {
 
                 // 2a. Restore UserDefaults (Standard)
                 let standardURL = tempRestoreDir.appendingPathComponent("standard_settings.plist")
-                if fileManager.fileExists(atPath: standardURL.path) {
+                if FileManager.default.fileExists(atPath: standardURL.path) {
                     if let data = try? Data(contentsOf: standardURL),
                        let dict = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] {
                         let standardDefaults = UserDefaults.standard
@@ -420,16 +404,16 @@ struct BackupRestoreView: View {
 
                 // 3. Restore Database (Core Data)
                 let dbSourceDir = tempRestoreDir.appendingPathComponent("database")
-                if fileManager.fileExists(atPath: dbSourceDir.path) {
+                if FileManager.default.fileExists(atPath: dbSourceDir.path) {
                     if let storeURL = Storage.shared.container.persistentStoreDescriptions.first?.url {
                         let baseName = storeURL.lastPathComponent
                         let dbDestDir = storeURL.deletingLastPathComponent()
                         for f in [baseName, "\(baseName)-shm", "\(baseName)-wal"] {
                             let src = dbSourceDir.appendingPathComponent(f)
                             let dest = dbDestDir.appendingPathComponent(f)
-                            if fileManager.fileExists(atPath: src.path) {
-                                try? fileManager.removeItem(at: dest)
-                                try fileManager.copyItem(at: src, to: dest)
+                            if FileManager.default.fileExists(atPath: src.path) {
+                                try? FileManager.default.removeItem(at: dest)
+                                try FileManager.default.copyItem(at: src, to: dest)
                             }
                         }
                     }
@@ -440,47 +424,47 @@ struct BackupRestoreView: View {
 
                 // 4a. Certificates
                 let certsSourceDir = tempRestoreDir.appendingPathComponent("certificates")
-                if fileManager.fileExists(atPath: certsSourceDir.path) {
-                    let certsDestDir = fileManager.certificates
-                    try? fileManager.createDirectory(at: certsDestDir, withIntermediateDirectories: true)
+                if FileManager.default.fileExists(atPath: certsSourceDir.path) {
+                    let certsDestDir = FileManager.default.certificates
+                    try? FileManager.default.createDirectory(at: certsDestDir, withIntermediateDirectories: true)
 
-                    let contents = (try? fileManager.contentsOfDirectory(at: certsSourceDir, includingPropertiesForKeys: nil)) ?? []
+                    let contents = (try? FileManager.default.contentsOfDirectory(at: certsSourceDir, includingPropertiesForKeys: nil)) ?? []
                     for file in contents {
                         // Skip any hidden files or metadata
                         if file.lastPathComponent.contains(".json") { continue }
 
                         let dest = certsDestDir.appendingPathComponent(file.lastPathComponent)
-                        try? fileManager.removeItem(at: dest)
-                        try fileManager.copyItem(at: file, to: dest)
+                        try? FileManager.default.removeItem(at: dest)
+                        try FileManager.default.copyItem(at: file, to: dest)
                     }
                 }
 
                 // 4b. Signed Apps - Handle both old (IPA-only) and new (Directory) formats
                 let signedSourceDir = tempRestoreDir.appendingPathComponent("signed_apps")
-                if fileManager.fileExists(atPath: signedSourceDir.path) {
-                    let signedDestDir = fileManager.signed
-                    try? fileManager.createDirectory(at: signedDestDir, withIntermediateDirectories: true)
+                if FileManager.default.fileExists(atPath: signedSourceDir.path) {
+                    let signedDestDir = FileManager.default.signed
+                    try? FileManager.default.createDirectory(at: signedDestDir, withIntermediateDirectories: true)
 
-                    let contents = (try? fileManager.contentsOfDirectory(at: signedSourceDir, includingPropertiesForKeys: nil)) ?? []
+                    let contents = (try? FileManager.default.contentsOfDirectory(at: signedSourceDir, includingPropertiesForKeys: nil)) ?? []
                     for fileURL in contents {
                         let name = fileURL.lastPathComponent
                         if name.contains(".json") { continue }
 
                         var isDir: ObjCBool = false
-                        if fileManager.fileExists(atPath: fileURL.path, isDirectory: &isDir) {
+                        if FileManager.default.fileExists(atPath: fileURL.path, isDirectory: &isDir) {
                             if isDir.boolValue {
                                 // New format: Full directory
                                 let dest = signedDestDir.appendingPathComponent(name)
-                                try? fileManager.removeItem(at: dest)
-                                try fileManager.copyItem(at: fileURL, to: dest)
+                                try? FileManager.default.removeItem(at: dest)
+                                try FileManager.default.copyItem(at: fileURL, to: dest)
                             } else if fileURL.pathExtension.lowercased() == "ipa" {
                                 // Old format: Single IPA file
                                 let uuid = name.replacingOccurrences(of: ".ipa", with: "")
                                 let destFolder = signedDestDir.appendingPathComponent(uuid)
-                                try? fileManager.createDirectory(at: destFolder, withIntermediateDirectories: true)
+                                try? FileManager.default.createDirectory(at: destFolder, withIntermediateDirectories: true)
                                 let destFile = destFolder.appendingPathComponent("ipa")
-                                try? fileManager.removeItem(at: destFile)
-                                try fileManager.copyItem(at: fileURL, to: destFile)
+                                try? FileManager.default.removeItem(at: destFile)
+                                try FileManager.default.copyItem(at: fileURL, to: destFile)
                             }
                         }
                     }
@@ -488,30 +472,30 @@ struct BackupRestoreView: View {
 
                 // 4c. Imported (Unsigned) Apps - Handle both old (IPA-only) and new (Directory) formats
                 let importedSourceDir = tempRestoreDir.appendingPathComponent("imported_apps")
-                if fileManager.fileExists(atPath: importedSourceDir.path) {
-                    let importedDestDir = fileManager.unsigned
-                    try? fileManager.createDirectory(at: importedDestDir, withIntermediateDirectories: true)
+                if FileManager.default.fileExists(atPath: importedSourceDir.path) {
+                    let importedDestDir = FileManager.default.unsigned
+                    try? FileManager.default.createDirectory(at: importedDestDir, withIntermediateDirectories: true)
 
-                    let contents = (try? fileManager.contentsOfDirectory(at: importedSourceDir, includingPropertiesForKeys: nil)) ?? []
+                    let contents = (try? FileManager.default.contentsOfDirectory(at: importedSourceDir, includingPropertiesForKeys: nil)) ?? []
                     for fileURL in contents {
                         let name = fileURL.lastPathComponent
                         if name.contains(".json") { continue }
 
                         var isDir: ObjCBool = false
-                        if fileManager.fileExists(atPath: fileURL.path, isDirectory: &isDir) {
+                        if FileManager.default.fileExists(atPath: fileURL.path, isDirectory: &isDir) {
                             if isDir.boolValue {
                                 // New format: Full directory
                                 let dest = importedDestDir.appendingPathComponent(name)
-                                try? fileManager.removeItem(at: dest)
-                                try fileManager.copyItem(at: fileURL, to: dest)
+                                try? FileManager.default.removeItem(at: dest)
+                                try FileManager.default.copyItem(at: fileURL, to: dest)
                             } else if fileURL.pathExtension.lowercased() == "ipa" {
                                 // Old format: Single IPA file
                                 let uuid = name.replacingOccurrences(of: ".ipa", with: "")
                                 let destFolder = importedDestDir.appendingPathComponent(uuid)
-                                try? fileManager.createDirectory(at: destFolder, withIntermediateDirectories: true)
+                                try? FileManager.default.createDirectory(at: destFolder, withIntermediateDirectories: true)
                                 let destFile = destFolder.appendingPathComponent("ipa")
-                                try? fileManager.removeItem(at: destFile)
-                                try fileManager.copyItem(at: fileURL, to: destFile)
+                                try? FileManager.default.removeItem(at: destFile)
+                                try FileManager.default.copyItem(at: fileURL, to: destFile)
                             }
                         }
                     }
@@ -519,44 +503,44 @@ struct BackupRestoreView: View {
 
                 // 4d. Default Frameworks
                 let frameworksSourceDir = tempRestoreDir.appendingPathComponent("default_frameworks")
-                if fileManager.fileExists(atPath: frameworksSourceDir.path) {
+                if FileManager.default.fileExists(atPath: frameworksSourceDir.path) {
                     let frameworksDestDir = documentsURL.appendingPathComponent("DefaultFrameworks") // Simplified path
-                    try? fileManager.createDirectory(at: frameworksDestDir, withIntermediateDirectories: true)
+                    try? FileManager.default.createDirectory(at: frameworksDestDir, withIntermediateDirectories: true)
 
-                    let contents = (try? fileManager.contentsOfDirectory(at: frameworksSourceDir, includingPropertiesForKeys: nil)) ?? []
+                    let contents = (try? FileManager.default.contentsOfDirectory(at: frameworksSourceDir, includingPropertiesForKeys: nil)) ?? []
                     for file in contents {
                         let destFile = frameworksDestDir.appendingPathComponent(file.lastPathComponent)
-                        try? fileManager.removeItem(at: destFile)
-                        try fileManager.copyItem(at: file, to: destFile)
+                        try? FileManager.default.removeItem(at: destFile)
+                        try FileManager.default.copyItem(at: file, to: destFile)
                     }
                 }
 
                 // 4e. Archives
                 let archivesSourceDir = tempRestoreDir.appendingPathComponent("archives")
-                if fileManager.fileExists(atPath: archivesSourceDir.path) {
-                    let archivesDestDir = fileManager.archives
-                    try? fileManager.createDirectory(at: archivesDestDir, withIntermediateDirectories: true)
+                if FileManager.default.fileExists(atPath: archivesSourceDir.path) {
+                    let archivesDestDir = FileManager.default.archives
+                    try? FileManager.default.createDirectory(at: archivesDestDir, withIntermediateDirectories: true)
 
-                    let contents = (try? fileManager.contentsOfDirectory(at: archivesSourceDir, includingPropertiesForKeys: nil)) ?? []
+                    let contents = (try? FileManager.default.contentsOfDirectory(at: archivesSourceDir, includingPropertiesForKeys: nil)) ?? []
                     for file in contents {
                         let destFile = archivesDestDir.appendingPathComponent(file.lastPathComponent)
-                        try? fileManager.removeItem(at: destFile)
-                        try fileManager.copyItem(at: file, to: destFile)
+                        try? FileManager.default.removeItem(at: destFile)
+                        try FileManager.default.copyItem(at: file, to: destFile)
                     }
                 }
 
                 // 4f. Root Documents Files (Pairing, SSL certs)
                 let extraSourceDir = tempRestoreDir.appendingPathComponent("extra_files")
-                if fileManager.fileExists(atPath: extraSourceDir.path) {
-                    let contents = (try? fileManager.contentsOfDirectory(at: extraSourceDir, includingPropertiesForKeys: nil)) ?? []
+                if FileManager.default.fileExists(atPath: extraSourceDir.path) {
+                    let contents = (try? FileManager.default.contentsOfDirectory(at: extraSourceDir, includingPropertiesForKeys: nil)) ?? []
                     for file in contents {
                         let destFile = documentsURL.appendingPathComponent(file.lastPathComponent)
-                        try? fileManager.removeItem(at: destFile)
-                        try fileManager.copyItem(at: file, to: destFile)
+                        try? FileManager.default.removeItem(at: destFile)
+                        try FileManager.default.copyItem(at: file, to: destFile)
                     }
                 }
 
-                try? fileManager.removeItem(at: tempRestoreDir)
+                try? FileManager.default.removeItem(at: tempRestoreDir)
 
                 await MainActor.run {
                     isRestoring = false
@@ -569,7 +553,7 @@ struct BackupRestoreView: View {
                 }
 
             } catch {
-                try? fileManager.removeItem(at: tempRestoreDir)
+                try? FileManager.default.removeItem(at: tempRestoreDir)
                 await MainActor.run {
                     isRestoring = false
                     UIAlertController.showAlertWithOk(title: .localized("Restore Error"), message: .localized("Failed to restore backup: \(error.localizedDescription)"))
@@ -788,20 +772,19 @@ struct BackupRestoreView: View {
 
     private func prepareBackup(with options: BackupOptions) async -> URL? {
         let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent("Backup_\(UUID().uuidString)")
-        let fileManager = FileManager.default
 
         do {
-            try fileManager.createDirectory(at: tempDir, withIntermediateDirectories: true)
+            try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
 
             // 1. Certificates
             if options.includeCertificates {
                 let certificatesDir = tempDir.appendingPathComponent("certificates")
-                try? fileManager.createDirectory(at: certificatesDir, withIntermediateDirectories: true)
+                try? FileManager.default.createDirectory(at: certificatesDir, withIntermediateDirectories: true)
 
-                let src = fileManager.certificates
-                if fileManager.fileExists(atPath: src.path) {
-                    for file in (try? fileManager.contentsOfDirectory(at: src, includingPropertiesForKeys: nil)) ?? [] {
-                        try? fileManager.copyItem(at: file, to: certificatesDir.appendingPathComponent(file.lastPathComponent))
+                let src = FileManager.default.certificates
+                if FileManager.default.fileExists(atPath: src.path) {
+                    for file in (try? FileManager.default.contentsOfDirectory(at: src, includingPropertiesForKeys: nil)) ?? [] {
+                        try? FileManager.default.copyItem(at: file, to: certificatesDir.appendingPathComponent(file.lastPathComponent))
                     }
                 }
 
@@ -841,13 +824,13 @@ struct BackupRestoreView: View {
             // 3. Signed Apps
             if options.includeSignedApps {
                 let signedAppsDir = tempDir.appendingPathComponent("signed_apps")
-                try? fileManager.createDirectory(at: signedAppsDir, withIntermediateDirectories: true)
+                try? FileManager.default.createDirectory(at: signedAppsDir, withIntermediateDirectories: true)
 
-                let src = fileManager.signed
-                if fileManager.fileExists(atPath: src.path) {
-                    let folders = (try? fileManager.contentsOfDirectory(at: src, includingPropertiesForKeys: nil)) ?? []
+                let src = FileManager.default.signed
+                if FileManager.default.fileExists(atPath: src.path) {
+                    let folders = (try? FileManager.default.contentsOfDirectory(at: src, includingPropertiesForKeys: nil)) ?? []
                     for folder in folders {
-                        try? fileManager.copyItem(at: folder, to: signedAppsDir.appendingPathComponent(folder.lastPathComponent))
+                        try? FileManager.default.copyItem(at: folder, to: signedAppsDir.appendingPathComponent(folder.lastPathComponent))
                     }
                 }
 
@@ -864,13 +847,13 @@ struct BackupRestoreView: View {
             // 4. Imported (Unsigned) Apps
             if options.includeImportedApps {
                 let importedAppsDir = tempDir.appendingPathComponent("imported_apps")
-                try? fileManager.createDirectory(at: importedAppsDir, withIntermediateDirectories: true)
+                try? FileManager.default.createDirectory(at: importedAppsDir, withIntermediateDirectories: true)
 
-                let src = fileManager.unsigned
-                if fileManager.fileExists(atPath: src.path) {
-                    let folders = (try? fileManager.contentsOfDirectory(at: src, includingPropertiesForKeys: nil)) ?? []
+                let src = FileManager.default.unsigned
+                if FileManager.default.fileExists(atPath: src.path) {
+                    let folders = (try? FileManager.default.contentsOfDirectory(at: src, includingPropertiesForKeys: nil)) ?? []
                     for folder in folders {
-                        try? fileManager.copyItem(at: folder, to: importedAppsDir.appendingPathComponent(folder.lastPathComponent))
+                        try? FileManager.default.copyItem(at: folder, to: importedAppsDir.appendingPathComponent(folder.lastPathComponent))
                     }
                 }
 
@@ -887,12 +870,12 @@ struct BackupRestoreView: View {
             // 5. Default Frameworks
             if options.includeDefaultFrameworks {
                 let dest = tempDir.appendingPathComponent("default_frameworks")
-                try? fileManager.createDirectory(at: dest, withIntermediateDirectories: true)
+                try? FileManager.default.createDirectory(at: dest, withIntermediateDirectories: true)
 
                 let src = Storage.shared.documentsURL.appendingPathComponent("DefaultFrameworks")
-                if fileManager.fileExists(atPath: src.path) {
-                    for file in (try? fileManager.contentsOfDirectory(at: src, includingPropertiesForKeys: nil)) ?? [] {
-                        try? fileManager.copyItem(at: file, to: dest.appendingPathComponent(file.lastPathComponent))
+                if FileManager.default.fileExists(atPath: src.path) {
+                    for file in (try? FileManager.default.contentsOfDirectory(at: src, includingPropertiesForKeys: nil)) ?? [] {
+                        try? FileManager.default.copyItem(at: file, to: dest.appendingPathComponent(file.lastPathComponent))
                     }
                 }
             }
@@ -912,7 +895,7 @@ struct BackupRestoreView: View {
             // 7. Extra Files (Always) - Copy all plists, certs, and logs from root
             let extraDir = tempDir.appendingPathComponent("extra_files")
             try? FileManager.default.createDirectory(at: extraDir, withIntermediateDirectories: true)
-            let rootFiles = (try? fileManager.contentsOfDirectory(at: Storage.shared.documentsURL, includingPropertiesForKeys: nil)) ?? []
+            let rootFiles = (try? FileManager.default.contentsOfDirectory(at: Storage.shared.documentsURL, includingPropertiesForKeys: nil)) ?? []
             for fileURL in rootFiles {
                 let ext = fileURL.pathExtension.lowercased()
                 let name = fileURL.lastPathComponent
@@ -922,7 +905,7 @@ struct BackupRestoreView: View {
                 if importantExtensions.contains(ext) || importantNames.contains(name) {
                     // Skip database files here as they are handled in step 8
                     if ext == "sqlite" || name.contains("-shm") || name.contains("-wal") { continue }
-                    try? fileManager.copyItem(at: fileURL, to: extraDir.appendingPathComponent(name))
+                    try? FileManager.default.copyItem(at: fileURL, to: extraDir.appendingPathComponent(name))
                 }
             }
 
@@ -1101,4 +1084,3 @@ struct BackupOptionsView: View {
         }
     }
 }
-

@@ -10,6 +10,12 @@ struct LanguageSettingsView: View {
     var body: some View {
         NBNavigationView(.localized("Translation")) {
             List {
+                Section {
+                    LanguageHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
+
                 // Button to open iOS Settings
                 Section {
                     Button {

@@ -18,6 +18,12 @@ struct AppearanceView: View {
     
     var body: some View {
         List {
+            Section {
+                AppearanceHeaderView()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
             // MARK: - Theme
             Section {
                 Picker("Appearance", selection: $userInterfaceStyle) {

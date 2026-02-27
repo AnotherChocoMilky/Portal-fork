@@ -26,6 +26,8 @@ struct CheckForUpdatesView: View {
         ZStack {
             ScrollView {
                 VStack(spacing: 24) {
+                    UpdatesHeaderView()
+
                     // Hero Section
                     heroSection
 

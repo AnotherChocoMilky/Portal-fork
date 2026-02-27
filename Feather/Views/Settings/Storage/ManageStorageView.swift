@@ -66,6 +66,12 @@ struct ManageStorageView: View {
     var body: some View {
         ZStack {
             List {
+                Section {
+                    StorageHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
+
                 // Storage Overview
                 Section {
                     HStack {

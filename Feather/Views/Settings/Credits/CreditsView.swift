@@ -74,29 +74,9 @@ struct CreditsView: View {
 		NBList(.localized("Credits")) {
 			// Header Section
 			Section {
-				VStack(spacing: 12) {
-					Image(systemName: "person.3.fill")
-						.font(.system(size: 56, weight: .bold))
-						.foregroundStyle(
-							LinearGradient(
-								colors: [.blue, .purple],
-								startPoint: .topLeading,
-								endPoint: .bottomTrailing
-							)
-						)
-						.padding(.bottom, 4)
-					
-					Text(.localized("Credits"))
-						.font(.system(size: 24, weight: .bold, design: .rounded))
-						.foregroundStyle(.primary)
-
-					Text(.localized("Check out who made this Portal."))
-						.font(.subheadline)
-						.foregroundStyle(.secondary)
-						.multilineTextAlignment(.center)
-				}
-				.frame(maxWidth: .infinity)
-				.padding(.vertical, 32)
+				CreditsHeaderView()
+					.listRowInsets(EdgeInsets())
+					.listRowBackground(Color.clear)
 			}
 			.listRowBackground(Color.clear)
 			.listRowSeparator(.hidden)

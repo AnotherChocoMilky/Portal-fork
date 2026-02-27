@@ -13,6 +13,12 @@ struct ConfigurationView: View {
     
     var body: some View {
         List {
+            Section {
+                ConfigurationHeaderView()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
             Section("Quick Actions") {
                 Button {
                     showInstallationOptions = true

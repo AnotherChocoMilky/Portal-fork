@@ -33,6 +33,10 @@ struct CertificatesView: View {
 	var body: some View {
 		ScrollView {
 			LazyVStack(spacing: 18) {
+				CertificatesHeaderView()
+					.opacity(appearAnimation ? 1 : 0)
+					.offset(y: appearAnimation ? 0 : 20)
+
 				// Certificate Type Picker Card
 				certificateTypeCard
 					.opacity(appearAnimation ? 1 : 0)
@@ -56,6 +60,7 @@ struct CertificatesView: View {
 		.overlay {
 			if _certificates.isEmpty {
 				emptyStateView
+					.padding(.top, 200)
 			}
 		}
 		.toolbar {

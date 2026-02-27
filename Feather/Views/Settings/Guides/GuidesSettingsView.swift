@@ -14,6 +14,8 @@ struct GuidesSettingsView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
+                GuidesHeaderView()
+
                 // AI Status Card
                 aiStatusCard
                 
