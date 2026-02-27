@@ -36,8 +36,8 @@ struct SettingsView: View {
             List {
                 headerSection
                 fetchProgressSection
+                generalSection
                 preferencesSection
-                signingSection
                 dataSection
                 saveDataSection
                 resourcesSection
@@ -144,6 +144,12 @@ struct SettingsView: View {
         }
     }
 
+    private var generalSection: some View {
+        Section {
+            SettingsRow(icon: "gearshape.fill", title: String.localized("General"), color: .accentColor, destination: GeneralView())
+        }
+    }
+
     private var preferencesSection: some View {
         Section {
             if showDashboard && !hideManager.isHidden("settings.home") {
@@ -151,9 +157,6 @@ struct SettingsView: View {
             }
             if !hideManager.isHidden("settings.appearance") {
                 SettingsRow(icon: "gear.badge", title: String.localized("Display & Interface"), color: .accentColor, destination: AppearanceView())
-            }
-            if !hideManager.isHidden("settings.liveActivities") {
-                SettingsRow(icon: "widget.small.badge.plus", title: String.localized("Live Activities"), color: .accentColor, destination: LiveActivitySettingsView())
             }
 
             if !hideManager.isHidden("settings.language") {
@@ -174,19 +177,6 @@ struct SettingsView: View {
         }
     }
     
-    private var signingSection: some View {
-        Section {
-            if !hideManager.isHidden("settings.certificates") {
-                SettingsRow(icon: "person.badge.key.fill", title: String.localized("Certificates"), color: .accentColor, destination: CertificatesView())
-            }
-            if !hideManager.isHidden("settings.signing") {
-                SettingsRow(icon: "signature", title: String.localized("Signing"), color: .accentColor, destination: ConfigurationView())
-            }
-        } header: {
-            SettingsSectionHeader(title: String.localized("Signing"), icon: "shield.lefthalf.filled.badge.checkmark")
-        }
-    }
-    
     @FetchRequest(
         entity: AltSource.entity(),
         sortDescriptors: [NSSortDescriptor(keyPath: \AltSource.order, ascending: true)]
@@ -202,15 +192,9 @@ struct SettingsView: View {
                     _showAddSource = true
                 }
             }
-            if !isEnterprise && !hideManager.isHidden("settings.storage") {
-                SettingsRow(icon: "externaldrive.fill.badge.person.crop", title: String.localized("Storage"), color: .accentColor, destination: ManageStorageView())
-            }
 
             if !hideManager.isHidden("settings.backupRestore") {
                 SettingsRow(icon: "externaldrive.fill.badge.timemachine", title: String.localized("Backup & Restore"), color: .accentColor, destination: BackupRestoreView())
-            }
-            if !hideManager.isHidden("settings.logs") {
-                SettingsRow(icon: "ecg.text.page", title: String.localized("Logs"), color: .accentColor, destination: AppLogsView())
             }
 
             if !hideManager.isHidden("settings.repoBuilder") {
@@ -309,72 +293,3 @@ struct SettingsView: View {
 
 }
 
-// MARK: - Settings Row Components
-
-private struct SettingsActionRow: View {
-    let icon: String
-    let title: String
-    let color: Color
-    var isLoading: Bool = false
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack {
-                SettingsRowContent(icon: icon, title: title, color: color)
-                Spacer()
-                if isLoading {
-                    ProgressView()
-                }
-            }
-        }
-        .disabled(isLoading)
-    }
-}
-
-private struct SettingsRow<Destination: View>: View {
-    let icon: String
-    let title: String
-    let color: Color
-    let destination: Destination
-    
-    var body: some View {
-        NavigationLink(destination: destination) {
-            SettingsRowContent(icon: icon, title: title, color: color)
-        }
-    }
-}
-
-private struct SettingsRowContent: View {
-    let icon: String
-    let title: String
-    let color: Color
-    
-    var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(color)
-                .frame(width: 28, height: 28)
-            
-            Text(title)
-                .font(.body)
-        }
-        .padding(.vertical, 2)
-    }
-}
-
-private struct SettingsSectionHeader: View {
-    let title: String
-    let icon: String
-    
-    var body: some View {
-        HStack(spacing: 5) {
-            Image(systemName: icon)
-                .font(.system(size: 10, weight: .semibold))
-            Text(title)
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-        }
-        .foregroundStyle(.secondary)
-    }
-}
