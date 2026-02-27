@@ -1,6 +1,6 @@
 import SwiftUI
 import Combine
-
+import AltSourceKit
 // MARK: - Gesture Types
 enum GestureType: String, CaseIterable, Codable, Identifiable {
     case singleTap = "Single Tap"
