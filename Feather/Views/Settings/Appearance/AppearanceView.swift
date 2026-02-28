@@ -15,8 +15,11 @@ struct AppearanceView: View {
     @AppStorage("Feather.showHeaderViews") private var showHeaderViews: Bool = true
     @AppStorage("Feather.useNewAllAppsView") private var useNewAllAppsView: Bool = true
     @AppStorage("Feather.greetingsName") private var greetingsName: String = ""
+    @AppStorage("Feather.certificateExperience") private var certificateExperience: String = CertificateExperience.developer.rawValue
     @StateObject private var hapticsManager = HapticsManager.shared
     
+    private var isEnterprise: Bool { certificateExperience == CertificateExperience.enterprise.rawValue }
+
     var body: some View {
         List {
             if showHeaderViews {
