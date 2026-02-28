@@ -34,6 +34,25 @@ struct DidYouKnowFacts {
 	}
 }
 
+// MARK: - App Entry
+struct AppEntry: Identifiable, Hashable {
+    let source: ASRepository
+    let app: ASRepository.App
+
+    var id: String {
+        let sourceID = source.id ?? source.name ?? "unknown_source"
+        return "\(sourceID).\(app.currentUniqueId)"
+    }
+
+    static func == (lhs: AppEntry, rhs: AppEntry) -> Bool {
+        lhs.id == rhs.id
+    }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
 // MARK: - All Apps Row Configuration
 struct AllAppsRowConfig {
     let showVersion: Bool
@@ -190,8 +209,8 @@ struct AllAppsView: View {
     @State private var _spinnerRotation: Double = 0
     
     // Optimized State for Large Datasets
-    @State private var _allApps: [(source: ASRepository, app: ASRepository.App)] = []
-    @State private var _filteredApps: [(source: ASRepository, app: ASRepository.App)] = []
+    @State private var _allApps: [AppEntry] = []
+    @State private var _filteredApps: [AppEntry] = []
     @State private var _filterTask: Task<Void, Never>?
 
     init(isTab: Bool = false, object: [AltSource], viewModel: SourcesViewModel) {
@@ -200,8 +219,9 @@ struct AllAppsView: View {
         self.viewModel = viewModel
 
         if !viewModel.allApps.isEmpty {
-            self.__allApps = State(initialValue: viewModel.allApps)
-            self.__filteredApps = State(initialValue: viewModel.allApps)
+            let entries = viewModel.allApps.map { AppEntry(source: $0.source, app: $0.app) }
+            self.__allApps = State(initialValue: entries)
+            self.__filteredApps = State(initialValue: entries)
             self.__isLoading = State(initialValue: false)
             self.__sources = State(initialValue: object.compactMap { viewModel.sources[$0] })
         }
@@ -523,7 +543,7 @@ struct AllAppsView: View {
         Group {
             if _useGrid {
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: _gridSpacing), count: _gridColumns), spacing: _gridSpacing) {
-                    ForEach(_filteredApps, id: \.app.currentUniqueId) { entry in
+                    ForEach(_filteredApps, id: \.id) { entry in
                         AllAppsRowView(
                             source: entry.source,
                             app: entry.app,
@@ -549,7 +569,7 @@ struct AllAppsView: View {
                 .padding(.horizontal, 20)
             } else {
                 LazyVStack(spacing: _rowSpacing) {
-                    ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
+                    ForEach(_filteredApps, id: \.id) { entry in
                         AllAppsRowView(
                             source: entry.source,
                             app: entry.app,
@@ -557,7 +577,7 @@ struct AllAppsView: View {
                                 HapticsManager.shared.softImpact()
                                 _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
                             },
-                            isLast: index == _filteredApps.count - 1,
+                            isLast: entry.id == _filteredApps.last?.id,
                             config: _rowConfig
                         )
                         .padding(.horizontal, _rowHorizontalPadding)
@@ -723,7 +743,7 @@ struct AllAppsView: View {
 
 			// Perform filtering and sorting in background
 			let sortedApps = await Task.detached(priority: .userInitiated) {
-				let apps: [(source: ASRepository, app: ASRepository.App)]
+				let apps: [AppEntry]
 
 				if searchText.isEmpty {
 					apps = allApps
@@ -763,22 +783,35 @@ struct AllAppsView: View {
             }
 
 			await MainActor.run {
+                // Optimize animations for large datasets
+                let shouldAnimate = sortedApps.count < 100
+
                 if #available(iOS 17.0, *) {
-                    withAnimation(.snappy) {
-                        _filteredApps = sortedApps
-                        _isSearching = false
-                    }
-                } else {
-                    if useSpringAnimations {
-                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                    if shouldAnimate {
+                        withAnimation(.snappy) {
                             _filteredApps = sortedApps
                             _isSearching = false
                         }
                     } else {
-                        withAnimation(.easeInOut(duration: 0.25)) {
-                            _filteredApps = sortedApps
-                            _isSearching = false
+                        _filteredApps = sortedApps
+                        _isSearching = false
+                    }
+                } else {
+                    if shouldAnimate {
+                        if useSpringAnimations {
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                                _filteredApps = sortedApps
+                                _isSearching = false
+                            }
+                        } else {
+                            withAnimation(.easeInOut(duration: 0.25)) {
+                                _filteredApps = sortedApps
+                                _isSearching = false
+                            }
                         }
+                    } else {
+                        _filteredApps = sortedApps
+                        _isSearching = false
                     }
                 }
 			}
@@ -790,8 +823,9 @@ struct AllAppsView: View {
 	private func _loadAllSources() {
 		// If we already have data in viewModel, use it immediately
 		if _allApps.isEmpty && !viewModel.allApps.isEmpty {
-			_allApps = viewModel.allApps
-			_filteredApps = viewModel.allApps
+			let entries = viewModel.allApps.map { AppEntry(source: $0.source, app: $0.app) }
+			_allApps = entries
+			_filteredApps = entries
 			_sources = object.compactMap { viewModel.sources[$0] }
 			_isLoading = false
 		}
@@ -850,7 +884,7 @@ struct AllAppsView: View {
 
 		await MainActor.run {
 			_sources = finalSources
-			_allApps = flattenedApps
+			_allApps = flattenedApps.map { AppEntry(source: $0.source, app: $0.app) }
 			_filterApps()
 			_loadedSourcesCount = object.count
 		}
