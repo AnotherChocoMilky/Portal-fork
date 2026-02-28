@@ -23,6 +23,7 @@ struct WSFLink: Identifiable {
 
 // MARK: - View
 struct CreditsView: View {
+	@AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
 	private let credits: [CreditItem] = [
 		CreditItem(
 			username: "dylans2010",
@@ -73,13 +74,15 @@ struct CreditsView: View {
 	var body: some View {
 		NBList(.localized("Credits")) {
 			// Header Section
-			Section {
-				CreditsHeaderView()
-					.listRowInsets(EdgeInsets())
-					.listRowBackground(Color.clear)
+			if showHeaderViews {
+				Section {
+					CreditsHeaderView()
+						.listRowInsets(EdgeInsets())
+						.listRowBackground(Color.clear)
+				}
+				.listRowBackground(Color.clear)
+				.listRowSeparator(.hidden)
 			}
-			.listRowBackground(Color.clear)
-			.listRowSeparator(.hidden)
 
 			// Developers Section
 			Section {

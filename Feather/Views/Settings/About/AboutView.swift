@@ -15,6 +15,7 @@ extension AboutView {
 struct AboutView: View {
 	typealias CreditsDataHandler = Result<[CreditsModel], Error>
 	private let _dataService = NBFetchService()
+	@AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
 	
 	@State private var _credits: [CreditsModel] = []
 	@State private var _donators: [CreditsModel] = []
@@ -27,12 +28,14 @@ struct AboutView: View {
 	// MARK: Body
 	var body: some View {
 		NBList(.localized("About")) {
-			Section {
-				AboutHeaderView()
-					.listRowInsets(EdgeInsets())
-					.listRowBackground(Color.clear)
+			if showHeaderViews {
+				Section {
+					AboutHeaderView()
+						.listRowInsets(EdgeInsets())
+						.listRowBackground(Color.clear)
+				}
+				.listRowBackground(Color.clear)
 			}
-			.listRowBackground(Color.clear)
 
 			if !isLoading {
 				Section {

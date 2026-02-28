@@ -7,6 +7,7 @@ struct CertificatesView: View {
 	@AppStorage("Feather.certificateExperience") private var certificateExperience: String = CertificateExperience.developer.rawValue
 	@AppStorage("forceShowGuides") private var forceShowGuides = false
 	@AppStorage("feature_passwordChanger") private var passwordChanger = false
+	@AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
 	
 	@State private var _isAddingPresenting = false
 	@State private var _isPasswordChangePresenting = false
@@ -33,9 +34,11 @@ struct CertificatesView: View {
 	var body: some View {
 		ScrollView {
 			LazyVStack(spacing: 18) {
-				CertificatesHeaderView()
-					.opacity(appearAnimation ? 1 : 0)
-					.offset(y: appearAnimation ? 0 : 20)
+				if showHeaderViews {
+					CertificatesHeaderView()
+						.opacity(appearAnimation ? 1 : 0)
+						.offset(y: appearAnimation ? 0 : 20)
+				}
 
 				// Certificate Type Picker Card
 				certificateTypeCard

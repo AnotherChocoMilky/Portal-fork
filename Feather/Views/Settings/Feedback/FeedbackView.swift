@@ -805,6 +805,7 @@ private struct ModernFormatButton: View {
 struct FeedbackView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @Environment(\.openURL) private var openURL
     
     // Constants
@@ -986,10 +987,12 @@ struct FeedbackView: View {
     
     private var mainScrollView: some View {
         Form {
-            Section {
-                FeedbackHeaderView()
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+            if showHeaderViews {
+                Section {
+                    FeedbackHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
             }
 
             Section {

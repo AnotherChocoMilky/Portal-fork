@@ -12,6 +12,7 @@ enum OTPPairingMode {
 // MARK: - Pairing Through OTP View
 struct PairingThroughOTPView: View {
     @Environment(\.dismiss) var dismiss
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @StateObject private var viewModel = OTPPairingViewModel()
     @State private var selectedMode: OTPPairingMode = .sender
     @State private var otpInput: String = ""
@@ -20,10 +21,12 @@ struct PairingThroughOTPView: View {
     
     var body: some View {
         List {
-            Section {
-                PairingThroughOTPHeaderView()
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+            if showHeaderViews {
+                Section {
+                    PairingThroughOTPHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
             }
 
             // Mode Selection

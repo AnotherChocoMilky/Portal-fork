@@ -45,13 +45,16 @@ struct AllAppsCustomizationView: View {
     @AppStorage("Feather.allApps.headerGradient") private var headerGradient: Bool = true
     @AppStorage("Feather.allApps.compactHeader") private var compactHeader: Bool = false
     @AppStorage("Feather.allApps.animationDuration") private var animationDuration: Double = 0.3
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
 
     var body: some View {
         List {
-            Section {
-                AllAppsHeaderView()
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+            if showHeaderViews {
+                Section {
+                    AllAppsHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
             }
 
             Section {

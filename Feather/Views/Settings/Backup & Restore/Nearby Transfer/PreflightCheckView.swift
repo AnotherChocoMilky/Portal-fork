@@ -15,6 +15,7 @@ struct PreflightItem: Identifiable {
 // MARK: - Preflight Check View
 struct PreflightCheckView: View {
     @Environment(\.dismiss) var dismiss
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @StateObject private var viewModel = PreflightCheckViewModel()
     @State private var scanPhase: CGFloat = 0
     
@@ -23,18 +24,20 @@ struct PreflightCheckView: View {
     var body: some View {
         NBList(.localized("Preflight Check")) {
             // Summary Section
-            Section {
-                VStack(spacing: 24) {
-                    if viewModel.isScanning {
-                        radarScanView
-                    } else {
-                        statusHeaderView
+            if showHeaderViews {
+                Section {
+                    VStack(spacing: 24) {
+                        if viewModel.isScanning {
+                            radarScanView
+                        } else {
+                            statusHeaderView
+                        }
                     }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 30)
+                    .listRowBackground(Color.clear)
+                    .listRowInsets(EdgeInsets())
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 30)
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets())
             }
             
             // Items Breakdown

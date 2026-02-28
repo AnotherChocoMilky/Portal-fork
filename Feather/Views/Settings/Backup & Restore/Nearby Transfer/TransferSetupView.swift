@@ -3,15 +3,18 @@ import NimbleViews
 
 // MARK: - Transfer Setup View
 struct TransferSetupView: View {
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @Environment(\.dismiss) var dismiss
     
     var body: some View {
         List {
             // Header Section
-            Section {
-                TransferSetupHeaderView()
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+            if showHeaderViews {
+                Section {
+                    TransferSetupHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
             }
             
             // Quick Start Section

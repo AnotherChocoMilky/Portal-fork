@@ -304,6 +304,7 @@ class ProfilePictureManager: ObservableObject {
 struct HomeSettingsView: View {
     @StateObject private var settingsManager = HomeSettingsManager.shared
     @StateObject private var profileManager = ProfilePictureManager.shared
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @StateObject private var updateTrackingManager = AppUpdateTrackingManager.shared
     @State private var isReordering = false
     @State private var showResetConfirmation = false
@@ -319,10 +320,12 @@ struct HomeSettingsView: View {
     
     var body: some View {
         NBList(.localized("Home Settings")) {
-            Section {
-                HomeHeaderView()
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+            if showHeaderViews {
+                Section {
+                    HomeHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
             }
 
             profilePictureSection

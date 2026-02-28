@@ -263,6 +263,7 @@ struct RepoSource: Codable, Identifiable {
 
 struct RepoBuilder: View {
     @AppStorage("Feather.repoBuilder.savedSources") private var savedSourcesData: Data = Data()
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
 
     @State private var repoName = ""
     @State private var repoIdentifier = ""
@@ -304,10 +305,12 @@ struct RepoBuilder: View {
     var body: some View {
         NBNavigationView(String.localized("Repository Builder")) {
             Form {
-                Section {
-                    RepoBuilderHeaderView()
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
+                if showHeaderViews {
+                    Section {
+                        RepoBuilderHeaderView()
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                    }
                 }
 
                 Section(header: Label(String.localized("Source Information"), systemImage: "info.circle.fill")) {

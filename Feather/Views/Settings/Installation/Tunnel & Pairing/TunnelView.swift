@@ -4,6 +4,7 @@ import IDeviceSwift
 
 // MARK: - View
 struct TunnelView: View {
+	@AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
 	@State private var _isImportingPairingPresenting = false
 	
 	@State var doesHavePairingFile = false
@@ -12,28 +13,30 @@ struct TunnelView: View {
 	// MARK: Body
     var body: some View {
 		Group {
-			Section {
-				_tunnelInfo()
-				TunnelHeaderView()
-			} footer: {
-				if doesHavePairingFile {
-					Text(.localized("Seems like you've gotten your hands on your pairing file!"))
-						.foregroundStyle(
-							LinearGradient(
-								colors: [Color.green, Color.green.opacity(0.8)],
-								startPoint: .leading,
-								endPoint: .trailing
+			if showHeaderViews {
+				Section {
+					_tunnelInfo()
+					TunnelHeaderView()
+				} footer: {
+					if doesHavePairingFile {
+						Text(.localized("Seems like you've gotten your hands on your pairing file!"))
+							.foregroundStyle(
+								LinearGradient(
+									colors: [Color.green, Color.green.opacity(0.8)],
+									startPoint: .leading,
+									endPoint: .trailing
+								)
 							)
-						)
-				} else {
-					Text(.localized("No pairing file found, please import it to continue the process."))
-						.foregroundStyle(
-							LinearGradient(
-								colors: [Color.orange, Color.orange.opacity(0.8)],
-								startPoint: .leading,
-								endPoint: .trailing
+					} else {
+						Text(.localized("No pairing file found, please import it to continue the process."))
+							.foregroundStyle(
+								LinearGradient(
+									colors: [Color.orange, Color.orange.opacity(0.8)],
+									startPoint: .leading,
+									endPoint: .trailing
+								)
 							)
-						)
+					}
 				}
 			}
 			

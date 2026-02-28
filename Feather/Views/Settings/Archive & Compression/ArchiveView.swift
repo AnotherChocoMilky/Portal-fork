@@ -6,14 +6,17 @@ import NimbleViews
 struct ArchiveView: View {
 	@AppStorage("Feather.compressionLevel") private var _compressionLevel: Int = ZipCompression.DefaultCompression.rawValue
 	@AppStorage("Feather.useShareSheetForArchiving") private var _useShareSheet: Bool = false
+	@AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
 	
 	// MARK: Body
     var body: some View {
 		NBList(.localized("Archive & Compression")) {
-			Section {
-				ArchiveHeaderView()
-					.listRowInsets(EdgeInsets())
-					.listRowBackground(Color.clear)
+			if showHeaderViews {
+				Section {
+					ArchiveHeaderView()
+						.listRowInsets(EdgeInsets())
+						.listRowBackground(Color.clear)
+				}
 			}
 
 			Section {
