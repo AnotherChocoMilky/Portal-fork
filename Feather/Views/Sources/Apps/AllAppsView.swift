@@ -68,6 +68,7 @@ struct AllAppsRowConfig {
 }
 
 // MARK: - All Apps View (Modern Integrated Style)
+@MainActor
 struct AllAppsView: View {
     var isTab: Bool = false
     @Environment(\.dismiss) private var dismiss
@@ -830,9 +831,14 @@ struct AllAppsView: View {
 		}
 		
 		// Offload data processing to a background thread
+        let currentObject = self.object
+        let currentViewModel = self.viewModel
+
 		let (finalSources, flattenedApps) = await Task.detached(priority: .userInitiated) {
 			// Get final loaded sources from viewModel
-			let sources = self.object.compactMap { self.viewModel.sources[$0] }
+			let sources = await MainActor.run {
+                currentObject.compactMap { currentViewModel.sources[$0] }
+            }
 
 			// Flatten apps
 			let apps = sources.flatMap { source in
