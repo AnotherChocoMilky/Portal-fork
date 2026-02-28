@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct FilesHeaderView: View {
+struct PairingThroughOTPHeaderView: View {
     // MARK: - Body
     var body: some View {
         headerCard
@@ -10,14 +10,14 @@ struct FilesHeaderView: View {
     private var headerCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Icon
-            filesIcon
+            headerIcon
 
             // Title
-            Text(.localized("Files"))
+            Text(.localized("Remote Pairing"))
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Manage your imported files, documents, and application backups."))
+            Text(.localized("Connect devices using a secure 6-digit code over the internet."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)
@@ -34,11 +34,11 @@ struct FilesHeaderView: View {
     }
 
     @ViewBuilder
-    private var filesIcon: some View {
+    private var headerIcon: some View {
         ZStack {
             Color.accentColor.opacity(0.15)
 
-            Image(systemName: "folder.fill")
+            Image(systemName: "key.fill")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 35, height: 35)
@@ -55,6 +55,6 @@ struct FilesHeaderView: View {
 }
 
 #Preview {
-    FilesHeaderView()
+    PairingThroughOTPHeaderView()
         .padding()
 }

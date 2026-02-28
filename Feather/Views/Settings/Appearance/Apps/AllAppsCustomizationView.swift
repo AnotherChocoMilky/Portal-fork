@@ -49,6 +49,12 @@ struct AllAppsCustomizationView: View {
     var body: some View {
         List {
             Section {
+                AllAppsHeaderView()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
+            Section {
                 Picker(selection: $rowStyle) {
                     ForEach(AllAppsView.AllAppsRowStyle.allCases) { style in
                         Text(style.rawValue).tag(style)

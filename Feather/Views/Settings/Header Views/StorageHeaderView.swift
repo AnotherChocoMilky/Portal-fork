@@ -17,34 +17,6 @@ struct StorageHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            HStack(spacing: 8) {
-                // Info Row
-                HStack(spacing: 6) {
-                    Image(systemName: "externaldrive.fill.badge.person.crop")
-                        .font(.system(size: 12))
-                    Text(.localized("Disk Management"))
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                }
-                .foregroundStyle(Color.accentColor)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(Color.primary.opacity(0.05))
-                .clipShape(Capsule())
-
-                Text(.localized("Data"))
-                    .font(.system(size: 10, weight: .bold))
-                    .kerning(1.0)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Capsule())
-                    .foregroundStyle(Color.accentColor)
-                    .overlay(
-                        Capsule()
-                            .stroke(Color.accentColor.opacity(0.2), lineWidth: 0.5)
-                    )
-            }
-
             Text(.localized("Monitor your disk usage and manage cached application data."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))

@@ -33,6 +33,9 @@ struct TabBarCustomizationView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
+                TabBarHeaderView()
+                    .padding(.horizontal, 16)
+
                 // Tab Labels Section
                 VStack(alignment: .leading, spacing: 8) {
                     Text(verbatim: .localized("Appearance").uppercased())

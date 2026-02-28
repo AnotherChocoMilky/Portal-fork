@@ -19,6 +19,12 @@ struct PairingView: View {
     
     var body: some View {
         List {
+            Section {
+                PairingHeaderView()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
             // Mode Selection
             Section {
                 Picker("Transfer Mode", selection: $selectedMode) {

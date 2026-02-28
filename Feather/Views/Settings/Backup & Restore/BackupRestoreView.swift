@@ -54,7 +54,6 @@ struct BackupRestoreView: View {
             }
             _nearbyTransferSection
             _advancedToolsSection
-            _aboutSection
         }
         .navigationTitle(.localized("Backup & Restore"))
         .sheet(isPresented: $isBackupOptionsPresented) {
@@ -266,39 +265,6 @@ struct BackupRestoreView: View {
             } header: {
                 Text(.localized("Advanced Tools"))
             }
-        }
-    }
-
-    @ViewBuilder
-    private var _aboutSection: some View {
-        Section {
-            Label {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(.localized("What's Included"))
-                        .font(.headline)
-                    Text(.localized("Backups can include certificates, profiles, signed apps, imported apps, sources, and settings."))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            } icon: {
-                Image(systemName: "checkmark.shield.fill")
-                    .foregroundStyle(.blue)
-            }
-
-            Label {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(.localized("Important"))
-                        .font(.headline)
-                    Text(.localized("Restoring requires the app to restart. Certificate restoration preserves files for manual re-import if needed."))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            } icon: {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
-            }
-        } header: {
-            Text(.localized("About Backups"))
         }
     }
 

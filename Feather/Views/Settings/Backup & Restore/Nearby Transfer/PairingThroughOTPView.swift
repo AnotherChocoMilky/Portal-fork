@@ -20,6 +20,12 @@ struct PairingThroughOTPView: View {
     
     var body: some View {
         List {
+            Section {
+                PairingThroughOTPHeaderView()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
             // Mode Selection
             Section {
                 Picker("Your Role", selection: $selectedMode) {

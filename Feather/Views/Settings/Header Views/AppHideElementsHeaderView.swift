@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct FilesHeaderView: View {
+struct AppHideElementsHeaderView: View {
     // MARK: - Body
     var body: some View {
         headerCard
@@ -10,14 +10,14 @@ struct FilesHeaderView: View {
     private var headerCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Icon
-            filesIcon
+            headerIcon
 
             // Title
-            Text(.localized("Files"))
+            Text(.localized("Hide UI Elements"))
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Manage your imported files, documents, and application backups."))
+            Text(.localized("Toggle the visibility of various interface components across the app."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)
@@ -34,11 +34,11 @@ struct FilesHeaderView: View {
     }
 
     @ViewBuilder
-    private var filesIcon: some View {
+    private var headerIcon: some View {
         ZStack {
             Color.accentColor.opacity(0.15)
 
-            Image(systemName: "folder.fill")
+            Image(systemName: "eye.slash.fill")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 35, height: 35)
@@ -55,6 +55,6 @@ struct FilesHeaderView: View {
 }
 
 #Preview {
-    FilesHeaderView()
+    AppHideElementsHeaderView()
         .padding()
 }
