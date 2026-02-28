@@ -3,14 +3,17 @@ import NimbleViews
 
 // MARK: - View
 struct InstallationView: View {
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @State private var _showServerSheet = false
 
     var body: some View {
         NBList(.localized("Installation")) {
-            Section {
-                InstallationHeaderView()
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+            if showHeaderViews {
+                Section {
+                    InstallationHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
             }
 
             Section {

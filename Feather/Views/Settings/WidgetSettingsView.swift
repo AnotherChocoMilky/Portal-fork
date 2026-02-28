@@ -3,12 +3,15 @@ import WidgetKit
 import NimbleViews
 
 struct WidgetSettingsView: View {
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     var body: some View {
         List {
-            Section {
-                WidgetHeaderView()
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+            if showHeaderViews {
+                Section {
+                    WidgetHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
             }
 
             Section {

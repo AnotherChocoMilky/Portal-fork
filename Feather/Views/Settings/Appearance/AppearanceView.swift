@@ -12,16 +12,19 @@ struct AppearanceView: View {
     @AppStorage("com.apple.SwiftUI.IgnoreSolariumLinkedOnCheck") private var ignoreSolariumLinkedOnCheck: Bool = false
     @AppStorage("Feather.showNews") private var showNews: Bool = true
     @AppStorage("Feather.showIconsInAppearance") private var showIconsInAppearance: Bool = true
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews: Bool = true
     @AppStorage("Feather.useNewAllAppsView") private var useNewAllAppsView: Bool = true
     @AppStorage("Feather.greetingsName") private var greetingsName: String = ""
     @StateObject private var hapticsManager = HapticsManager.shared
     
     var body: some View {
         List {
-            Section {
-                AppearanceHeaderView()
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+            if showHeaderViews {
+                Section {
+                    AppearanceHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
             }
 
             // MARK: - Theme
@@ -75,6 +78,10 @@ struct AppearanceView: View {
                     Label("Show News", systemImage: "newspaper")
                         .foregroundStyle(Color.accentColor)
                 }
+                Toggle(isOn: $showHeaderViews) {
+                    Label("Show Header Views", systemImage: "dock.rectangle")
+                        .foregroundStyle(Color.accentColor)
+                }
             } header: {
                 Label("Display", systemImage: "eye.fill")
             }
@@ -119,6 +126,12 @@ struct AppearanceView: View {
 
             // MARK: - Customization
             Section {
+                if !isEnterprise {
+                    NavigationLink(destination: AppIconView()) {
+                        Label("App Icons", systemImage: "app.badge.fill")
+                            .foregroundStyle(Color.accentColor)
+                    }
+                }
                 NavigationLink(destination: AllAppsCustomizationView()) {
                     Label("All Apps", systemImage: "square.grid.2x2.fill")
                         .foregroundStyle(Color.accentColor)

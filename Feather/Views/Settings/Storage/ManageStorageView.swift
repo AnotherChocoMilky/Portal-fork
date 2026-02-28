@@ -19,6 +19,7 @@ struct StorageCategory: Identifiable {
 
 // MARK: - ManageStorageView
 struct ManageStorageView: View {
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @State private var cleanupPeriod: CleanupPeriod = .thirtyDays
     @State private var isCalculating = false
     @State private var showStorageAnalyzer = false
@@ -66,10 +67,12 @@ struct ManageStorageView: View {
     var body: some View {
         ZStack {
             List {
-                Section {
-                    StorageHeaderView()
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
+                if showHeaderViews {
+                    Section {
+                        StorageHeaderView()
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                    }
                 }
 
                 // Storage Overview

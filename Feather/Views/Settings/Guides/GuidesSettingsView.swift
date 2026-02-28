@@ -3,6 +3,7 @@ import NimbleViews
 
 struct GuidesSettingsView: View {
     @ObservedObject private var settingsManager = GuideAISettingsManager.shared
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @State private var apiKeyInput: String = ""
     @State private var customModelInput: String = ""
     @State private var showingAPIKeyAlert = false
@@ -14,7 +15,9 @@ struct GuidesSettingsView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                GuidesHeaderView()
+                if showHeaderViews {
+                    GuidesHeaderView()
+                }
 
                 // AI Status Card
                 aiStatusCard

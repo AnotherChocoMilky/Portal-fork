@@ -5,6 +5,7 @@ import MultipeerConnectivity
 // MARK: - Pairing View
 struct PairingView: View {
     @Environment(\.dismiss) var dismiss
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @StateObject private var service = NearbyTransferService()
     @State private var selectedMode: TransferMode = .receive
     @State private var showingProgress = false
@@ -19,10 +20,12 @@ struct PairingView: View {
     
     var body: some View {
         List {
-            Section {
-                PairingHeaderView()
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+            if showHeaderViews {
+                Section {
+                    PairingHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
             }
 
             // Mode Selection

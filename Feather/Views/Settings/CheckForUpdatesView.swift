@@ -3,6 +3,7 @@
 import SwiftUI
 
 struct CheckForUpdatesView: View {
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @StateObject private var updateManager = UpdateManager()
     @State private var selectedReleaseForNotes: GitHubRelease? = nil
     @State private var hammerTapCount = 0
@@ -26,7 +27,9 @@ struct CheckForUpdatesView: View {
         ZStack {
             ScrollView {
                 VStack(spacing: 24) {
-                    UpdatesHeaderView()
+                    if showHeaderViews {
+                        UpdatesHeaderView()
+                    }
 
                     // Hero Section
                     heroSection

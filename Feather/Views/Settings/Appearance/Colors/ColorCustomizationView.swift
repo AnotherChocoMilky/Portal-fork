@@ -49,6 +49,7 @@ struct ColorCustomizationView: View {
     @AppStorage(UserDefaults.Keys.cardOpacity) private var cardOpacity: Double = 1.0
     @AppStorage("Feather.userTintColor") private var tintColorHex: String = "#0077BE"
     @AppStorage("Feather.userThemes") private var userThemesData: Data = Data()
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
 
     @State private var uiElementColor: Color = .blue
     @State private var textColor: Color = .black
@@ -104,10 +105,12 @@ struct ColorCustomizationView: View {
 
     var body: some View {
         List {
-            Section {
-                ColorHeaderView()
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+            if showHeaderViews {
+                Section {
+                    ColorHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
             }
 
             // MARK: - Theme Gallery

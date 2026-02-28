@@ -10,13 +10,16 @@ struct ConfigurationView: View {
     @State private var showInstallationOptions = false
     @AppStorage("Feather.compressionLevel") private var _compressionLevel: Int = ZipCompression.DefaultCompression.rawValue
     @AppStorage("Feather.useShareSheetForArchiving") private var _useShareSheet: Bool = false
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     
     var body: some View {
         List {
-            Section {
-                ConfigurationHeaderView()
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+            if showHeaderViews {
+                Section {
+                    ConfigurationHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
             }
 
             Section("Quick Actions") {

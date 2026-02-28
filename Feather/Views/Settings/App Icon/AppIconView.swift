@@ -121,6 +121,7 @@ enum AppIconOption: String, CaseIterable, Identifiable {
 // MARK: - View
 struct AppIconView: View {
 	@Environment(\.scenePhase) private var scenePhase
+	@AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
 	@State private var currentIcon: String? = UIApplication.shared.alternateIconName
 	@State private var showingError = false
 	@State private var errorMessage = ""
@@ -156,10 +157,12 @@ struct AppIconView: View {
 	// MARK: Body
 	var body: some View {
 		NBList(.localized("App Icons")) {
-			Section {
-				AppIconHeaderView()
-					.listRowInsets(EdgeInsets())
-					.listRowBackground(Color.clear)
+			if showHeaderViews {
+				Section {
+					AppIconHeaderView()
+						.listRowInsets(EdgeInsets())
+						.listRowBackground(Color.clear)
+				}
 			}
 
 			Section {

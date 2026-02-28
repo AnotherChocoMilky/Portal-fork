@@ -4,16 +4,19 @@ import NimbleViews
 // MARK: - Language Settings View
 struct LanguageSettingsView: View {
     @AppStorage("appLanguage") private var appLanguage: String = "en"
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @State private var showRestartAlert = false
     @State private var selectedLanguage: AppLanguage = .english
     
     var body: some View {
         NBNavigationView(.localized("Translation")) {
             List {
-                Section {
-                    LanguageHeaderView()
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
+                if showHeaderViews {
+                    Section {
+                        LanguageHeaderView()
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                    }
                 }
 
                 // Button to open iOS Settings

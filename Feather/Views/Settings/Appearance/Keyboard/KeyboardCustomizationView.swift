@@ -3,6 +3,7 @@ import PhotosUI
 
 struct KeyboardCustomizationView: View {
     @StateObject private var manager = KeyboardCustomizeManager.shared
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
 
     @State private var startColor: Color = .blue
     @State private var endColor: Color = .cyan
@@ -15,10 +16,12 @@ struct KeyboardCustomizationView: View {
 
     var body: some View {
         List {
-            Section {
-                KeyboardHeaderView()
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+            if showHeaderViews {
+                Section {
+                    KeyboardHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
             }
 
             Section {

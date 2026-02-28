@@ -13,14 +13,17 @@ struct FilesSettingsView: View {
     @AppStorage("files_enableOpenInSigner") private var enableOpenInSigner = true
     @AppStorage("files_enableFixStructure") private var enableFixStructure = true
     @AppStorage("files_enableBreadcrumbs") private var enableBreadcrumbs = true
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     
     var body: some View {
         NBNavigationView(.localized("Files Settings"), displayMode: .inline) {
             Form {
-                Section {
-                    FilesHeaderView()
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
+                if showHeaderViews {
+                    Section {
+                        FilesHeaderView()
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                    }
                 }
 
                 // MARK: - View Style Section

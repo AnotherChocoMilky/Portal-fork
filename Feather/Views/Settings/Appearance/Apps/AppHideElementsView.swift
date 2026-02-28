@@ -7,16 +7,19 @@ struct AppHideElementsView: View {
     @StateObject private var filesManager = FilesHideManager.shared
     @StateObject private var guidesManager = GuidesHideManager.shared
     @StateObject private var settingsManager = SettingsHideManager.shared
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
 
     @State private var searchText = ""
 
     var body: some View {
         NBNavigationView(.localized("Hide UI Elements")) {
             List {
-                Section {
-                    AppHideElementsHeaderView()
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
+                if showHeaderViews {
+                    Section {
+                        AppHideElementsHeaderView()
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
+                    }
                 }
 
                 Section {

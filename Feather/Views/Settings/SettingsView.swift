@@ -41,7 +41,6 @@ struct SettingsView: View {
                 dataSection
                 saveDataSection
                 resourcesSection
-                if !isEnterprise { appSection }
                 if isDeveloperModeEnabled { developerSection }
             }
             .scrollContentBackground(.hidden)
@@ -73,6 +72,9 @@ struct SettingsView: View {
                     navigateToUpdates.wrappedValue = false
                 }
             }
+        }
+        .navigationDestination(isPresented: $navigateToCheckForUpdates) {
+            CheckForUpdatesView()
         }
     }
     
@@ -158,16 +160,6 @@ struct SettingsView: View {
             if !hideManager.isHidden("settings.appearance") {
                 SettingsRow(icon: "gear.badge", title: String.localized("Display & Interface"), color: .accentColor, destination: AppearanceView())
             }
-
-            if !hideManager.isHidden("settings.language") {
-                Button {
-                    if let url = URL(string: UIApplication.openSettingsURLString) {
-                        UIApplication.shared.open(url)
-                    }
-                } label: {
-                    SettingsRowContent(icon: "translate", title: String.localized("Language"), color: .accentColor)
-                }
-            }
         } header: {
             SettingsSectionHeader(title: String.localized("Customizations"), icon: "slider.horizontal.3")
                 .onLongPressGesture(minimumDuration: 2.0) {
@@ -191,10 +183,6 @@ struct SettingsView: View {
                 SettingsActionRow(icon: "binoculars.circle.fill", title: String.localized("Sources"), color: .accentColor) {
                     _showAddSource = true
                 }
-            }
-
-            if !hideManager.isHidden("settings.backupRestore") {
-                SettingsRow(icon: "externaldrive.fill.badge.timemachine", title: String.localized("Backup & Restore"), color: .accentColor, destination: BackupRestoreView())
             }
 
             if !hideManager.isHidden("settings.repoBuilder") {
@@ -243,43 +231,11 @@ struct SettingsView: View {
             if !hideManager.isHidden("settings.guides") {
                 SettingsRow(icon: "apple.intelligence", title: String.localized("Guides With AI"), color: .accentColor, destination: GuidesSettingsView())
             }
-            if !hideManager.isHidden("settings.credits") {
-                SettingsRow(icon: "person.crop.circle.fill.badge.checkmark", title: String.localized("Credits"), color: .accentColor, destination: CreditsView())
-            }
-            if !hideManager.isHidden("settings.feedback") {
-                SettingsRow(icon: "bubble.left.and.bubble.right.fill", title: String.localized("Feedback"), color: .accentColor, destination: FeedbackView())
-            }
         } header: {
             SettingsSectionHeader(title: String.localized("Resources"), icon: "books.vertical.fill")
         }
     }
     
-    private var appSection: some View {
-        Section {
-            if !hideManager.isHidden("settings.appIcons") {
-                SettingsRow(icon: "app.badge.fill", title: String.localized("App Icons"), color: .accentColor, destination: AppIconView())
-            }
-            if !hideManager.isHidden("settings.updates") {
-                Button {
-                    navigateToCheckForUpdates = true
-                } label: {
-                    SettingsRowContent(icon: "arrow.triangle.2.circlepath", title: String.localized("Check For Updates"), color: .accentColor)
-                }
-                .simultaneousGesture(
-                    LongPressGesture(minimumDuration: 2.0)
-                        .onEnded { _ in
-                            ToastManager.shared.show("🚀 Turbo Updates Enabled! (Just kidding)", type: .info)
-                            HapticsManager.shared.success()
-                        }
-                )
-                .navigationDestination(isPresented: $navigateToCheckForUpdates) {
-                    CheckForUpdatesView()
-                }
-            }
-        } header: {
-            SettingsSectionHeader(title: String.localized("App"), icon: "app.fill")
-        }
-    }
     
     private var developerSection: some View {
         Section {

@@ -12,6 +12,7 @@ struct TabBarCustomizationView: View {
     @AppStorage("Feather.tabBar.order") private var tabOrder: String = "dashboard,sources,guides,library,files,settings,allapps"
     @AppStorage("Feather.tabBar.hideLabels") private var hideTabLabels = false
     @AppStorage("Feather.tabBar.defaultTab") private var defaultTab: String = "dashboard"
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     // Settings cannot be disabled
     
     @State private var showMinimumWarning = false
@@ -33,8 +34,10 @@ struct TabBarCustomizationView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
-                TabBarHeaderView()
-                    .padding(.horizontal, 16)
+                if showHeaderViews {
+                    TabBarHeaderView()
+                        .padding(.horizontal, 16)
+                }
 
                 // Tab Labels Section
                 VStack(alignment: .leading, spacing: 8) {

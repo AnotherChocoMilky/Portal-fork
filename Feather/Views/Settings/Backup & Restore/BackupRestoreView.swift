@@ -38,15 +38,18 @@ struct BackupRestoreView: View {
 
     @AppStorage("feature_advancedBackupTools") var advancedBackupTools = false
     @AppStorage("feature_newBackupOptions") var newBackupOptions = false
+    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @ObservedObject private var advancedManager = BackupAdvancedManager.shared
 
     // MARK: Body
     var body: some View {
         List {
-            Section {
-                BackupRestoreHeaderView()
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
+            if showHeaderViews {
+                Section {
+                    BackupRestoreHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
             }
 
             if newBackupOptions {
