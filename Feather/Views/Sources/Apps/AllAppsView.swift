@@ -426,35 +426,51 @@ struct AllAppsView: View {
     }
 
     private var appsListView: some View {
-        Group {
+        VStack(spacing: _rowSpacing) {
             if _useGrid {
-                let columns = Array(repeating: GridItem(.flexible(), spacing: _gridSpacing), count: _useGrid ? _gridColumns : 1)
-                LazyVGrid(columns: columns, spacing: _gridSpacing) {
-                    ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
-                        AllAppsRowView(
-                            source: entry.source,
-                            app: entry.app,
-                            onTap: {
-                                HapticsManager.shared.softImpact()
-                                _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
-                            },
-                            isLast: index == _filteredApps.count - 1
-                        )
-                        .onTapGesture(count: 2) {
-                            Task {
-                                await GestureManager.shared.performAction(for: .doubleTap, in: .allApps, context: entry.app)
+                let chunkedApps = stride(from: 0, to: _filteredApps.count, by: _gridColumns).map {
+                    Array(_filteredApps[$0..<min($0 + _gridColumns, _filteredApps.count)])
+                }
+
+                VStack(spacing: _gridSpacing) {
+                    ForEach(0..<chunkedApps.count, id: \.self) { rowIndex in
+                        HStack(alignment: .top, spacing: _gridSpacing) {
+                            let row = chunkedApps[rowIndex]
+                            ForEach(0..<row.count, id: \.self) { itemIndex in
+                                let entry = row[itemIndex]
+                                AllAppsRowView(
+                                    source: entry.source,
+                                    app: entry.app,
+                                    onTap: {
+                                        HapticsManager.shared.softImpact()
+                                        _selectedRoute = SourceAppRoute(source: entry.source, app: entry.app)
+                                    },
+                                    isLast: rowIndex == chunkedApps.count - 1 && itemIndex == row.count - 1
+                                )
+                                .onTapGesture(count: 2) {
+                                    Task {
+                                        await GestureManager.shared.performAction(for: .doubleTap, in: .allApps, context: entry.app)
+                                    }
+                                }
+                                .onLongPressGesture {
+                                    Task {
+                                        await GestureManager.shared.performAction(for: .longPress, in: .allApps, context: entry.app)
+                                    }
+                                }
                             }
-                        }
-                        .onLongPressGesture {
-                            Task {
-                                await GestureManager.shared.performAction(for: .longPress, in: .allApps, context: entry.app)
+
+                            if row.count < _gridColumns {
+                                ForEach(0..<(_gridColumns - row.count), id: \.self) { _ in
+                                    Color.clear
+                                        .frame(maxWidth: .infinity)
+                                }
                             }
                         }
                     }
                 }
                 .padding(.horizontal, 20)
             } else {
-                LazyVStack(spacing: _rowSpacing) {
+                VStack(spacing: _rowSpacing) {
                     ForEach(Array(_filteredApps.enumerated()), id: \.element.app.currentUniqueId) { index, entry in
                         AllAppsRowView(
                             source: entry.source,
@@ -875,19 +891,8 @@ struct AllAppsRowView: View {
         VStack(spacing: 0) {
             HStack(spacing: 16) {
                 // App Icon
-                ZStack {
-                    appIcon
-                        .frame(width: iconSize, height: iconSize)
-
-                    if isDownloading {
-                        Circle()
-                            .trim(from: 0, to: downloadProgress)
-                            .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                            .frame(width: iconSize + 6, height: iconSize + 6)
-                            .rotationEffect(.degrees(-90))
-                            .animation(.linear(duration: 0.2), value: downloadProgress)
-                    }
-                }
+                appIcon
+                    .frame(width: iconSize, height: iconSize)
                 .overlay(alignment: .bottomLeading) {
                     if showSourceIcon, let iconURL = source.currentIconURL {
                         LazyImage(url: iconURL) { state in
@@ -1025,9 +1030,6 @@ struct AllAppsRowView: View {
                 }
             }
 
-            if isDownloading {
-                downloadProgressBar
-            }
         }
         .padding(12)
         .background(
@@ -1050,23 +1052,51 @@ struct AllAppsRowView: View {
 	
 	@ViewBuilder
 	private var appIcon: some View {
-		if let iconURL = app.iconURL {
-			LazyImage(url: iconURL) { state in
-				if let image = state.image {
-					image
-						.resizable()
-						.aspectRatio(contentMode: .fill)
-						.clipShape(RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous)
-                                .stroke(Color(hex: iconBorderColor), lineWidth: iconBorderWidth)
-                        )
-				} else {
-					iconPlaceholder
+		ZStack {
+			if let iconURL = app.iconURL {
+				LazyImage(url: iconURL) { state in
+					if let image = state.image {
+						image
+							.resizable()
+							.aspectRatio(contentMode: .fill)
+							.clipShape(RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous))
+							.overlay(
+								RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous)
+									.stroke(Color(hex: iconBorderColor), lineWidth: iconBorderWidth)
+							)
+					} else {
+						iconPlaceholder
+					}
 				}
+			} else {
+				iconPlaceholder
 			}
-		} else {
-			iconPlaceholder
+
+			if isDownloading {
+				ZStack {
+					Rectangle()
+						.fill(.ultraThinMaterial)
+
+					VStack(spacing: 4) {
+						ZStack {
+							Circle()
+								.stroke(Color.accentColor.opacity(0.2), lineWidth: 3)
+
+							Circle()
+								.trim(from: 0, to: downloadProgress)
+								.stroke(Color.accentColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+								.rotationEffect(.degrees(-90))
+						}
+						.frame(width: 32, height: 32)
+
+						Text("\(Int(downloadProgress * 100))%")
+							.font(.system(size: 10, weight: .bold, design: .monospaced))
+							.foregroundStyle(.primary)
+					}
+				}
+				.clipShape(RoundedRectangle(cornerRadius: iconCornerRadius, style: .continuous))
+				.transition(.opacity.combined(with: .scale(scale: 0.9)))
+			}
 		}
 	}
 	
