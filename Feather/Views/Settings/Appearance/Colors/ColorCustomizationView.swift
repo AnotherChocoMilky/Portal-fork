@@ -104,6 +104,12 @@ struct ColorCustomizationView: View {
 
     var body: some View {
         List {
+            Section {
+                ColorHeaderView()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
             // MARK: - Theme Gallery
             Section {
                 themeGallerySection

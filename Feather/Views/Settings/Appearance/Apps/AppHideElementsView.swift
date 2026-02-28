@@ -14,6 +14,12 @@ struct AppHideElementsView: View {
         NBNavigationView(.localized("Hide UI Elements")) {
             List {
                 Section {
+                    AppHideElementsHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
+
+                Section {
                     Button(role: .destructive) {
                         sourcesManager.resetToDefaults()
                         libraryManager.resetToDefaults()

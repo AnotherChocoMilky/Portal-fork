@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct FilesHeaderView: View {
+struct TransferSetupHeaderView: View {
     // MARK: - Body
     var body: some View {
         headerCard
@@ -10,14 +10,14 @@ struct FilesHeaderView: View {
     private var headerCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Icon
-            filesIcon
+            headerIcon
 
             // Title
-            Text(.localized("Files"))
+            Text(.localized("Wireless Transfer"))
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Manage your imported files, documents, and application backups."))
+            Text(.localized("Move your backups between devices instantly using a secure, direct connection."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)
@@ -34,11 +34,11 @@ struct FilesHeaderView: View {
     }
 
     @ViewBuilder
-    private var filesIcon: some View {
+    private var headerIcon: some View {
         ZStack {
             Color.accentColor.opacity(0.15)
 
-            Image(systemName: "folder.fill")
+            Image(systemName: "antenna.radiowaves.left.and.right")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 35, height: 35)
@@ -55,6 +55,6 @@ struct FilesHeaderView: View {
 }
 
 #Preview {
-    FilesHeaderView()
+    TransferSetupHeaderView()
         .padding()
 }

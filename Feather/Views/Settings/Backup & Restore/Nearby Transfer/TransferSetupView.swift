@@ -9,25 +9,9 @@ struct TransferSetupView: View {
         List {
             // Header Section
             Section {
-                VStack(spacing: 16) {
-                    Image(systemName: "antenna.radiowaves.left.and.right")
-                        .font(.system(size: 48))
-                        .foregroundStyle(Color.accentColor)
-                        .padding(.top, 10)
-                    
-                    VStack(spacing: 8) {
-                        Text(.localized("Wireless Transfer"))
-                            .font(.title2.bold())
-
-                        Text(.localized("Move your backups between devices instantly using a secure, direct connection."))
-                            .font(.subheadline)
-                            .multilineTextAlignment(.center)
-                            .foregroundStyle(.secondary)
-                    }
-                    .padding(.bottom, 10)
-                }
-                .frame(maxWidth: .infinity)
-                .listRowBackground(Color.clear)
+                TransferSetupHeaderView()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
             }
             
             // Quick Start Section

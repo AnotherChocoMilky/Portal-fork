@@ -17,34 +17,6 @@ struct AppIconHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            HStack(spacing: 8) {
-                // Info Row
-                HStack(spacing: 6) {
-                    Image(systemName: "app.badge.fill")
-                        .font(.system(size: 12))
-                    Text(.localized("Customization"))
-                        .font(.system(size: 14, weight: .semibold, design: .rounded))
-                }
-                .foregroundStyle(Color.accentColor)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(Color.primary.opacity(0.05))
-                .clipShape(Capsule())
-
-                Text(.localized("Visuals"))
-                    .font(.system(size: 10, weight: .bold))
-                    .kerning(1.0)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Capsule())
-                    .foregroundStyle(Color.accentColor)
-                    .overlay(
-                        Capsule()
-                            .stroke(Color.accentColor.opacity(0.2), lineWidth: 0.5)
-                    )
-            }
-
             Text(.localized("Change your application icon to match your style and preference."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))

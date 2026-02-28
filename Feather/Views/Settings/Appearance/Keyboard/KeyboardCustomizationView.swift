@@ -16,6 +16,12 @@ struct KeyboardCustomizationView: View {
     var body: some View {
         List {
             Section {
+                KeyboardHeaderView()
+                    .listRowInsets(EdgeInsets())
+                    .listRowBackground(Color.clear)
+            }
+
+            Section {
                 Toggle(isOn: $manager.isEnabled) {
                     AppearanceRowLabel(icon: "keyboard", title: "Enable Backdrop", color: .purple)
                 }
