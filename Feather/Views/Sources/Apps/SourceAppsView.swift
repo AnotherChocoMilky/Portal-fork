@@ -54,6 +54,7 @@ extension SourceAppsView {
 }
 
 // MARK: - SourceAppsView
+@MainActor
 struct SourceAppsView: View {
     @AppStorage("Feather.sortOptionRawValue") private var sortOptionRawValue: String = SortOption.default.rawValue
     @AppStorage("Feather.sortAscending") private var sortAscending: Bool = true
