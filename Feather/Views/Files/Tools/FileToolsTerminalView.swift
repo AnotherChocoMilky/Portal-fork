@@ -1,10 +1,12 @@
 import SwiftUI
+import UIKit
 import NimbleViews
 
 // MARK: - Advanced File Tools Terminal View
 struct FileToolsTerminalView: View {
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @AppStorage("terminal_theme") private var terminalTheme: TerminalTheme = .classic
     @StateObject private var viewModel: TerminalViewModel
     @FocusState private var isInputFocused: Bool
 
@@ -53,17 +55,17 @@ struct FileToolsTerminalView: View {
                             HStack(spacing: 4) {
                                 Text("\(viewModel.currentPathName) $")
                                     .font(.system(.caption, design: .monospaced))
-                                    .foregroundStyle(.green)
+                                    .foregroundStyle(terminalTheme.promptColor)
 
                                 Text(item.command)
                                     .font(.system(.caption, design: .monospaced))
-                                    .foregroundStyle(.primary)
+                                    .foregroundStyle(terminalTheme.textColor)
                             }
 
                             if !item.output.isEmpty {
                                 Text(item.output)
                                     .font(.system(.caption, design: .monospaced))
-                                    .foregroundStyle(item.isError ? .red : .secondary)
+                                    .foregroundStyle(item.isError ? .red : terminalTheme.secondaryTextColor)
                                     .padding(.leading, 12)
                                     .textSelection(.enabled)
                             }
@@ -73,7 +75,7 @@ struct FileToolsTerminalView: View {
                 }
                 .padding()
             }
-            .background(Color.black.opacity(colorScheme == .dark ? 0.95 : 0.9))
+            .background(terminalTheme.backgroundColor)
             .onChange(of: viewModel.history.count) { _ in
                 if let last = viewModel.history.last {
                     withAnimation {
@@ -91,9 +93,10 @@ struct FileToolsTerminalView: View {
             HStack(spacing: 12) {
                 Text(">")
                     .font(.system(.body, design: .monospaced))
-                    .foregroundStyle(.green)
+                    .foregroundStyle(terminalTheme.promptColor)
 
                 TextField(.localized("Enter Command"), text: $viewModel.currentInput)
+                    .foregroundStyle(terminalTheme.textColor)
                     .font(.system(.body, design: .monospaced))
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
@@ -107,12 +110,12 @@ struct FileToolsTerminalView: View {
                         viewModel.execute()
                     } label: {
                         Image(systemName: "return")
-                            .foregroundStyle(.green)
+                            .foregroundStyle(terminalTheme.promptColor)
                     }
                 }
             }
             .padding()
-            .background(Color.clear)
+            .background(terminalTheme.backgroundColor)
 
             // Command History / Suggestions bar
             if !viewModel.commandHistory.isEmpty {
@@ -153,6 +156,20 @@ struct FileToolsTerminalView: View {
                 Button("mv - Move/Rename") { viewModel.currentInput = "mv " }
                 Button("rm - Remove") { viewModel.currentInput = "rm " }
                 Button("cat - Read File") { viewModel.currentInput = "cat " }
+            }
+
+            Section("System Info") {
+                Button("neofetch - System Info") { viewModel.currentInput = "neofetch" }
+                Button("df - Disk Usage") { viewModel.currentInput = "df" }
+                Button("uptime - System Uptime") { viewModel.currentInput = "uptime" }
+                Button("uname - OS Name") { viewModel.currentInput = "uname" }
+            }
+
+            Section("Utilities") {
+                Button("whoami - Current User") { viewModel.currentInput = "whoami" }
+                Button("date - Current Date") { viewModel.currentInput = "date" }
+                Button("history - Cmd History") { viewModel.currentInput = "history" }
+                Button("echo - Print Text") { viewModel.currentInput = "echo " }
             }
 
             Section("Terminal") {
@@ -205,6 +222,11 @@ class TerminalViewModel: ObservableObject {
             commandHistory.append(command)
         }
 
+        let (output, isError) = executeCommandInternal(command)
+        history.append(TerminalEntry(command: command, output: output, isError: isError))
+    }
+
+    private func executeCommandInternal(_ command: String) -> (output: String, isError: Bool) {
         let parts = command.split(separator: " ").map(String.init)
         let baseCmd = parts.first?.lowercased() ?? ""
         let args = parts.dropFirst()
@@ -324,20 +346,60 @@ class TerminalViewModel: ObservableObject {
                 isError = true
             }
 
+        case "whoami":
+            output = "mobile"
+
+        case "date":
+            let formatter = DateFormatter()
+            formatter.dateFormat = "EEE MMM d HH:mm:ss zzz yyyy"
+            output = formatter.string(from: Date())
+
+        case "echo":
+            output = args.joined(separator: " ")
+
+        case "uname":
+            output = "Darwin"
+
+        case "history":
+            output = commandHistory.enumerated().map { "\($0 + 1)  \($1)" }.joined(separator: "\n")
+
+        case "df":
+            if let attributes = try? FileManager.default.attributesOfFileSystem(forPath: NSHomeDirectory()),
+               let size = attributes[.systemSize] as? Int64,
+               let free = attributes[.systemFreeSize] as? Int64 {
+                let sizeGB = Double(size) / (1024 * 1024 * 1024)
+                let freeGB = Double(free) / (1024 * 1024 * 1024)
+                let usedGB = sizeGB - freeGB
+                output = String(format: "Filesystem    Size    Used   Avail  Capacity\n/dev/disk0s1  %.1fGB  %.1fGB  %.1fGB   %d%%", sizeGB, usedGB, freeGB, Int((usedGB/sizeGB) * 100))
+            } else {
+                output = "df: failed to get disk usage"
+                isError = true
+            }
+
+        case "uptime":
+            let uptime = ProcessInfo.processInfo.systemUptime
+            let days = Int(uptime / 86400)
+            let hours = Int((uptime.truncatingRemainder(dividingBy: 86400)) / 3600)
+            let minutes = Int((uptime.truncatingRemainder(dividingBy: 3600)) / 60)
+            output = "up \(days) days, \(hours):\(String(format: "%02d", minutes))"
+
+        case "neofetch":
+            let device = UIDevice.current
+            output = """
+               .---.         OS: \(device.systemName) \(device.systemVersion)
+              /     \\        Host: \(device.model)
+              | () () |       Kernel: Darwin
+              \\  ^  /        Uptime: \(executeCommandInternal("uptime").output)
+               |||||         Packages: Swift, SwiftUI
+               |||||         Shell: FeatherTerminal
+            """
+
         case "help":
             output = """
             Available commands:
-            ls      - List contents
-            pwd     - Print working directory
-            cd      - Change directory
-            cat     - Read file content
-            mkdir   - Create directory
-            rm      - Remove file/directory
-            touch   - Create empty file
-            cp      - Copy item
-            mv      - Move/Rename item
-            clear   - Clear terminal
-            help    - Show this help
+            ls, pwd, cd, cat, mkdir, rm, touch, cp, mv,
+            whoami, date, echo, uname, history, df, uptime,
+            neofetch, clear, help
             """
 
         default:
@@ -345,6 +407,6 @@ class TerminalViewModel: ObservableObject {
             isError = true
         }
 
-        history.append(TerminalEntry(command: command, output: output, isError: isError))
+        return (output, isError)
     }
 }

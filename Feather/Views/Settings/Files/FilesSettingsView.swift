@@ -13,6 +13,7 @@ struct FilesSettingsView: View {
     @AppStorage("files_enableOpenInSigner") private var enableOpenInSigner = true
     @AppStorage("files_enableFixStructure") private var enableFixStructure = true
     @AppStorage("files_enableBreadcrumbs") private var enableBreadcrumbs = true
+    @AppStorage("terminal_theme") private var terminalTheme: TerminalTheme = .classic
     @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     
     var body: some View {
@@ -103,6 +104,20 @@ struct FilesSettingsView: View {
                     Text(.localized("Enable or disable smart context actions in the Files tab. Quick Inspect shows detailed file information, Open in Signer opens IPA files in Library, and Fix Structure attempts to repair corrupted file structures."))
                 }
                 
+                // MARK: - Terminal Section
+                NBSection(.localized("Terminal")) {
+                    Picker(selection: $terminalTheme) {
+                        ForEach(TerminalTheme.allCases) { theme in
+                            Text(.localized(theme.rawValue)).tag(theme)
+                        }
+                    } label: {
+                        ConditionalLabel(title: .localized("Terminal Theme"), systemImage: "terminal")
+                    }
+                    .pickerStyle(.menu)
+                } footer: {
+                    Text(.localized("Choose the appearance of the integrated terminal."))
+                }
+
                 // MARK: - Reset Section
                 NBSection(.localized("Reset")) {
                     Button {
@@ -134,6 +149,7 @@ struct FilesSettingsView: View {
         enableOpenInSigner = true
         enableFixStructure = true
         enableBreadcrumbs = true
+        terminalTheme = .classic
         
         HapticsManager.shared.success()
     }
