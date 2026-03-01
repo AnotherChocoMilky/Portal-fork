@@ -32,6 +32,13 @@ struct GuideDetailView: View {
     @ObservedObject private var aiSettingsManager = GuideAISettingsManager.shared
     @Environment(\.colorScheme) private var colorScheme
     
+    // Foundation Models Guide Generation State
+    @State private var isGeneratingGuide = false
+    @State private var generatedGuideContent: String?
+    @State private var generatedGuideParsed: ParsedGuideContent?
+    @State private var guideGenerationError: String?
+    @State private var showingGeneratedGuide = false
+    
     var accentColor: Color {
         if colorType == "gradient" {
             return Color(hex: gradientStartHex)
@@ -48,7 +55,8 @@ struct GuideDetailView: View {
         // AI is available if either Apple Intelligence is supported OR OpenRouter API key is configured
         let appleIntelligenceAvailable = AppleIntelligenceService.shared.isAvailable
         let openRouterConfigured = aiSettingsManager.hasAPIKey
-        return appleIntelligenceAvailable || openRouterConfigured
+        let foundationModelsAvailable = AppleIntelligenceService.shared.isFoundationModelsAvailable
+        return appleIntelligenceAvailable || openRouterConfigured || foundationModelsAvailable
     }
     
     private var shouldShowAIButton: Bool {
@@ -114,6 +122,16 @@ struct GuideDetailView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
+                } else if showingGeneratedGuide, let parsed = generatedGuideParsed {
+                    // Foundation Models Generated Guide View
+                    VStack(alignment: .leading, spacing: 16) {
+                        generatedGuideHeader
+                        
+                        ForEach(parsed.elements) { element in
+                            renderElement(element)
+                        }
+                    }
+                    .padding()
                 } else if showingAIOutput, let aiParsed = aiParsedContent {
                     // AI Output View
                     VStack(alignment: .leading, spacing: 16) {
@@ -135,6 +153,11 @@ struct GuideDetailView: View {
                 }
             }
             
+            // Foundation Models Generation Overlay
+            if isGeneratingGuide {
+                guideGenerationOverlay
+            }
+            
             // AI Processing Overlay
             if isProcessingAI {
                 aiProcessingOverlay
@@ -144,8 +167,11 @@ struct GuideDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
-                if shouldShowAIButton {
-                    aiButton
+                HStack(spacing: 4) {
+                    generateGuideButton
+                    if shouldShowAIButton {
+                        aiButton
+                    }
                 }
             }
         }
@@ -255,6 +281,222 @@ struct GuideDetailView: View {
                 .aiButtonEffect(isActive: isAIAvailable)
         }
         .disabled(isProcessingAI)
+    }
+    
+    @ViewBuilder
+    private var generateGuideButton: some View {
+        if AppleIntelligenceService.shared.isFoundationModelsAvailable {
+            Button {
+                HapticsManager.shared.softImpact()
+                if showingGeneratedGuide {
+                    withAnimation {
+                        showingGeneratedGuide = false
+                        generatedGuideParsed = nil
+                        generatedGuideContent = nil
+                    }
+                } else {
+                    Task {
+                        await generateGuideWithAI()
+                    }
+                }
+            } label: {
+                Image(systemName: showingGeneratedGuide ? "doc.text" : "apple.intelligence")
+                    .foregroundStyle(accentColor)
+            }
+            .disabled(isGeneratingGuide || isProcessingAI)
+        }
+    }
+    
+    @ViewBuilder
+    private var generatedGuideHeader: some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [.purple, .indigo, .blue],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 44, height: 44)
+                    
+                    Image(systemName: "apple.intelligence")
+                        .font(.title3)
+                        .foregroundStyle(.white)
+                }
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("AI Generated Guide")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    
+                    Text("Generated with Apple Intelligence")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+                
+                Button {
+                    withAnimation(.spring(response: 0.3)) {
+                        showingGeneratedGuide = false
+                        generatedGuideParsed = nil
+                        generatedGuideContent = nil
+                    }
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding()
+            .background(
+                LinearGradient(
+                    colors: [Color.purple.opacity(0.15), Color.indigo.opacity(0.1), Color.blue.opacity(0.05)],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            )
+        }
+        .background(Color.clear)
+        .cornerRadius(16)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(
+                    LinearGradient(
+                        colors: [.purple.opacity(0.3), .indigo.opacity(0.2), .blue.opacity(0.1)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
+    }
+    
+    @ViewBuilder
+    private var guideGenerationOverlay: some View {
+        ZStack {
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea()
+            
+            LinearGradient(
+                colors: [.purple.opacity(0.2), .indigo.opacity(0.15), .blue.opacity(0.1)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .ignoresSafeArea()
+            .opacity(0.5)
+            
+            VStack(spacing: 24) {
+                Spacer()
+                
+                if let error = guideGenerationError {
+                    VStack(spacing: 20) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 48))
+                            .foregroundStyle(.orange)
+                        
+                        VStack(spacing: 6) {
+                            Text("Generation Failed")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                            
+                            Text(error)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal)
+                        }
+                        
+                        Button {
+                            HapticsManager.shared.softImpact()
+                            guideGenerationError = nil
+                            Task {
+                                await generateGuideWithAI()
+                            }
+                        } label: {
+                            Text("Retry")
+                                .fontWeight(.semibold)
+                                .padding(.horizontal, 32)
+                                .padding(.vertical, 12)
+                                .background(accentColor)
+                                .foregroundStyle(.white)
+                                .clipShape(Capsule())
+                        }
+                    }
+                    .padding()
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(.ultraThinMaterial)
+                    )
+                    .padding(.horizontal, 24)
+                } else {
+                    VStack(spacing: 20) {
+                        ZStack {
+                            Circle()
+                                .stroke(
+                                    AngularGradient(
+                                        colors: [accentColor, .purple, .indigo, accentColor],
+                                        center: .center
+                                    ),
+                                    lineWidth: 4
+                                )
+                                .frame(width: 80, height: 80)
+                                .rotationEffect(.degrees(isGeneratingGuide ? 360 : 0))
+                                .animation(.linear(duration: 3).repeatForever(autoreverses: false), value: isGeneratingGuide)
+                            
+                            Image(systemName: "apple.intelligence")
+                                .font(.system(size: 32, weight: .medium))
+                                .foregroundStyle(
+                                    LinearGradient(
+                                        colors: [accentColor, .purple],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .scaleEffect(isGeneratingGuide ? 1.1 : 0.95)
+                                .animation(.easeInOut(duration: 1).repeatForever(autoreverses: true), value: isGeneratingGuide)
+                        }
+                        
+                        VStack(spacing: 6) {
+                            Text("Generating Guide...")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                            
+                            Text("Apple Intelligence is writing your guide")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                
+                Spacer()
+                
+                Button {
+                    HapticsManager.shared.softImpact()
+                    isGeneratingGuide = false
+                    guideGenerationError = nil
+                } label: {
+                    Text("Cancel")
+                        .font(.body)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 32)
+                        .padding(.vertical, 12)
+                        .background(
+                            Capsule()
+                                .fill(.ultraThinMaterial)
+                        )
+                }
+                .padding(.bottom, 50)
+            }
+        }
+        .transition(.opacity)
     }
     
     @ViewBuilder
@@ -541,6 +783,33 @@ struct GuideDetailView: View {
         }
         
         isProcessingAI = false
+    }
+    
+    private func generateGuideWithAI() async {
+        guard #available(iOS 26.0, *) else { return }
+        
+        isGeneratingGuide = true
+        guideGenerationError = nil
+        
+        do {
+            let generatedText = try await AppleIntelligenceService.shared.generateGuideContent(
+                title: guide.displayName,
+                context: content
+            )
+            
+            generatedGuideContent = generatedText
+            generatedGuideParsed = GuideParser.parse(markdown: generatedText)
+            
+            withAnimation {
+                showingGeneratedGuide = true
+            }
+            
+            isGeneratingGuide = false
+            HapticsManager.shared.success()
+        } catch {
+            guideGenerationError = error.localizedDescription
+            HapticsManager.shared.error()
+        }
     }
     
     private func loadContent() async {
