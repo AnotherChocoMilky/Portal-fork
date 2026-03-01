@@ -5,6 +5,7 @@
 import Foundation
 import UIKit
 import SwiftUI
+import FoundationModels
 
 final class AppleIntelligenceService {
     static let shared = AppleIntelligenceService()
@@ -46,6 +47,17 @@ final class AppleIntelligenceService {
         let available = checkWritingToolsAvailability()
         AppLogManager.shared.debug("Apple Intelligence availability check: \(available)", category: "AppleIntelligence")
         return available
+    }
+    
+    var isFoundationModelsAvailable: Bool {
+        if #available(iOS 26.0, *) {
+            if case .available = SystemLanguageModel.default.availability {
+                AppLogManager.shared.success("Foundation Models available on this device", category: "AppleIntelligence")
+                return true
+            }
+            AppLogManager.shared.warning("Foundation Models not available on this device", category: "AppleIntelligence")
+        }
+        return false
     }
     
     var deviceIdentifier: String {
@@ -119,6 +131,46 @@ final class AppleIntelligenceService {
                 )
             }
         }
+    }
+    
+    @available(iOS 26.0, *)
+    func generateGuideContent(title: String, context: String) async throws -> String {
+        AppLogManager.shared.info("Starting Foundation Models guide generation for: \(title)", category: "AppleIntelligence")
+        
+        let model = SystemLanguageModel.default
+        
+        guard case .available = model.availability else {
+            let error = AppleIntelligenceError.notAvailable
+            AppLogManager.shared.error("Foundation Models not available: \(error.localizedDescription)", category: "AppleIntelligence", errorCode: .DEVICE_NOT_SUPPORTED)
+            throw error
+        }
+        
+        let session = LanguageModelSession(
+            model: model,
+            instructions: """
+            You are a knowledgeable technical guide writer for iOS app users. \
+            Generate clear, step-by-step, actionable guides with proper Markdown formatting. \
+            Use ## for major section headings, ### for sub-headings, \
+            bullet points for feature lists, and numbered lists for sequential steps. \
+            Be concise, accurate, and helpful. Do not include preamble or meta-commentary.
+            """
+        )
+        
+        let prompt: String
+        if context.isEmpty {
+            prompt = "Write a comprehensive, step-by-step guide titled: \"\(title)\""
+        } else {
+            prompt = "Write a comprehensive, step-by-step guide titled: \"\(title)\"\n\nContext: \(context)"
+        }
+        
+        AppLogManager.shared.debug("Sending prompt to Foundation Models", category: "AppleIntelligence")
+        
+        let response = try await session.respond(to: prompt)
+        let result = response.content
+        
+        AppLogManager.shared.success("Foundation Models guide generation completed (\(result.count) characters)", category: "AppleIntelligence")
+        
+        return result
     }
     
     @MainActor
