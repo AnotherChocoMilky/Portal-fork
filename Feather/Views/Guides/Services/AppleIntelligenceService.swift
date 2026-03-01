@@ -5,7 +5,9 @@
 import Foundation
 import UIKit
 import SwiftUI
+#if canImport(FoundationModels)
 import FoundationModels
+#endif
 
 final class AppleIntelligenceService {
     static let shared = AppleIntelligenceService()
@@ -50,6 +52,7 @@ final class AppleIntelligenceService {
     }
     
     var isFoundationModelsAvailable: Bool {
+#if canImport(FoundationModels)
         if #available(iOS 26.0, *) {
             if case .available = SystemLanguageModel.default.availability {
                 AppLogManager.shared.success("Foundation Models available on this device", category: "AppleIntelligence")
@@ -57,6 +60,7 @@ final class AppleIntelligenceService {
             }
             AppLogManager.shared.warning("Foundation Models not available on this device", category: "AppleIntelligence")
         }
+#endif
         return false
     }
     
@@ -135,6 +139,7 @@ final class AppleIntelligenceService {
     
     @available(iOS 26.0, *)
     func generateGuideContent(title: String, context: String) async throws -> String {
+#if canImport(FoundationModels)
         AppLogManager.shared.info("Starting Foundation Models guide generation for: \(title)", category: "AppleIntelligence")
         
         let model = SystemLanguageModel.default
@@ -171,6 +176,9 @@ final class AppleIntelligenceService {
         AppLogManager.shared.success("Foundation Models guide generation completed (\(result.count) characters)", category: "AppleIntelligence")
         
         return result
+#else
+        throw AppleIntelligenceError.notAvailable
+#endif
     }
     
     @MainActor
