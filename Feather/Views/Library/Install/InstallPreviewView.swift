@@ -19,6 +19,7 @@ struct InstallPreviewView: View {
     @AppStorage("Feather.serverMethod") private var _serverMethod: Int = 0
     @State private var _isWebviewPresenting = false
     @State private var progressTask: Task<Void, Never>?
+    @ObservedObject var colorManager = AppIconColorManager.shared
 
     var app: AppInfoPresentable
     @StateObject var viewModel: InstallerStatusViewModel
@@ -36,23 +37,11 @@ struct InstallPreviewView: View {
 
     // MARK: Body
     var body: some View {
-        let cornerRadius = {
-            if #available(iOS 26.0, *) {
-                28.0
-            } else {
-                10.5
-            }
-        }()
-
         ZStack {
             InstallProgressView(app: app, viewModel: viewModel)
-            _status()
             _button()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-        .background(Color(UIColor.secondarySystemBackground))
-        .cornerRadius(cornerRadius)
-        .padding()
         .sheet(isPresented: $_isWebviewPresenting) {
             SafariRepresentableView(url: installer.pageEndpoint).ignoresSafeArea()
         }
@@ -101,24 +90,22 @@ struct InstallPreviewView: View {
     }
 
     @ViewBuilder
-    private func _status() -> some View {
-        Label(viewModel.statusLabel, systemImage: viewModel.statusImage)
-            .padding()
-            .labelStyle(.titleAndIcon)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-            .animation(.smooth, value: viewModel.statusImage)
-    }
-
-    @ViewBuilder
     private func _button() -> some View {
         ZStack {
             if viewModel.isCompleted {
                 Button {
                     UIApplication.openApp(with: app.identifier ?? "")
                 } label: {
-                    NBButton("Open", systemImage: "", style: .text)
+                    Text("Open")
+                        .bold()
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(colorManager.primaryColor.adaptiveForeground)
+                        .foregroundColor(colorManager.primaryColor)
+                        .cornerRadius(12)
                 }
-                .padding()
+                .padding(32)
+                .padding(.bottom, 16) // Extra padding for safe area
                 .compatTransition()
             }
         }
