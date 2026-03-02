@@ -249,10 +249,6 @@ struct LibraryView: View {
                         .sheet(item: $_selectedInfoAppPresenting) { app in
                                 LibraryInfoView(app: app.base)
                         }
-                        .fullScreenCover(item: $_selectedInstallAppPresenting) { app in
-                                InstallPreviewView(app: app.base, isSharing: app.archive)
-                                        .interactiveDismissDisabled()
-                        }
                         .fullScreenCover(item: $_selectedSigningAppPresenting) { app in
                                 ModernSigningView(app: app.base)
                         }
@@ -266,6 +262,23 @@ struct LibraryView: View {
                                 .presentationDetents([.height(260)])
                                 .presentationDragIndicator(.visible)
                                 .compatPresentationRadius(24)
+                        }
+                        .overlay {
+                            Group {
+                                if let installApp = _selectedInstallAppPresenting {
+                                    InstallPreviewView(
+                                        app: installApp.base,
+                                        isSharing: installApp.archive,
+                                        onDismiss: {
+                                            withAnimation(.easeInOut(duration: 0.25)) {
+                                                _selectedInstallAppPresenting = nil
+                                            }
+                                        }
+                                    )
+                                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                                }
+                            }
+                            .animation(.easeInOut(duration: 0.25), value: _selectedInstallAppPresenting?.id)
                         }
             .fullScreenCover(isPresented: $_showBatchSigningSheet) {
                 BatchSigningView(

@@ -12,7 +12,7 @@ import OSLog
 
 // MARK: - View
 struct InstallPreviewView: View {
-    @Environment(\.dismiss) var dismiss
+    var onDismiss: () -> Void
 
     @AppStorage("Feather.useShareSheetForArchiving") private var _useShareSheet: Bool = false
     @AppStorage("Feather.installationMethod") private var _installationMethod: Int = 0
@@ -27,9 +27,10 @@ struct InstallPreviewView: View {
 
     @State var isSharing: Bool
 
-    init(app: AppInfoPresentable, isSharing: Bool = false) {
+    init(app: AppInfoPresentable, isSharing: Bool = false, onDismiss: @escaping () -> Void) {
         self.app = app
         self.isSharing = isSharing
+        self.onDismiss = onDismiss
         let viewModel = InstallerStatusViewModel(isIdevice: UserDefaults.standard.integer(forKey: "Feather.installationMethod") == 1)
         self._viewModel = StateObject(wrappedValue: viewModel)
         self._installer = StateObject(wrappedValue: try! ServerInstaller(app: app, viewModel: viewModel))
@@ -90,7 +91,7 @@ struct InstallPreviewView: View {
     @ViewBuilder
     private func _button() -> some View {
         Button {
-            dismiss()
+            onDismiss()
         } label: {
             Text(viewModel.isCompleted ? "Close" : "Cancel")
                 .bold()
@@ -146,12 +147,12 @@ struct InstallPreviewView: View {
 
                     if await !_useShareSheet {
                         await MainActor.run {
-                            dismiss()
+                            onDismiss()
                         }
                     } else {
                         if let package {
                             await MainActor.run {
-                                dismiss()
+                                onDismiss()
                                 UIActivityViewController.show(activityItems: [package])
                             }
                         }
@@ -166,7 +167,7 @@ struct InstallPreviewView: View {
                         message: String(describing: error),
                         action: {
                             HeartbeatManager.shared.start(true)
-                            dismiss()
+                            onDismiss()
                         }
                     )
                 }

@@ -179,6 +179,7 @@ struct FeatherApp: App {
 			.handleStatusBarHiding()
 			.onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
 				_handlePendingWidgetAction()
+				NotificationManager.shared.clearBadge()
 			}
 		})
 	}
@@ -706,6 +707,7 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
 	func sceneDidBecomeActive(_ scene: UIScene) {
 		// Called when scene has moved from inactive to active state
 		AppLogManager.shared.debug("Scene became active", category: "Lifecycle")
+		NotificationManager.shared.clearBadge()
 	}
 	
 	func sceneWillResignActive(_ scene: UIScene) {
