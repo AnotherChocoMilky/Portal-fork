@@ -2,7 +2,7 @@ import SwiftUI
 import NimbleViews
 import IDeviceSwift
 
-// MARK: - Modern Toaster Install Preview View
+// MARK: - Modern Floating Install Preview View
 struct InstallPreviewView: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
@@ -12,8 +12,6 @@ struct InstallPreviewView: View {
     @AppStorage("Feather.serverMethod") private var _serverMethod: Int = 0
     @State private var _isWebviewPresenting = false
     @State private var appearAnimation = false
-    @State private var _contentOpacity: Double = 1.0
-    @State private var _metalState: MetalAnimationState = .idle
     @State private var _errorMessage: String? = nil
     
     var app: AppInfoPresentable
@@ -33,75 +31,138 @@ struct InstallPreviewView: View {
     }
     
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer()
-            HStack(spacing: 12) {
-                // Compact Icon
-                FRAppIconView(app: app, size: 44)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-                    .scaleEffect(appearAnimation ? 1 : 0.9)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(app.name ?? "Unknown App")
-                        .font(.system(size: 15, weight: .bold, design: .rounded))
-                        .lineLimit(1)
-
-                    if let error = _errorMessage {
-                        Text(error)
-                            .font(.system(size: 11, weight: .medium))
-                            .foregroundStyle(.red)
-                            .lineLimit(1)
-                    } else {
-                        HStack(spacing: 4) {
-                            Image(systemName: viewModel.statusImage)
-                                .font(.system(size: 10))
-                                .bounceEffect(viewModel.status)
-                            Text(viewModel.statusLabel)
-                                .font(.system(size: 11, weight: .semibold))
-                        }
-                        .foregroundStyle(Color.accentColor)
+        ZStack {
+            Color.black.opacity(0.1)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    if viewModel.isCompleted || _errorMessage != nil {
+                        dismiss()
                     }
                 }
 
+            VStack {
                 Spacer()
 
-                // Compact Progress
-                if !viewModel.isCompleted && _errorMessage == nil {
-                    ZStack {
-                        Circle()
-                            .stroke(Color.accentColor.opacity(0.2), lineWidth: 3)
-                            .frame(width: 32, height: 32)
+                // Floating Container
+                VStack(spacing: 0) {
+                    // 1. App Icon
+                    FRAppIconView(app: app, size: 80)
+                        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+                        .padding(.top, 36)
+                        .padding(.bottom, 20)
 
-                        Circle()
-                            .trim(from: 0, to: viewModel.overallProgress)
-                            .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-                            .frame(width: 32, height: 32)
-                            .rotationEffect(.degrees(-90))
-                            .animation(.spring(), value: viewModel.overallProgress)
+                    // 2. App Name
+                    Text(app.name ?? "Unknown App")
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
+                        .padding(.bottom, 24)
 
-                        Text("\(Int(viewModel.overallProgress * 100))")
-                            .font(.system(size: 8, weight: .bold, design: .monospaced))
+                    // 3. Progress Bar
+                    if !viewModel.isCompleted && _errorMessage == nil {
+                        InstallProgressBar(progress: viewModel.overallProgress)
+                            .frame(height: 6)
+                            .padding(.horizontal, 32)
+                            .padding(.bottom, 16)
                     }
-                } else {
-                    actionButtons
+
+                    // 4. Status Label
+                    HStack(spacing: 8) {
+                        if let error = _errorMessage {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.system(size: 14))
+                                .foregroundStyle(.red)
+                            Text(error)
+                                .font(.system(size: 15, weight: .medium, design: .rounded))
+                                .foregroundStyle(.red)
+                                .lineLimit(1)
+                        } else {
+                            if !viewModel.isCompleted {
+                                ProgressView()
+                                    .controlSize(.small)
+                            } else {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(.green)
+                            }
+
+                            Text(viewModel.statusLabel)
+                                .font(.system(size: 15, weight: .medium, design: .rounded))
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.bottom, (viewModel.isCompleted || _errorMessage != nil) ? 20 : 36)
+
+                    // Action Buttons
+                    if viewModel.isCompleted || _errorMessage != nil {
+                        VStack(spacing: 12) {
+                            if viewModel.isCompleted {
+                                Button {
+                                    if fromLibraryTab {
+                                        UIApplication.openApp(with: app.identifier ?? "")
+                                    } else {
+                                        dismiss()
+                                    }
+                                } label: {
+                                    HStack {
+                                        Image(systemName: fromLibraryTab ? "play.fill" : "checkmark")
+                                        Text(fromLibraryTab ? "Open App" : "Done")
+                                    }
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                    .foregroundStyle(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(Color.accentColor)
+                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                }
+                            } else if _errorMessage != nil {
+                                Button {
+                                    dismiss()
+                                } label: {
+                                    HStack {
+                                        Image(systemName: "xmark")
+                                        Text("Close")
+                                    }
+                                    .font(.system(size: 16, weight: .bold, design: .rounded))
+                                    .foregroundStyle(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 14)
+                                    .background(Color.red)
+                                    .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 32)
+                        .padding(.bottom, 36)
+                    }
                 }
+                .frame(maxWidth: 400) // Max width for larger devices
+                .background {
+                    RoundedRectangle(cornerRadius: 32, style: .continuous)
+                        .fill(
+                            LinearGradient(
+                                colors: [
+                                    colorScheme == .dark ? Color(UIColor.secondarySystemGroupedBackground) : .white,
+                                    colorScheme == .dark ? Color(UIColor.systemGroupedBackground) : Color(UIColor.secondarySystemBackground)
+                                ],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .shadow(color: .black.opacity(0.12), radius: 30, x: 0, y: 15)
+                }
+                .padding(.horizontal, 24) // Outer padding for all sizes
+
+                Spacer()
             }
-            .padding(16)
-            .background(Color.clear)
-            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
-                    .stroke(Color.primary.opacity(0.1), lineWidth: 1)
-            )
-            .shadow(color: .black.opacity(0.15), radius: 15, x: 0, y: 10)
-            Spacer()
         }
-        .padding(.horizontal, 16)
         .opacity(appearAnimation ? 1 : 0)
         .offset(y: appearAnimation ? 0 : 20)
         .onAppear {
-            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
                 appearAnimation = true
             }
             _install()
@@ -139,37 +200,6 @@ struct InstallPreviewView: View {
         }
     }
     
-    @ViewBuilder
-    private var actionButtons: some View {
-        if viewModel.isCompleted {
-            Button {
-                if fromLibraryTab {
-                    UIApplication.openApp(with: app.identifier ?? "")
-                } else {
-                    dismiss()
-                }
-            } label: {
-                Image(systemName: fromLibraryTab ? "play.fill" : "checkmark.circle.fill")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(10)
-                    .background(Color.green)
-                    .clipShape(Circle())
-            }
-        } else if _errorMessage != nil {
-            Button {
-                dismiss()
-            } label: {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundStyle(.white)
-                    .padding(10)
-                    .background(Color.red)
-                    .clipShape(Circle())
-            }
-        }
-    }
-    
     private func _install() {
         guard isSharing || app.identifier != Bundle.main.bundleIdentifier! || _installationMethod == 1 else {
             UIAlertController.showAlertWithOk(
@@ -180,8 +210,6 @@ struct InstallPreviewView: View {
         }
         
         Task.detached {
-            await MainActor.run { _metalState = .loading }
-
             do {
                 let handler = await ArchiveHandler(app: app, viewModel: viewModel)
                 try await handler.move()
@@ -190,7 +218,6 @@ struct InstallPreviewView: View {
                 if await !isSharing {
                     if await _installationMethod == 0 {
                         await MainActor.run {
-                            _metalState = .success
                             installer.packageUrl = packageUrl
                             viewModel.status = .ready
                         }
@@ -198,11 +225,9 @@ struct InstallPreviewView: View {
                         let handler = await InstallationProxy(viewModel: viewModel)
                         do {
                             try await handler.install(at: packageUrl, suspend: app.identifier == Bundle.main.bundleIdentifier!)
-                            await MainActor.run { _metalState = .success }
                         } catch {
                             await MainActor.run {
                                 _errorMessage = error.localizedDescription
-                                _metalState = .error
                                 viewModel.status = .broken(error)
                             }
                         }
@@ -210,7 +235,6 @@ struct InstallPreviewView: View {
                 } else {
                     let package = try await handler.moveToArchive(packageUrl, shouldOpen: !_useShareSheet)
                     await MainActor.run {
-                        _metalState = .success
                         DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
                             dismiss()
                             if _useShareSheet, let package {
@@ -222,7 +246,6 @@ struct InstallPreviewView: View {
             } catch {
                 await MainActor.run {
                     _errorMessage = error.localizedDescription
-                    _metalState = .error
                 }
             }
         }
@@ -230,15 +253,34 @@ struct InstallPreviewView: View {
 
     private func _handleStatusChange(_ status: InstallerStatusViewModel.InstallerStatus) {
         switch status {
-        case .none: break
-        case .ready: _metalState = .success
-        case .sendingManifest, .sendingPayload, .installing: _metalState = .loading
+        case .none, .ready, .sendingManifest, .sendingPayload, .installing: break
         case .completed(_):
-            _metalState = .success
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) { dismiss() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                if !fromLibraryTab {
+                    dismiss()
+                }
+            }
         case .broken(let error):
             _errorMessage = error.localizedDescription
-            _metalState = .error
+        }
+    }
+}
+
+// MARK: - Local Modern Progress Bar
+struct InstallProgressBar: View {
+    let progress: Double
+
+    var body: some View {
+        GeometryReader { geo in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.primary.opacity(0.06))
+
+                Capsule()
+                    .fill(Color.accentColor)
+                    .frame(width: geo.size.width * CGFloat(min(max(progress, 0), 1)))
+                    .animation(.spring(response: 0.5, dampingFraction: 0.8), value: progress)
+            }
         }
     }
 }
