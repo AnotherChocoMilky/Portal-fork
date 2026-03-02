@@ -58,10 +58,8 @@ struct InstallProgressView<Footer: View>: View {
                     .padding(.bottom, 32)
 
                 Spacer()
-                Spacer()
             }
         }
-        .ignoresSafeArea()
         .onAppear {
             _isPulsing = true
             _loadIconColors()
