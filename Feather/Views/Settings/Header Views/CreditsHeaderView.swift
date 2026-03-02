@@ -17,7 +17,7 @@ struct CreditsHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Honoring the talented individuals who contributed to the development of Portal."))
+            Text(.localized("Deevelopers who made Portal possible for you guys to use."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)

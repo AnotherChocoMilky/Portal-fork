@@ -17,7 +17,7 @@ struct PairingHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Establish a secure connection between devices to begin data transfer."))
+            Text(.localized("Establish a secure local connection between devices to begin data transfer."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)

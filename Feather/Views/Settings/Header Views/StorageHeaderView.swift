@@ -17,7 +17,7 @@ struct StorageHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Monitor your disk usage and manage cached application data."))
+            Text(.localized("Monitor how Portal uses your device's storage and manage cached data."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)

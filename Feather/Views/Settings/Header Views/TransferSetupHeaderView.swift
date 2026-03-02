@@ -13,11 +13,11 @@ struct TransferSetupHeaderView: View {
             headerIcon
 
             // Title
-            Text(.localized("Wireless Transfer"))
+            Text(.localized("Nearby Transfer"))
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Move your backups between devices instantly using a secure, direct connection."))
+            Text(.localized("Move your backups between devices instantly using a secure, direct local connection."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)

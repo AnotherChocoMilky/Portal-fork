@@ -17,7 +17,7 @@ struct PairingThroughOTPHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Connect devices using a secure 6-digit code over the internet."))
+            Text(.localized("Connect devices using a secure 6 digit code generated over your local network."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)

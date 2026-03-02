@@ -17,7 +17,7 @@ struct ColorHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Customize colors, themes, and advanced styling for the entire interface."))
+            Text(.localized("Customize colors, themes, and advanced styling for the entire Portal interface."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)

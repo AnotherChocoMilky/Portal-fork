@@ -17,7 +17,7 @@ struct BackupRestoreHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Protect your data by creating backups or restoring from previous sessions."))
+            Text(.localized("Protect your Portal data by creating Backups files or restoring from previous backup sessions."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)

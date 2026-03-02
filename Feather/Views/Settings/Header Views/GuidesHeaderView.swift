@@ -17,7 +17,7 @@ struct GuidesHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Access tutorials and AI-powered assistance for your application."))
+            Text(.localized("Access useful guides or tips with AI powered assistance from Apple Intelligence or OpenRouter."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)

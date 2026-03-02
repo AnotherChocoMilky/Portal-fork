@@ -17,7 +17,7 @@ struct FeedbackHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Share your thoughts, report issues, and help us improve the app."))
+            Text(.localized("Share your thoughts, report issues, and help me improve Portal."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)

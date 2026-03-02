@@ -17,7 +17,7 @@ struct FilesHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Manage your imported files, documents, and application backups."))
+            Text(.localized("Manage your settings for the Files feature."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)

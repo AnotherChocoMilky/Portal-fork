@@ -17,7 +17,7 @@ struct KeyboardHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Customize the dynamic background that appears behind the keyboard."))
+            Text(.localized("Customize the keyboard backdrop behind the keyboard."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)

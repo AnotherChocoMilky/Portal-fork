@@ -17,7 +17,7 @@ struct AppIconHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Change your application icon to match your style and preference."))
+            Text(.localized("Change your application icon to match your style and preference. This does not work as of this update."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)

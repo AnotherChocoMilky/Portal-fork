@@ -41,7 +41,7 @@ struct NotificationsView: View {
             } header: {
                 Text(.localized("Global Settings"))
             } footer: {
-                Text(.localized("Master switch to enable or disable all notifications from Portal."))
+                Text(.localized("Toggle to enable or disable all notifications from Portal."))
             }
 
             if notificationsEnabled {
@@ -52,7 +52,7 @@ struct NotificationsView: View {
                 } header: {
                     Text(.localized("Notification Preferences"))
                 } footer: {
-                    Text(.localized("Customize which events you want to be notified about."))
+                    Text(.localized("Choose which events you want to be notified about."))
                 }
 
                 Section {
@@ -60,7 +60,7 @@ struct NotificationsView: View {
                         notificationManager.sendTestNotification()
                     } label: {
                         HStack {
-                            Label(.localized("Send Test Notification"), systemImage: "paperplane.fill")
+                            Label(.localized("Test Notifications"), systemImage: "paperplane.fill")
                             Spacer()
                         }
                     }
@@ -71,7 +71,7 @@ struct NotificationsView: View {
                         notificationManager.openSettings()
                     } label: {
                         HStack {
-                            Label(.localized("Open System Settings"), systemImage: "gear")
+                            Label(.localized("Open iOS Settings"), systemImage: "gear")
                             Spacer()
                             Image(systemName: "arrow.up.right")
                                 .font(.caption)
@@ -79,7 +79,7 @@ struct NotificationsView: View {
                         }
                     }
                 } footer: {
-                    Text(.localized("Manage system-level notification permissions for Portal."))
+                    Text(.localized("Manage system level notification permissions for Portal."))
                 }
             }
         }
@@ -89,7 +89,7 @@ struct NotificationsView: View {
             }
             Button(.localized("Cancel"), role: .cancel) { }
         } message: {
-            Text(.localized("Please enable notifications in System Settings to receive updates."))
+            Text(.localized("Please enable notifications in iOS Settings to receive updates."))
         }
         .onAppear {
             notificationManager.checkAuthorizationStatus()
@@ -98,7 +98,7 @@ struct NotificationsView: View {
 
     private var authorizationStatusText: String {
         switch notificationManager.authorizationStatus {
-        case .authorized: return .localized("Authorized")
+        case .authorized: return .localized("Enabled")
         case .denied: return .localized("Denied")
         case .notDetermined: return .localized("Not Determined")
         case .provisional: return .localized("Provisional")

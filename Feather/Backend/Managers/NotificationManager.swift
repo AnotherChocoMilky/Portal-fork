@@ -1,3 +1,6 @@
+// made by dylan for Portal
+// NotificationManager is a code logic that allows the app to send push notifications to the user.
+
 import Foundation
 import UserNotifications
 import UIKit
@@ -94,18 +97,17 @@ final class NotificationManager: NSObject, ObservableObject {
     // MARK: - Send Notifications
     
     func sendAppSignedNotification(appName: String) {
-        // This was historically used for "Downloaded App" in this codebase
         sendNotification(
             title: .localized("Downloaded App"),
-            body: String(format: .localized("%@ was downloaded successfully. Check the Library tab to sign the app"), appName),
+            body: String(format: .localized("%@ was downloaded successfully. Check the Library tab to sign the app now."), appName),
             type: .appDownloaded
         )
     }
 
     func sendAppReadyNotification(appName: String) {
         sendNotification(
-            title: .localized("App Ready to Install"),
-            body: String(format: .localized("%@ has been signed successfully and is ready to install."), appName),
+            title: .localized("App Ready To Install"),
+            body: String(format: .localized("%@ has been signed successfully and is ready to install!"), appName),
             type: .appSigned
         )
     }
@@ -137,7 +139,7 @@ final class NotificationManager: NSObject, ObservableObject {
     func sendUpdateAvailableNotification(version: String) {
         sendNotification(
             title: .localized("Update Available"),
-            body: String(format: .localized("A new version of Feather (%@) is available."), version),
+            body: String(format: .localized("A new version of Portal (%@) is now available for updating."), version),
             type: .updateAvailable
         )
     }
@@ -145,7 +147,7 @@ final class NotificationManager: NSObject, ObservableObject {
     func sendBackupSuccessNotification() {
         sendNotification(
             title: .localized("Backup Successful"),
-            body: .localized("Your data has been backed up successfully."),
+            body: .localized("Your Portal data has been backed up successfully."),
             type: .backupSuccess
         )
     }
@@ -169,7 +171,7 @@ final class NotificationManager: NSObject, ObservableObject {
     func sendLowStorageNotification() {
         sendNotification(
             title: .localized("Low Storage"),
-            body: .localized("Your device storage is running low. Some features may not work correctly."),
+            body: .localized("Your device storage is running low. Some features may not work correctly and might make Portal not behave as intended."),
             type: .lowStorage
         )
     }
@@ -184,8 +186,8 @@ final class NotificationManager: NSObject, ObservableObject {
 
     func sendTestNotification() {
         sendNotification(
-            title: .localized("Test Notification"),
-            body: .localized("This is a test notification. Notifications are working correctly!"),
+            title: .localized("Hello From Portal"),
+            body: .localized("If you see this, notifications are working correctly!"),
             type: .test
         )
     }
@@ -198,8 +200,6 @@ final class NotificationManager: NSObject, ObservableObject {
         )
     }
 
-    /// Schedules the "App Closed" notification immediately.
-    /// Call this only from applicationWillTerminate to detect actual force quit.
     func scheduleAppClosedNotification() {
         let notificationDelay: TimeInterval = 1
         Task {
@@ -210,7 +210,7 @@ final class NotificationManager: NSObject, ObservableObject {
 
             let content = UNMutableNotificationContent()
             content.title = .localized("App Closed")
-            content.body = .localized("You just closed Portal, apps might not be able to refresh or run any background tasks.")
+            content.body = .localized("You just closed Portal, apps might not be able to refresh or run any set background tasks.")
             content.sound = .default
             content.categoryIdentifier = NotificationType.appClosed.rawValue
 
@@ -251,8 +251,6 @@ final class NotificationManager: NSObject, ObservableObject {
             content.sound = .default
             content.badge = NSNumber(value: 1)
             content.categoryIdentifier = type.rawValue
-
-            // Trigger nil for immediate delivery
             let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
 
             do {
@@ -272,21 +270,15 @@ final class NotificationManager: NSObject, ObservableObject {
     }
 }
 
-// MARK: - UNUserNotificationCenterDelegate
-
 extension NotificationManager: UNUserNotificationCenterDelegate {
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification, withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void) {
-        // Show notifications even when the app is in the foreground
         completionHandler([.banner, .list, .sound, .badge])
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler completionHandler: @escaping () -> Void) {
-        // Handle notification tap
         let identifier = response.notification.request.content.categoryIdentifier
         
         AppLogManager.shared.info("User tapped notification: \(identifier)", category: "Notifications")
-        
-        // Clear badge and delivered notifications when user taps a notification
         DispatchQueue.main.async {
             UIApplication.shared.applicationIconBadgeNumber = 0
             UNUserNotificationCenter.current().removeAllDeliveredNotifications()

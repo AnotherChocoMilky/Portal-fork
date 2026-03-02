@@ -17,7 +17,7 @@ struct GeneralHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Manage your app experience, certificates, and system logs in one place."))
+            Text(.localized("Manage your app experience, certificates, and system logs."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)

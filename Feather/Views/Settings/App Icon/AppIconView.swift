@@ -206,7 +206,7 @@ struct AppIconView: View {
 					.buttonStyle(.plain)
 				}
 			} footer: {
-				Text(.localized("The default icon automatically adapts to light and dark mode. Choose from various tinted and clear icon styles with different appearances. Keep in mind this is still WIP and will be fully done later."))
+				Text(.localized("The default icon automatically adapts to light and dark mode. Choose from various tinted and clear icon styles with different appearances."))
 			}
 		}
 		.onAppear {

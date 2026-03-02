@@ -17,7 +17,7 @@ struct AppHideElementsHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Toggle the visibility of various interface components across the app."))
+            Text(.localized("Toggle the visibility of various interface components across Portal."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)

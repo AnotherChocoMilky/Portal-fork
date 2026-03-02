@@ -17,7 +17,7 @@ struct UpdatesHeaderView: View {
                 .font(.title2).bold()
                 .foregroundStyle(Color.accentColor)
 
-            Text(.localized("Check for new versions and stay up to date with the latest features."))
+            Text(.localized("Check for new Portal versions and stay up to date with the latest features and bug fixes."))
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
                 .padding(.top, 4)
