@@ -995,6 +995,129 @@ struct InfoPlistEntriesView: View {
         }
     }
 
+    @ViewBuilder
+    private var batchActionsSheet: some View {
+        NavigationStack {
+            List {
+                Section {
+                    Button(role: .destructive) {
+                        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+                            for key in selectedEntries {
+                                options.customInfoPlistEntries.removeValue(forKey: key)
+                            }
+                            selectedEntries.removeAll()
+                            isSelectionMode = false
+                        }
+                        HapticsManager.shared.success()
+                        showBatchActionsSheet = false
+                    } label: {
+                        Label(.localized("Delete \(selectedEntries.count) Selected"), systemImage: "trash")
+                    }
+                    .disabled(selectedEntries.isEmpty)
+
+                    Button {
+                        selectedEntries.removeAll()
+                        isSelectionMode = false
+                        showBatchActionsSheet = false
+                    } label: {
+                        Label(.localized("Deselect All"), systemImage: "xmark.circle")
+                    }
+                } header: {
+                    Label(.localized("Selected Entries (\(selectedEntries.count))"), systemImage: "checkmark.circle.fill")
+                }
+            }
+            .navigationTitle(.localized("Batch Actions"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(.localized("Cancel")) {
+                        showBatchActionsSheet = false
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
+    }
+
+    @ViewBuilder
+    private var searchReplaceSheet: some View {
+        NavigationStack {
+            ZStack {
+                Color.clear.ignoresSafeArea()
+
+                ScrollView {
+                    VStack(spacing: 20) {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(.localized("Search Value"))
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                                .padding(.leading, 4)
+
+                            TextField(.localized("Value to Find"), text: $searchReplaceTarget)
+                                .font(.system(size: 16))
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .padding(14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(Color.clear)
+                                )
+                        }
+
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text(.localized("Replace With"))
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                                .padding(.leading, 4)
+
+                            TextField(.localized("Replacement Value"), text: $searchReplaceNewValue)
+                                .font(.system(size: 16))
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .padding(14)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                        .fill(Color.clear)
+                                )
+                        }
+
+                        Button {
+                            for (key, val) in options.customInfoPlistEntries {
+                                if let strVal = val.value as? String,
+                                   strVal.contains(searchReplaceTarget) {
+                                    let replaced = strVal.replacingOccurrences(of: searchReplaceTarget, with: searchReplaceNewValue)
+                                    options.customInfoPlistEntries[key] = AnyCodable(replaced)
+                                }
+                            }
+                            HapticsManager.shared.success()
+                            showSearchReplaceSheet = false
+                        } label: {
+                            Label(.localized("Replace All"), systemImage: "arrow.triangle.2.circlepath")
+                                .font(.system(size: 16, weight: .semibold))
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .disabled(searchReplaceTarget.isEmpty)
+                        .padding(.top, 8)
+                    }
+                    .padding(20)
+                }
+            }
+            .navigationTitle(.localized("Search & Replace"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(.localized("Cancel")) {
+                        showSearchReplaceSheet = false
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
+    }
+
     struct PresetButton: View {
         let title: String
         let subtitle: String
