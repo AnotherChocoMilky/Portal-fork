@@ -8,6 +8,7 @@ class SettingsHideManager: BaseHideManager, AppHideManaging {
             // Preferences
             HideableItem(id: "settings.home", title: "Home", description: "Show/Hide Home row", defaultValue: false),
             HideableItem(id: "settings.appearance", title: "Appearance", description: "Show/Hide Appearance row.", defaultValue: false),
+            HideableItem(id: "settings.notifications", title: "Notifications", description: "Show/Hide Notifications row.", defaultValue: false),
             HideableItem(id: "settings.liveActivities", title: "Live Activities", description: "Show/Hide Live Activities row.", defaultValue: false),
             HideableItem(id: "settings.language", title: "Language", description: "Show/Hide Language row.", defaultValue: false),
 

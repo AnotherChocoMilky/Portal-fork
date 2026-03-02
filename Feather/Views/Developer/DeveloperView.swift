@@ -3675,40 +3675,15 @@ struct TestNotificationsView: View {
     }
     
     private func sendTestNotification() {
-        let content = UNMutableNotificationContent()
-        content.title = "Test Notification"
-        content.body = "This is a test notification from Portal Developer Tools."
-        content.sound = .default
-        content.badge = 1
+        NotificationManager.shared.sendTestNotification()
         
-        // Create a trigger for immediate delivery
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
+        debugInfo.append("✅ Notification request sent to NotificationManager")
+        notificationSent = true
+        isTestingNotification = false
         
-        let request = UNNotificationRequest(
-            identifier: "feather.test.notification.\(UUID().uuidString)",
-            content: content,
-            trigger: trigger
-        )
-        
-        UNUserNotificationCenter.current().add(request) { error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    debugInfo.append("❌ ERROR: Failed to schedule notification")
-                    debugInfo.append("Error: \(error.localizedDescription)")
-                    AppLogManager.shared.error("Failed to send test notification: \(error.localizedDescription)", category: "Test Notifications")
-                } else {
-                    debugInfo.append("✅ Notification scheduled successfully")
-                    AppLogManager.shared.success("Test notification scheduled", category: "Test Notifications")
-                }
-                
-                notificationSent = true
-                isTestingNotification = false
-                
-                // Show result dialog after a short delay
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                    showResultDialog = true
-                }
-            }
+        // Show result dialog after a short delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            showResultDialog = true
         }
     }
     

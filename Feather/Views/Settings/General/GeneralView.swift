@@ -16,6 +16,8 @@ struct GeneralView: View {
 
             signingSection
 
+            notificationsSection
+
             dataSection
 
             systemSection
@@ -47,6 +49,16 @@ struct GeneralView: View {
                         .listRowBackground(Color.clear)
                 }
             }
+        }
+    }
+
+    private var notificationsSection: some View {
+        Section {
+            if !hideManager.isHidden("settings.notifications") {
+                SettingsRow(icon: "bell.badge.fill", title: String.localized("Notifications"), color: .accentColor, destination: NotificationsView())
+            }
+        } header: {
+            SettingsSectionHeader(title: String.localized("Notifications"), icon: "bell.fill")
         }
     }
 
