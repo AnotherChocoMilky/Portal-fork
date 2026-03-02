@@ -37,11 +37,9 @@ struct InstallPreviewView: View {
 
     // MARK: Body
     var body: some View {
-        ZStack {
-            InstallProgressView(app: app, viewModel: viewModel)
+        InstallProgressView(app: app, viewModel: viewModel) {
             _button()
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
         .sheet(isPresented: $_isWebviewPresenting) {
             SafariRepresentableView(url: installer.pageEndpoint).ignoresSafeArea()
         }
@@ -91,8 +89,20 @@ struct InstallPreviewView: View {
 
     @ViewBuilder
     private func _button() -> some View {
-        ZStack {
+        HStack(spacing: 16) {
             if viewModel.isCompleted {
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Close")
+                        .bold()
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(.ultraThinMaterial)
+                        .foregroundColor(colorManager.primaryColor.adaptiveForeground)
+                        .cornerRadius(12)
+                }
+
                 Button {
                     UIApplication.openApp(with: app.identifier ?? "")
                 } label: {
@@ -104,13 +114,23 @@ struct InstallPreviewView: View {
                         .foregroundColor(colorManager.primaryColor)
                         .cornerRadius(12)
                 }
-                .padding(32)
-                .padding(.bottom, 16) // Extra padding for safe area
-                .compatTransition()
+            } else {
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Cancel")
+                        .bold()
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 12)
+                        .background(.ultraThinMaterial)
+                        .foregroundColor(colorManager.primaryColor.adaptiveForeground)
+                        .cornerRadius(12)
+                }
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        .padding(.horizontal, 32)
         .animation(.easeInOut(duration: 0.3), value: viewModel.isCompleted)
+        .compatTransition()
     }
 
     private func _install() {

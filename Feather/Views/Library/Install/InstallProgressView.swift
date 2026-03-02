@@ -2,37 +2,63 @@
 import SwiftUI
 import IDeviceSwift
 
-struct InstallProgressView: View {
+struct InstallProgressView<Footer: View>: View {
     @State private var _isPulsing = false
     @ObservedObject var colorManager = AppIconColorManager.shared
 
     var app: AppInfoPresentable
     @ObservedObject var viewModel: InstallerStatusViewModel
+    let footer: () -> Footer
+
+    init(
+        app: AppInfoPresentable,
+        viewModel: InstallerStatusViewModel,
+        @ViewBuilder footer: @escaping () -> Footer = { EmptyView() }
+    ) {
+        self.app = app
+        self.viewModel = viewModel
+        self.footer = footer
+    }
 
     var body: some View {
         ZStack {
             _background()
 
-            VStack(spacing: 24) {
+            VStack(spacing: 0) {
+                Spacer()
+
                 _appIcon()
                     .scaleEffect(_isPulsing ? 1.02 : 1.0)
                     .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: _isPulsing)
+                    .padding(.bottom, 32)
 
-                VStack(spacing: 8) {
-                    Text(app.name ?? "App")
-                        .font(.title)
-                        .bold()
-                        .multilineTextAlignment(.center)
-                        .foregroundColor(colorManager.primaryColor.adaptiveForeground)
+                VStack(spacing: 16) {
+                    VStack(spacing: 12) {
+                        Text(app.name ?? "App")
+                            .font(.title)
+                            .bold()
+                            .multilineTextAlignment(.center)
+                            .foregroundColor(colorManager.primaryColor.adaptiveForeground)
 
-                    _progressBar()
+                        _progressBar()
+                    }
 
                     Text(viewModel.statusLabel)
                         .font(.subheadline)
-                        .foregroundColor(colorManager.primaryColor.adaptiveForeground.opacity(0.8))
+                        .fontWeight(.medium)
+                        .kerning(-0.2)
+                        .foregroundColor(colorManager.primaryColor.adaptiveForeground.opacity(0.7))
                         .multilineTextAlignment(.center)
                 }
                 .padding(.horizontal, 40)
+
+                Spacer()
+
+                footer()
+                    .padding(.bottom, 32)
+
+                Spacer()
+                Spacer()
             }
         }
         .ignoresSafeArea()
@@ -44,16 +70,29 @@ struct InstallProgressView: View {
 
     @ViewBuilder
     private func _background() -> some View {
-        LinearGradient(
-            gradient: Gradient(colors: [
-                colorManager.primaryColor,
-                colorManager.secondaryColor,
-                colorManager.tertiaryColor
-            ]),
-            startPoint: .top,
-            endPoint: .bottom
-        )
-        .overlay(.ultraThinMaterial)
+        ZStack {
+            LinearGradient(
+                gradient: Gradient(colors: [
+                    colorManager.primaryColor,
+                    colorManager.secondaryColor
+                ]),
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            RadialGradient(
+                gradient: Gradient(colors: [colorManager.primaryColor.opacity(0.6), .clear]),
+                center: UnitPoint(x: 0.5, y: 0.38),
+                startRadius: 0,
+                endRadius: 300
+            )
+            .ignoresSafeArea()
+
+            Rectangle()
+                .fill(.ultraThinMaterial)
+                .ignoresSafeArea()
+        }
     }
 
     @ViewBuilder
