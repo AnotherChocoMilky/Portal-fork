@@ -1,4 +1,5 @@
 import SwiftUI
+import NimbleViews
 import UniformTypeIdentifiers
 import CoreTransferable
 
@@ -559,19 +560,15 @@ struct RepoBuilder: View {
                     }
                 }
             }
-            .fileImporter(
-                isPresented: $showingImportPicker,
-                allowedContentTypes: [.json],
-                allowsMultipleSelection: false
-            ) { result in
-                switch result {
-                case .success(let urls):
-                    if let url = urls.first {
+            .sheet(isPresented: $showingImportPicker) {
+                FileImporterRepresentableView(
+                    allowedContentTypes: [.json],
+                    onDocumentsPicked: { urls in
+                        guard let url = urls.first else { return }
                         importJSON(from: url)
                     }
-                case .failure:
-                    break
-                }
+                )
+                .ignoresSafeArea()
             }
             .repoFileExporter(isPresented: $showingExportDialog, item: exportDocument, repoName: repoName)
             .sheet(isPresented: $showingGuide) {

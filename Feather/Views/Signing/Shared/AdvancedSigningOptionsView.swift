@@ -1,4 +1,5 @@
 import SwiftUI
+import NimbleViews
 import PhotosUI
 import ImageIO
 import UniformTypeIdentifiers
@@ -719,21 +720,19 @@ struct AdvancedDebugToolsView: View {
         .onAppear {
             loadAppInfo()
         }
-        .fileImporter(
-            isPresented: $showDylibPicker,
-            allowedContentTypes: [.init(filenameExtension: "dylib")!, .init(filenameExtension: "framework")!, .init(filenameExtension: "deb")!],
-            allowsMultipleSelection: true
-        ) { result in
-            switch result {
-            case .success(let urls):
-                for url in urls {
-                    if !options.injectionFiles.contains(url) {
-                        options.injectionFiles.append(url)
+        .sheet(isPresented: $showDylibPicker) {
+            FileImporterRepresentableView(
+                allowedContentTypes: [.init(filenameExtension: "dylib")!, .init(filenameExtension: "framework")!, .init(filenameExtension: "deb")!],
+                allowsMultipleSelection: true,
+                onDocumentsPicked: { urls in
+                    for url in urls {
+                        if !options.injectionFiles.contains(url) {
+                            options.injectionFiles.append(url)
+                        }
                     }
                 }
-            case .failure:
-                break
-            }
+            )
+            .ignoresSafeArea()
         }
         .alert("Status", isPresented: $showStatusAlert) {
             Button("OK", role: .cancel) { }
