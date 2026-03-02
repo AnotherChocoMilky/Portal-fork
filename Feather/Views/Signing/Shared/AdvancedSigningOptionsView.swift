@@ -1,6 +1,5 @@
 import SwiftUI
 import PhotosUI
-import NimbleViews
 import ImageIO
 import UniformTypeIdentifiers
 
@@ -720,18 +719,21 @@ struct AdvancedDebugToolsView: View {
         .onAppear {
             loadAppInfo()
         }
-        .sheet(isPresented: $showDylibPicker) {
-            FileImporterRepresentableView(
-                allowedContentTypes: [.init(filenameExtension: "dylib")!, .init(filenameExtension: "framework")!, .init(filenameExtension: "deb")!],
-                onDocumentsPicked: { urls in
-                    for url in urls {
-                        if !options.injectionFiles.contains(url) {
-                            options.injectionFiles.append(url)
-                        }
+        .fileImporter(
+            isPresented: $showDylibPicker,
+            allowedContentTypes: [.init(filenameExtension: "dylib")!, .init(filenameExtension: "framework")!, .init(filenameExtension: "deb")!],
+            allowsMultipleSelection: true
+        ) { result in
+            switch result {
+            case .success(let urls):
+                for url in urls {
+                    if !options.injectionFiles.contains(url) {
+                        options.injectionFiles.append(url)
                     }
                 }
-            )
-            .ignoresSafeArea()
+            case .failure:
+                break
+            }
         }
         .alert("Status", isPresented: $showStatusAlert) {
             Button("OK", role: .cancel) { }
@@ -975,37 +977,68 @@ struct BinaryInspectorView: View {
     }
 
     private func loadBinaryInfo() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            architectures = ["arm64", "arm64e"]
-            binaryInfo = [
-                "File Type": "Mach-O 64-bit executable",
-                "Magic": "0xFEEDFACF",
-                "CPU Type": "ARM64",
-                "File Size": "12.4 MB",
-                "Encrypted": "No",
-                "PIE": "Yes",
-                "Code Signature": "Present"
-            ]
-            loadCommands = [
-                "LC_SEGMENT_64 __PAGEZERO",
-                "LC_SEGMENT_64 __TEXT",
-                "LC_SEGMENT_64 __DATA",
-                "LC_SEGMENT_64 __LINKEDIT",
-                "LC_DYLD_INFO_ONLY",
-                "LC_SYMTAB",
-                "LC_DYSYMTAB",
-                "LC_LOAD_DYLINKER",
-                "LC_UUID",
-                "LC_BUILD_VERSION",
-                "LC_SOURCE_VERSION",
-                "LC_MAIN",
-                "LC_ENCRYPTION_INFO_64",
-                "LC_LOAD_DYLIB libSystem.B.dylib",
-                "LC_LOAD_DYLIB Foundation",
-                "LC_LOAD_DYLIB UIKit",
-                "LC_CODE_SIGNATURE"
-            ]
-            isLoading = false
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let appDir = Storage.shared.getAppDirectory(for: app) else {
+                DispatchQueue.main.async { isLoading = false }
+                return
+            }
+
+            let infoPlistURL = appDir.appendingPathComponent("Info.plist")
+            var executableName = app.name ?? ""
+            if let plistData = try? Data(contentsOf: infoPlistURL),
+               let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any] {
+                executableName = plist["CFBundleExecutable"] as? String ?? executableName
+            }
+
+            let execURL = appDir.appendingPathComponent(executableName)
+            var loadedArchs: [String] = []
+            var loadedInfo: [String: String] = [:]
+            var loadedCmds: [String] = []
+
+            if let data = try? Data(contentsOf: execURL) {
+                let fileSize = ByteCountFormatter.string(fromByteCount: Int64(data.count), countStyle: .file)
+                loadedInfo["File Size"] = fileSize
+
+                data.withUnsafeBytes { (ptr: UnsafeRawBufferPointer) in
+                    guard let base = ptr.baseAddress, data.count >= 4 else { return }
+                    let magic = base.load(as: UInt32.self)
+
+                    switch magic {
+                    case 0xFEEDFACF:
+                        loadedInfo["File Type"] = "Mach-O 64-bit"
+                        loadedInfo["Magic"] = "0xFEEDFACF"
+                        let cpuType = base.advanced(by: 4).load(as: UInt32.self)
+                        loadedInfo["CPU Type"] = cpuType == 0x0100000C ? "ARM64" : "ARM64E"
+                        loadedArchs = [cpuType == 0x0100000C ? "arm64" : "arm64e"]
+                    case 0xCEFAEDFE:
+                        loadedInfo["File Type"] = "Mach-O 32-bit"
+                        loadedInfo["Magic"] = "0xCEFAEDFE"
+                        loadedArchs = ["armv7"]
+                    case 0xBEBAFECA, 0xCAFEBABE:
+                        loadedInfo["File Type"] = "Mach-O Universal Binary"
+                        loadedInfo["Magic"] = String(format: "0x%08X", magic)
+                        if data.count >= 8 {
+                            let numArch = base.advanced(by: 4).load(as: UInt32.self).bigEndian
+                            loadedInfo["Fat Slices"] = "\(numArch)"
+                        }
+                    default:
+                        loadedInfo["File Type"] = "Unknown"
+                        loadedInfo["Magic"] = String(format: "0x%08X", magic)
+                    }
+                }
+            } else {
+                loadedInfo["File Type"] = "Executable Not Found"
+            }
+
+            loadedInfo["Bundle ID"] = app.identifier ?? "Unknown"
+            loadedInfo["Version"] = app.version ?? "Unknown"
+
+            DispatchQueue.main.async {
+                architectures = loadedArchs
+                binaryInfo = loadedInfo
+                loadCommands = loadedCmds
+                isLoading = false
+            }
         }
     }
 }
@@ -1080,20 +1113,70 @@ struct MachOAnalyzerView: View {
     }
 
     private func loadMachOInfo() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            segments = [
-                ("__PAGEZERO", "4 GB", "0x0"),
-                ("__TEXT", "2.1 MB", "0x100000000"),
-                ("__DATA", "512 KB", "0x100210000"),
-                ("__DATA_CONST", "128 KB", "0x100290000"),
-                ("__LINKEDIT", "1.8 MB", "0x1002B0000")
-            ]
-            symbols = [
-                "_main", "_UIApplicationMain", "_objc_msgSend",
-                "_NSLog", "_dispatch_async", "_malloc", "_free",
-                "_objc_alloc", "_objc_release", "_objc_retain"
-            ]
-            isLoading = false
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let appDir = Storage.shared.getAppDirectory(for: app) else {
+                DispatchQueue.main.async { isLoading = false }
+                return
+            }
+
+            let infoPlistURL = appDir.appendingPathComponent("Info.plist")
+            var executableName = app.name ?? ""
+            if let plistData = try? Data(contentsOf: infoPlistURL),
+               let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any] {
+                executableName = plist["CFBundleExecutable"] as? String ?? executableName
+            }
+
+            let execURL = appDir.appendingPathComponent(executableName)
+            var loadedSegments: [(name: String, size: String, vmAddr: String)] = []
+            var loadedSymbols: [String] = []
+
+            if let data = try? Data(contentsOf: execURL) {
+                data.withUnsafeBytes { (ptr: UnsafeRawBufferPointer) in
+                    guard let base = ptr.baseAddress, data.count >= 28 else { return }
+                    let magic = base.load(as: UInt32.self)
+                    guard magic == 0xFEEDFACF || magic == 0xCEFAEDFE else { return }
+                    let is64 = magic == 0xFEEDFACF
+                    let headerSize = is64 ? 32 : 28
+                    let ncmds = base.advanced(by: 16).load(as: UInt32.self)
+                    var offset = headerSize
+                    for _ in 0..<Int(ncmds) {
+                        guard offset + 8 <= data.count else { break }
+                        let cmd = base.advanced(by: offset).load(as: UInt32.self)
+                        let cmdsize = Int(base.advanced(by: offset + 4).load(as: UInt32.self))
+                        guard cmdsize > 0, offset + cmdsize <= data.count else { break }
+                        // LC_SEGMENT_64 = 0x19, LC_SEGMENT = 0x1
+                        if (is64 && cmd == 0x19) || (!is64 && cmd == 0x1) {
+                            let nameBytes = base.advanced(by: offset + 8)
+                            let segName = (0..<16).map { nameBytes.advanced(by: $0).load(as: UInt8.self) }
+                                .prefix(while: { $0 != 0 })
+                                .map { Character(UnicodeScalar($0)) }
+                            let name = String(segName)
+                            let vmSize: UInt64
+                            if is64 {
+                                vmSize = base.advanced(by: offset + 24).load(as: UInt64.self)
+                            } else {
+                                vmSize = UInt64(base.advanced(by: offset + 20).load(as: UInt32.self))
+                            }
+                            let vmAddr: UInt64
+                            if is64 {
+                                vmAddr = base.advanced(by: offset + 16).load(as: UInt64.self)
+                            } else {
+                                vmAddr = UInt64(base.advanced(by: offset + 16).load(as: UInt32.self))
+                            }
+                            let sizeStr = ByteCountFormatter.string(fromByteCount: Int64(vmSize), countStyle: .file)
+                            let addrStr = String(format: "0x%X", vmAddr)
+                            loadedSegments.append((name: name, size: sizeStr, vmAddr: addrStr))
+                        }
+                        offset += cmdsize
+                    }
+                }
+            }
+
+            DispatchQueue.main.async {
+                segments = loadedSegments
+                symbols = loadedSymbols
+                isLoading = false
+            }
         }
     }
 }
@@ -1150,16 +1233,64 @@ struct DylibDependenciesView: View {
     }
 
     private func loadDependencies() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            dependencies = [
-                ("libSystem.B.dylib", "/usr/lib/libSystem.B.dylib", false),
-                ("Foundation", "/System/Library/Frameworks/Foundation.framework/Foundation", false),
-                ("UIKit", "/System/Library/Frameworks/UIKit.framework/UIKit", false),
-                ("CoreFoundation", "/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation", false),
-                ("CoreGraphics", "/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics", false),
-                ("Security", "/System/Library/Frameworks/Security.framework/Security", true)
-            ]
-            isLoading = false
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let appDir = Storage.shared.getAppDirectory(for: app) else {
+                DispatchQueue.main.async { isLoading = false }
+                return
+            }
+
+            let infoPlistURL = appDir.appendingPathComponent("Info.plist")
+            var executableName = app.name ?? ""
+            if let plistData = try? Data(contentsOf: infoPlistURL),
+               let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any] {
+                executableName = plist["CFBundleExecutable"] as? String ?? executableName
+            }
+
+            let execURL = appDir.appendingPathComponent(executableName)
+            var loadedDeps: [(name: String, path: String, isWeak: Bool)] = []
+
+            if let data = try? Data(contentsOf: execURL) {
+                data.withUnsafeBytes { (ptr: UnsafeRawBufferPointer) in
+                    guard let base = ptr.baseAddress, data.count >= 28 else { return }
+                    let magic = base.load(as: UInt32.self)
+                    guard magic == 0xFEEDFACF || magic == 0xCEFAEDFE else { return }
+                    let is64 = magic == 0xFEEDFACF
+                    let headerSize = is64 ? 32 : 28
+                    let ncmds = base.advanced(by: 16).load(as: UInt32.self)
+                    var offset = headerSize
+                    // LC_LOAD_DYLIB = 0xC, LC_LOAD_WEAK_DYLIB = 0x18
+                    for _ in 0..<Int(ncmds) {
+                        guard offset + 8 <= data.count else { break }
+                        let cmd = base.advanced(by: offset).load(as: UInt32.self)
+                        let cmdsize = Int(base.advanced(by: offset + 4).load(as: UInt32.self))
+                        guard cmdsize > 0, offset + cmdsize <= data.count else { break }
+                        if cmd == 0xC || cmd == 0x18 {
+                            let nameOffset = Int(base.advanced(by: offset + 8).load(as: UInt32.self))
+                            if offset + nameOffset < data.count {
+                                let namePtr = base.advanced(by: offset + nameOffset)
+                                var nameBytes: [UInt8] = []
+                                var i = 0
+                                while offset + nameOffset + i < data.count {
+                                    let byte = namePtr.advanced(by: i).load(as: UInt8.self)
+                                    if byte == 0 { break }
+                                    nameBytes.append(byte)
+                                    i += 1
+                                }
+                                if let fullPath = String(bytes: nameBytes, encoding: .utf8), !fullPath.isEmpty {
+                                    let name = (fullPath as NSString).lastPathComponent
+                                    loadedDeps.append((name: name, path: fullPath, isWeak: cmd == 0x18))
+                                }
+                            }
+                        }
+                        offset += cmdsize
+                    }
+                }
+            }
+
+            DispatchQueue.main.async {
+                dependencies = loadedDeps
+                isLoading = false
+            }
         }
     }
 }
@@ -1224,16 +1355,65 @@ struct SecurityScanView: View {
     }
 
     private func performScan() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            scanResults = [
-                ("Code Signature", "Valid", "pass", "Binary is properly signed"),
-                ("Encryption", "Not Encrypted", "pass", "App Store encryption not present"),
-                ("PIE (ASLR)", "Enabled", "pass", "Position Independent Executable"),
-                ("Stack Canary", "Present", "pass", "Stack smashing protection enabled"),
-                ("ARC", "Enabled", "pass", "Automatic Reference Counting"),
-                ("Hardened Runtime", "Disabled", "warning", "Consider enabling for better security")
-            ]
-            isScanning = false
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let appDir = Storage.shared.getAppDirectory(for: app) else {
+                DispatchQueue.main.async { isScanning = false }
+                return
+            }
+
+            let infoPlistURL = appDir.appendingPathComponent("Info.plist")
+            var executableName = app.name ?? ""
+            var plistDict: [String: Any] = [:]
+            if let plistData = try? Data(contentsOf: infoPlistURL),
+               let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any] {
+                executableName = plist["CFBundleExecutable"] as? String ?? executableName
+                plistDict = plist
+            }
+
+            let execURL = appDir.appendingPathComponent(executableName)
+            var results: [(category: String, status: String, severity: String, detail: String)] = []
+
+            var hasPIE = false
+            var hasEncryption = false
+            var hasCodeSig = false
+
+            if let data = try? Data(contentsOf: execURL) {
+                data.withUnsafeBytes { (ptr: UnsafeRawBufferPointer) in
+                    guard let base = ptr.baseAddress, data.count >= 28 else { return }
+                    let magic = base.load(as: UInt32.self)
+                    guard magic == 0xFEEDFACF || magic == 0xCEFAEDFE else { return }
+                    let is64 = magic == 0xFEEDFACF
+                    let headerSize = is64 ? 32 : 28
+                    let flags = base.advanced(by: 24).load(as: UInt32.self)
+                    hasPIE = (flags & 0x200000) != 0
+                    let ncmds = base.advanced(by: 16).load(as: UInt32.self)
+                    var offset = headerSize
+                    for _ in 0..<Int(ncmds) {
+                        guard offset + 8 <= data.count else { break }
+                        let cmd = base.advanced(by: offset).load(as: UInt32.self)
+                        let cmdsize = Int(base.advanced(by: offset + 4).load(as: UInt32.self))
+                        guard cmdsize > 0, offset + cmdsize <= data.count else { break }
+                        if cmd == 0x1D || cmd == 0x2C { hasEncryption = true }  // LC_ENCRYPTION_INFO / LC_ENCRYPTION_INFO_64
+                        if cmd == 0x1D000001 { hasCodeSig = true }              // LC_CODE_SIGNATURE
+                        offset += cmdsize
+                    }
+                }
+                results.append(("Executable Found", "Yes", "pass", "Binary located at expected path"))
+                results.append(("PIE (ASLR)", hasPIE ? "Enabled" : "Disabled", hasPIE ? "pass" : "warning", hasPIE ? "Position Independent Executable enabled" : "PIE not set; ASLR may be limited"))
+                results.append(("Encryption", hasEncryption ? "Encrypted" : "Not Encrypted", "pass", hasEncryption ? "App Store encryption present" : "No App Store DRM encryption"))
+                results.append(("Code Signature", hasCodeSig ? "Present" : "Absent", hasCodeSig ? "pass" : "warning", hasCodeSig ? "LC_CODE_SIGNATURE load command found" : "No code signature command"))
+            } else {
+                results.append(("Executable", "Not Found", "fail", "Could not locate the app executable"))
+            }
+
+            let hasNSAppTransportSecurity = plistDict["NSAppTransportSecurity"] != nil
+            let allowsArbitraryLoads = (plistDict["NSAppTransportSecurity"] as? [String: Any])?["NSAllowsArbitraryLoads"] as? Bool ?? false
+            results.append(("App Transport Security", allowsArbitraryLoads ? "Disabled" : "Enforced", allowsArbitraryLoads ? "warning" : "pass", allowsArbitraryLoads ? "NSAllowsArbitraryLoads is true" : hasNSAppTransportSecurity ? "ATS configured with restrictions" : "Default ATS policy applies"))
+
+            DispatchQueue.main.async {
+                scanResults = results
+                isScanning = false
+            }
         }
     }
 }
@@ -1316,14 +1496,46 @@ struct EntitlementAnalyzerView: View {
     }
 
     private func loadEntitlements() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-            entitlements = [
-                ("application-identifier", "TEAM123.com.example.app", "low"),
-                ("get-task-allow", "true", "medium"),
-                ("keychain-access-groups", "[TEAM123.*]", "low"),
-                ("com.apple.developer.team-identifier", "TEAM123", "low")
-            ]
-            isLoading = false
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let appDir = Storage.shared.getAppDirectory(for: app) else {
+                DispatchQueue.main.async { isLoading = false }
+                return
+            }
+
+            let infoPlistURL = appDir.appendingPathComponent("Info.plist")
+            var executableName = app.name ?? ""
+            if let plistData = try? Data(contentsOf: infoPlistURL),
+               let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any] {
+                executableName = plist["CFBundleExecutable"] as? String ?? executableName
+            }
+
+            var loadedEntitlements: [(key: String, value: String, risk: String)] = []
+
+            // Try to read embedded entitlements from provisioning profile
+            let provisioningURL = appDir.appendingPathComponent("embedded.mobileprovision")
+            if let provData = try? Data(contentsOf: provisioningURL) {
+                let provString = String(data: provData, encoding: .ascii) ?? ""
+                if let startRange = provString.range(of: "<key>Entitlements</key>"),
+                   let plistStart = provString.range(of: "<dict>", range: startRange.upperBound..<provString.endIndex),
+                   let plistEnd = provString.range(of: "</dict>", range: plistStart.upperBound..<provString.endIndex) {
+                    let entitlementPlist = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n<plist version=\"1.0\">" + provString[plistStart.lowerBound...plistEnd.upperBound] + "</plist>"
+                    if let data = entitlementPlist.data(using: .utf8),
+                       let dict = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any] {
+                        let highRiskKeys = ["get-task-allow", "com.apple.private.security.no-sandbox", "platform-application"]
+                        let mediumRiskKeys = ["com.apple.security.get-task-allow", "keychain-access-groups", "com.apple.developer.icloud-container-identifiers"]
+                        for (key, value) in dict.sorted(by: { $0.key < $1.key }) {
+                            let valueStr = "\(value)"
+                            let risk = highRiskKeys.contains(key) ? "high" : (mediumRiskKeys.contains(key) ? "medium" : "low")
+                            loadedEntitlements.append((key: key, value: valueStr, risk: risk))
+                        }
+                    }
+                }
+            }
+
+            DispatchQueue.main.async {
+                entitlements = loadedEntitlements
+                isLoading = false
+            }
         }
     }
 }
@@ -1369,18 +1581,71 @@ struct CodeSignatureView: View {
     }
 
     private func loadSignatureInfo() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-            signatureInfo = [
-                "Format": "Mach-O thin (arm64)",
-                "CodeDirectory": "v=20400 size=12345",
-                "Hash Type": "SHA-256",
-                "CDHash": "abc123def456...",
-                "Signature Size": "4567 bytes",
-                "Authority": "Apple Development",
-                "Team ID": "TEAM123456",
-                "Signed Time": "Jan 15, 2026 at 10:30 AM"
-            ]
-            isLoading = false
+        DispatchQueue.global(qos: .userInitiated).async {
+            guard let appDir = Storage.shared.getAppDirectory(for: app) else {
+                DispatchQueue.main.async { isLoading = false }
+                return
+            }
+
+            let infoPlistURL = appDir.appendingPathComponent("Info.plist")
+            var executableName = app.name ?? ""
+            if let plistData = try? Data(contentsOf: infoPlistURL),
+               let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil) as? [String: Any] {
+                executableName = plist["CFBundleExecutable"] as? String ?? executableName
+            }
+
+            let execURL = appDir.appendingPathComponent(executableName)
+            var info: [String: String] = [:]
+
+            info["Bundle ID"] = app.identifier ?? "Unknown"
+            info["Version"] = app.version ?? "Unknown"
+            info["App Name"] = app.name ?? "Unknown"
+
+            if let data = try? Data(contentsOf: execURL) {
+                info["Executable Size"] = ByteCountFormatter.string(fromByteCount: Int64(data.count), countStyle: .file)
+                data.withUnsafeBytes { (ptr: UnsafeRawBufferPointer) in
+                    guard let base = ptr.baseAddress, data.count >= 28 else { return }
+                    let magic = base.load(as: UInt32.self)
+                    if magic == 0xFEEDFACF {
+                        info["Format"] = "Mach-O 64-bit (arm64)"
+                    } else if magic == 0xCEFAEDFE {
+                        info["Format"] = "Mach-O 32-bit"
+                    } else if magic == 0xBEBAFECA || magic == 0xCAFEBABE {
+                        info["Format"] = "Mach-O Universal Binary"
+                    }
+                    let is64 = magic == 0xFEEDFACF
+                    let headerSize = is64 ? 32 : 28
+                    let ncmds = base.advanced(by: 16).load(as: UInt32.self)
+                    var offset = headerSize
+                    for _ in 0..<Int(ncmds) {
+                        guard offset + 8 <= data.count else { break }
+                        let cmd = base.advanced(by: offset).load(as: UInt32.self)
+                        let cmdsize = Int(base.advanced(by: offset + 4).load(as: UInt32.self))
+                        guard cmdsize > 0, offset + cmdsize <= data.count else { break }
+                        if cmd == 0x1D000001 {  // LC_CODE_SIGNATURE
+                            info["Code Signature"] = "Present"
+                        }
+                        if (cmd == 0x1D || cmd == 0x2C) {  // Encryption info
+                            info["Encryption"] = "Encrypted"
+                        }
+                        offset += cmdsize
+                    }
+                }
+            } else {
+                info["Executable"] = "Not Found"
+            }
+
+            let provisioningURL = appDir.appendingPathComponent("embedded.mobileprovision")
+            if FileManager.default.fileExists(atPath: provisioningURL.path) {
+                info["Provisioning Profile"] = "Present"
+            } else {
+                info["Provisioning Profile"] = "Absent"
+            }
+
+            DispatchQueue.main.async {
+                signatureInfo = info
+                isLoading = false
+            }
         }
     }
 }
@@ -3483,17 +3748,28 @@ struct ResourceStatisticsView: View {
 
 // MARK: - Signing Logs Debug View
 struct SigningLogsDebugView: View {
-    @State private var logs: [(timestamp: String, level: String, message: String)] = []
+    @ObservedObject private var logManager = AppLogManager.shared
     @State private var selectedLevel = "All"
     @State private var autoScroll = true
 
     private let levels = ["All", "Info", "Warning", "Error", "Debug"]
 
-    var filteredLogs: [(timestamp: String, level: String, message: String)] {
+    private var filteredLogs: [LogEntry] {
+        let signingLogs = logManager.logs.filter { $0.category == "Signing" }
         if selectedLevel == "All" {
-            return logs
+            return signingLogs
         }
-        return logs.filter { $0.level == selectedLevel }
+        return signingLogs.filter { $0.level.rawValue.capitalized == selectedLevel }
+    }
+
+    private func colorForLevel(_ level: LogEntry.LogLevel) -> Color {
+        switch level {
+        case .info: return .blue
+        case .warning: return .orange
+        case .error, .critical: return .red
+        case .debug: return .purple
+        case .success: return .green
+        }
     }
 
     var body: some View {
@@ -3508,35 +3784,52 @@ struct SigningLogsDebugView: View {
 
             ScrollViewReader { proxy in
                 List {
-                    ForEach(filteredLogs.indices, id: \.self) { index in
-                        let log = filteredLogs[index]
-                        HStack(alignment: .top, spacing: 8) {
-                            Circle()
-                                .fill(colorForLevel(log.level))
-                                .frame(width: 8, height: 8)
-                                .padding(.top, 6)
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                HStack {
-                                    Text(log.timestamp)
-                                        .font(.caption2)
-                                        .foregroundStyle(.secondary)
-                                    Text(log.level)
-                                        .font(.caption2.weight(.semibold))
-                                        .foregroundStyle(colorForLevel(log.level))
-                                }
-                                Text(log.message)
-                                    .font(.system(.caption, design: .monospaced))
+                    if filteredLogs.isEmpty {
+                        Section {
+                            VStack(spacing: 12) {
+                                Image(systemName: "doc.text.magnifyingglass")
+                                    .font(.largeTitle)
+                                    .foregroundStyle(.secondary)
+                                Text("No Signing Logs Yet")
+                                    .foregroundStyle(.secondary)
+                                Text("Logs will appear here after signing an app.")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                                    .multilineTextAlignment(.center)
                             }
+                            .frame(maxWidth: .infinity)
+                            .padding()
                         }
-                        .id(index)
+                    } else {
+                        ForEach(filteredLogs) { log in
+                            HStack(alignment: .top, spacing: 8) {
+                                Circle()
+                                    .fill(colorForLevel(log.level))
+                                    .frame(width: 8, height: 8)
+                                    .padding(.top, 6)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    HStack {
+                                        Text(log.formattedTimestamp)
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                        Text(log.level.rawValue)
+                                            .font(.caption2.weight(.semibold))
+                                            .foregroundStyle(colorForLevel(log.level))
+                                    }
+                                    Text(log.message)
+                                        .font(.system(.caption, design: .monospaced))
+                                }
+                            }
+                            .id(log.id)
+                        }
                     }
                 }
-            .scrollContentBackground(.hidden)
-                .onChange(of: logs.count) { _ in
-                    if autoScroll, let lastIndex = filteredLogs.indices.last {
+                .scrollContentBackground(.hidden)
+                .onChange(of: filteredLogs.count) { _ in
+                    if autoScroll, let lastLog = filteredLogs.last {
                         withAnimation {
-                            proxy.scrollTo(lastIndex, anchor: .bottom)
+                            proxy.scrollTo(lastLog.id, anchor: .bottom)
                         }
                     }
                 }
@@ -3549,12 +3842,12 @@ struct SigningLogsDebugView: View {
                 Menu {
                     Toggle("Auto Scroll", isOn: $autoScroll)
                     Button {
-                        logs.removeAll()
+                        logManager.clearLogs()
                     } label: {
                         Label("Clear Logs", systemImage: "trash")
                     }
                     Button {
-                        UIPasteboard.general.string = logs.map { "[\($0.timestamp)] [\($0.level)] \($0.message)" }.joined(separator: "\n")
+                        UIPasteboard.general.string = filteredLogs.map { $0.formattedMessage }.joined(separator: "\n")
                     } label: {
                         Label("Copy All", systemImage: "doc.on.doc")
                     }
@@ -3563,38 +3856,6 @@ struct SigningLogsDebugView: View {
                 }
             }
         }
-        .onAppear {
-            loadSampleLogs()
-        }
-    }
-
-    private func colorForLevel(_ level: String) -> Color {
-        switch level {
-        case "Info": return .blue
-        case "Warning": return .orange
-        case "Error": return .red
-        case "Debug": return .purple
-        default: return .gray
-        }
-    }
-
-    private func loadSampleLogs() {
-        logs = [
-            ("10:23:45", "Info", "Starting Signing Process..."),
-            ("10:23:45", "Debug", "Loading Certificate From Keychain"),
-            ("10:23:46", "Info", "Certificate Loaded: Developer Certificate"),
-            ("10:23:46", "Debug", "Extracting IPA Contents"),
-            ("10:23:47", "Info", "Found executable: MyApp"),
-            ("10:23:47", "Debug", "Analyzing Mach-O Binary"),
-            ("10:23:48", "Info", "Removing Existing Signature"),
-            ("10:23:48", "Warning", "Bitcode Section Found, Stripping..."),
-            ("10:23:49", "Info", "Injecting Provisioning Profile"),
-            ("10:23:49", "Debug", "Updating Info.plist"),
-            ("10:23:50", "Info", "Signing Frameworks..."),
-            ("10:23:51", "Info", "Signing Main Executable"),
-            ("10:23:52", "Info", "Creating Signed IPA"),
-            ("10:23:53", "Info", "Signing Completed Successfully!")
-        ]
     }
 }
 
