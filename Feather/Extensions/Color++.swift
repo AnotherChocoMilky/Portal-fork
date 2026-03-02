@@ -36,4 +36,24 @@ extension Color {
 		let b = Float(components[2])
 		return String(format: "#%02lX%02lX%02lX", lroundf(r * 255), lroundf(g * 255), lroundf(b * 255))
 	}
+
+	/// Returns the perceived brightness of the color (0.0 to 1.0)
+	var brightness: Double {
+		var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+		if UIColor(self).getRed(&r, green: &g, blue: &b, alpha: &a) {
+			return Double((r * 299 + g * 587 + b * 114) / 1000)
+		}
+
+		var white: CGFloat = 0
+		if UIColor(self).getWhite(&white, alpha: &a) {
+			return Double(white)
+		}
+
+		return 0
+	}
+
+	/// Returns a high-contrast foreground color (black or white) based on the background brightness
+	var adaptiveForeground: Color {
+		brightness > 0.5 ? .black : .white
+	}
 }
