@@ -1,5 +1,3 @@
-// this view is not needed anymore, useless
-
 import SwiftUI
 import NimbleViews
 
@@ -27,10 +25,17 @@ struct NotificationsView: View {
                         }
                     }
                 }
+
+                HStack {
+                    Text(.localized("Status"))
+                    Spacer()
+                    Text(authorizationStatusText)
+                        .foregroundStyle(authorizationStatusColor)
+                }
             } header: {
                 Text(.localized("App Notifications"))
             } footer: {
-                Text(.localized("Receive notifications when apps are successfully signed from the Sources tab and ready in the Library tab."))
+                Text(.localized("Receive notifications when apps are successfully signed and ready in the Library tab."))
             }
             
             if notificationsEnabled {
@@ -103,6 +108,26 @@ struct NotificationsView: View {
         }
         .onAppear {
             notificationManager.checkAuthorizationStatus()
+        }
+    }
+
+    private var authorizationStatusText: String {
+        switch notificationManager.authorizationStatus {
+        case .authorized: return .localized("Authorized")
+        case .denied: return .localized("Denied")
+        case .notDetermined: return .localized("Not Determined")
+        case .provisional: return .localized("Provisional")
+        case .ephemeral: return .localized("Ephemeral")
+        @unknown default: return .localized("Unknown")
+        }
+    }
+
+    private var authorizationStatusColor: Color {
+        switch notificationManager.authorizationStatus {
+        case .authorized: return .green
+        case .denied: return .red
+        case .notDetermined: return .orange
+        default: return .secondary
         }
     }
 }
