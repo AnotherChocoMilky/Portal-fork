@@ -198,10 +198,10 @@ final class NotificationManager: NSObject, ObservableObject {
         )
     }
 
-    /// Schedules the "App Closed" notification with a short delay.
-    /// Call this when the app enters the background; cancel if it returns to the foreground.
+    /// Schedules the "App Closed" notification immediately.
+    /// Call this only from applicationWillTerminate to detect actual force quit.
     func scheduleAppClosedNotification() {
-        let delay: TimeInterval = 2
+        let notificationDelay: TimeInterval = 1
         Task {
             let center = UNUserNotificationCenter.current()
             let settings = await center.notificationSettings()
@@ -214,15 +214,10 @@ final class NotificationManager: NSObject, ObservableObject {
             content.sound = .default
             content.categoryIdentifier = NotificationType.appClosed.rawValue
 
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: notificationDelay, repeats: false)
             let request = UNNotificationRequest(identifier: "feather.app.closed", content: content, trigger: trigger)
             try? await center.add(request)
         }
-    }
-
-    /// Cancels a previously scheduled "App Closed" notification (e.g., when the app returns to foreground).
-    func cancelAppClosedNotification() {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["feather.app.closed"])
     }
 
     private func sendNotification(title: String, body: String, type: NotificationType) {

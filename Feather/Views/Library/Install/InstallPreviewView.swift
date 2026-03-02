@@ -89,46 +89,17 @@ struct InstallPreviewView: View {
 
     @ViewBuilder
     private func _button() -> some View {
-        HStack(spacing: 16) {
-            if viewModel.isCompleted {
-                Button {
-                    dismiss()
-                } label: {
-                    Text("Close")
-                        .bold()
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(.ultraThinMaterial)
-                        .foregroundColor(colorManager.primaryColor.adaptiveForeground)
-                        .cornerRadius(12)
-                }
-
-                Button {
-                    UIApplication.openApp(with: app.identifier ?? "")
-                } label: {
-                    Text("Open")
-                        .bold()
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(colorManager.primaryColor.adaptiveForeground)
-                        .foregroundColor(colorManager.primaryColor)
-                        .cornerRadius(12)
-                }
-            } else {
-                Button {
-                    dismiss()
-                } label: {
-                    Text("Cancel")
-                        .bold()
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 12)
-                        .background(.ultraThinMaterial)
-                        .foregroundColor(colorManager.primaryColor.adaptiveForeground)
-                        .cornerRadius(12)
-                }
-            }
+        Button {
+            dismiss()
+        } label: {
+            Text(viewModel.isCompleted ? "Close" : "Cancel")
+                .bold()
+                .padding(.horizontal, 24)
+                .padding(.vertical, 12)
+                .background(.ultraThinMaterial)
+                .foregroundColor(colorManager.primaryColor.adaptiveForeground)
+                .cornerRadius(12)
         }
-        .padding(.horizontal, 32)
         .animation(.easeInOut(duration: 0.3), value: viewModel.isCompleted)
         .compatTransition()
     }

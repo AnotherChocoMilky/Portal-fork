@@ -22,42 +22,17 @@ struct InstallProgressView<Footer: View>: View {
 
     var body: some View {
         ZStack {
-            _background()
+            Color.black.opacity(0.45)
+                .ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            VStack {
                 Spacer()
+                    .frame(minHeight: 0, maxHeight: .infinity)
 
-                _appIcon()
-                    .scaleEffect(_isPulsing ? 1.02 : 1.0)
-                    .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: _isPulsing)
-                    .padding(.bottom, 32)
-
-                VStack(spacing: 16) {
-                    VStack(spacing: 12) {
-                        Text(app.name ?? "App")
-                            .font(.title)
-                            .bold()
-                            .multilineTextAlignment(.center)
-                            .foregroundColor(colorManager.primaryColor.adaptiveForeground)
-
-                        _progressBar()
-                    }
-
-                    Text(viewModel.statusLabel)
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .kerning(-0.2)
-                        .foregroundColor(colorManager.primaryColor.adaptiveForeground.opacity(0.7))
-                        .multilineTextAlignment(.center)
-                }
-                .padding(.horizontal, 40)
+                _card()
 
                 Spacer()
-
-                footer()
-                    .padding(.bottom, 32)
-
-                Spacer()
+                    .frame(minHeight: 0, idealHeight: 80, maxHeight: .infinity)
             }
         }
         .onAppear {
@@ -67,7 +42,42 @@ struct InstallProgressView<Footer: View>: View {
     }
 
     @ViewBuilder
-    private func _background() -> some View {
+    private func _card() -> some View {
+        VStack(spacing: 16) {
+            _appIcon()
+                .scaleEffect(_isPulsing ? 1.02 : 1.0)
+                .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: _isPulsing)
+
+            VStack(spacing: 10) {
+                Text(app.name ?? "App")
+                    .font(.headline)
+                    .bold()
+                    .multilineTextAlignment(.center)
+                    .foregroundColor(colorManager.primaryColor.adaptiveForeground)
+
+                _progressBar()
+                    .padding(.horizontal, 4)
+
+                Text(viewModel.statusLabel)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .kerning(-0.2)
+                    .foregroundColor(colorManager.primaryColor.adaptiveForeground.opacity(0.7))
+                    .multilineTextAlignment(.center)
+            }
+
+            footer()
+        }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 24)
+        .background(_cardBackground())
+        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .shadow(color: .black.opacity(0.25), radius: 24, x: 0, y: 8)
+        .padding(.horizontal, 40)
+    }
+
+    @ViewBuilder
+    private func _cardBackground() -> some View {
         ZStack {
             LinearGradient(
                 gradient: Gradient(colors: [
@@ -77,19 +87,16 @@ struct InstallProgressView<Footer: View>: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .ignoresSafeArea()
 
             RadialGradient(
                 gradient: Gradient(colors: [colorManager.primaryColor.opacity(0.6), .clear]),
-                center: UnitPoint(x: 0.5, y: 0.38),
+                center: UnitPoint(x: 0.5, y: 0.3),
                 startRadius: 0,
-                endRadius: 300
+                endRadius: 200
             )
-            .ignoresSafeArea()
 
             Rectangle()
                 .fill(.ultraThinMaterial)
-                .ignoresSafeArea()
         }
     }
 
@@ -99,15 +106,15 @@ struct InstallProgressView<Footer: View>: View {
             ZStack(alignment: .leading) {
                 RoundedRectangle(cornerRadius: 4)
                     .fill(colorManager.primaryColor.adaptiveForeground.opacity(0.2))
-                    .frame(height: 6)
+                    .frame(height: 4)
 
                 RoundedRectangle(cornerRadius: 4)
                     .fill(colorManager.primaryColor)
-                    .frame(width: geometry.size.width * CGFloat(viewModel.overallProgress), height: 6)
+                    .frame(width: geometry.size.width * CGFloat(viewModel.overallProgress), height: 4)
                     .animation(.smooth, value: viewModel.overallProgress)
             }
         }
-        .frame(height: 6)
+        .frame(height: 4)
     }
 
     private func _loadIconColors() {
@@ -120,10 +127,10 @@ struct InstallProgressView<Footer: View>: View {
     @ViewBuilder
     private func _appIcon() -> some View {
         FRAppIconView(app: app)
-            .frame(width: 100, height: 100)
-            .shadow(color: colorManager.primaryColor.opacity(0.6), radius: 16, x: 0, y: 8)
+            .frame(width: 72, height: 72)
+            .shadow(color: colorManager.primaryColor.opacity(0.6), radius: 12, x: 0, y: 6)
             .overlay {
-                RoundedRectangle(cornerRadius: 100 * 0.2237)
+                RoundedRectangle(cornerRadius: 72 * 0.2237)
                     .stroke(colorManager.primaryColor.opacity(0.3), lineWidth: 1)
             }
     }
