@@ -22,6 +22,7 @@ struct GlobalThemeModifier: ViewModifier {
     @AppStorage(UserDefaults.Keys.cardOpacity) private var cardOpacity: Double = 1.0
 
     @ObservedObject private var appState = AppStateManager.shared
+    @Environment(\.colorScheme) private var colorScheme
 
     private var selectedFontDesign: Font.Design {
         switch fontDesign {
@@ -67,6 +68,24 @@ struct GlobalThemeModifier: ViewModifier {
                 .environment(\.cardOpacity, cardOpacity)
                 .sheetBackgroundColorModifier(sheetColor)
         }
+        .onAppear {
+            _applyDefaultDarkThemeIfNeeded()
+        }
+    }
+
+    private func _applyDefaultDarkThemeIfNeeded() {
+        // Only apply Midnight theme automatically if:
+        // 1. The system is in Dark Mode
+        // 2. The user has not manually selected a theme yet (no stored uiElement key)
+        guard colorScheme == .dark else { return }
+        guard UserDefaults.standard.object(forKey: UserDefaults.Keys.uiElement) == nil else { return }
+
+        // Apply the Midnight preset theme values
+        backgroundManager.baseColor = Color(hex: "#1C1C1E")
+        uiElementColorHex = "#0A84FF"
+        textColorHex = "#FFFFFF"
+        secondaryTextColorHex = "#8E8E93"
+        fontDesign = "rounded"
     }
 }
 

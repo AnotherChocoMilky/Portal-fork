@@ -532,6 +532,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		// Called when the user discards a scene session (iPad multi-window)
 		AppLogManager.shared.info("Scene session discarded", category: "Lifecycle")
 	}
+
+	func applicationWillTerminate(_ application: UIApplication) {
+		// Called only when the user force quits the app from the app switcher
+		AppLogManager.shared.info("Application will terminate (force quit)", category: "Lifecycle")
+		NotificationManager.shared.scheduleAppClosedNotification()
+	}
 	
 	private func _setupCrashHandler() {
 		// Set up NSException handler for crash logging
@@ -710,7 +716,6 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
 	func sceneWillEnterForeground(_ scene: UIScene) {
 		// Called as scene transitions from background to foreground
 		AppLogManager.shared.debug("Scene entering foreground", category: "Lifecycle")
-		NotificationManager.shared.cancelAppClosedNotification()
 	}
 
 	func sceneDidEnterBackground(_ scene: UIScene) {
@@ -719,6 +724,5 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
 		
 		// Save any pending changes
 		Storage.shared.saveContext()
-		NotificationManager.shared.scheduleAppClosedNotification()
 	}
 }
