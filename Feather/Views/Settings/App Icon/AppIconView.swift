@@ -209,6 +209,14 @@ struct AppIconView: View {
 				Text(.localized("The default icon automatically adapts to light and dark mode. Choose from various tinted and clear icon styles with different appearances. Keep in mind this is still WIP and will be fully done later."))
 			}
 		}
+		.onAppear {
+			currentIcon = UIApplication.shared.alternateIconName
+		}
+		.onChange(of: scenePhase) { newPhase in
+			if newPhase == .active {
+				currentIcon = UIApplication.shared.alternateIconName
+			}
+		}
 		.alert(.localized("Error"), isPresented: $showingError) {
 			Button(.localized("OK"), role: .cancel) { }
 		} message: {
@@ -227,18 +235,6 @@ struct AppIconView: View {
 
 		// 2. Debounce and concurrency lock
 		guard !isChangingIcon else { return }
-
-		// 3. Ensure application is active to avoid background invalidation or OSStatus -54 errors
-		guard UIApplication.shared.applicationState == .active else {
-			print("[AppIcon] Skipping icon change: application is not active")
-			return
-		}
-
-		// Guard against scene phase changes if possible
-		guard scenePhase == .active else {
-			print("[AppIcon] Skipping icon change: scene is not active")
-			return
-		}
 
 		// 4. Verify system support
 		guard UIApplication.shared.supportsAlternateIcons else {
