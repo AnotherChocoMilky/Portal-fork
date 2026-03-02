@@ -1,5 +1,4 @@
 import SwiftUI
-import NimbleViews
 import UniformTypeIdentifiers
 
 struct InfoPlistEntriesView: View {
@@ -97,16 +96,19 @@ struct InfoPlistEntriesView: View {
             .sheet(isPresented: $showEditSheet) { editEntrySheet }
             .sheet(isPresented: $showBatchActionsSheet) { batchActionsSheet }
             .sheet(isPresented: $showSearchReplaceSheet) { searchReplaceSheet }
-            .sheet(isPresented: $showImportSheet) {
-                FileImporterRepresentableView(
-                    allowedContentTypes: [.propertyList, .xml],
-                    allowsMultipleSelection: false,
-                    onDocumentsPicked: { urls in
-                        guard let url = urls.first else { return }
+            .fileImporter(
+                isPresented: $showImportSheet,
+                allowedContentTypes: [.propertyList, .xml],
+                allowsMultipleSelection: false
+            ) { result in
+                switch result {
+                case .success(let urls):
+                    if let url = urls.first {
                         importPlistFile(url: url)
                     }
-                )
-                .ignoresSafeArea()
+                case .failure:
+                    break
+                }
             }
             .confirmationDialog(.localized("Delete Entry"), isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
                 Button(.localized("Delete"), role: .destructive) {
@@ -1775,6 +1777,8 @@ struct InfoPlistEntriesView: View {
     }
     
     private func importPlistFile(url: URL) {
+        let isSecurityScoped = url.startAccessingSecurityScopedResource()
+        defer { if isSecurityScoped { url.stopAccessingSecurityScopedResource() } }
         do {
             let data = try Data(contentsOf: url)
             guard let plist = try PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {

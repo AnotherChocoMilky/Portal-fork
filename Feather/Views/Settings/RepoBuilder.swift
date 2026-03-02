@@ -1,5 +1,4 @@
 import SwiftUI
-import NimbleViews
 import UniformTypeIdentifiers
 import CoreTransferable
 
@@ -303,15 +302,27 @@ struct RepoBuilder: View {
     }
 
     var body: some View {
-        NBNavigationView(String.localized("Source Builder")) {
-            Form {
-                if showHeaderViews {
-                    Section {
-                        RepoBuilderHeaderView()
-                            .listRowInsets(EdgeInsets())
-                            .listRowBackground(Color.clear)
+        NavigationStack {
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color.blue.opacity(0.06),
+                        Color.purple.opacity(0.04),
+                        Color.clear
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
+
+                Form {
+                    if showHeaderViews {
+                        Section {
+                            RepoBuilderHeaderView()
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.clear)
+                        }
                     }
-                }
 
                 Section(header: Label(String.localized("Source Information"), systemImage: "info.circle.fill")) {
                     HStack {
@@ -548,12 +559,19 @@ struct RepoBuilder: View {
                     }
                 }
             }
-            .sheet(isPresented: $showingImportPicker) {
-                FileImporterRepresentableView(allowedContentTypes: [.json]) { urls in
-                    guard let url = urls.first else { return }
-                    importJSON(from: url)
+            .fileImporter(
+                isPresented: $showingImportPicker,
+                allowedContentTypes: [.json],
+                allowsMultipleSelection: false
+            ) { result in
+                switch result {
+                case .success(let urls):
+                    if let url = urls.first {
+                        importJSON(from: url)
+                    }
+                case .failure:
+                    break
                 }
-                .ignoresSafeArea()
             }
             .repoFileExporter(isPresented: $showingExportDialog, item: exportDocument, repoName: repoName)
             .sheet(isPresented: $showingGuide) {
@@ -588,6 +606,8 @@ struct RepoBuilder: View {
             } message: {
                 Text(String.localized("This will replace all current information in the builder with the data from the saved source."))
             }
+        }
+        .navigationTitle(String.localized("Source Builder"))
         }
     }
 
