@@ -1,11 +1,15 @@
 import SwiftUI
+import CoreImage
+import CoreImage.CIFilterBuiltins
 
 struct CoreSignHeaderView: View {
     // MARK: - State
     @State private var currentSubtitleIndex: Int = 0
+    @State private var recentSubtitleIndices: [Int] = []
     @State private var showCredits = false
     @State private var showSecretDimension = false
     @State private var iconRotationAngle: Double = 0
+    @State private var iconBackgroundColor: Color = Color.accentColor.opacity(0.15)
     var hideAboutButton: Bool = false
 
     // MARK: - Current Subtitle
@@ -19,6 +23,7 @@ struct CoreSignHeaderView: View {
             .onAppear {
                 setupLifecycleObservers()
                 rotateSubtitle()
+                loadIconBackgroundColor()
             }
             .sheet(isPresented: $showCredits) {
                 CreditsView()
@@ -88,18 +93,22 @@ struct CoreSignHeaderView: View {
                 .background(Color.primary.opacity(0.05))
                 .clipShape(Capsule())
 
-                Text(.localized("Release"))
-                    .font(.system(size: 10, weight: .bold))
-                    .kerning(1.0)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(.ultraThinMaterial)
-                    .clipShape(Capsule())
-                    .foregroundStyle(Color.accentColor)
-                    .overlay(
-                        Capsule()
-                            .stroke(Color.accentColor.opacity(0.2), lineWidth: 0.5)
-                    )
+                HStack(spacing: 4) {
+                    Image(systemName: "tag.fill")
+                        .font(.system(size: 10))
+                    Text(.localized("Release"))
+                        .font(.system(size: 10, weight: .bold))
+                        .kerning(1.0)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(.ultraThinMaterial)
+                .clipShape(Capsule())
+                .foregroundStyle(Color.accentColor)
+                .overlay(
+                    Capsule()
+                        .stroke(Color.accentColor.opacity(0.2), lineWidth: 0.5)
+                )
             }
 
             Text("\(UIDevice.current.humanReadableModelName) • \(UIDevice.current.systemVersion) • \(Bundle.main.bundleIdentifier ?? "com.feather.portal")")
@@ -109,7 +118,10 @@ struct CoreSignHeaderView: View {
             Text(currentSubtitle)
                 .font(.subheadline)
                 .foregroundStyle(Color.accentColor.opacity(0.7))
-                .transition(.opacity)
+                .transition(.asymmetric(
+                    insertion: .move(edge: .bottom).combined(with: .opacity),
+                    removal: .move(edge: .top).combined(with: .opacity)
+                ))
                 .id(currentSubtitleIndex)
                 .padding(.top, 4)
             
@@ -132,7 +144,12 @@ struct CoreSignHeaderView: View {
     @ViewBuilder
     private var appIcon: some View {
         ZStack {
-            Color.accentColor.opacity(0.15)
+            iconBackgroundColor
+                .overlay(
+                    iconBackgroundColor
+                        .blur(radius: 8)
+                        .opacity(0.6)
+                )
 
             if let iconName = Bundle.main.iconFileName,
                let icon = UIImage(named: iconName) {
@@ -150,7 +167,7 @@ struct CoreSignHeaderView: View {
         }
         .frame(width: 60, height: 60)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: 5)
+        .shadow(color: iconBackgroundColor.opacity(0.5), radius: 10, x: 0, y: 5)
         .overlay(
             RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)
@@ -188,22 +205,54 @@ struct CoreSignHeaderView: View {
     }
 
     private func rotateSubtitle() {
+        let maxRecentSubtitles = 3
         let subtitles = HeaderSubtitle.allSubtitles
         guard !subtitles.isEmpty else { return }
 
         var newIndex = Int.random(in: 0..<subtitles.count)
-        
+
         if subtitles.count > 1 {
             var attempts = 0
-            while newIndex == currentSubtitleIndex && attempts < 10 {
+            // Avoid the last `maxRecentSubtitles` shown indices to prevent repeats
+            while recentSubtitleIndices.contains(newIndex) && attempts < 20 {
                 newIndex = Int.random(in: 0..<subtitles.count)
                 attempts += 1
             }
         }
 
-        withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) {
+        // Update recent history (keep last maxRecentSubtitles)
+        recentSubtitleIndices.append(newIndex)
+        if recentSubtitleIndices.count > maxRecentSubtitles {
+            recentSubtitleIndices.removeFirst()
+        }
+
+        withAnimation(.spring(response: 0.45, dampingFraction: 0.75)) {
             currentSubtitleIndex = newIndex
         }
+    }
+
+    private func loadIconBackgroundColor() {
+        let rgbMaxValue: CGFloat = 255
+        guard let iconName = Bundle.main.iconFileName,
+              let icon = UIImage(named: iconName),
+              let ciImage = CIImage(image: icon) else { return }
+        // CIVector uses x/y for origin and z/w for width/height of the rectangle
+        let extent = CIVector(x: ciImage.extent.origin.x, y: ciImage.extent.origin.y,
+                              z: ciImage.extent.size.width, w: ciImage.extent.size.height)
+        guard let filter = CIFilter(name: "CIAreaAverage",
+                                    parameters: [kCIInputImageKey: ciImage,
+                                                 kCIInputExtentKey: extent]),
+              let output = filter.outputImage else { return }
+        var bitmap = [UInt8](repeating: 0, count: 4)
+        let context = CIContext(options: [.workingColorSpace: kCFNull as Any])
+        context.render(output, toBitmap: &bitmap, rowBytes: 4,
+                       bounds: CGRect(x: 0, y: 0, width: 1, height: 1),
+                       format: .RGBA8, colorSpace: nil)
+        let color = Color(UIColor(red: CGFloat(bitmap[0]) / rgbMaxValue,
+                                  green: CGFloat(bitmap[1]) / rgbMaxValue,
+                                  blue: CGFloat(bitmap[2]) / rgbMaxValue,
+                                  alpha: 0.25))
+        DispatchQueue.main.async { iconBackgroundColor = color }
     }
 
     func onTabChange() {
