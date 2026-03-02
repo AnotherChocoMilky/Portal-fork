@@ -249,11 +249,9 @@ struct LibraryView: View {
                         .sheet(item: $_selectedInfoAppPresenting) { app in
                                 LibraryInfoView(app: app.base)
                         }
-                        .sheet(item: $_selectedInstallAppPresenting) { app in
+                        .fullScreenCover(item: $_selectedInstallAppPresenting) { app in
                                 InstallPreviewView(app: app.base, isSharing: app.archive)
-                                        .presentationDetents([.height(200)])
-                                        .presentationDragIndicator(.visible)
-                                        .compatPresentationRadius(21)
+                                        .interactiveDismissDisabled()
                         }
                         .fullScreenCover(item: $_selectedSigningAppPresenting) { app in
                                 ModernSigningView(app: app.base)
