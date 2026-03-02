@@ -158,6 +158,8 @@ struct NotificationToggleRow: View {
         case .certExpiring: return .localized("Certificate Expiry")
         case .lowStorage: return .localized("Low Storage")
         case .securityAlert: return .localized("Security Alerts")
+        case .appClosed: return .localized("App Closed")
+        case .dataFetched: return .localized("Data Fetched")
         case .test: return .localized("Test Notifications")
         }
     }
@@ -175,6 +177,8 @@ struct NotificationToggleRow: View {
         case .certExpiring: return .localized("Notify when your certificate is about to expire.")
         case .lowStorage: return .localized("Notify when device storage is low.")
         case .securityAlert: return .localized("Notify about important security events.")
+        case .appClosed: return .localized("Notify when Portal is force closed.")
+        case .dataFetched: return .localized("Notify when source data has been fetched and cached.")
         case .test: return .localized("Receive test notifications to verify setup.")
         }
     }
@@ -192,6 +196,8 @@ struct NotificationToggleRow: View {
         case .certExpiring: return "clock.badge.exclamationmark.fill"
         case .lowStorage: return "internaldrive.fill"
         case .securityAlert: return "shield.fill"
+        case .appClosed: return "xmark.app.fill"
+        case .dataFetched: return "arrow.clockwise.circle.fill"
         case .test: return "paperplane.fill"
         }
     }

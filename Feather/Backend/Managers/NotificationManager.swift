@@ -15,6 +15,8 @@ enum NotificationType: String, CaseIterable {
     case certExpiring = "CERT_EXPIRING"
     case lowStorage = "LOW_STORAGE"
     case securityAlert = "SECURITY_ALERT"
+    case appClosed = "APP_CLOSED"
+    case dataFetched = "DATA_FETCHED"
     case test = "TEST"
 
     var defaultEnabled: Bool {
@@ -186,6 +188,41 @@ final class NotificationManager: NSObject, ObservableObject {
             body: .localized("This is a test notification. Notifications are working correctly!"),
             type: .test
         )
+    }
+
+    func sendDataFetchedNotification() {
+        sendNotification(
+            title: .localized("Data Fetched Successfully!"),
+            body: .localized("Source data has been fetched and cached successfully!"),
+            type: .dataFetched
+        )
+    }
+
+    /// Schedules the "App Closed" notification with a short delay.
+    /// Call this when the app enters the background; cancel if it returns to the foreground.
+    func scheduleAppClosedNotification() {
+        let delay: TimeInterval = 2
+        Task {
+            let center = UNUserNotificationCenter.current()
+            let settings = await center.notificationSettings()
+            guard settings.authorizationStatus == .authorized || settings.authorizationStatus == .provisional else { return }
+            guard UserDefaults.standard.bool(forKey: NotificationType.appClosed.userDefaultsKey) else { return }
+
+            let content = UNMutableNotificationContent()
+            content.title = .localized("App Closed")
+            content.body = .localized("You just closed Portal, apps might not be able to refresh or run any background tasks.")
+            content.sound = .default
+            content.categoryIdentifier = NotificationType.appClosed.rawValue
+
+            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: delay, repeats: false)
+            let request = UNNotificationRequest(identifier: "feather.app.closed", content: content, trigger: trigger)
+            try? await center.add(request)
+        }
+    }
+
+    /// Cancels a previously scheduled "App Closed" notification (e.g., when the app returns to foreground).
+    func cancelAppClosedNotification() {
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["feather.app.closed"])
     }
 
     private func sendNotification(title: String, body: String, type: NotificationType) {

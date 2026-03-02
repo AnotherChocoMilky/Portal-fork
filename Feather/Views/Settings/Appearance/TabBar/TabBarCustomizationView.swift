@@ -3,15 +3,15 @@ import NimbleViews
 
 // MARK: - TabBarCustomizationView
 struct TabBarCustomizationView: View {
-    @AppStorage("Feather.tabBar.dashboard") private var showDashboard = true
+    @AppStorage("Feather.tabBar.dashboard") private var showDashboard = false
     @AppStorage("Feather.tabBar.sources") private var showSources = true
     @AppStorage("Feather.tabBar.library") private var showLibrary = true
     @AppStorage("Feather.tabBar.files") private var showFiles = false
-    @AppStorage("Feather.tabBar.guides") private var showGuides = true
-    @AppStorage("Feather.tabBar.allApps") private var showAllApps = true
-    @AppStorage("Feather.tabBar.order") private var tabOrder: String = "dashboard,sources,guides,library,files,settings,allapps"
+    @AppStorage("Feather.tabBar.guides") private var showGuides = false
+    @AppStorage("Feather.tabBar.allApps") private var showAllApps = false
+    @AppStorage("Feather.tabBar.order") private var tabOrder: String = "sources,library,settings"
     @AppStorage("Feather.tabBar.hideLabels") private var hideTabLabels = false
-    @AppStorage("Feather.tabBar.defaultTab") private var defaultTab: String = "dashboard"
+    @AppStorage("Feather.tabBar.defaultTab") private var defaultTab: String = "sources"
     @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     // Settings cannot be disabled
     
@@ -348,7 +348,7 @@ struct TabBarCustomizationView: View {
     private func loadTabOrder() {
         var tabs = tabOrder.split(separator: ",").map(String.init)
         if tabs.isEmpty {
-            tabs = ["dashboard", "sources", "guides", "library", "files", "settings", "allapps"]
+            tabs = ["sources", "library", "settings"]
         } else if !tabs.contains("allapps") {
             // Add allapps if missing, usually before settings
             if let settingsIndex = tabs.firstIndex(of: "settings") {
@@ -388,7 +388,7 @@ struct TabBarCustomizationView: View {
     }
     
     private func resetTabOrder() {
-        orderedTabs = ["dashboard", "sources", "guides", "library", "files", "settings", "allapps"]
+        orderedTabs = ["sources", "library", "settings"]
         saveTabOrder()
     }
     

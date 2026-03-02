@@ -270,6 +270,11 @@ struct AllAppsView: View {
         .onAppear {
             _loadAllSources()
         }
+        .onChange(of: viewModel.allApps.count) { count in
+            if count > 0 && _allApps.isEmpty {
+                _loadAllSources()
+            }
+        }
         .onChange(of: _searchText) { _ in
             _filterApps()
         }

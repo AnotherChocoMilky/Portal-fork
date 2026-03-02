@@ -710,13 +710,15 @@ class SceneDelegate: NSObject, UIWindowSceneDelegate {
 	func sceneWillEnterForeground(_ scene: UIScene) {
 		// Called as scene transitions from background to foreground
 		AppLogManager.shared.debug("Scene entering foreground", category: "Lifecycle")
+		NotificationManager.shared.cancelAppClosedNotification()
 	}
-	
+
 	func sceneDidEnterBackground(_ scene: UIScene) {
 		// Called as scene transitions from foreground to background
 		AppLogManager.shared.debug("Scene entered background", category: "Lifecycle")
 		
 		// Save any pending changes
 		Storage.shared.saveContext()
+		NotificationManager.shared.scheduleAppClosedNotification()
 	}
 }

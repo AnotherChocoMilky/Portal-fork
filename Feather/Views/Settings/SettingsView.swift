@@ -193,11 +193,14 @@ struct SettingsView: View {
                 SettingsActionRow(icon: "arrow.clockwise.circle.fill", title: _isFetchingFullData ? String.localized("Fetching Source Data...") : String.localized("Fetch Full Data"), color: .accentColor, isLoading: _isFetchingFullData) {
                     Task {
                         _isFetchingFullData = true
+                        BackgroundAudioManager.shared.start()
                         // Fetch both manager's data
                         await SourcesViewModel.shared.forceFetchAllSources(_sources)
                         await AppUpdateTrackingManager.shared.manualFetchAllSources()
+                        BackgroundAudioManager.shared.stop()
                         _isFetchingFullData = false
                         HapticsManager.shared.success()
+                        NotificationManager.shared.sendDataFetchedNotification()
                     }
                 }
             }
