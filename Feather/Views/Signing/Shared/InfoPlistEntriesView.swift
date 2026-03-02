@@ -1,9 +1,9 @@
 import SwiftUI
+import NimbleViews
 import UniformTypeIdentifiers
 
 struct InfoPlistEntriesView: View {
     @Environment(\.dismiss) var dismiss
-    @Environment(\.colorScheme) var colorScheme
     @Binding var options: Options
     
     @State private var editingKey: String?
@@ -34,9 +34,6 @@ struct InfoPlistEntriesView: View {
     @State private var editStringValue = ""
     @State private var editBoolValue = false
     @State private var editNumberValue = ""
-    
-    @State private var floatingAnimation = false
-    @State private var appearAnimation = false
     
     enum InfoPlistValueType: String, CaseIterable {
         case string = "String"
@@ -80,15 +77,153 @@ struct InfoPlistEntriesView: View {
     
     var body: some View {
         NavigationStack {
-            ZStack {
-                modernBackground
+            List {
+                Section {
+                    Button {
+                        showPresetSheet = true
+                    } label: {
+                        Label(.localized("Presets"), systemImage: "sparkles")
+                    }
+                    
+                    Button {
+                        showImportSheet = true
+                    } label: {
+                        Label(.localized("Import from .plist"), systemImage: "square.and.arrow.down")
+                    }
+                    
+                    Button {
+                        showSearchReplaceSheet = true
+                    } label: {
+                        Label(.localized("Search & Replace"), systemImage: "magnifyingglass")
+                    }
+                    
+                    Button {
+                        exportPlistFile()
+                    } label: {
+                        Label(.localized("Export"), systemImage: "square.and.arrow.up")
+                    }
+                    .disabled(options.customInfoPlistEntries.isEmpty)
+                    
+                    if !options.customInfoPlistEntries.isEmpty {
+                        Button(role: .destructive) {
+                            withAnimation {
+                                options.customInfoPlistEntries.removeAll()
+                            }
+                            HapticsManager.shared.success()
+                        } label: {
+                            Label(.localized("Clear All"), systemImage: "arrow.counterclockwise")
+                        }
+                    }
+                } header: {
+                    Text(.localized("Quick Actions"))
+                }
                 
-                VStack(spacing: 0) {
-                    headerSection
-                    searchBar
-                    mainContent
+                if filteredEntries.isEmpty {
+                    Section {
+                        HStack {
+                            Spacer()
+                            VStack(spacing: 8) {
+                                Image(systemName: "doc.text")
+                                    .font(.largeTitle)
+                                    .foregroundStyle(.secondary)
+                                Text(.localized("No Entries Yet"))
+                                    .font(.headline)
+                                Text(.localized("Add custom Info.plist entries\nto modify app behavior"))
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .multilineTextAlignment(.center)
+                                Button {
+                                    showAddEntryDialog = true
+                                } label: {
+                                    Label(.localized("Add Entry"), systemImage: "plus.circle.fill")
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .padding(.top, 4)
+                            }
+                            .padding(.vertical, 24)
+                            Spacer()
+                        }
+                    }
+                } else {
+                    Section {
+                        ForEach(Array(filteredEntries.enumerated()), id: \.element.key) { index, entry in
+                            ModernEntryRow(
+                                key: entry.key,
+                                value: entry.value,
+                                isFirst: index == 0,
+                                isLast: index == filteredEntries.count - 1,
+                                isSelected: selectedEntries.contains(entry.key),
+                                isSelectionMode: isSelectionMode,
+                                onTap: {
+                                    if isSelectionMode {
+                                        withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                            if selectedEntries.contains(entry.key) {
+                                                selectedEntries.remove(entry.key)
+                                            } else {
+                                                selectedEntries.insert(entry.key)
+                                            }
+                                        }
+                                    } else {
+                                        prepareEdit(key: entry.key, value: entry.value)
+                                        showEditSheet = true
+                                    }
+                                },
+                                onToggle: entry.value.value is Bool ? { newValue in
+                                    withAnimation {
+                                        options.customInfoPlistEntries[entry.key] = AnyCodable(newValue)
+                                    }
+                                    HapticsManager.shared.softImpact()
+                                } : nil,
+                                onDelete: {
+                                    entryToDelete = entry.key
+                                    showDeleteConfirmation = true
+                                },
+                                onDuplicate: {
+                                    duplicateEntry(key: entry.key, value: entry.value)
+                                }
+                            )
+                        }
+                    } header: {
+                        HStack {
+                            Text(.localized("Entries (\(filteredEntries.count))"))
+                            Spacer()
+                            if !options.customInfoPlistEntries.isEmpty {
+                                Button {
+                                    withAnimation {
+                                        isSelectionMode.toggle()
+                                        if !isSelectionMode {
+                                            selectedEntries.removeAll()
+                                        }
+                                    }
+                                } label: {
+                                    Text(isSelectionMode ? .localized("Cancel") : .localized("Select"))
+                                        .font(.system(size: 13, weight: .medium))
+                                }
+                            }
+                        }
+                    }
+                    
+                    if isSelectionMode && !selectedEntries.isEmpty {
+                        Section {
+                            Button(role: .destructive) {
+                                withAnimation {
+                                    for key in selectedEntries {
+                                        _ = options.customInfoPlistEntries.removeValue(forKey: key)
+                                    }
+                                    selectedEntries.removeAll()
+                                    isSelectionMode = false
+                                }
+                                HapticsManager.shared.success()
+                            } label: {
+                                Label(.localized("Delete \(selectedEntries.count) Selected"), systemImage: "trash")
+                                    .frame(maxWidth: .infinity)
+                            }
+                        }
+                    }
                 }
             }
+            .searchable(text: $searchText, prompt: .localized("Search Entries"))
+            .navigationTitle(.localized("Info.plist Entries"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { toolbarContent }
             .sheet(isPresented: $showAddEntryDialog) { addEntrySheet }
@@ -96,19 +231,15 @@ struct InfoPlistEntriesView: View {
             .sheet(isPresented: $showEditSheet) { editEntrySheet }
             .sheet(isPresented: $showBatchActionsSheet) { batchActionsSheet }
             .sheet(isPresented: $showSearchReplaceSheet) { searchReplaceSheet }
-            .fileImporter(
-                isPresented: $showImportSheet,
-                allowedContentTypes: [.propertyList, .xml],
-                allowsMultipleSelection: false
-            ) { result in
-                switch result {
-                case .success(let urls):
-                    if let url = urls.first {
+            .sheet(isPresented: $showImportSheet) {
+                FileImporterRepresentableView(
+                    allowedContentTypes: [.propertyList, .xml],
+                    onDocumentsPicked: { urls in
+                        guard let url = urls.first else { return }
                         importPlistFile(url: url)
                     }
-                case .failure:
-                    break
-                }
+                )
+                .ignoresSafeArea()
             }
             .confirmationDialog(.localized("Delete Entry"), isPresented: $showDeleteConfirmation, titleVisibility: .visible) {
                 Button(.localized("Delete"), role: .destructive) {
@@ -123,406 +254,7 @@ struct InfoPlistEntriesView: View {
             } message: {
                 Text(.localized("Are you sure you want to delete this entry?"))
             }
-            .onAppear {
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                    appearAnimation = true
-                }
-            }
         }
-    }
-    
-    @ViewBuilder
-    private var modernBackground: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color.indigo.opacity(0.08),
-                    Color.purple.opacity(0.04),
-                    Color.clear.opacity(0.95),
-                    Color.clear
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-            
-            GeometryReader { geo in
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [Color.indigo.opacity(0.15), Color.indigo.opacity(0)],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 140
-                        )
-                    )
-                    .frame(width: 280, height: 280)
-                    .blur(radius: 60)
-                    .offset(x: floatingAnimation ? -30 : 30, y: floatingAnimation ? -20 : 20)
-                    .position(x: geo.size.width * 0.85, y: geo.size.height * 0.15)
-                
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [Color.purple.opacity(0.12), Color.purple.opacity(0)],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 100
-                        )
-                    )
-                    .frame(width: 200, height: 200)
-                    .blur(radius: 50)
-                    .offset(x: floatingAnimation ? 20 : -20, y: floatingAnimation ? 15 : -15)
-                    .position(x: geo.size.width * 0.15, y: geo.size.height * 0.7)
-            }
-            .ignoresSafeArea()
-        }
-        .onAppear {
-            withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) {
-                floatingAnimation = true
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private var headerSection: some View {
-        VStack(spacing: 8) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.indigo.opacity(0.3), Color.purple.opacity(0.2)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 56, height: 56)
-                    .shadow(color: Color.indigo.opacity(0.3), radius: 10, x: 0, y: 5)
-                
-                Image(systemName: "doc.badge.gearshape.fill")
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-            .scaleEffect(appearAnimation ? 1 : 0.5)
-            .opacity(appearAnimation ? 1 : 0)
-            
-            VStack(spacing: 4) {
-                Text(.localized("Info.plist Entries"))
-                    .font(.title3.weight(.bold))
-                    .foregroundStyle(.primary)
-                
-                Text(.localized("\(options.customInfoPlistEntries.count) Custom Entries"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .opacity(appearAnimation ? 1 : 0)
-        }
-        .padding(.top, 16)
-        .padding(.bottom, 8)
-    }
-    
-    @ViewBuilder
-    private var searchBar: some View {
-        HStack(spacing: 10) {
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.secondary)
-                
-                TextField(.localized("Search Entries"), text: $searchText)
-                    .font(.system(size: 15))
-                    .textInputAutocapitalization(.never)
-                
-                if !searchText.isEmpty {
-                    Button {
-                        searchText = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.clear)
-            )
-            
-            if !options.customInfoPlistEntries.isEmpty {
-                Button {
-                    withAnimation {
-                        isSelectionMode.toggle()
-                        if !isSelectionMode {
-                            selectedEntries.removeAll()
-                        }
-                    }
-                } label: {
-                    Image(systemName: isSelectionMode ? "checkmark.circle.fill" : "checklist")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundStyle(isSelectionMode ? .indigo : .secondary)
-                        .frame(width: 40, height: 40)
-                        .background(
-                            RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .fill(Color.clear)
-                        )
-                }
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.bottom, 8)
-    }
-    
-    @ViewBuilder
-    private var mainContent: some View {
-        ScrollView {
-            LazyVStack(spacing: 12) {
-                quickActionsSection
-                    .padding(.horizontal, 16)
-                
-                if filteredEntries.isEmpty {
-                    emptyStateView
-                        .padding(.top, 40)
-                } else {
-                    entriesSection
-                        .padding(.horizontal, 16)
-                }
-                
-                if isSelectionMode && !selectedEntries.isEmpty {
-                    batchActionBar
-                }
-            }
-            .padding(.vertical, 12)
-            .padding(.bottom, 80)
-        }
-    }
-    
-    @ViewBuilder
-    private var quickActionsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(.localized("Quick Actions"))
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .padding(.leading, 4)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    QuickActionCard(
-                        icon: "sparkles",
-                        title: .localized("Presets"),
-                        subtitle: .localized("Common Options"),
-                        gradient: [.purple, .indigo]
-                    ) {
-                        showPresetSheet = true
-                    }
-                    
-                    QuickActionCard(
-                        icon: "square.and.arrow.down",
-                        title: .localized("Import"),
-                        subtitle: .localized("From .plist"),
-                        gradient: [.green, .teal]
-                    ) {
-                        showImportSheet = true
-                    }
-                    
-                    QuickActionCard(
-                        icon: "magnifyingglass",
-                        title: .localized("Replace"),
-                        subtitle: .localized("Bulk Edit"),
-                        gradient: [.orange, .red]
-                    ) {
-                        showSearchReplaceSheet = true
-                    }
-
-                    QuickActionCard(
-                        icon: "square.and.arrow.up",
-                        title: .localized("Export"),
-                        subtitle: .localized("Save Entries"),
-                        gradient: [.blue, .cyan]
-                    ) {
-                        exportPlistFile()
-                    }
-                    .opacity(options.customInfoPlistEntries.isEmpty ? 0.5 : 1)
-                    .disabled(options.customInfoPlistEntries.isEmpty)
-                    
-                    if !options.customInfoPlistEntries.isEmpty {
-                        QuickActionCard(
-                            icon: "arrow.counterclockwise",
-                            title: .localized("Clear All"),
-                            subtitle: .localized("Remove All"),
-                            gradient: [.red, .orange]
-                        ) {
-                            withAnimation {
-                                options.customInfoPlistEntries.removeAll()
-                            }
-                            HapticsManager.shared.success()
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private var emptyStateView: some View {
-        VStack(spacing: 20) {
-            ZStack {
-                Circle()
-                    .fill(Color.indigo.opacity(0.1))
-                    .frame(width: 80, height: 80)
-                
-                Image(systemName: "doc.text.fill")
-                    .font(.system(size: 32))
-                    .foregroundStyle(.indigo)
-            }
-            
-            VStack(spacing: 8) {
-                Text(.localized("No Entries Yet"))
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                
-                Text(.localized("Add custom Info.plist entries\nto modify app behavior"))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-            
-            Button {
-                showAddEntryDialog = true
-            } label: {
-                HStack(spacing: 8) {
-                    Image(systemName: "plus.circle.fill")
-                    Text(.localized("Add Entry"))
-                }
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
-                .background(
-                    LinearGradient(
-                        colors: [.indigo, .purple],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .clipShape(Capsule())
-                .shadow(color: .indigo.opacity(0.4), radius: 10, x: 0, y: 5)
-            }
-        }
-    }
-    
-    @ViewBuilder
-    private var entriesSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text(.localized("Entries (\(filteredEntries.count))"))
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundStyle(.secondary)
-                
-                Spacer()
-                
-                if isSelectionMode {
-                    Button {
-                        if selectedEntries.count == filteredEntries.count {
-                            selectedEntries.removeAll()
-                        } else {
-                            selectedEntries = Set(filteredEntries.map { $0.key })
-                        }
-                    } label: {
-                        Text(selectedEntries.count == filteredEntries.count ? .localized("Deselect All") : .localized("Select All"))
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(.indigo)
-                    }
-                }
-            }
-            .padding(.leading, 4)
-            
-            VStack(spacing: 2) {
-                ForEach(Array(filteredEntries.enumerated()), id: \.element.key) { index, entry in
-                    ModernEntryRow(
-                        key: entry.key,
-                        value: entry.value,
-                        isFirst: index == 0,
-                        isLast: index == filteredEntries.count - 1,
-                        isSelected: selectedEntries.contains(entry.key),
-                        isSelectionMode: isSelectionMode,
-                        onTap: {
-                            if isSelectionMode {
-                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    if selectedEntries.contains(entry.key) {
-                                        selectedEntries.remove(entry.key)
-                                    } else {
-                                        selectedEntries.insert(entry.key)
-                                    }
-                                }
-                            } else {
-                                prepareEdit(key: entry.key, value: entry.value)
-                                showEditSheet = true
-                            }
-                        },
-                        onToggle: entry.value.value is Bool ? { newValue in
-                            withAnimation {
-                                options.customInfoPlistEntries[entry.key] = AnyCodable(newValue)
-                            }
-                            HapticsManager.shared.softImpact()
-                        } : nil,
-                        onDelete: {
-                            entryToDelete = entry.key
-                            showDeleteConfirmation = true
-                        },
-                        onDuplicate: {
-                            duplicateEntry(key: entry.key, value: entry.value)
-                        }
-                    )
-                }
-            }
-            .background(
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.clear)
-            )
-        }
-    }
-    
-    @ViewBuilder
-    private var batchActionBar: some View {
-        HStack(spacing: 16) {
-            Text(.localized("\(selectedEntries.count) Selected"))
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(.secondary)
-            
-            Spacer()
-            
-            Button {
-                withAnimation {
-                    for key in selectedEntries {
-                        _ = options.customInfoPlistEntries.removeValue(forKey: key)
-                    }
-                    selectedEntries.removeAll()
-                    isSelectionMode = false
-                }
-                HapticsManager.shared.success()
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "trash")
-                    Text(.localized("Delete"))
-                }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 10)
-                .background(Color.red)
-                .clipShape(Capsule())
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(.ultraThinMaterial)
-                .shadow(color: .black.opacity(0.1), radius: 10, x: 0, y: -5)
-        )
-        .padding(.horizontal, 16)
     }
     
     @ToolbarContentBuilder
@@ -618,24 +350,11 @@ struct InfoPlistEntriesView: View {
                         Button {
                             addEntry()
                         } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "plus.circle.fill")
-                                Text(.localized("Add Entry"))
-                            }
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                LinearGradient(
-                                    colors: newKey.isEmpty ? [.gray] : [.indigo, .purple],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            .shadow(color: newKey.isEmpty ? .clear : .indigo.opacity(0.4), radius: 10, x: 0, y: 5)
+                            Label(.localized("Add Entry"), systemImage: "plus.circle.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .frame(maxWidth: .infinity)
                         }
+                        .buttonStyle(.borderedProminent)
                         .disabled(newKey.isEmpty)
                         .padding(.top, 8)
                     }
@@ -785,24 +504,11 @@ struct InfoPlistEntriesView: View {
                         Button {
                             saveEdit()
                         } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "checkmark.circle.fill")
-                                Text(.localized("Save Changes"))
-                            }
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(
-                                LinearGradient(
-                                    colors: [.indigo, .purple],
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                            .shadow(color: .indigo.opacity(0.4), radius: 10, x: 0, y: 5)
+                            Label(.localized("Save Changes"), systemImage: "checkmark.circle.fill")
+                                .font(.system(size: 16, weight: .semibold))
+                                .frame(maxWidth: .infinity)
                         }
+                        .buttonStyle(.borderedProminent)
                         .padding(.top, 8)
                     }
                     .padding(20)
