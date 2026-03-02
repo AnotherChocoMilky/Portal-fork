@@ -41,7 +41,7 @@ struct NotificationsView: View {
             } header: {
                 Text(.localized("Global Settings"))
             } footer: {
-                Text(.localized("Master switch to enable or disable all notifications from Feather."))
+                Text(.localized("Master switch to enable or disable all notifications from Portal."))
             }
 
             if notificationsEnabled {
@@ -79,7 +79,7 @@ struct NotificationsView: View {
                         }
                     }
                 } footer: {
-                    Text(.localized("Manage system-level notification permissions for Feather."))
+                    Text(.localized("Manage system-level notification permissions for Portal."))
                 }
             }
         }
@@ -169,7 +169,7 @@ struct NotificationToggleRow: View {
         case .signingFailed: return .localized("Notify when an app fails to sign.")
         case .downloadStarted: return .localized("Notify when a download begins.")
         case .downloadFailed: return .localized("Notify when a download fails.")
-        case .updateAvailable: return .localized("Notify when a new Feather update is available.")
+        case .updateAvailable: return .localized("Notify when a new Portal update is available.")
         case .backupSuccess: return .localized("Notify when a backup completes successfully.")
         case .backupFailed: return .localized("Notify when a backup fails.")
         case .certExpiring: return .localized("Notify when your certificate is about to expire.")
