@@ -403,7 +403,7 @@ struct CheckForUpdatesView: View {
                             Text("Searching For Updates")
                                 .font(.system(.headline, design: .rounded))
 
-                            Text("Portal is checking for any updates...")
+                            Text("Portal is checking for any avaiilable updates...")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                         }
@@ -1218,7 +1218,7 @@ class UpdateManager: ObservableObject {
         DispatchQueue.main.async {
             self.isDownloading = false
             self.downloadProgress = 0.0
-            self.errorMessage = "Download failed: \(error.localizedDescription)"
+            self.errorMessage = "Download Failed: \(error.localizedDescription)"
             HapticsManager.shared.error()
             AppLogManager.shared.error("Download Failed: \(error.localizedDescription)", category: "Updates")
         }

@@ -397,7 +397,7 @@ struct ModernSigningView: View {
                 Button {
                     _isAltPickerPresenting = true
                 } label: {
-                    Label("Select Alternative Icon", systemImage: "app.dashed")
+                    Label("Choose App Icon", systemImage: "app.dashed")
                 }
                 Button {
                     _isFilePickerPresenting = true
@@ -573,7 +573,7 @@ struct ModernSigningView: View {
                             Text("Clone App")
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundStyle(.secondary)
-                            Text("Append random string to ID")
+                            Text("Append random string to ID to clone a app.")
                                 .font(.system(size: 10))
                                 .foregroundStyle(.tertiary)
                         }
@@ -1184,7 +1184,7 @@ struct ModernSigningOptionsView: View {
                     }
                     
                     HStack {
-                        TextField("Enter Scheme (e.g. test)", text: $newURLScheme)
+                        TextField("Enter Scheme (e.g. test-app://)", text: $newURLScheme)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled()
 
@@ -1236,7 +1236,7 @@ struct ModernSigningOptionsView: View {
                 modernOptionSection(title: "Experiments", icon: "flask.fill", color: .purple, isBeta: true) {
                     modernOptionToggle(title: "Replace Substrate", icon: "square.2.layers.3d.bottom.filled", color: .purple, isOn: $options.experiment_replaceSubstrateWithEllekit)
                     Divider().padding(.leading, 52)
-                    modernOptionToggle(title: "Liquid Glass", icon: "drop.fill", color: .blue, isOn: $options.experiment_supportLiquidGlass)
+                    modernOptionToggle(title: "Enable Liquid Glass", icon: "drop.fill", color: .blue, isOn: $options.experiment_supportLiquidGlass)
                 }
                 .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets())
@@ -1875,9 +1875,9 @@ struct ModernEditSheet: View {
                                 .font(.system(size: 18, weight: .bold, design: .rounded))
                                 .foregroundStyle(.primary)
 
-                            Text("Enter New \(title.lowercased())")
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(.secondary)
+                            Text("Enter New \(title)")
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.secondary)
                         }
                         
                         Spacer()

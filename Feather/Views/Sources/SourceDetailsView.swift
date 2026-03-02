@@ -42,7 +42,6 @@ struct SourceDetailsView: View {
     
     var body: some View {
         ZStack {
-            // Gradient background based on source icon color - increased intensity
             LinearGradient(
                 colors: [
                     dominantColor.opacity(0.2),
@@ -56,15 +55,11 @@ struct SourceDetailsView: View {
             
             ScrollView {
                 VStack(spacing: 24) {
-                    // Prominent source header card
                     sourceHeaderCard
-                    
-                    // Featured horizontal card section
                     if _showNews, let news = repository?.news, !news.isEmpty {
                         featuredNewsSection(news: filteredNews.isEmpty && !_searchText.isEmpty ? [] : (filteredNews.isEmpty ? news : filteredNews))
                     }
 
-                    // Vertical feed of app cards
                     if let apps = repository?.apps, !apps.isEmpty {
                         appsVerticalFeed(apps: filteredApps.isEmpty && !_searchText.isEmpty ? [] : filteredApps)
                     }
@@ -95,7 +90,6 @@ struct SourceDetailsView: View {
     // MARK: - Source Header Card (Modern - Icon at top, info below)
     private var sourceHeaderCard: some View {
         VStack(spacing: 24) {
-            // Large centered icon with modern styling
             if let iconURL = source.iconURL {
                 LazyImage(url: iconURL) { state in
                     if let image = state.image {
@@ -113,7 +107,6 @@ struct SourceDetailsView: View {
                 iconPlaceholder
             }
             
-            // Source info
             VStack(spacing: 6) {
                 Text(source.name ?? String.localized("Unknown"))
                     .font(.system(size: 28, weight: .bold, design: .rounded))
@@ -126,7 +119,6 @@ struct SourceDetailsView: View {
                 }
             }
             
-            // Stats row
             if let repo = repository {
                 HStack(spacing: 32) {
                     statItem(value: "\(repo.apps.count)", label: "Apps")
@@ -169,7 +161,6 @@ struct SourceDetailsView: View {
         }
     }
     
-    // MARK: - Featured News Section (Horizontal Cards)
     @ViewBuilder
     private func featuredNewsSection(news: [ASRepository.News]) -> some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -192,7 +183,7 @@ struct SourceDetailsView: View {
             }
             
             if news.isEmpty {
-                Text("No news currently available.")
+                Text("No news are currently available, check back later.")
                     .font(.system(size: 14))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)

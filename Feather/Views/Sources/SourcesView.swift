@@ -138,7 +138,6 @@ struct SourcesView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: .gestureOpenSourceDetails)) { notification in
             if let source = notification.object as? AltSource {
-                // In a real app, we'd navigate. Here we just log or trigger a state change if possible.
                 AppLogManager.shared.info("Gesture: Open Source Details for \(source.name ?? "")", category: "Gestures")
             }
         }
@@ -147,8 +146,6 @@ struct SourcesView: View {
                    let action = userInfo["action"] as? GestureAction,
                    action == .deleteApp,
                    let source = userInfo["context"] as? AltSource else { return }
-
-             // In Sources view, delete means delete source
              Storage.shared.deleteSource(for: source)
              HapticsManager.shared.success()
         }
@@ -475,7 +472,7 @@ struct SourcesView: View {
         
         UIAlertController.showAlert(
             title: .localized("Enjoying %@?", arguments: Bundle.main.name),
-            message: .localized("If you are, go to our GitHub and give us a star!"),
+            message: .localized("If you are, go to our GitHub and give us a star! Anything will help"),
             actions: [github, cancel]
         )
     }
@@ -665,14 +662,12 @@ private struct AllAppsCardView: View {
 	let horizontalSizeClass: UserInterfaceSizeClass?
 	let totalApps: Int
 	
-	// Get app icon for the gradient - use the system's app icon
 	@State private var appIconColor: Color = .accentColor
 	
 	var body: some View {
 		let isRegular = horizontalSizeClass != .compact
 		
 		VStack(spacing: 0) {
-			// Content only - no gradient banner
 			contentSection(isRegular: isRegular)
 		}
 		.background(cardBackground)
@@ -684,7 +679,6 @@ private struct AllAppsCardView: View {
 		}
 	}
 	
-	// Extract color from app icon
 	private func extractAppIconColor() {
 		guard let iconName = Bundle.main.iconFileName,
 			  let appIcon = UIImage(named: iconName) else {
@@ -709,14 +703,12 @@ private struct AllAppsCardView: View {
 		}
 		
 		var bitmap = [UInt8](repeating: 0, count: 4)
-		// Use a shared context for better performance
 		let context = Self.sharedCIContext
 		context.render(outputImage, toBitmap: &bitmap, rowBytes: 4, bounds: CGRect(x: 0, y: 0, width: 1, height: 1), format: .RGBA8, colorSpace: nil)
 		
 		appIconColor = Color(red: Double(bitmap[0]) / 255, green: Double(bitmap[1]) / 255, blue: Double(bitmap[2]) / 255)
 	}
 	
-	// Shared CIContext for performance
 	private static let sharedCIContext = CIContext(options: [.workingColorSpace: kCFNull as Any])
 	
 	private func contentSection(isRegular: Bool) -> some View {

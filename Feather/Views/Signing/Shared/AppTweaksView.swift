@@ -302,7 +302,7 @@ struct AppTweaksView: View {
                                 Text(url.lastPathComponent)
                                     .font(.system(size: 14, weight: .medium))
                                     .lineLimit(1)
-                                Text(url.scheme == "http" || url.scheme == "https" ? "Remote URL" : "Local File")
+                                Text(url.scheme == "http" || url.scheme == "https" ? "Online URL" : "Local File")
                                     .font(.system(size: 11))
                                     .foregroundStyle(.secondary)
                             }
@@ -738,7 +738,7 @@ struct ExtractTweaksView: View {
             .alert("Success", isPresented: $showSuccessAlert) {
                 Button("OK") { dismiss() }
             } message: {
-                Text("Tweaks extracted to Documents directory.")
+                Text("Tweaks extracted to Portal's Documents directory.")
             }
         }
     }
@@ -782,7 +782,7 @@ struct ExtractTweaksView: View {
 
                 // Create zip file in Documents directory
                 let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-                let zipFileName = "ExtractedTweaks_\(Date().timeIntervalSince1970).zip"
+                let zipFileName = "ExtractedAppTweaks_\(Date().timeIntervalSince1970).zip"
                 let zipURL = documentsDir.appendingPathComponent(zipFileName)
 
                 // Create zip

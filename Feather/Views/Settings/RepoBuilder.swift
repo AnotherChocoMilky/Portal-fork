@@ -303,7 +303,7 @@ struct RepoBuilder: View {
     }
 
     var body: some View {
-        NBNavigationView(String.localized("Repository Builder")) {
+        NBNavigationView(String.localized("Source Builder")) {
             Form {
                 if showHeaderViews {
                     Section {
@@ -810,7 +810,7 @@ struct AddRepoAppView: View {
                     }
 
                     if !app.size.isEmpty && app.size != "0" {
-                        Text(String.localized("Result: \(app.size) bytes"))
+                        Text(String.localized("Result: \(app.size) Bytes"))
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
@@ -1046,16 +1046,17 @@ struct RepoBuilderGuideView: View {
                             String.localized("3. Upload the generated JSON (e.g., as 'repo.json')."),
                             String.localized("4. Click on the file, then click 'Raw' to get the direct link."),
                             String.localized("5. This Raw link is what users will add as a Source."),
-                            String.localized("TIP: You can also use services like Vercel, Netlify, or even a Discord message link (though less recommended).")
+                            String.localized("6. You can share this link to others or add it here on Portal or diffrent signers."),
+                            String.localized("TIP: You can also use services like Vercel or Netlify.")
                         ]
                     )
 
                     guideSection(
                         title: String.localized("Common Mistakes"),
                         content: [
-                            String.localized("• Invalid URLs: Make sure all URLs start with https:// and point directly to the file."),
+                            String.localized("• Invalid URLs: Make sure all URLs start with https:// and point directly to the .ipa file."),
                             String.localized("• Bundle ID Mismatch: If the Bundle ID doesn't match the IPA, some installers might fail to show the icon."),
-                            String.localized("• Size: Always use bytes for the size (e.g., 1048576 for 1MB).")
+                            String.localized("• Size: Always use bytes for the size (e.g., 1048576 for 1MB). Use the converter feature on the Add App view to help with this.")
                         ]
                     )
                 }

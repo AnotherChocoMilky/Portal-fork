@@ -56,7 +56,7 @@ struct SigningAlternativeIconView: View {
 									)
 							}
 							
-							Text(.localized("No Icons Found"))
+							Text(.localized("No Icons Found On App BUndle"))
 								.font(.subheadline)
 								.foregroundStyle(
 									LinearGradient(

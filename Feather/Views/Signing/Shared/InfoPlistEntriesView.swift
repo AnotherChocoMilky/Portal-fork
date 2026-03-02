@@ -734,7 +734,7 @@ struct InfoPlistEntriesView: View {
             
         case .dictionary:
             VStack(spacing: 8) {
-                Text(.localized("Dictionary entries will be created empty"))
+                Text(.localized("Dictionary entries will be created empty."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -870,6 +870,7 @@ struct InfoPlistEntriesView: View {
         }
     }
     
+    // this is already available in the ModernSigningView file
     @ViewBuilder
     private var presetOptionsSheet: some View {
         NavigationStack {
@@ -882,7 +883,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("Custom Display Name"),
-                            subtitle: .localized("Overwrite app name"),
+                            subtitle: .localized("Overwrite App Name"),
                             icon: "textformat",
                             color: .blue
                         ) {
@@ -891,7 +892,7 @@ struct InfoPlistEntriesView: View {
 
                         PresetButton(
                             title: .localized("Custom Version"),
-                            subtitle: .localized("Overwrite version string"),
+                            subtitle: .localized("Overwrite Version String"),
                             icon: "tag",
                             color: .purple
                         ) {
@@ -906,7 +907,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("Portrait Only"),
-                            subtitle: .localized("Lock to portrait mode"),
+                            subtitle: .localized("Lock To Portrait Mode"),
                             icon: "rectangle.portrait.fill",
                             color: .blue
                         ) {
@@ -915,7 +916,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Landscape Only"),
-                            subtitle: .localized("Lock to landscape mode"),
+                            subtitle: .localized("Lock To Landscape Mode"),
                             icon: "rectangle.fill",
                             color: .green
                         ) {
@@ -924,7 +925,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("All Orientations"),
-                            subtitle: .localized("Allow all rotations"),
+                            subtitle: .localized("Allow All Rotations"),
                             icon: "rotate.3d.fill",
                             color: .purple
                         ) {
@@ -939,7 +940,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("Background Audio"),
-                            subtitle: .localized("Play audio in background"),
+                            subtitle: .localized("Play Audio In Background"),
                             icon: "music.note",
                             color: .pink
                         ) {
@@ -948,7 +949,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Background Location"),
-                            subtitle: .localized("Access location in background"),
+                            subtitle: .localized("Access Location In Background"),
                             icon: "location.fill",
                             color: .orange
                         ) {
@@ -957,7 +958,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("VoIP"),
-                            subtitle: .localized("Voice over IP support"),
+                            subtitle: .localized("Voice Over IP Support"),
                             icon: "phone.fill",
                             color: .cyan
                         ) {
@@ -966,7 +967,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Background Fetch"),
-                            subtitle: .localized("Fetch content periodically"),
+                            subtitle: .localized("Fetch Content Periodically"),
                             icon: "arrow.down.circle.fill",
                             color: .teal
                         ) {
@@ -975,7 +976,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Background Processing"),
-                            subtitle: .localized("Run background tasks"),
+                            subtitle: .localized("Run Background Tasks"),
                             icon: "cpu.fill",
                             color: .purple
                         ) {
@@ -984,7 +985,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Remote Notifications"),
-                            subtitle: .localized("Receive push notifications"),
+                            subtitle: .localized("Receive Push Notifications"),
                             icon: "bell.badge.fill",
                             color: .red
                         ) {
@@ -999,7 +1000,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("Require Full Screen"),
-                            subtitle: .localized("Disable multitasking"),
+                            subtitle: .localized("Disable Multitasking"),
                             icon: "rectangle.expand.vertical",
                             color: .purple
                         ) {
@@ -1008,7 +1009,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Hide Status Bar"),
-                            subtitle: .localized("Hide the system status bar"),
+                            subtitle: .localized("Hide The System Status Bar"),
                             icon: "eye.slash.fill",
                             color: .gray
                         ) {
@@ -1017,7 +1018,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Force Dark Mode"),
-                            subtitle: .localized("Always use dark appearance"),
+                            subtitle: .localized("Always Use Dark Appearance"),
                             icon: "moon.fill",
                             color: .indigo
                         ) {
@@ -1026,7 +1027,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Force Light Mode"),
-                            subtitle: .localized("Always use light appearance"),
+                            subtitle: .localized("Always Use Light Appearance"),
                             icon: "sun.max.fill",
                             color: .orange
                         ) {
@@ -1041,7 +1042,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("File Sharing"),
-                            subtitle: .localized("Enable iTunes/Finder file sharing"),
+                            subtitle: .localized("Enable iTunes/Finder File Sharing"),
                             icon: "folder.fill",
                             color: .cyan
                         ) {
@@ -1050,7 +1051,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Document Browser"),
-                            subtitle: .localized("Support document browser"),
+                            subtitle: .localized("Support Document Browser"),
                             icon: "doc.fill",
                             color: .brown
                         ) {
@@ -1065,7 +1066,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("Camera Usage"),
-                            subtitle: .localized("Add camera permission"),
+                            subtitle: .localized("Add Camera Permission"),
                             icon: "camera.fill",
                             color: .blue
                         ) {
@@ -1074,7 +1075,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Photo Library"),
-                            subtitle: .localized("Add photo library permission"),
+                            subtitle: .localized("Add Photo Library Permission"),
                             icon: "photo.fill",
                             color: .purple
                         ) {
@@ -1083,7 +1084,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Microphone"),
-                            subtitle: .localized("Add microphone permission"),
+                            subtitle: .localized("Add Microphone Permission"),
                             icon: "mic.fill",
                             color: .red
                         ) {
@@ -1092,7 +1093,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Location"),
-                            subtitle: .localized("Add location permission"),
+                            subtitle: .localized("Add Location Permission"),
                             icon: "location.fill",
                             color: .green
                         ) {
@@ -1101,7 +1102,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Contacts"),
-                            subtitle: .localized("Add contacts permission"),
+                            subtitle: .localized("Add Contacts Permission"),
                             icon: "person.crop.circle.fill",
                             color: .orange
                         ) {
@@ -1110,7 +1111,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Face ID"),
-                            subtitle: .localized("Add Face ID permission"),
+                            subtitle: .localized("Add Face ID Permission"),
                             icon: "faceid",
                             color: .indigo
                         ) {
@@ -1119,7 +1120,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Bluetooth"),
-                            subtitle: .localized("Add Bluetooth permission"),
+                            subtitle: .localized("Add Bluetooth Permission"),
                             icon: "antenna.radiowaves.left.and.right",
                             color: .blue
                         ) {
@@ -1134,11 +1135,11 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("Add URL Scheme"),
-                            subtitle: .localized("Custom deep linking scheme"),
+                            subtitle: .localized("Custom Deep Linking Scheme"),
                             icon: "link.circle.fill",
                             color: .orange
                         ) {
-                            addURLScheme("myapp")
+                            addURLScheme("test-app")
                         }
                     }
                     
@@ -1149,7 +1150,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("Allow HTTP"),
-                            subtitle: .localized("Allow insecure HTTP connections"),
+                            subtitle: .localized("Allow Insecure HTTP Connections"),
                             icon: "network",
                             color: .orange
                         ) {
@@ -1165,7 +1166,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("Substrate Safe Mode"),
-                            subtitle: .localized("Run in safe mode on jailbroken devices"),
+                            subtitle: .localized("Run In Safe Mode On Jailbroken Devices"),
                             icon: "shield.checkered",
                             color: .yellow
                         ) {
@@ -1174,7 +1175,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Unrestricted Web GL"),
-                            subtitle: .localized("Allow WebGL without restrictions"),
+                            subtitle: .localized("Allow WebGL Without Restrictions"),
                             icon: "cube.transparent",
                             color: .cyan
                         ) {
@@ -1183,7 +1184,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Disable Tracking"),
-                            subtitle: .localized("Disable app tracking transparency"),
+                            subtitle: .localized("Disable App Tracking Transparency"),
                             icon: "hand.raised.slash.fill",
                             color: .red
                         ) {
@@ -1198,7 +1199,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("Game Center"),
-                            subtitle: .localized("Enable Game Center integration"),
+                            subtitle: .localized("Enable Game Center Integration"),
                             icon: "gamecontroller.fill",
                             color: .mint
                         ) {
@@ -1207,7 +1208,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Hide Launch Screen"),
-                            subtitle: .localized("Remove launch storyboard"),
+                            subtitle: .localized("Remove Launch Storyboard"),
                             icon: "gauge.high",
                             color: .pink
                         ) {
@@ -1216,7 +1217,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Metal Support"),
-                            subtitle: .localized("Enable Metal graphics API"),
+                            subtitle: .localized("Enable Metal Graphics API"),
                             icon: "cpu",
                             color: .purple
                         ) {
@@ -1230,8 +1231,8 @@ struct InfoPlistEntriesView: View {
                         color: .red
                     ) {
                         PresetButton(
-                            title: .localized("Shake to Undo"),
-                            subtitle: .localized("Enable shake to undo/edit"),
+                            title: .localized("Shake To Undo"),
+                            subtitle: .localized("Enable Shake To Undo/Edit"),
                             icon: "app.badge",
                             color: .red
                         ) {
@@ -1240,7 +1241,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Critical Alerts"),
-                            subtitle: .localized("Allow critical alerts permission"),
+                            subtitle: .localized("Allow Critical Alerts Permission"),
                             icon: "exclamationmark.triangle.fill",
                             color: .orange
                         ) {
@@ -1255,7 +1256,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("Third-Party Keyboards"),
-                            subtitle: .localized("Allow third-party keyboard extensions"),
+                            subtitle: .localized("Allow thRird Party Keyboard Extensions"),
                             icon: "keyboard.badge.ellipsis",
                             color: .blue
                         ) {
@@ -1264,7 +1265,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Dictation"),
-                            subtitle: .localized("Enable voice dictation"),
+                            subtitle: .localized("Enable Voice Dictation"),
                             icon: "mic.badge.plus",
                             color: .purple
                         ) {
@@ -1279,7 +1280,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("WiFi Required"),
-                            subtitle: .localized("Require WiFi connection"),
+                            subtitle: .localized("Require WiFi Connection"),
                             icon: "wifi",
                             color: .blue
                         ) {
@@ -1288,7 +1289,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("AirDrop Support"),
-                            subtitle: .localized("Enable AirDrop sharing"),
+                            subtitle: .localized("Enable AirDrop Sharing"),
                             icon: "airplayaudio",
                             color: .cyan
                         ) {
@@ -1297,7 +1298,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Local Network"),
-                            subtitle: .localized("Add local network permission"),
+                            subtitle: .localized("Add Local Network Permission"),
                             icon: "network",
                             color: .green
                         ) {
@@ -1306,7 +1307,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("NFC Reader"),
-                            subtitle: .localized("Add NFC reader permission"),
+                            subtitle: .localized("Add NFC Reader Permission"),
                             icon: "wave.3.right",
                             color: .orange
                         ) {
@@ -1321,7 +1322,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("Photo Library Add"),
-                            subtitle: .localized("Permission to add photos"),
+                            subtitle: .localized("Permission To Add Photos"),
                             icon: "photo.badge.plus",
                             color: .pink
                         ) {
@@ -1330,7 +1331,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Media Library"),
-                            subtitle: .localized("Access music and media library"),
+                            subtitle: .localized("Access Music And Media Library"),
                             icon: "music.note.list",
                             color: .red
                         ) {
@@ -1339,7 +1340,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Speech Recognition"),
-                            subtitle: .localized("Enable speech recognition"),
+                            subtitle: .localized("Enable Speech Recognition"),
                             icon: "waveform",
                             color: .purple
                         ) {
@@ -1354,7 +1355,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("Health Kit"),
-                            subtitle: .localized("Access health data"),
+                            subtitle: .localized("Access Health dData"),
                             icon: "heart.text.square.fill",
                             color: .red
                         ) {
@@ -1363,7 +1364,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Motion & Fitness"),
-                            subtitle: .localized("Access motion and fitness data"),
+                            subtitle: .localized("Access Motion And Fitness Data"),
                             icon: "figure.walk",
                             color: .orange
                         ) {
@@ -1378,7 +1379,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("Calendars Access"),
-                            subtitle: .localized("Access calendar events"),
+                            subtitle: .localized("Access Calendar Events"),
                             icon: "calendar.badge.plus",
                             color: .orange
                         ) {
@@ -1387,7 +1388,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Reminders Access"),
-                            subtitle: .localized("Access reminders"),
+                            subtitle: .localized("Access Reminders"),
                             icon: "checklist",
                             color: .blue
                         ) {
@@ -1402,7 +1403,7 @@ struct InfoPlistEntriesView: View {
                     ) {
                         PresetButton(
                             title: .localized("HomeKit"),
-                            subtitle: .localized("Control HomeKit accessories"),
+                            subtitle: .localized("Control HomeKit Accessories"),
                             icon: "homekit",
                             color: .brown
                         ) {
@@ -1411,7 +1412,7 @@ struct InfoPlistEntriesView: View {
                         
                         PresetButton(
                             title: .localized("Siri Integration"),
-                            subtitle: .localized("Enable Siri shortcuts and intents"),
+                            subtitle: .localized("Enable Siri Shortcuts And Intents"),
                             icon: "sparkles",
                             color: .purple
                         ) {
@@ -1435,7 +1436,7 @@ struct InfoPlistEntriesView: View {
 
                         PresetButton(
                             title: .localized("Allow Insecure Loads"),
-                            subtitle: .localized("Bypass ATS restrictions"),
+                            subtitle: .localized("Bypass ATS Restrictions"),
                             icon: "lock.open.fill",
                             color: .red
                         ) {
@@ -1444,7 +1445,7 @@ struct InfoPlistEntriesView: View {
 
                         PresetButton(
                             title: .localized("Hide iPad Home Bar"),
-                            subtitle: .localized("Auto hide home indicator"),
+                            subtitle: .localized("Auto Hide Home Indicator"),
                             icon: "minus",
                             color: .blue
                         ) {
