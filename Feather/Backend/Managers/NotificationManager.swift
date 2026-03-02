@@ -265,7 +265,10 @@ final class NotificationManager: NSObject, ObservableObject {
     }
     
     func clearBadge() {
-        UNUserNotificationCenter.current().setBadgeCount(0)
+        DispatchQueue.main.async {
+            UIApplication.shared.applicationIconBadgeNumber = 0
+            UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+        }
     }
 }
 
@@ -282,6 +285,12 @@ extension NotificationManager: UNUserNotificationCenterDelegate {
         let identifier = response.notification.request.content.categoryIdentifier
         
         AppLogManager.shared.info("User tapped notification: \(identifier)", category: "Notifications")
+        
+        // Clear badge and delivered notifications when user taps a notification
+        DispatchQueue.main.async {
+            UIApplication.shared.applicationIconBadgeNumber = 0
+            UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+        }
         
         completionHandler()
     }
