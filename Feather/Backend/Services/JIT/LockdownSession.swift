@@ -5,6 +5,7 @@
 
 import Foundation
 import IDevice
+import IDeviceSwift
 
 // MARK: - LockdownSession
 

@@ -5,6 +5,7 @@
 
 import Foundation
 import IDevice
+import IDeviceSwift
 import Network
 import OSLog
 
