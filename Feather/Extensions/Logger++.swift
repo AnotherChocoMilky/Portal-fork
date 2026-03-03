@@ -6,4 +6,5 @@ extension Logger {
 	private static var subsystem = Bundle.main.bundleIdentifier!
 	static let signing = Logger(subsystem: subsystem, category: "Signing")
 	static let misc = Logger(subsystem: subsystem, category: "Misc")
+	static let jit = Logger(subsystem: subsystem, category: "JIT")
 }

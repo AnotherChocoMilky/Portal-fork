@@ -149,6 +149,7 @@ struct SettingsView: View {
     private var generalSection: some View {
         Section {
             SettingsRow(icon: "gearshape.fill", title: String.localized("General"), color: .accentColor, destination: GeneralView())
+            SettingsRow(icon: "bolt.circle.fill", title: String.localized("JIT Enabling"), color: .accentColor, destination: JITSettingsView())
         }
     }
 
