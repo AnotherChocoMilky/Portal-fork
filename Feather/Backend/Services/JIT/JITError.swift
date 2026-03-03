@@ -25,6 +25,17 @@ enum JITError: LocalizedError {
     case timeout(stage: String)
     case unknown(String)
 
+    /// Returns `true` for errors that may be resolved by a fallback strategy.
+    /// Fatal errors (unsupported iOS, missing/invalid pairing) return `false`.
+    var isRecoverable: Bool {
+        switch self {
+        case .unsupportedIOSVersion, .pairingMissing, .pairingInvalid:
+            return false
+        default:
+            return true
+        }
+    }
+
     var errorDescription: String? {
         switch self {
         case .deviceCommunicationFailure:

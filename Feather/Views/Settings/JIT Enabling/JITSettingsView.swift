@@ -31,6 +31,7 @@ struct JITSettingsView: View {
             statusSection
             pairingSection
             vpnSection
+            fallbackSection
             enableSection
             helpSection
         }
@@ -208,6 +209,48 @@ struct JITSettingsView: View {
             SettingsSectionHeader(title: String.localized("VPN"), icon: "network")
         } footer: {
             Text(String.localized("A loopback VPN is required for debugserver communication over localhost."))
+        }
+    }
+
+    private var fallbackSection: some View {
+        Section {
+            ForEach(Array(JITFallbackRegistry.availableStrategies.enumerated()), id: \.offset) { _, strategy in
+                Button {
+                    manager.selectedFallbackStrategyIdentifier = strategy.identifier
+                } label: {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            Circle()
+                                .fill(Color.indigo.opacity(0.15))
+                                .frame(width: 36, height: 36)
+                            Image(systemName: "arrow.uturn.backward.circle")
+                                .font(.system(size: 16))
+                                .foregroundStyle(.indigo)
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(String.localized(strategy.displayName))
+                                .font(.subheadline)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.primary)
+                            Text(String.localized(strategy.strategyDescription))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if manager.selectedFallbackStrategyIdentifier == strategy.identifier {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundStyle(.accentColor)
+                        }
+                    }
+                    .padding(.vertical, 2)
+                }
+                .foregroundStyle(.primary)
+            }
+        } header: {
+            SettingsSectionHeader(title: String.localized("Fallback Method"), icon: "arrow.uturn.backward.circle.fill")
+        } footer: {
+            Text(String.localized("The fallback method is invoked automatically when a recoverable error occurs during JIT enabling."))
         }
     }
 
