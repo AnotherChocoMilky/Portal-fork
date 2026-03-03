@@ -23,6 +23,10 @@ enum JITError: LocalizedError {
     case resumeFailed
     case unsupportedIOSVersion(current: String)
     case timeout(stage: String)
+    case brokenPipe
+    case socketRejection
+    case lockdownHandshakeFailed
+    case subnetMismatch(vpnIP: String, physicalSubnet: String)
     case unknown(String)
 
     /// Returns `true` for errors that may be resolved by a fallback strategy.
@@ -31,6 +35,8 @@ enum JITError: LocalizedError {
         switch self {
         case .unsupportedIOSVersion, .pairingMissing, .pairingInvalid:
             return false
+        case .brokenPipe, .socketRejection, .lockdownHandshakeFailed, .subnetMismatch:
+            return true
         default:
             return true
         }
@@ -66,6 +72,14 @@ enum JITError: LocalizedError {
             return String.localized("iOS \(current) is not supported for JIT enabling.")
         case .timeout(let stage):
             return String.localized("The operation timed out during \(stage).")
+        case .brokenPipe:
+            return String.localized("Connection lost (broken pipe). The device may have dropped the session.")
+        case .socketRejection:
+            return String.localized("The device rejected the socket connection. Verify VPN and pairing status.")
+        case .lockdownHandshakeFailed:
+            return String.localized("The lockdown handshake failed. The device session could not be established.")
+        case .subnetMismatch(let vpnIP, let physicalSubnet):
+            return String.localized("VPN interface IP \(vpnIP) is not within the physical subnet \(physicalSubnet). A compatible IP will be assigned automatically.")
         case .unknown(let message):
             return String.localized("An unexpected error occurred: \(message)")
         }

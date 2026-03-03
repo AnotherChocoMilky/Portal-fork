@@ -17,6 +17,7 @@ class JITFallbackRegistry {
         RetryAttachStrategy(),
         PIDRevalidationStrategy(),
         LockdownResetStrategy(),
-        DelayedAttachStrategy()
+        DelayedAttachStrategy(),
+        iOS_26_4_JIT_Method()
     ]
 }
