@@ -240,7 +240,7 @@ struct JITSettingsView: View {
                         if manager.selectedFallbackStrategyIdentifier == strategy.identifier {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(.accentColor)
+                                .foregroundStyle(Color.accentColor)
                         }
                     }
                     .padding(.vertical, 2)
