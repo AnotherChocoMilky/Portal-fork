@@ -147,14 +147,14 @@ class JITManager: ObservableObject {
 
         let components = version.split(separator: ".").compactMap { Int($0) }
         guard components.count >= 2 else {
-            throw JITError.unsupportedIOSVersion(version)
+            throw JITError.unsupportedIOSVersion(current: version)
         }
 
         let major = components[0]
         let minor = components[1]
 
         if major < 17 || (major == 17 && minor < 4) {
-            throw JITError.unsupportedIOSVersion(version)
+            throw JITError.unsupportedIOSVersion(current: version)
         }
     }
 }
