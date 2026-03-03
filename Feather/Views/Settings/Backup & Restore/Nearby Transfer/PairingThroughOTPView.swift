@@ -56,9 +56,9 @@ struct PairingThroughOTPView: View {
             
             // Guidance
             Section {
-                Label("Direct over Wi-Fi/Bluetooth", systemImage: "wifi")
-                Label("Secure 6-digit encryption", systemImage: "lock.shield.fill")
-                Label("Auto-expiring codes", systemImage: "timer")
+                Label("Direct Over Wi-Fi/Bluetooth", systemImage: "wifi")
+                Label("Secure 6 Digit Encryption", systemImage: "lock.shield.fill")
+                Label("Auto Expiring Codes", systemImage: "timer")
             } header: {
                 Text(.localized("Security Features"))
             }
@@ -108,7 +108,7 @@ struct PairingThroughOTPView: View {
                     ProgressView(value: Double(viewModel.timeRemaining), total: Double(viewModel.otpExpirationSeconds))
                         .tint(viewModel.expirationColor)
                     
-                    Text("Expires in \(viewModel.timeRemaining) seconds")
+                    Text("Expires In \(viewModel.timeRemaining) Seconds")
                         .font(.caption.bold())
                         .foregroundStyle(viewModel.expirationColor)
                 }
@@ -118,7 +118,7 @@ struct PairingThroughOTPView: View {
                     Label("Recipient Connected", systemImage: "checkmark.circle.fill")
                         .foregroundStyle(.green)
                 } else if viewModel.isWaitingForRecipient {
-                    Label("Waiting for recipient...", systemImage: "antenna.radiowaves.left.and.right")
+                    Label("Waiting For Recipient...", systemImage: "antenna.radiowaves.left.and.right")
                         .foregroundStyle(.blue)
                 }
             }
@@ -154,11 +154,11 @@ struct PairingThroughOTPView: View {
     private var recipientUI: some View {
         Section {
             VStack(spacing: 20) {
-                Text("Enter 6-Digit Code")
+                Text("Enter 6 Digit Code")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
-                TextField("000000", text: $otpInput)
+                TextField("123456", text: $otpInput)
                     .font(.system(size: 40, weight: .bold, design: .monospaced))
                     .multilineTextAlignment(.center)
                     .keyboardType(.numberPad)
@@ -175,7 +175,7 @@ struct PairingThroughOTPView: View {
                     .padding()
 
                 if viewModel.isValidating {
-                    ProgressView("Connecting to sender...")
+                    ProgressView("Connecting To Sender...")
                 }
 
                 if let error = viewModel.errorMessage {

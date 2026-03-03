@@ -185,7 +185,7 @@ struct BackupContentsView: View {
 
                     if certificates.isEmpty && signedApps.isEmpty && importedApps.isEmpty && frameworks.isEmpty && archives.isEmpty {
                         Section {
-                            Text("No recognizable metadata found in backup.")
+                            Text("No recognizable metadata found in this backup.")
                                 .foregroundStyle(.secondary)
                         }
                     }

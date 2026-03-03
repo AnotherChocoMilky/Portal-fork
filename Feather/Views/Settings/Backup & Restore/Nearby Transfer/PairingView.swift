@@ -63,7 +63,7 @@ struct PairingView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Pair Remotely")
                                 .font(.headline)
-                            Text("Secure 6-digit code connection over the internet.")
+                            Text("Secure 6 digit code connection over the internet.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -89,7 +89,7 @@ struct PairingView: View {
                             Spacer()
                             VStack(spacing: 12) {
                                 ProgressView()
-                                Text("Searching for nearby devices...")
+                                Text("Searching For Nearby Devices...")
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
@@ -106,7 +106,7 @@ struct PairingView: View {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(peer.displayName)
                                             .font(.headline)
-                                        Text("Tap to establish secure connection")
+                                        Text("Tap To Establish Secure Connection")
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                     }
@@ -131,7 +131,7 @@ struct PairingView: View {
                             .foregroundStyle(.blue)
                             .padding(.top, 10)
                         
-                        Text("Ready to Receive")
+                        Text("Ready To Receive")
                             .font(.headline)
 
                         Text("Stay on this screen to remain visible to senders.")

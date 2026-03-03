@@ -16,14 +16,14 @@ struct AutoBackupsView: View {
                     Label {
                         VStack(alignment: .leading) {
                             Text("Automatic Backups")
-                            Text("Automatically secure your data").font(.caption).foregroundStyle(.secondary)
+                            Text("Automatically secure your data.").font(.caption).foregroundStyle(.secondary)
                         }
                     } icon: {
                         Image(systemName: "calendar.badge.clock").foregroundStyle(.blue)
                     }
                 }
             } footer: {
-                Text("Automatic backups run when the app is opened or in the background if system conditions allow.")
+                Text("Automatic backups run when the app is opened or in the background if iOS allows it.")
             }
 
             if isEnabled {

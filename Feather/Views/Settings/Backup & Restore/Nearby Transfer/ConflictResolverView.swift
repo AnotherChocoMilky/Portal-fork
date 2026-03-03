@@ -94,7 +94,7 @@ struct ConflictResolverView: View {
                 Section {
                     HStack(spacing: 12) {
                         ProgressView()
-                        Text("Scanning for duplicates...")
+                        Text("Scanning For Duplicates...")
                             .font(.system(.subheadline, design: .rounded))
                             .foregroundStyle(.secondary)
                     }

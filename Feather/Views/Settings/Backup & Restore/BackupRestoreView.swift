@@ -216,7 +216,7 @@ struct BackupRestoreView: View {
                     .foregroundStyle(.green)
             }
         } header: {
-            Text(.localized("Wireless Transfer"))
+            Text(.localized("Nearby Transfer"))
         }
     }
 
@@ -618,7 +618,7 @@ struct BackupRestoreView: View {
                 }
             }
 
-            AppLogManager.shared.success("Cleared \(count) cache items", category: "Advanced Tools")
+            AppLogManager.shared.success("Cleared \(count) Cache Items", category: "Advanced Tools")
             UIAlertController.showAlertWithOk(title: "Caches Cleared", message: "Successfully removed \(count) temporary files and cached items.")
         } catch {
             AppLogManager.shared.error("Failed to clear caches: \(error.localizedDescription)", category: "Advanced Tools", errorCode: .FILE_OP_FAILED)
