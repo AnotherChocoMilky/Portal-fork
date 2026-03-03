@@ -25,15 +25,31 @@ class JITManager: ObservableObject {
 
     // MARK: - Fallback strategy
 
+    /// Whether the device is running iOS 26.4 or later, requiring the automatic fallback.
+    var isIOS264OrLater: Bool {
+        let version = UIDevice.current.systemVersion
+        let components = version.split(separator: ".").compactMap { Int($0) }
+        guard components.count >= 2 else { return false }
+        let major = components[0]
+        let minor = components[1]
+        return major > 26 || (major == 26 && minor >= 4)
+    }
+
     /// Persisted identifier of the selected fallback strategy.
     /// Defaults to `RetryAttachStrategy` when no selection has been saved.
+    /// Automatically overridden to `iOS_26_4_JIT_Method` on iOS 26.4+.
     @Published var selectedFallbackStrategyIdentifier: String = UserDefaults.standard.string(forKey: "Feather.jitFallbackStrategy") ?? "retry-attach" {
         didSet { UserDefaults.standard.set(selectedFallbackStrategyIdentifier, forKey: "Feather.jitFallbackStrategy") }
     }
 
     /// The active fallback strategy resolved from the registry.
+    /// On iOS 26.4+, always returns `iOS_26_4_JIT_Method` regardless of user selection.
     var selectedFallbackStrategy: any JITFallbackStrategy {
-        JITFallbackRegistry.availableStrategies.first { $0.identifier == selectedFallbackStrategyIdentifier }
+        if isIOS264OrLater {
+            return JITFallbackRegistry.availableStrategies.first { $0.identifier == "iOS_26_4_JIT_Method" }
+                ?? JITFallbackRegistry.availableStrategies[0]
+        }
+        return JITFallbackRegistry.availableStrategies.first { $0.identifier == selectedFallbackStrategyIdentifier }
             ?? JITFallbackRegistry.availableStrategies[0]
     }
 

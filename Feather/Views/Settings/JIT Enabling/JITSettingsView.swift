@@ -214,43 +214,75 @@ struct JITSettingsView: View {
 
     private var fallbackSection: some View {
         Section {
-            ForEach(Array(JITFallbackRegistry.availableStrategies.enumerated()), id: \.offset) { _, strategy in
-                Button {
-                    manager.selectedFallbackStrategyIdentifier = strategy.identifier
-                } label: {
-                    HStack(spacing: 12) {
-                        ZStack {
-                            Circle()
-                                .fill(Color.indigo.opacity(0.15))
-                                .frame(width: 36, height: 36)
-                            Image(systemName: "arrow.uturn.backward.circle")
-                                .font(.system(size: 16))
-                                .foregroundStyle(.indigo)
-                        }
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(String.localized(strategy.displayName))
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.primary)
-                            Text(String.localized(strategy.strategyDescription))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        if manager.selectedFallbackStrategyIdentifier == strategy.identifier {
-                            Image(systemName: "checkmark")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(Color.accentColor)
-                        }
+            if manager.isIOS264OrLater {
+                // Auto-selected mode: show the iOS 26.4 strategy as locked-in
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.indigo.opacity(0.15))
+                            .frame(width: 36, height: 36)
+                        Image(systemName: "arrow.uturn.backward.circle")
+                            .font(.system(size: 16))
+                            .foregroundStyle(.indigo)
                     }
-                    .padding(.vertical, 2)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(String.localized(manager.selectedFallbackStrategy.displayName))
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.primary)
+                        Text(String.localized(manager.selectedFallbackStrategy.strategyDescription))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.accentColor)
                 }
-                .foregroundStyle(.primary)
+                .padding(.vertical, 2)
+            } else {
+                ForEach(Array(JITFallbackRegistry.availableStrategies.enumerated()), id: \.offset) { _, strategy in
+                    Button {
+                        manager.selectedFallbackStrategyIdentifier = strategy.identifier
+                    } label: {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color.indigo.opacity(0.15))
+                                    .frame(width: 36, height: 36)
+                                Image(systemName: "arrow.uturn.backward.circle")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(.indigo)
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(String.localized(strategy.displayName))
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.primary)
+                                Text(String.localized(strategy.strategyDescription))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            if manager.selectedFallbackStrategyIdentifier == strategy.identifier {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                        }
+                        .padding(.vertical, 2)
+                    }
+                    .foregroundStyle(.primary)
+                }
             }
         } header: {
             SettingsSectionHeader(title: String.localized("Fallback Method"), icon: "arrow.uturn.backward.circle.fill")
         } footer: {
-            Text(String.localized("The fallback method is invoked automatically when a recoverable error occurs during JIT enabling."))
+            if manager.isIOS264OrLater {
+                Text(String.localized("Looks like you are on iOS 26.4 or later. You need a specific fallback method, don't worry tho, Portal has it set already for you!"))
+            } else {
+                Text(String.localized("The fallback method is invoked automatically when a recoverable error occurs during JIT enabling."))
+            }
         }
     }
 
