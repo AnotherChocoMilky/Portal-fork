@@ -5,11 +5,12 @@
 
 import Foundation
 import IDevice
+import OSLog
 
 // MARK: - PairingManager
 
 /// Responsible for managing the pairing file lifecycle: import, validation, and storage.
-/// The pairing file is stored at `Documents/pairingFile.plist`, consistent with HeartbeatManager.
+/// The pairing file is stored at `Documents/pairingFile.plist`.
 class PairingManager {
     static let shared = PairingManager()
 
@@ -30,12 +31,21 @@ class PairingManager {
 
     // MARK: - Import
 
-    /// Imports a pairing file from the given URL, validates it, and writes it to the canonical path.
-    /// The actual file move is delegated to `FR.movePairing(_:)` which handles security-scoped
-    /// resource access and file system operations. This method validates the result.
+    /// Imports a pairing file from the given URL and validates it.
     /// - Parameter sourceURL: The URL of the .plist or .mobiledevicepairing file selected by the user.
-    func importPairingFile(from sourceURL: URL) {
-        FR.movePairing(sourceURL)
+    func importPairingFile(from sourceURL: URL) throws {
+        let fileManager = FileManager.default
+        let destURL = URL(fileURLWithPath: Self.pairingFilePath)
+
+        try? fileManager.removeItem(at: destURL)
+        try fileManager.copyItem(at: sourceURL, to: destURL)
+
+        guard validatePairingFile() else {
+            try? fileManager.removeItem(at: destURL)
+            throw JITError.pairingInvalid("The imported file could not be parsed as a valid pairing record.")
+        }
+
+        Logger.jit.info("PairingManager: Successfully imported and validated pairing file")
     }
 
     /// Validates the pairing file currently on disk by asking idevice to parse it.
@@ -45,6 +55,7 @@ class PairingManager {
         var pairingFile: OpaquePointer?
         let err = idevice_pairing_file_read(Self.pairingFilePath, &pairingFile)
         if let err = err {
+            Logger.jit.error("PairingManager: Validation failed with error code \(err.pointee.code)")
             idevice_error_free(err)
             return false
         }
@@ -56,20 +67,20 @@ class PairingManager {
 
     /// Returns an opaque pointer to a freshly-read pairing file.
     /// The caller is responsible for freeing the pointer via `idevice_pairing_file_free`.
-    /// - Throws: `JITError.pairingFileNotFound` or `JITError.pairingFileInvalid`.
+    /// - Throws: `JITError.pairingMissing` or `JITError.pairingInvalid`.
     func readPairingFile() throws -> OpaquePointer {
         guard hasPairingFile else {
-            throw JITError.pairingFileNotFound
+            throw JITError.pairingMissing
         }
         var pairingFile: OpaquePointer?
         let err = idevice_pairing_file_read(Self.pairingFilePath, &pairingFile)
         if let err = err {
             let code = err.pointee.code
             idevice_error_free(err)
-            throw JITError.pairingFileInvalid("idevice error code \(code)")
+            throw JITError.pairingInvalid("idevice error code \(code)")
         }
         guard let pf = pairingFile else {
-            throw JITError.pairingFileInvalid("Nil pointer returned")
+            throw JITError.pairingInvalid("Nil pointer returned")
         }
         return pf
     }
@@ -78,5 +89,6 @@ class PairingManager {
 
     func removePairingFile() {
         try? FileManager.default.removeItem(atPath: Self.pairingFilePath)
+        Logger.jit.info("PairingManager: Removed pairing file")
     }
 }

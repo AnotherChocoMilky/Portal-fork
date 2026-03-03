@@ -6,15 +6,12 @@
 import Foundation
 import IDevice
 import IDeviceSwift
+import OSLog
 
 // MARK: - LockdownSession
 
 /// Establishes an authenticated lockdown session using the pairing record
 /// and provides a TCP provider handle for downstream services (debugserver, etc.).
-///
-/// Internally this wraps the HeartbeatManager's existing provider so that
-/// JIT operations can reuse the already-authenticated connection without
-/// opening a second lockdown session.
 class LockdownSession {
 
     // MARK: - Types
@@ -36,44 +33,57 @@ class LockdownSession {
 
     // MARK: - Connect
 
-    /// Borrows the provider that the HeartbeatManager has already authenticated.
-    /// If the heartbeat is not running yet, this will attempt to start it and
-    /// wait up to `timeout` seconds for the connection to come up.
+    /// Establishes a connection to the device and authenticates via the pairing file.
+    /// This utilizes the loopback VPN address (10.7.0.1).
     ///
     /// - Parameter timeout: Maximum seconds to wait for the connection.
-    /// - Throws: `JITError.socketConnectionFailed` if the device cannot be reached.
+    /// - Throws: `JITError` if authentication or connection fails.
     func connect(timeout: TimeInterval = 5.0) throws {
-        let heartbeat = HeartbeatManager.shared
+        Logger.jit.info("LockdownSession: Attempting to connect to device")
 
-        // Quick path – provider already exists
-        if let existingProvider = heartbeat.provider {
-            self.provider = existingProvider
-            return
+        let pairingManager = PairingManager.shared
+        let pairingFile = try pairingManager.readPairingFile()
+        defer { idevice_pairing_file_free(pairingFile) }
+
+        // Define device address
+        var addr = sockaddr_in()
+        memset(&addr, 0, MemoryLayout.size(ofValue: addr))
+        addr.sin_family = sa_family_t(AF_INET)
+        addr.sin_port = CFSwapInt16HostToBig(UInt16(LOCKDOWN_PORT))
+
+        guard inet_pton(AF_INET, "10.7.0.1", &addr.sin_addr) == 1 else {
+            throw JITError.unknownError("Invalid loopback IP address")
         }
 
-        // Ensure socket is reachable before bothering to start heartbeat
-        let socketCheck = heartbeat.checkSocketConnection(timeoutInSeconds: timeout)
-        guard socketCheck.isConnected else {
-            throw JITError.socketConnectionFailed(socketCheck.error ?? "Unreachable")
+        // Create TCP provider
+        var providerPtr: TcpProviderHandle?
+        let result = withUnsafePointer(to: &addr) {
+            $0.withMemoryRebound(to: sockaddr.self, capacity: 1) { sockaddrPtr in
+                idevice_tcp_provider_new(sockaddrPtr, pairingFile, "Portal-JIT", &providerPtr)
+            }
         }
 
-        // Start heartbeat and wait briefly for provider to become available
-        heartbeat.start()
-        let deadline = Date(timeIntervalSinceNow: timeout)
-        while heartbeat.provider == nil && Date() < deadline {
-            Thread.sleep(forTimeInterval: 0.1)
+        if let err = result {
+            let code = err.pointee.code
+            idevice_error_free(err)
+            Logger.jit.error("LockdownSession: Failed to create TCP provider: \(code)")
+            throw JITError.lockdownAuthenticationFailed("Failed to create TCP provider (code \(code))")
         }
 
-        guard let p = heartbeat.provider else {
-            throw JITError.socketConnectionFailed("Heartbeat did not produce a provider in time")
+        guard let p = providerPtr else {
+            throw JITError.lockdownAuthenticationFailed("Nil provider returned")
         }
+
         self.provider = p
+        Logger.jit.info("LockdownSession: Authenticated and connected successfully")
     }
 
     // MARK: - Disconnect
 
     func disconnect() {
-        // We only borrow the provider from HeartbeatManager; do not free it here.
+        // TCP provider is managed by the C side usually, but if we allocated it we should be careful.
+        // In idevice-ffi, idevice_tcp_provider_new creates it. There isn't an explicit free for just the provider
+        // but it's typically cleaned up when the higher-level handles are closed or on deinit of the FFI side.
         provider = nil
     }
 }

@@ -4,19 +4,12 @@
 //
 
 import Foundation
-import IDevice
-import IDeviceSwift
-import Network
+import UIKit
 import OSLog
 
 // MARK: - JITManager
 
 /// High-level orchestrator for the JIT enabling pipeline.
-///
-/// Usage:
-/// ```swift
-/// let result = await JITManager.shared.enableJIT(for: "com.example.app")
-/// ```
 @MainActor
 class JITManager: ObservableObject {
 
@@ -25,7 +18,7 @@ class JITManager: ObservableObject {
     static let shared = JITManager()
     private init() {}
 
-    // MARK: - Published state (drives JITStatusView)
+    // MARK: - Published state
 
     @Published var state: JITState = .idle
     @Published var lastError: JITError?
@@ -33,85 +26,94 @@ class JITManager: ObservableObject {
     // MARK: - Dependencies
 
     private let pairingManager = PairingManager.shared
-    private let lockdownSession = LockdownSession()
+    private let tunnelManager = TunnelManager.shared
 
     // MARK: - Public API
 
     /// Enables JIT for the application with the given bundle identifier.
     ///
-    /// Steps:
-    /// 1. Validate pairing file
-    /// 2. Check VPN / socket connectivity
-    /// 3. Establish lockdown session (obtain TCP provider)
-    /// 4. Construct a `DebugServerClient` and run the full attach flow
+    /// The flow:
+    /// 1. Validate iOS version (>= 17.4)
+    /// 2. Ensure loopback VPN is active
+    /// 3. Validate pairing record
+    /// 4. Establish lockdown session
+    /// 5. Start debugserver service
+    /// 6. Resolve PID by launching app suspended
+    /// 7. Attach and Resume (detach)
     ///
     /// - Parameter bundleID: The CFBundleIdentifier of the target app.
-    /// - Returns: `true` on success, `false` on failure (error stored in `lastError`).
-    @discardableResult
-    func enableJIT(for bundleID: String) async -> Bool {
+    /// - Throws: `JITError` on failure.
+    func enableJIT(for bundleID: String) async throws {
         lastError = nil
-        state = .validatingPairing
+        Logger.jit.info("JITManager: Starting JIT pipeline for \(bundleID)")
 
         do {
-            // 1. Pairing file
+            // 1. Validate iOS Version
+            try validateIOSVersion()
+
+            // 2. Ensure VPN is active
+            state = .checkingVPN
+            try await tunnelManager.ensureTunnelActive()
+
+            // 3. Validate Pairing
+            state = .validatingPairing
             guard pairingManager.hasPairingFile else {
-                throw JITError.pairingFileNotFound
+                throw JITError.pairingMissing
             }
             guard pairingManager.validatePairingFile() else {
-                throw JITError.pairingFileInvalid("Could not parse the pairing file")
+                throw JITError.pairingInvalid("Pairing record validation failed.")
             }
 
-            // 2. VPN / socket connectivity
-            state = .checkingVPN
-            let socketCheck = await checkSocketOnBackground()
-            guard socketCheck.isConnected else {
-                throw JITError.vpnNotActive
-            }
-
-            // 3. Lockdown / TCP provider
+            // 4. Lockdown Session
             state = .connectingLockdown
-            try lockdownSession.connect()
-            guard let provider = lockdownSession.provider else {
-                throw JITError.debugSessionFailed("No TCP provider after lockdown connect")
+            let lockdown = LockdownSession()
+            try lockdown.connect()
+            guard let provider = lockdown.provider else {
+                throw JITError.lockdownAuthenticationFailed("Failed to obtain TCP provider")
             }
 
-            // 4. Attach debugserver
+            // 5 & 6. Resolve PID (Launch Suspended)
             state = .connectingDebugServer
-            try await attachDebugServerOnBackground(bundleID: bundleID, provider: provider)
+            let pid = try ProcessResolver.shared.launchSuspended(bundleID: bundleID, provider: provider)
+
+            // 7. Attach and Resume
+            let client = DebugServerClient()
+            try client.attachAndEnableJIT(pid: pid, provider: provider)
 
             state = .jitEnabled
-            return true
+            Logger.jit.info("JITManager: JIT successfully enabled for \(bundleID)")
 
         } catch let error as JITError {
             lastError = error
             state = .failed(error)
-            Logger.jit.error("enableJIT failed: \(error.localizedDescription ?? "unknown")")
-            return false
+            Logger.jit.error("JITManager: Pipeline failed: \(error.localizedDescription ?? "unknown")")
+            throw error
         } catch {
-            let wrappedError = JITError.unknown(error.localizedDescription)
+            let wrappedError = JITError.unknownError(error.localizedDescription)
             lastError = wrappedError
             state = .failed(wrappedError)
-            Logger.jit.error("enableJIT unexpected error: \(error.localizedDescription)")
-            return false
+            Logger.jit.error("JITManager: Unexpected error: \(error.localizedDescription)")
+            throw wrappedError
         }
     }
 
-    // MARK: - Background helpers
+    // MARK: - Helpers
 
-    private func checkSocketOnBackground() async -> (isConnected: Bool, error: String?) {
-        await withCheckedContinuation { continuation in
-            DispatchQueue.global(qos: .userInitiated).async {
-                let result = HeartbeatManager.shared.checkSocketConnection()
-                continuation.resume(returning: result)
-            }
+    private func validateIOSVersion() throws {
+        let version = UIDevice.current.systemVersion
+        Logger.jit.info("JITManager: Device iOS version: \(version)")
+
+        let components = version.split(separator: ".").compactMap { Int($0) }
+        guard components.count >= 2 else {
+            throw JITError.unsupportedIOSVersion(version)
         }
-    }
 
-    private func attachDebugServerOnBackground(bundleID: String, provider: OpaquePointer) async throws {
-        try await Task.detached(priority: .userInitiated) {
-            let client = DebugServerClient()
-            try client.enableJIT(for: bundleID, provider: provider)
-        }.value
+        let major = components[0]
+        let minor = components[1]
+
+        if major < 17 || (major == 17 && minor < 4) {
+            throw JITError.unsupportedIOSVersion(version)
+        }
     }
 }
 
@@ -145,10 +147,10 @@ enum JITState: Equatable {
     var displayTitle: String {
         switch self {
         case .idle:                  return String.localized("Ready")
-        case .validatingPairing:     return String.localized("Validating Pairing File...")
-        case .checkingVPN:           return String.localized("Checking VPN Tunnel...")
-        case .connectingLockdown:    return String.localized("Connecting to Device...")
-        case .connectingDebugServer: return String.localized("Attaching Debugserver...")
+        case .validatingPairing:     return String.localized("Validating Pairing Record...")
+        case .checkingVPN:           return String.localized("Activating Loopback VPN...")
+        case .connectingLockdown:    return String.localized("Authenticating with Device...")
+        case .connectingDebugServer: return String.localized("Enabling JIT...")
         case .jitEnabled:            return String.localized("JIT Enabled!")
         case .failed:                return String.localized("Failed")
         }
