@@ -63,7 +63,7 @@ struct JITAppSelectionView: View, InstallationProxyAppsDelegate {
                 HStack(spacing: 12) {
                     Image(systemName: "app.badge.checkmark")
                         .font(.system(size: 24))
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                         .frame(width: 40, height: 40)
 
                     VStack(alignment: .leading, spacing: 2) {
