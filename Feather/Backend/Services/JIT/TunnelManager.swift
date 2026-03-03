@@ -22,6 +22,16 @@ class TunnelManager {
     func ensureTunnelActive() async throws {
         Logger.jit.info("TunnelManager: Ensuring loopback VPN is active")
 
+        do {
+            try await performEnsureTunnelActive()
+        } catch let error as JITError {
+            throw error
+        } catch {
+            throw JITError.vpnStartFailed
+        }
+    }
+
+    private func performEnsureTunnelActive() async throws {
         let managers = try await NETunnelProviderManager.loadAllFromPreferences()
         let manager: NETunnelProviderManager
 
@@ -54,14 +64,18 @@ class TunnelManager {
         }
 
         Logger.jit.info("TunnelManager: Starting VPN tunnel")
-        try manager.connection.startVPNTunnel()
+        do {
+            try manager.connection.startVPNTunnel()
+        } catch {
+            throw JITError.vpnStartFailed
+        }
 
         // Wait for connection with timeout
         let deadline = Date().addingTimeInterval(10)
         while manager.connection.status != .connected {
             if Date() > deadline {
                 Logger.jit.error("TunnelManager: VPN start timed out")
-                throw JITError.vpnStartFailed("Connection timed out")
+                throw JITError.timeout(stage: "VPN Start")
             }
             try await Task.sleep(nanoseconds: 500_000_000) // 0.5s
             try await manager.loadFromPreferences() // Refresh status

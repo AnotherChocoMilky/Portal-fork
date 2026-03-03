@@ -52,7 +52,7 @@ class LockdownSession {
         addr.sin_port = CFSwapInt16HostToBig(UInt16(LOCKDOWN_PORT))
 
         guard inet_pton(AF_INET, "10.7.0.1", &addr.sin_addr) == 1 else {
-            throw JITError.unknownError("Invalid loopback IP address")
+            throw JITError.unknown("Invalid loopback IP address")
         }
 
         // Create TCP provider
@@ -64,14 +64,13 @@ class LockdownSession {
         }
 
         if let err = result {
-            let code = err.pointee.code
             idevice_error_free(err)
-            Logger.jit.error("LockdownSession: Failed to create TCP provider: \(code)")
-            throw JITError.lockdownAuthenticationFailed("Failed to create TCP provider (code \(code))")
+            Logger.jit.error("LockdownSession: Failed to create TCP provider")
+            throw JITError.lockdownAuthenticationFailed
         }
 
         guard let p = providerPtr else {
-            throw JITError.lockdownAuthenticationFailed("Nil provider returned")
+            throw JITError.lockdownAuthenticationFailed
         }
 
         self.provider = p

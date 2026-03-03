@@ -62,30 +62,27 @@ class DebugServerClient {
         var coreDevicePtr: OpaquePointer?
         var err = core_device_proxy_connect(provider, &coreDevicePtr)
         if let e = err {
-            let code = e.pointee.code
             idevice_error_free(e)
-            throw JITError.debugServerStartFailed("core_device_proxy_connect failed: \(code)")
+            throw JITError.debugServerUnavailable
         }
         guard let coreDevicePtr else {
-            throw JITError.debugServerStartFailed("core_device_proxy_connect returned nil")
+            throw JITError.debugServerUnavailable
         }
 
         var rsdPort: UInt16 = 0
         err = core_device_proxy_get_server_rsd_port(coreDevicePtr, &rsdPort)
         if let e = err {
-            let code = e.pointee.code
             idevice_error_free(e)
             core_device_proxy_free(coreDevicePtr)
-            throw JITError.debugServerStartFailed("get_server_rsd_port failed: \(code)")
+            throw JITError.debugServerUnavailable
         }
 
         var adapterPtr: OpaquePointer?
         err = core_device_proxy_create_tcp_adapter(coreDevicePtr, &adapterPtr)
         if let e = err {
-            let code = e.pointee.code
             idevice_error_free(e)
             core_device_proxy_free(coreDevicePtr)
-            throw JITError.debugServerStartFailed("create_tcp_adapter failed: \(code)")
+            throw JITError.debugServerUnavailable
         }
         self.adapter = adapterPtr
         // coreDevice ownership transferred to adapter
@@ -93,35 +90,31 @@ class DebugServerClient {
         var streamPtr: OpaquePointer?
         err = adapter_connect(adapterPtr, rsdPort, &streamPtr)
         if let e = err {
-            let code = e.pointee.code
             idevice_error_free(e)
-            throw JITError.debugServerStartFailed("adapter_connect failed: \(code)")
+            throw JITError.debugServerUnavailable
         }
 
         var handshakePtr: OpaquePointer?
         err = rsd_handshake_new(streamPtr, &handshakePtr)
         if let e = err {
-            let code = e.pointee.code
             idevice_error_free(e)
-            throw JITError.debugServerStartFailed("rsd_handshake_new failed: \(code)")
+            throw JITError.debugServerUnavailable
         }
         self.handshake = handshakePtr
 
         var remoteServerPtr: OpaquePointer?
         err = remote_server_connect_rsd(adapterPtr, handshakePtr, &remoteServerPtr)
         if let e = err {
-            let code = e.pointee.code
             idevice_error_free(e)
-            throw JITError.debugServerStartFailed("remote_server_connect_rsd failed: \(code)")
+            throw JITError.debugServerUnavailable
         }
         self.remoteServer = remoteServerPtr
 
         var debugProxyPtr: OpaquePointer?
         err = debug_proxy_connect_rsd(adapterPtr, handshakePtr, &debugProxyPtr)
         if let e = err {
-            let code = e.pointee.code
             idevice_error_free(e)
-            throw JITError.debugServerStartFailed("debug_proxy_connect_rsd failed: \(code)")
+            throw JITError.debugServerUnavailable
         }
         self.debugProxy = debugProxyPtr
     }
@@ -130,7 +123,7 @@ class DebugServerClient {
 
     private func performAttachDetachSequence(pid: Int64) throws {
         guard let debugProxy else {
-            throw JITError.attachFailed("Debug proxy handle is nil")
+            throw JITError.attachFailed
         }
 
         // 1. Send initial ACKs to synchronize
@@ -158,14 +151,13 @@ class DebugServerClient {
             idevice_string_free(resp)
 
             if respStr.hasPrefix("E") {
-                throw JITError.attachFailed("vAttach returned error: \(respStr)")
+                throw JITError.attachFailed
             }
         }
 
         if let e = err {
-            let code = e.pointee.code
             idevice_error_free(e)
-            throw JITError.attachFailed("vAttach transport error: \(code)")
+            throw JITError.attachFailed
         }
 
         // 4. Detach (D) — this leaves JIT enabled

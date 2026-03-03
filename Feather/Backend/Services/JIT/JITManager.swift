@@ -61,7 +61,7 @@ class JITManager: ObservableObject {
                 throw JITError.pairingMissing
             }
             guard pairingManager.validatePairingFile() else {
-                throw JITError.pairingInvalid("Pairing record validation failed.")
+                throw JITError.pairingInvalid
             }
 
             // 4. Lockdown Session
@@ -69,7 +69,7 @@ class JITManager: ObservableObject {
             let lockdown = LockdownSession()
             try lockdown.connect()
             guard let provider = lockdown.provider else {
-                throw JITError.lockdownAuthenticationFailed("Failed to obtain TCP provider")
+                throw JITError.lockdownAuthenticationFailed
             }
 
             // 5 & 6. Resolve PID (Launch Suspended)
@@ -86,10 +86,10 @@ class JITManager: ObservableObject {
         } catch let error as JITError {
             lastError = error
             state = .failed(error)
-            Logger.jit.error("JITManager: Pipeline failed: \(error.localizedDescription ?? "unknown")")
+            Logger.jit.error("JITManager: Pipeline failed: \(error.localizedDescription)")
             throw error
         } catch {
-            let wrappedError = JITError.unknownError(error.localizedDescription)
+            let wrappedError = JITError.unknown(error.localizedDescription)
             lastError = wrappedError
             state = .failed(wrappedError)
             Logger.jit.error("JITManager: Unexpected error: \(error.localizedDescription)")
