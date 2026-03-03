@@ -23,6 +23,20 @@ class JITManager: ObservableObject {
     @Published var state: JITState = .idle
     @Published var lastError: JITError?
 
+    // MARK: - Fallback strategy
+
+    /// Persisted identifier of the selected fallback strategy.
+    /// Defaults to `RetryAttachStrategy` when no selection has been saved.
+    @Published var selectedFallbackStrategyIdentifier: String = UserDefaults.standard.string(forKey: "Feather.jitFallbackStrategy") ?? "retry-attach" {
+        didSet { UserDefaults.standard.set(selectedFallbackStrategyIdentifier, forKey: "Feather.jitFallbackStrategy") }
+    }
+
+    /// The active fallback strategy resolved from the registry.
+    var selectedFallbackStrategy: any JITFallbackStrategy {
+        JITFallbackRegistry.availableStrategies.first { $0.identifier == selectedFallbackStrategyIdentifier }
+            ?? JITFallbackRegistry.availableStrategies[0]
+    }
+
     // MARK: - Dependencies
 
     private let pairingManager = PairingManager.shared
@@ -48,14 +62,14 @@ class JITManager: ObservableObject {
         Logger.jit.info("JITManager: Starting JIT pipeline for \(bundleID)")
 
         do {
-            // 1. Validate iOS Version
+            // 1. Validate iOS Version (fatal — no fallback)
             try validateIOSVersion()
 
             // 2. Ensure VPN is active
             state = .checkingVPN
             try await tunnelManager.ensureTunnelActive()
 
-            // 3. Validate Pairing
+            // 3. Validate Pairing (fatal — no fallback)
             state = .validatingPairing
             guard pairingManager.hasPairingFile else {
                 throw JITError.pairingMissing
@@ -76,9 +90,21 @@ class JITManager: ObservableObject {
             state = .connectingDebugServer
             let pid = try ProcessResolver.shared.launchSuspended(bundleID: bundleID, provider: provider)
 
-            // 7. Attach and Resume
+            // 7. Attach and Resume — attempt primary, then fallback on recoverable errors
             let client = DebugServerClient()
-            try client.attachAndEnableJIT(pid: pid, provider: provider)
+            do {
+                try client.attachAndEnableJIT(pid: pid, provider: provider)
+            } catch let attachError as JITError where attachError.isRecoverable {
+                Logger.jit.warning("JITManager: Primary attach failed (\(attachError.localizedDescription)); invoking fallback strategy '\(self.selectedFallbackStrategy.identifier)'")
+                let context = JITContext(
+                    bundleID: bundleID,
+                    currentPID: pid,
+                    lockdownSession: lockdown,
+                    vpnManager: tunnelManager,
+                    logger: Logger.jit
+                )
+                try await selectedFallbackStrategy.execute(context: context)
+            }
 
             state = .jitEnabled
             Logger.jit.info("JITManager: JIT successfully enabled for \(bundleID)")
