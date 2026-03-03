@@ -14,9 +14,11 @@ import OSLog
 /// Allows pairing file import, shows pairing/VPN status, and triggers JIT enabling.
 struct JITSettingsView: View {
 
+    @Environment(\.dismiss) var dismiss
     @StateObject private var manager = JITManager.shared
     @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
 
+    @State private var showDisclaimer = true
     @State private var isPairingPresented = false
     @State private var isAppSelectionPresented = false
     @State private var selectedBundleID: String = ""
@@ -58,6 +60,16 @@ struct JITSettingsView: View {
         }
         .sheet(isPresented: $showStatusSheet) {
             jitStatusSheet
+        }
+        .alert(String.localized(" ⚠️ DISCLAIMER ⚠️"), isPresented: $showDisclaimer) {
+            Button(String.localized("Ok, That’s Fine")) {
+                showDisclaimer = false
+            }
+            Button(String.localized("Take Me Out"), role: .cancel) {
+                dismiss()
+            }
+        } message: {
+            Text(String.localized("This is a EARLY feature, it might not work as expected and it also depends on the OS version of your iPhone or iPad. If it works for you, great. If not, well I don’t know what to say"))
         }
         .onAppear {
             refreshStatus()
