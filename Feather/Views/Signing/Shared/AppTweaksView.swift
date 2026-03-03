@@ -11,17 +11,9 @@ struct AppTweaksView: View {
     var app: AppInfoPresentable
     @Binding var options: Options
 
-    @State private var selectedTab = 0
-    @State private var expandedFrameworks = false
-    @State private var expandedBundles = false
-    @State private var expandedDylibs = false
     @State private var showExtractView = false
     @State private var showAddUrlView = false
     @State private var searchText = ""
-    @FocusState private var searchFieldFocused: Bool
-
-    @State private var floatingAnimation = false
-    @State private var appearAnimation = false
 
     // Data
     @State private var dylibs: [String] = []
@@ -30,25 +22,21 @@ struct AppTweaksView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack {
-                modernBackground
-
-                VStack(spacing: 0) {
-                    headerSection
-                    searchBar
-                    mainContent
-                }
+            List {
+                overviewSection
+                injectionSection
+                componentsSection
             }
+            .listStyle(.insetGrouped)
+            .navigationTitle(String.localized("App Tweaks"))
             .navigationBarTitleDisplayMode(.inline)
+            .searchable(text: $searchText, prompt: String.localized("Search Tweaks"))
             .toolbar { toolbarContent }
             .onAppear {
                 loadData()
-                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                    appearAnimation = true
-                }
             }
             .sheet(isPresented: $showExtractView) {
-                ExtractTweaksView(app: app, frameworks: frameworks, bundles: bundles)
+                ExtractTweaksView(app: app, frameworks: frameworks, bundles: bundles, dylibs: dylibs)
             }
             .sheet(isPresented: $showAddUrlView) {
                 AddTweakUrlView { url in
@@ -59,425 +47,134 @@ struct AppTweaksView: View {
         }
     }
 
-    @ViewBuilder
-    private var modernBackground: some View {
-        ZStack {
-            LinearGradient(
-                colors: [
-                    Color.blue.opacity(0.08),
-                    Color.purple.opacity(0.04),
-                    Color.clear.opacity(0.95),
-                    Color.clear
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .ignoresSafeArea()
-
-            GeometryReader { geo in
-                Circle()
-                    .fill(Color.blue.opacity(0.12))
-                    .frame(width: 280, height: 280)
-                    .blur(radius: 60)
-                    .offset(x: floatingAnimation ? -30 : 30, y: floatingAnimation ? -20 : 20)
-                    .position(x: geo.size.width * 0.9, y: geo.size.height * 0.1)
-
-                Circle()
-                    .fill(Color.purple.opacity(0.08))
-                    .frame(width: 200, height: 200)
-                    .blur(radius: 50)
-                    .offset(x: floatingAnimation ? 20 : -20, y: floatingAnimation ? 15 : -15)
-                    .position(x: geo.size.width * 0.1, y: geo.size.height * 0.8)
-            }
-            .ignoresSafeArea()
-        }
-        .onAppear {
-            withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) {
-                floatingAnimation = true
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var headerSection: some View {
-        VStack(spacing: 8) {
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.blue.opacity(0.3), Color.purple.opacity(0.2)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 56, height: 56)
-                    .shadow(color: Color.blue.opacity(0.3), radius: 10, x: 0, y: 5)
-
-                Image(systemName: "cube.fill")
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundStyle(.white)
-            }
-            .scaleEffect(appearAnimation ? 1 : 0.5)
-            .opacity(appearAnimation ? 1 : 0)
-
-            VStack(spacing: 4) {
-                Text("App Tweaks")
-                    .font(.title3.weight(.bold))
-                    .foregroundStyle(.primary)
-
-                Text("\(frameworks.count + bundles.count + dylibs.count) Components Found")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            .opacity(appearAnimation ? 1 : 0)
-        }
-        .padding(.top, 16)
-        .padding(.bottom, 8)
-    }
-
-    @ViewBuilder
-    private var searchBar: some View {
-        HStack(spacing: 12) {
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.secondary)
-
-                TextField("Search Tweaks", text: $searchText)
-                    .font(.system(size: 15))
-                    .textInputAutocapitalization(.never)
-                    .focused($searchFieldFocused)
-
-                if !searchText.isEmpty {
-                    Button {
-                        searchText = ""
-                        searchFieldFocused = false
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color.clear)
-            )
-        }
-        .padding(.horizontal, 20)
-        .padding(.bottom, 8)
-    }
-
-    @ViewBuilder
-    private var mainContent: some View {
-        ScrollView {
-            VStack(spacing: 24) {
-                // Overview
-                overviewSection
-
-                // Active Injection
-                injectionSection
-
-                // Components
-                componentsSection
-            }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 12)
-            .padding(.bottom, 40)
-        }
-    }
-
-    @ViewBuilder
     private var overviewSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        Section {
             HStack {
-                Text("Overview")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .tracking(0.5)
+                Label(String.localized("Frameworks"), systemImage: "cube.box.fill")
+                    .foregroundStyle(.blue)
                 Spacer()
-            }
-            .padding(.leading, 4)
-
-            HStack(spacing: 12) {
-                statCard(title: "Frameworks", value: "\(frameworks.count)", icon: "cube.box.fill", color: .blue)
-                statCard(title: "Bundles", value: "\(bundles.count)", icon: "shippingbox.fill", color: .purple)
-                statCard(title: "Dylibs", value: "\(dylibs.count)", icon: "puzzlepiece.fill", color: .orange)
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func statCard(title: String, value: String, icon: String, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.12))
-                    .frame(width: 32, height: 32)
-                Image(systemName: icon)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(color)
-            }
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(value)
-                    .font(.system(size: 18, weight: .bold, design: .rounded))
-                    .foregroundStyle(.primary)
-                Text(title)
-                    .font(.system(size: 10, weight: .medium))
+                Text("\(frameworks.count)")
                     .foregroundStyle(.secondary)
-                    .textCase(.uppercase)
             }
+            HStack {
+                Label(String.localized("Bundles"), systemImage: "shippingbox.fill")
+                    .foregroundStyle(.purple)
+                Spacer()
+                Text("\(bundles.count)")
+                    .foregroundStyle(.secondary)
+            }
+            HStack {
+                Label(String.localized("Dylibs"), systemImage: "puzzlepiece.fill")
+                    .foregroundStyle(.orange)
+                Spacer()
+                Text("\(dylibs.count)")
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text(String.localized("Overview"))
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(14)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.clear)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.black.opacity(0.03), lineWidth: 0.5)
-        )
     }
 
-    @ViewBuilder
     private var injectionSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text("Injection Queue")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.secondary)
-                    .tracking(0.5)
-                Spacer()
-                Text("\(options.injectionFiles.count) Files")
-                    .font(.system(size: 10, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
-            .padding(.leading, 4)
-
+        Section {
             if options.injectionFiles.isEmpty {
                 Button {
                     showAddUrlView = true
                 } label: {
-                    HStack {
-                        Spacer()
-                        VStack(spacing: 8) {
-                            Image(systemName: "plus.circle")
-                                .font(.title2)
-                                .foregroundStyle(.secondary)
-                            Text("Tap To Add Custom Tweaks")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundStyle(.secondary)
-                        }
-                        .padding(.vertical, 24)
-                        Spacer()
-                    }
-                    .background(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .fill(Color.clear)
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                            .stroke(Color.black.opacity(0.03), lineWidth: 0.5)
-                    )
+                    Label(String.localized("Add Custom Tweaks"), systemImage: "plus.circle")
                 }
-                .buttonStyle(.plain)
             } else {
-                VStack(spacing: 1) {
-                    ForEach(options.injectionFiles, id: \.self) { url in
-                        HStack(spacing: 12) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 8, style: .continuous)
-                                    .fill(Color.green.opacity(0.12))
-                                    .frame(width: 32, height: 32)
-                                Image(systemName: "syringe.fill")
-                                    .font(.system(size: 14))
-                                    .foregroundStyle(.green)
+                ForEach(options.injectionFiles, id: \.self) { url in
+                    HStack {
+                        Label(url.lastPathComponent, systemImage: "syringe.fill")
+                            .foregroundStyle(.green)
+                        Spacer()
+                        Button(role: .destructive) {
+                            withAnimation {
+                                options.injectionFiles.removeAll { $0 == url }
                             }
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(url.lastPathComponent)
-                                    .font(.system(size: 14, weight: .medium))
-                                    .lineLimit(1)
-                                Text(url.scheme == "http" || url.scheme == "https" ? "Online URL" : "Local File")
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Spacer()
-
-                            Button {
-                                withAnimation {
-                                    options.injectionFiles.removeAll { $0 == url }
-                                }
-                            } label: {
-                                Image(systemName: "xmark.circle.fill")
-                                    .foregroundStyle(.secondary)
-                            }
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
                         }
-                        .padding(12)
-                        .background(Color.clear)
+                        .buttonStyle(.plain)
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
+                .onDelete { indexSet in
+                    options.injectionFiles.remove(atOffsets: indexSet)
+                }
             }
+        } header: {
+            Text(String.localized("Injection Queue"))
         }
     }
 
-    @ViewBuilder
     private var componentsSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Components")
-                .font(.system(size: 11, weight: .bold))
-                .foregroundStyle(.secondary)
-                .tracking(0.5)
-                .padding(.leading, 4)
-
-            VStack(spacing: 2) {
-                // Frameworks
-                componentGroupRow(
-                    title: "Frameworks",
-                    count: frameworks.count,
-                    icon: "cube.fill",
-                    color: .blue,
-                    isExpanded: $expandedFrameworks
-                )
-
-                if expandedFrameworks {
-                    componentList(items: frameworks, prefix: "Frameworks/", optionsKey: "removeFiles")
-                }
-
-                Divider().padding(.leading, 56)
-
-                // Bundles
-                componentGroupRow(
-                    title: "Bundles & Extensions",
-                    count: bundles.count,
-                    icon: "shippingbox.fill",
-                    color: .purple,
-                    isExpanded: $expandedBundles
-                )
-
-                if expandedBundles {
-                    componentList(items: bundles, prefix: "PlugIns/", optionsKey: "removeFiles")
-                }
-
-                Divider().padding(.leading, 56)
-
-                // Dylibs
-                componentGroupRow(
-                    title: "Dylibs",
-                    count: dylibs.count,
-                    icon: "puzzlepiece.fill",
-                    color: .orange,
-                    isExpanded: $expandedDylibs
-                )
-
-                if expandedDylibs {
-                    componentList(items: dylibs, prefix: "", optionsKey: "disInjectionFiles")
-                }
+        Section {
+            DisclosureGroup {
+                componentList(items: frameworks, prefix: "Frameworks/", optionsKey: "removeFiles")
+            } label: {
+                Label(String.localized("Frameworks"), systemImage: "cube.fill")
+                    .foregroundStyle(.blue)
             }
-            .background(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .fill(Color.clear)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 18, style: .continuous)
-                    .stroke(Color.black.opacity(0.03), lineWidth: 0.5)
-            )
+
+            DisclosureGroup {
+                componentList(items: bundles, prefix: "PlugIns/", optionsKey: "removeFiles")
+            } label: {
+                Label(String.localized("Bundles & Extensions"), systemImage: "shippingbox.fill")
+                    .foregroundStyle(.purple)
+            }
+
+            DisclosureGroup {
+                componentList(items: dylibs, prefix: "", optionsKey: "disInjectionFiles")
+            } label: {
+                Label(String.localized("Dylibs"), systemImage: "puzzlepiece.fill")
+                    .foregroundStyle(.orange)
+            }
+        } header: {
+            Text(String.localized("Components"))
         }
-    }
-
-    @ViewBuilder
-    private func componentGroupRow(title: String, count: Int, icon: String, color: Color, isExpanded: Binding<Bool>) -> some View {
-        Button {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
-                isExpanded.wrappedValue.toggle()
-            }
-        } label: {
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(color.opacity(0.12))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: icon)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(color)
-                }
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 15, weight: .semibold))
-                    Text("\(count) Items Found")
-                        .font(.system(size: 11))
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.quaternary)
-                    .rotationEffect(.degrees(isExpanded.wrappedValue ? 90 : 0))
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-        }
-        .buttonStyle(.plain)
     }
 
     @ViewBuilder
     private func componentList(items: [String], prefix: String, optionsKey: String) -> some View {
         let filteredItems = searchText.isEmpty ? items : items.filter { $0.localizedCaseInsensitiveContains(searchText) }
 
-        VStack(spacing: 0) {
-            if filteredItems.isEmpty {
-                Text("No Items Matching Search")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 16)
-            } else {
-                ForEach(filteredItems, id: \.self) { item in
-                    let fullPath = prefix.isEmpty ? item : "\(prefix)\(item)"
-                    let isEnabled = optionsKey == "removeFiles" ? !options.removeFiles.contains(fullPath) : !options.disInjectionFiles.contains(fullPath)
+        if filteredItems.isEmpty {
+            Text(String.localized("No Items Found"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        } else {
+            ForEach(filteredItems, id: \.self) { item in
+                let fullPath = prefix.isEmpty ? item : "\(prefix)\(item)"
+                let isEnabled = optionsKey == "removeFiles" ? !options.removeFiles.contains(fullPath) : !options.disInjectionFiles.contains(fullPath)
 
-                    HStack(spacing: 12) {
-                        Button {
-                            toggleComponent(fullPath, key: optionsKey)
-                        } label: {
-                            Image(systemName: isEnabled ? "checkmark.circle.fill" : "circle")
-                                .font(.title3)
-                                .foregroundStyle(isEnabled ? .green : .secondary)
-                        }
-                        .buttonStyle(.plain)
-
-                        Text(item)
-                            .font(.system(size: 14, weight: .medium))
-                            .lineLimit(1)
-
-                        Spacer()
-
-                        // Action menu
-                        Menu {
-                            Button(role: .destructive) {
-                                removeComponent(item, from: prefix, key: optionsKey)
-                            } label: {
-                                Label("Remove From List", systemImage: "trash")
-                            }
-                        } label: {
-                            Image(systemName: "ellipsis")
-                                .font(.system(size: 14))
-                                .foregroundStyle(.tertiary)
-                                .frame(width: 32, height: 32)
-                        }
+                HStack {
+                    Button {
+                        toggleComponent(fullPath, key: optionsKey)
+                    } label: {
+                        Image(systemName: isEnabled ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(isEnabled ? .green : .secondary)
                     }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Color.black.opacity(0.02))
+                    .buttonStyle(.plain)
+
+                    Text(item)
+                        .font(.subheadline)
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    Menu {
+                        Button(role: .destructive) {
+                            removeComponent(item, from: prefix, key: optionsKey)
+                        } label: {
+                            Label(String.localized("Remove From List"), systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
             }
         }
@@ -490,7 +187,6 @@ struct AppTweaksView: View {
                 dismiss()
             } label: {
                 Image(systemName: "xmark.circle.fill")
-                    .font(.title2)
                     .foregroundStyle(.secondary)
             }
         }
@@ -500,13 +196,13 @@ struct AppTweaksView: View {
                 Button {
                     showAddUrlView = true
                 } label: {
-                    Label("Add From URL", systemImage: "link")
+                    Label(String.localized("Add From URL"), systemImage: "link")
                 }
 
                 Button {
                     showExtractView = true
                 } label: {
-                    Label("Extract Components", systemImage: "arrow.up.doc")
+                    Label(String.localized("Extract Components"), systemImage: "arrow.up.doc")
                 }
 
                 Divider()
@@ -514,18 +210,16 @@ struct AppTweaksView: View {
                 Button {
                     enableAll()
                 } label: {
-                    Label("Enable All", systemImage: "checkmark.circle")
+                    Label(String.localized("Enable All"), systemImage: "checkmark.circle")
                 }
 
                 Button {
                     disableAll()
                 } label: {
-                    Label("Disable All", systemImage: "xmark.circle")
+                    Label(String.localized("Disable All"), systemImage: "xmark.circle")
                 }
             } label: {
                 Image(systemName: "ellipsis.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(.blue)
             }
         }
     }
@@ -628,9 +322,9 @@ struct AddTweakUrlView: View {
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                 } header: {
-                    Text("Enter Tweak URL")
+                    Text(String.localized("Enter Tweak URL"))
                 } footer: {
-                    Text("Support for .dylib, .deb, and .framework (zip).")
+                    Text(String.localized("Support for .dylib, .deb, and .framework (zip)."))
                 }
 
                 Button {
@@ -639,18 +333,17 @@ struct AddTweakUrlView: View {
                         dismiss()
                     }
                 } label: {
-                    Text("Add Tweak")
+                    Text(String.localized("Add Tweak"))
                         .font(.headline)
                         .frame(maxWidth: .infinity)
                 }
                 .disabled(urlString.isEmpty || URL(string: urlString) == nil)
             }
-            .scrollContentBackground(.hidden)
-            .navigationTitle("Add From URL")
+            .navigationTitle(String.localized("Add From URL"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(String.localized("Cancel")) { dismiss() }
                 }
             }
         }
@@ -665,80 +358,90 @@ struct ExtractTweaksView: View {
     var app: AppInfoPresentable
     var frameworks: [String]
     var bundles: [String]
+    var dylibs: [String]
 
     @State private var selectedFrameworks = Set<String>()
     @State private var selectedBundles = Set<String>()
+    @State private var selectedDylibs = Set<String>()
     @State private var isExtracting = false
     @State private var showSuccessAlert = false
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color.clear.ignoresSafeArea()
-
-                VStack(spacing: 0) {
-                    if isExtracting {
-                        VStack(spacing: 20) {
-                            ProgressView()
-                                .scaleEffect(1.5)
-                            Text("Extracting Components...")
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundStyle(.secondary)
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else {
-                        List {
-                            if !frameworks.isEmpty {
-                                Section("Frameworks") {
-                                    ForEach(frameworks, id: \.self) { item in
-                                        Toggle(item, isOn: Binding(
-                                            get: { selectedFrameworks.contains(item) },
-                                            set: { if $0 { selectedFrameworks.insert(item) } else { selectedFrameworks.remove(item) } }
-                                        ))
-                                    }
-                                }
-                            }
-
-                            if !bundles.isEmpty {
-                                Section("Bundles") {
-                                    ForEach(bundles, id: \.self) { item in
-                                        Toggle(item, isOn: Binding(
-                                            get: { selectedBundles.contains(item) },
-                                            set: { if $0 { selectedBundles.insert(item) } else { selectedBundles.remove(item) } }
-                                        ))
-                                    }
+                if isExtracting {
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text(String.localized("Extracting Components..."))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    List {
+                        if !frameworks.isEmpty {
+                            Section(String.localized("Frameworks")) {
+                                ForEach(frameworks, id: \.self) { item in
+                                    Toggle(item, isOn: Binding(
+                                        get: { selectedFrameworks.contains(item) },
+                                        set: { if $0 { selectedFrameworks.insert(item) } else { selectedFrameworks.remove(item) } }
+                                    ))
                                 }
                             }
                         }
-            .scrollContentBackground(.hidden)
 
+                        if !bundles.isEmpty {
+                            Section(String.localized("Bundles")) {
+                                ForEach(bundles, id: \.self) { item in
+                                    Toggle(item, isOn: Binding(
+                                        get: { selectedBundles.contains(item) },
+                                        set: { if $0 { selectedBundles.insert(item) } else { selectedBundles.remove(item) } }
+                                    ))
+                                }
+                            }
+                        }
+
+                        if !dylibs.isEmpty {
+                            Section(String.localized("Dylibs")) {
+                                ForEach(dylibs, id: \.self) { item in
+                                    Toggle(item, isOn: Binding(
+                                        get: { selectedDylibs.contains(item) },
+                                        set: { if $0 { selectedDylibs.insert(item) } else { selectedDylibs.remove(item) } }
+                                    ))
+                                }
+                            }
+                        }
+                    }
+
+                    VStack {
+                        Spacer()
                         Button {
                             performExtract()
                         } label: {
-                            Text("Extract Selected")
+                            Text(String.localized("Extract Selected"))
                                 .font(.headline)
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 16)
-                                .background(Color.blue)
+                                .padding()
+                                .background(Color.accentColor)
                                 .foregroundStyle(.white)
-                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
-                        .padding(20)
-                        .disabled(selectedFrameworks.isEmpty && selectedBundles.isEmpty)
+                        .padding()
+                        .disabled(selectedFrameworks.isEmpty && selectedBundles.isEmpty && selectedDylibs.isEmpty)
                     }
                 }
             }
-            .navigationTitle("Extract Tweaks")
+            .navigationTitle(String.localized("Extract Tweaks"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button(String.localized("Cancel")) { dismiss() }
                 }
             }
-            .alert("Success", isPresented: $showSuccessAlert) {
-                Button("OK") { dismiss() }
+            .alert(String.localized("Success"), isPresented: $showSuccessAlert) {
+                Button(String.localized("OK")) { dismiss() }
             } message: {
-                Text("Tweaks extracted to Portal's Documents directory.")
+                Text(String.localized("Tweaks extracted to Portal's Documents directory."))
             }
         }
     }
@@ -780,9 +483,38 @@ struct ExtractTweaksView: View {
                     }
                 }
 
+                // Copy selected dylibs
+                if !selectedDylibs.isEmpty {
+                    let dylibsDir = tempDir.appendingPathComponent("Dylibs")
+                    try FileManager.default.createDirectory(at: dylibsDir, withIntermediateDirectories: true)
+
+                    for dylibPath in selectedDylibs {
+                        let actualName = dylibPath.components(separatedBy: "/").last ?? dylibPath
+
+                        let possibleSources = [
+                            appPath.appendingPathComponent(actualName),
+                            appPath.appendingPathComponent("Frameworks").appendingPathComponent(actualName)
+                        ]
+
+                        var copied = false
+                        for source in possibleSources {
+                            if FileManager.default.fileExists(atPath: source.path) {
+                                let dest = dylibsDir.appendingPathComponent(actualName)
+                                try FileManager.default.copyItem(at: source, to: dest)
+                                copied = true
+                                break
+                            }
+                        }
+
+                        if !copied {
+                            print("Could not find dylib file for: \(dylibPath)")
+                        }
+                    }
+                }
+
                 // Create zip file in Documents directory
                 let documentsDir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
-                let zipFileName = "ExtractedAppTweaks_\(Date().timeIntervalSince1970).zip"
+                let zipFileName = "ExtractedAppTweaks_\(Int(Date().timeIntervalSince1970)).zip"
                 let zipURL = documentsDir.appendingPathComponent(zipFileName)
 
                 // Create zip
@@ -801,8 +533,8 @@ struct ExtractTweaksView: View {
                     isExtracting = false
                     HapticsManager.shared.error()
                     UIAlertController.showAlertWithOk(
-                        title: "Error",
-                        message: "Failed to extract tweaks: \(error.localizedDescription)"
+                        title: String.localized("Error"),
+                        message: String.localized("Failed to extract tweaks: \(error.localizedDescription)")
                     )
                 }
             }
