@@ -42,7 +42,7 @@ class PairingManager {
 
         guard validatePairingFile() else {
             try? fileManager.removeItem(at: destURL)
-            throw JITError.pairingInvalid("The imported file could not be parsed as a valid pairing record.")
+            throw JITError.pairingInvalid
         }
 
         Logger.jit.info("PairingManager: Successfully imported and validated pairing file")
@@ -75,12 +75,11 @@ class PairingManager {
         var pairingFile: OpaquePointer?
         let err = idevice_pairing_file_read(Self.pairingFilePath, &pairingFile)
         if let err = err {
-            let code = err.pointee.code
             idevice_error_free(err)
-            throw JITError.pairingInvalid("idevice error code \(code)")
+            throw JITError.pairingInvalid
         }
         guard let pf = pairingFile else {
-            throw JITError.pairingInvalid("Nil pointer returned")
+            throw JITError.pairingInvalid
         }
         return pf
     }

@@ -46,12 +46,11 @@ class ProcessResolver {
         var processControl: ProcessControlHandle?
         let pcErr = process_control_new(session.remoteServer, &processControl)
         if let e = pcErr {
-            let code = e.pointee.code
             idevice_error_free(e)
-            throw JITError.processNotRunning("process_control_new failed: \(code)")
+            throw JITError.processNotRunning(bundleID: bundleID)
         }
         guard let pc = processControl else {
-            throw JITError.processNotRunning("process_control_new returned nil")
+            throw JITError.processNotRunning(bundleID: bundleID)
         }
         defer { process_control_free(pc) }
 
@@ -63,9 +62,8 @@ class ProcessResolver {
         }
 
         if let e = launchErr {
-            let code = e.pointee.code
             idevice_error_free(e)
-            throw JITError.processNotRunning("Failed to launch \(bundleID) suspended (code \(code))")
+            throw JITError.processNotRunning(bundleID: bundleID)
         }
 
         Logger.jit.info("ProcessResolver: Successfully launched \(bundleID) with PID \(pid)")
@@ -84,55 +82,49 @@ class ProcessResolver {
         var coreDevice: OpaquePointer?
         var err = core_device_proxy_connect(provider, &coreDevice)
         if let e = err {
-            let code = e.pointee.code
             idevice_error_free(e)
-            throw JITError.processNotRunning("core_device_proxy_connect failed: \(code)")
+            throw JITError.lockdownConnectionFailed
         }
 
         var rsdPort: UInt16 = 0
         err = core_device_proxy_get_server_rsd_port(coreDevice, &rsdPort)
         if let e = err {
-            let code = e.pointee.code
             idevice_error_free(e)
             core_device_proxy_free(coreDevice)
-            throw JITError.processNotRunning("get_server_rsd_port failed: \(code)")
+            throw JITError.lockdownConnectionFailed
         }
 
         var adapter: OpaquePointer?
         err = core_device_proxy_create_tcp_adapter(coreDevice, &adapter)
         if let e = err {
-            let code = e.pointee.code
             idevice_error_free(e)
             core_device_proxy_free(coreDevice)
-            throw JITError.processNotRunning("create_tcp_adapter failed: \(code)")
+            throw JITError.lockdownConnectionFailed
         }
 
         var stream: OpaquePointer?
         err = adapter_connect(adapter, rsdPort, &stream)
         if let e = err {
-            let code = e.pointee.code
             idevice_error_free(e)
             adapter_free(adapter)
-            throw JITError.processNotRunning("adapter_connect failed: \(code)")
+            throw JITError.lockdownConnectionFailed
         }
 
         var handshake: OpaquePointer?
         err = rsd_handshake_new(stream, &handshake)
         if let e = err {
-            let code = e.pointee.code
             idevice_error_free(e)
             adapter_free(adapter)
-            throw JITError.processNotRunning("rsd_handshake_new failed: \(code)")
+            throw JITError.lockdownConnectionFailed
         }
 
         var remoteServer: OpaquePointer?
         err = remote_server_connect_rsd(adapter, handshake, &remoteServer)
         if let e = err {
-            let code = e.pointee.code
             idevice_error_free(e)
             rsd_handshake_free(handshake)
             adapter_free(adapter)
-            throw JITError.processNotRunning("remote_server_connect_rsd failed: \(code)")
+            throw JITError.lockdownConnectionFailed
         }
 
         return RsdSession(adapter: adapter!, handshake: handshake!, remoteServer: remoteServer!)
