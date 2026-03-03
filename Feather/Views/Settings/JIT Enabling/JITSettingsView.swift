@@ -6,6 +6,7 @@
 import SwiftUI
 import NimbleViews
 import IDeviceSwift
+import OSLog
 
 // MARK: - JITSettingsView
 
@@ -79,7 +80,7 @@ struct JITSettingsView: View {
                     Text(manager.state.displayTitle)
                         .font(.system(size: 16, weight: .semibold))
                     if case .failed(let error) = manager.state {
-                        Text(error.localizedDescription ?? String.localized("Unknown error"))
+                        Text(error.localizedDescription)
                             .font(.caption)
                             .foregroundStyle(.red)
                     } else {
@@ -125,7 +126,7 @@ struct JITSettingsView: View {
                     Spacer()
                     Image(systemName: hasPairing ? "checkmark.circle.fill" : "chevron.right")
                         .font(hasPairing ? .system(size: 18) : .caption)
-                        .foregroundStyle(hasPairing ? .green : .tertiary)
+                        .foregroundStyle(hasPairing ? .green : .secondary)
                 }
                 .padding(.vertical, 2)
             }
@@ -222,7 +223,7 @@ struct JITSettingsView: View {
                             .frame(width: 36, height: 36)
                         Image(systemName: "bolt.fill")
                             .font(.system(size: 16))
-                            .foregroundStyle(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                     }
                     VStack(alignment: .leading, spacing: 2) {
                         Text(String.localized("Enable JIT for App"))
@@ -305,7 +306,7 @@ struct JITSettingsView: View {
                 }
                 if case .failed(let error) = manager.state {
                     Section {
-                        Text(error.localizedDescription ?? String.localized("Unknown error"))
+                        Text(error.localizedDescription)
                             .font(.subheadline)
                             .foregroundStyle(.red)
                     } header: {
@@ -364,7 +365,11 @@ struct JITSettingsView: View {
 
     private func enableJIT(for bundleID: String) async {
         showStatusSheet = true
-        await manager.enableJIT(for: bundleID)
+        do {
+            try await manager.enableJIT(for: bundleID)
+        } catch {
+            Logger.jit.error("Failed to enable JIT: \(error.localizedDescription)")
+        }
     }
 
     private func refreshStatus() {
