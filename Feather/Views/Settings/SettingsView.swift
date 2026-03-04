@@ -28,6 +28,7 @@ struct SettingsView: View {
     @AppStorage("Feather.tabBar.dashboard") private var showDashboard = true
     @StateObject private var hideManager = SettingsHideManager.shared
     @Environment(\.navigateToUpdates) private var navigateToUpdates
+    @State private var _searchText = ""
     
     private var isEnterprise: Bool { certificateExperience == CertificateExperience.enterprise.rawValue }
     
@@ -36,6 +37,11 @@ struct SettingsView: View {
             List {
                 headerSection
                 fetchProgressSection
+
+                if !_searchText.isEmpty {
+                    searchSuggestionsSection
+                }
+
                 generalSection
                 preferencesSection
                 dataSection
@@ -45,6 +51,7 @@ struct SettingsView: View {
             }
             .scrollContentBackground(.hidden)
             .listStyle(.insetGrouped)
+            .searchable(text: $_searchText, prompt: .localized("Search Settings"))
         }
         .fullScreenCover(isPresented: $_showAddSource) {
             SourcesAddView()
@@ -251,5 +258,58 @@ struct SettingsView: View {
         }
     }
 
+    private var searchSuggestionsSection: some View {
+        Section {
+            ForEach(allSettingsItems.filter { item in
+                item.title.localizedCaseInsensitiveContains(_searchText)
+            }) { item in
+                NavigationLink(destination: item.destination) {
+                    SettingsRowContent(icon: item.icon, title: item.title, color: item.color)
+                }
+            }
+        } header: {
+            SettingsSectionHeader(title: .localized("Suggestions"), icon: "sparkles")
+        }
+    }
+
+    private struct SettingsItem: Identifiable {
+        let id = UUID()
+        let title: String
+        let icon: String
+        let color: Color
+        let destination: AnyView
+    }
+
+    private var allSettingsItems: [SettingsItem] {
+        var items: [SettingsItem] = [
+            SettingsItem(title: .localized("General"), icon: "gearshape.fill", color: .accentColor, destination: AnyView(GeneralView())),
+            SettingsItem(title: .localized("JIT Enabling"), icon: "bolt.circle.fill", color: .accentColor, destination: AnyView(JITSettingsView())),
+            SettingsItem(title: .localized("Display & Interface"), icon: "gear.badge", color: .accentColor, destination: AnyView(AppearanceView())),
+            SettingsItem(title: .localized("Files"), icon: "folder.fill", color: .accentColor, destination: AnyView(FilesSettingsView())),
+            SettingsItem(title: .localized("Repository Builder"), icon: "list.star", color: .accentColor, destination: AnyView(RepoBuilder())),
+            SettingsItem(title: .localized("Guides With AI"), icon: "apple.intelligence", color: .accentColor, destination: AnyView(GuidesSettingsView())),
+            // Items within General
+            SettingsItem(title: .localized("Notifications"), icon: "bell.badge.fill", color: .accentColor, destination: AnyView(NotificationsView())),
+            SettingsItem(title: .localized("Live Activities"), icon: "widget.small.badge.plus", color: .accentColor, destination: AnyView(LiveActivitySettingsView())),
+            SettingsItem(title: .localized("Certificates"), icon: "person.badge.key.fill", color: .accentColor, destination: AnyView(CertificatesView())),
+            SettingsItem(title: .localized("Signing"), icon: "signature", color: .accentColor, destination: AnyView(ConfigurationView())),
+            SettingsItem(title: .localized("Storage"), icon: "externaldrive.fill.badge.person.crop", color: .accentColor, destination: AnyView(ManageStorageView())),
+            SettingsItem(title: .localized("Backup & Restore"), icon: "externaldrive.fill.badge.timemachine", color: .accentColor, destination: AnyView(BackupRestoreView())),
+            SettingsItem(title: .localized("Logs"), icon: "ecg.text.page", color: .accentColor, destination: AnyView(AppLogsView())),
+            SettingsItem(title: .localized("Credits"), icon: "person.crop.circle.fill.badge.checkmark", color: .accentColor, destination: AnyView(CreditsView())),
+            SettingsItem(title: .localized("Feedback"), icon: "bubble.left.and.bubble.right.fill", color: .accentColor, destination: AnyView(FeedbackView())),
+            SettingsItem(title: .localized("Check For Updates"), icon: "arrow.triangle.2.circlepath", color: .accentColor, destination: AnyView(CheckForUpdatesView()))
+        ]
+
+        if showDashboard {
+            items.append(SettingsItem(title: .localized("Home"), icon: "house.fill", color: .accentColor, destination: AnyView(HomeSettingsView())))
+        }
+
+        if isDeveloperModeEnabled {
+            items.append(SettingsItem(title: .localized("Debug"), icon: "person.2.badge.gearshape.fill", color: .red, destination: AnyView(DeveloperView())))
+        }
+
+        return items
+    }
 }
 

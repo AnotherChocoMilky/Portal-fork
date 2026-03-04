@@ -313,6 +313,12 @@
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
+		<string>fetch</string>
+		<string>processing</string>
+	</array>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>com.portal.app.refresh</string>
 	</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>

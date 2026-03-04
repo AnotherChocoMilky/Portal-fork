@@ -12,6 +12,7 @@ import LocalAuthentication
 struct DeveloperView: View {
     @StateObject private var authManager = DeveloperAuthManager.shared
     @State private var showAuthSheet = true
+    @State private var showScreenshotWarning = false
     @Environment(\.scenePhase) private var scenePhase
     
     var body: some View {
@@ -31,6 +32,15 @@ struct DeveloperView: View {
         }
         .onAppear {
             authManager.checkSessionValidity()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.userDidTakeScreenshotNotification)) { _ in
+            showScreenshotWarning = true
+            HapticsManager.shared.warning()
+            AppLogManager.shared.warning("Screenshot detected in Developer Mode!", category: "Security")
+        }
+        .sheet(isPresented: $showScreenshotWarning) {
+            ScreenshotPreventionView()
+                .interactiveDismissDisabled()
         }
         .onReceive(NotificationCenter.default.publisher(for: .gestureAuthenticateDeveloper)) { _ in
             if !authManager.isAuthenticated {
