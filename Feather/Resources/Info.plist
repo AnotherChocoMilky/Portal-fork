@@ -282,6 +282,8 @@
 	<array>
 		<string>_portal-backup._tcp</string>
 		<string>_portal-backup._udp</string>
+		<string>_portal-sources._tcp</string>
+		<string>_portal-sources._udp</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Portal needs access to your local network to discover nearby devices for wireless backup transfer.</string>
