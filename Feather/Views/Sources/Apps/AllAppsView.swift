@@ -41,7 +41,8 @@ struct AppEntry: Identifiable, Hashable {
 
     var id: String {
         let sourceID = source.id ?? source.name ?? "unknown_source"
-        return "\(sourceID).\(app.currentUniqueId)"
+        let appID = app.id ?? app.name ?? "unknown_app"
+        return "\(sourceID).\(appID)"
     }
 
     static func == (lhs: AppEntry, rhs: AppEntry) -> Bool {
@@ -207,6 +208,8 @@ struct AllAppsView: View {
     @State private var _loadedSourcesCount = 0
     @State private var _currentFact = DidYouKnowFacts.random()
     @State private var _spinnerRotation: Double = 0
+    @State private var _fetchStartTime: Date?
+    @State private var _averageTimePerSource: TimeInterval = 0.5 // Default guess
     
     // Optimized State for Large Datasets
     @State private var _allApps: [AppEntry] = []
@@ -260,6 +263,16 @@ struct AllAppsView: View {
                                         .font(.system(size: 20))
                                         .foregroundStyle(Color.accentColor)
                                 }
+
+                                Button {
+                                    _loadAllSources(force: true)
+                                    HapticsManager.shared.softImpact()
+                                } label: {
+                                    Image(systemName: "arrow.clockwise")
+                                        .font(.system(size: 18))
+                                        .foregroundStyle(Color.accentColor)
+                                }
+                                .disabled(_isLoading)
                             }
                         }
                     }
@@ -415,25 +428,40 @@ struct AllAppsView: View {
             Spacer()
 
             if !isTab {
-                Menu {
+                HStack(spacing: 12) {
                     Button {
-                        _showAppAdd = true
+                        _loadAllSources(force: true)
                         HapticsManager.shared.softImpact()
                     } label: {
-                        Label("Add App", systemImage: "plus")
+                        Image(systemName: "arrow.clockwise")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundStyle(Color.accentColor)
+                            .frame(width: 40, height: 40)
+                            .background(Color.accentColor.opacity(0.1))
+                            .clipShape(Circle())
                     }
+                    .disabled(_isLoading)
 
-                    if _showSorting {
-                        _sortingMenuContent
+                    Menu {
+                        Button {
+                            _showAppAdd = true
+                            HapticsManager.shared.softImpact()
+                        } label: {
+                            Label("Add App", systemImage: "plus")
+                        }
+
+                        if _showSorting {
+                            _sortingMenuContent
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle.fill")
+                            .font(.system(size: 22))
+                            .foregroundStyle(Color.accentColor)
+                            .padding(8)
+                            .background(Color.accentColor.opacity(0.1))
+                            .clipShape(Circle())
+                            .contentShape(Circle())
                     }
-                } label: {
-                    Image(systemName: "ellipsis.circle.fill")
-                        .font(.system(size: 22))
-                        .foregroundStyle(Color.accentColor)
-                        .padding(8)
-                        .background(Color.accentColor.opacity(0.1))
-                        .clipShape(Circle())
-                        .contentShape(Circle())
                 }
             }
         }
@@ -669,16 +697,36 @@ struct AllAppsView: View {
 						.font(.system(size: 28, weight: .bold, design: .rounded))
 						.foregroundStyle(.primary)
 
-                    HStack(spacing: 8) {
-                        ProgressView()
-                            .scaleEffect(0.8)
-                        Text("\(_loadedSourcesCount) / \(object.count) Sources")
-                            .font(.system(.subheadline, design: .monospaced))
-                            .fontWeight(.bold)
-                            .foregroundStyle(.secondary)
+                    VStack(spacing: 8) {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                            Text("\(_loadedSourcesCount) / \(object.count) Sources")
+                                .font(.system(.subheadline, design: .monospaced))
+                                .fontWeight(.bold)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if let startTime = _fetchStartTime, _loadedSourcesCount > 0 {
+                            let elapsed = Date().timeIntervalSince(startTime)
+                            let avg = elapsed / Double(_loadedSourcesCount)
+                            let remaining = Double(object.count - _loadedSourcesCount) * avg
+
+                            let minutes = Int(remaining) / 60
+                            let seconds = Int(remaining) % 60
+
+                            Text("Time Remaining: \(minutes)m \(seconds)s")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundStyle(.secondary)
+                                .transition(.opacity)
+                        } else if _isLoading && _loadedSourcesCount == 0 {
+                            Text("Estimating time...")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundStyle(.secondary.opacity(0.7))
+                        }
                     }
                     .padding(.horizontal, 16)
-                    .padding(.vertical, 8)
+                    .padding(.vertical, 10)
                     .background(Color.primary.opacity(0.05))
                     .cornerRadius(12)
 				}
@@ -825,9 +873,9 @@ struct AllAppsView: View {
 
 
 	// MARK: - Load All Sources
-	private func _loadAllSources() {
+	private func _loadAllSources(force: Bool = false) {
 		// If we already have data in viewModel, use it immediately
-		if _allApps.isEmpty && !viewModel.allApps.isEmpty {
+		if !force && _allApps.isEmpty && !viewModel.allApps.isEmpty {
 			let entries = viewModel.allApps.map { AppEntry(source: $0.source, app: $0.app) }
 			_allApps = entries
 			_filteredApps = entries
@@ -836,13 +884,19 @@ struct AllAppsView: View {
 		}
 
 		// If we still don't have apps, show the loading screen
-		if _allApps.isEmpty {
+		if force || _allApps.isEmpty {
 			_isLoading = true
 			_loadedSourcesCount = 0
 			_currentFact = DidYouKnowFacts.random()
+            _fetchStartTime = Date()
 		}
 		
 		Task {
+            if force {
+                RepositoryCacheManager.shared.clearCache()
+                await viewModel.forceFetchAllSources(object)
+            }
+
 			await updateSourcesInBackground()
 			
 			await MainActor.run {
