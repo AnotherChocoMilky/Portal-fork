@@ -28,6 +28,9 @@ struct CertificatesAddView: View {
     @State private var _isImportingZipPresenting = false
     @State private var _isImportingPortalCertPresenting = false
     
+    @State private var _alertMessage = ""
+    @State private var _showAlert = false
+
     var saveButtonDisabled: Bool {
         _p12URL == nil || _provisionURL == nil
     }
@@ -104,17 +107,46 @@ struct CertificatesAddView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .sheet(isPresented: $_isImportingP12Presenting) {
-                p12ImportSheet
+            .fileImporter(isPresented: $_isImportingP12Presenting, allowedContentTypes: [.p12]) { result in
+                switch result {
+                case .success(let url):
+                    withAnimation {
+                        self._p12URL = url
+                        self._p12Done = true
+                    }
+                    HapticsManager.shared.softImpact()
+                case .failure: break
+                }
             }
-            .sheet(isPresented: $_isImportingMobileProvisionPresenting) {
-                provisionImportSheet
+            .fileImporter(isPresented: $_isImportingMobileProvisionPresenting, allowedContentTypes: [.mobileProvision]) { result in
+                switch result {
+                case .success(let url):
+                    withAnimation {
+                        self._provisionURL = url
+                        self._provisionDone = true
+                    }
+                    HapticsManager.shared.softImpact()
+                case .failure: break
+                }
             }
-            .sheet(isPresented: $_isImportingZipPresenting) {
-                zipImportSheet
+            .fileImporter(isPresented: $_isImportingZipPresenting, allowedContentTypes: [.certificateZip]) { result in
+                switch result {
+                case .success(let url):
+                    _handleZipImport(url)
+                case .failure: break
+                }
             }
-            .sheet(isPresented: $_isImportingPortalCertPresenting) {
-                portalCertImportSheet
+            .fileImporter(isPresented: $_isImportingPortalCertPresenting, allowedContentTypes: [.portalCert, .data]) { result in
+                switch result {
+                case .success(let url):
+                    portalCertImportSheet_picked(url)
+                case .failure: break
+                }
+            }
+            .alert(.localized("Certificate"), isPresented: $_showAlert) {
+                Button(.localized("OK"), role: .cancel) { }
+            } message: {
+                Text(_alertMessage)
             }
         }
     }
@@ -396,67 +428,22 @@ struct CertificatesAddView: View {
             HapticsManager.shared.success()
             
         } catch let error as PortalCertHandler.PortalCertError {
-            UIAlertController.showAlertWithOk(
-                title: .localized("Import Failed"),
-                message: error.localizedDescription)
+            Task { @MainActor in
+                _alertMessage = error.localizedDescription
+                _showAlert = true
+            }
         } catch {
-            UIAlertController.showAlertWithOk(
-                title: .localized("Import Failed"),
-                message: .localized("Failed to import .portalcert file: \(error.localizedDescription)"))
+            Task { @MainActor in
+                _alertMessage = .localized("Failed to import .portalcert file: \(error.localizedDescription)")
+                _showAlert = true
+            }
         }
     }
     
-    // MARK: - Sheet Views
-    private var p12ImportSheet: some View {
-        FileImporterRepresentableView(
-            allowedContentTypes: [.p12],
-            onDocumentsPicked: { urls in
-                guard let selectedFileURL = urls.first else { return }
-                withAnimation {
-                    self._p12URL = selectedFileURL
-                    self._p12Done = true
-                }
-                HapticsManager.shared.softImpact()
-            }
-        )
-        .ignoresSafeArea()
-    }
-    
-    private var provisionImportSheet: some View {
-        FileImporterRepresentableView(
-            allowedContentTypes: [.mobileProvision],
-            onDocumentsPicked: { urls in
-                guard let selectedFileURL = urls.first else { return }
-                withAnimation {
-                    self._provisionURL = selectedFileURL
-                    self._provisionDone = true
-                }
-                HapticsManager.shared.softImpact()
-            }
-        )
-        .ignoresSafeArea()
-    }
-    
-    private var zipImportSheet: some View {
-        FileImporterRepresentableView(
-            allowedContentTypes: [.certificateZip],
-            onDocumentsPicked: { urls in
-                guard let selectedFileURL = urls.first else { return }
-                _handleZipImport(selectedFileURL)
-            }
-        )
-        .ignoresSafeArea()
-    }
-    
-    private var portalCertImportSheet: some View {
-        FileImporterRepresentableView(
-            allowedContentTypes: [.portalCert, .data],
-            onDocumentsPicked: { urls in
-                guard let selectedFileURL = urls.first else { return }
-                _handlePortalCertImport(selectedFileURL)
-            }
-        )
-        .ignoresSafeArea()
+    private func portalCertImportSheet_picked(_ url: URL) {
+        Task.detached {
+            _handlePortalCertImport(url)
+        }
     }
 }
 
@@ -465,17 +452,15 @@ extension CertificatesAddView {
 	private func _saveCertificate() {
         guard let p12URL = _p12URL, let provisionURL = _provisionURL else { return }
 
-        Task {
+        Task.detached {
             // Perform password check in background
             let isPasswordCorrect = FR.checkPasswordForCertificate(for: p12URL, with: _p12Password, using: provisionURL)
 
             await MainActor.run {
                 if !isPasswordCorrect {
                     withAnimation { _isSaving = false }
-                    UIAlertController.showAlertWithOk(
-                        title: .localized("Error"),
-                        message: .localized("The password you entered is wrong, please try again to add this certificate. If the password from this certificate is WSF, restart Portal and try again.")
-                    )
+                    _alertMessage = .localized("The password you entered is wrong, please try again to add this certificate. If the password from this certificate is WSF, restart Portal and try again.")
+                    _showAlert = true
                     return
                 }
 
@@ -488,11 +473,12 @@ extension CertificatesAddView {
                     isDefault: _isDefault
                 ) { error in
                     Task { @MainActor in
-                        if error == nil {
+                        if let error = error {
+                            _alertMessage = error.localizedDescription
+                            _showAlert = true
+                        } else {
                             HapticsManager.shared.success()
                             dismiss()
-                        } else {
-                            UIAlertController.showAlertWithOk(title: "Error", message: error?.localizedDescription ?? "Unknown error")
                         }
                         _isSaving = false
                     }
@@ -502,77 +488,81 @@ extension CertificatesAddView {
 	}
 	
 	private func _handleZipImport(_ zipURL: URL) {
-		let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-		
-		do {
-			try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-			try FileManager.default.unzipItem(at: zipURL, to: tempDir)
-			
-			var foundP12: URL?
-			var foundProvision: URL?
-			
-			func searchDirectory(_ directory: URL) throws {
-				let items = try FileManager.default.contentsOfDirectory(
-					at: directory,
-					includingPropertiesForKeys: [.isDirectoryKey],
-					options: [.skipsHiddenFiles]
-				)
-				
-				for item in items {
-					let resourceValues = try item.resourceValues(forKeys: [.isDirectoryKey])
-					if resourceValues.isDirectory == true {
-						try searchDirectory(item)
-					} else {
-						let ext = item.pathExtension.lowercased()
-						if ext == "p12" && foundP12 == nil {
-							foundP12 = item
-						} else if ext == "mobileprovision" && foundProvision == nil {
-							foundProvision = item
-						}
-					}
-				}
-			}
-			
-			try searchDirectory(tempDir)
-			
-			guard let p12URL = foundP12, let provisionURL = foundProvision else {
-				var missingFiles: [String] = []
-				if foundP12 == nil { missingFiles.append(".p12") }
-				if foundProvision == nil { missingFiles.append(".mobileprovision") }
-				throw CertificateImportError.missingCertificateFiles(missingFiles.joined(separator: " and "))
-			}
-			
-			let persistentTempDir = FileManager.default.temporaryDirectory.appendingPathComponent("certificates-\(UUID().uuidString)")
-			try FileManager.default.createDirectory(at: persistentTempDir, withIntermediateDirectories: true)
-			
-			let newP12URL = persistentTempDir.appendingPathComponent(p12URL.lastPathComponent)
-			let newProvisionURL = persistentTempDir.appendingPathComponent(provisionURL.lastPathComponent)
-			
-			try FileManager.default.copyItem(at: p12URL, to: newP12URL)
-			try FileManager.default.copyItem(at: provisionURL, to: newProvisionURL)
-			
-			withAnimation {
-                _p12URL = newP12URL
-                _provisionURL = newProvisionURL
-                _zipDone = true
+        Task.detached {
+            let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+
+            do {
+                try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+                try FileManager.default.unzipItem(at: zipURL, to: tempDir)
+
+                var foundP12: URL?
+                var foundProvision: URL?
+
+                func searchDirectory(_ directory: URL) throws {
+                    let items = try FileManager.default.contentsOfDirectory(
+                        at: directory,
+                        includingPropertiesForKeys: [.isDirectoryKey],
+                        options: [.skipsHiddenFiles]
+                    )
+
+                    for item in items {
+                        let resourceValues = try item.resourceValues(forKeys: [.isDirectoryKey])
+                        if resourceValues.isDirectory == true {
+                            try searchDirectory(item)
+                        } else {
+                            let ext = item.pathExtension.lowercased()
+                            if ext == "p12" && foundP12 == nil {
+                                foundP12 = item
+                            } else if ext == "mobileprovision" && foundProvision == nil {
+                                foundProvision = item
+                            }
+                        }
+                    }
+                }
+
+                try searchDirectory(tempDir)
+
+                guard let p12URL = foundP12, let provisionURL = foundProvision else {
+                    var missingFiles: [String] = []
+                    if foundP12 == nil { missingFiles.append(".p12") }
+                    if foundProvision == nil { missingFiles.append(".mobileprovision") }
+                    throw CertificateImportError.missingCertificateFiles(missingFiles.joined(separator: " and "))
+                }
+
+                let persistentTempDir = FileManager.default.temporaryDirectory.appendingPathComponent("certificates-\(UUID().uuidString)")
+                try FileManager.default.createDirectory(at: persistentTempDir, withIntermediateDirectories: true)
+
+                let newP12URL = persistentTempDir.appendingPathComponent(p12URL.lastPathComponent)
+                let newProvisionURL = persistentTempDir.appendingPathComponent(provisionURL.lastPathComponent)
+
+                try FileManager.default.copyItem(at: p12URL, to: newP12URL)
+                try FileManager.default.copyItem(at: provisionURL, to: newProvisionURL)
+
+                await MainActor.run {
+                    withAnimation {
+                        _p12URL = newP12URL
+                        _provisionURL = newProvisionURL
+                        _zipDone = true
+                    }
+                    HapticsManager.shared.success()
+                }
+
+                try? FileManager.default.removeItem(at: tempDir)
+
+            } catch let error as CertificateImportError {
+                try? FileManager.default.removeItem(at: tempDir)
+                await MainActor.run {
+                    _alertMessage = error.localizedDescription
+                    _showAlert = true
+                }
+            } catch {
+                try? FileManager.default.removeItem(at: tempDir)
+                await MainActor.run {
+                    _alertMessage = .localized("Failed to extract ZIP file: \(error.localizedDescription)")
+                    _showAlert = true
+                }
             }
-			
-			try? FileManager.default.removeItem(at: tempDir)
-			HapticsManager.shared.success()
-			
-		} catch let error as CertificateImportError {
-			try? FileManager.default.removeItem(at: tempDir)
-			UIAlertController.showAlertWithOk(
-				title: .localized("Import Failed"),
-				message: error.localizedDescription
-			)
-		} catch {
-			try? FileManager.default.removeItem(at: tempDir)
-			UIAlertController.showAlertWithOk(
-				title: .localized("Import Failed"),
-				message: .localized("Failed to extract ZIP file: \(error.localizedDescription)")
-			)
-		}
+        }
 	}
 }
 

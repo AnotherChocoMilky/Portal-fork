@@ -3,6 +3,7 @@ import CoreData
 import NimbleViews
 import Combine
 import IDeviceSwift
+import Zip
 
 // MARK: - Modern Library View with Blue Gradient Background
 struct LibraryView: View {
@@ -118,82 +119,44 @@ struct LibraryView: View {
                 }
 
                 ScrollView {
-                    LazyVStack(spacing: 12) {
+                    LazyVStack(spacing: 24) {
                         if displayedApps.isEmpty {
                             emptyStateView
                                 .padding(.top, 40)
                         } else {
-                            ForEach(displayedApps, id: \.uuid) { app in
-                                LibraryAppRow(
-                                    app: app,
-                                    selectedInfoAppPresenting: $_selectedInfoAppPresenting,
-                                    selectedSigningAppPresenting: $_selectedSigningAppPresenting,
-                                    selectedInstallAppPresenting: $_selectedInstallAppPresenting,
-                                    selectedApps: $_selectedApps,
-                                    editMode: $_editMode
-                                )
-                                .padding(.horizontal, 16)
-                                .onTapGesture(count: 2) {
-                                    Task {
-                                        await GestureManager.shared.performAction(for: .doubleTap, in: .library, context: app)
-                                    }
-                                }
-                                .onLongPressGesture {
-                                    Task {
-                                        await GestureManager.shared.performAction(for: .longPress, in: .library, context: app)
-                                    }
-                                }
-                                .swipeActions(edge: .trailing) {
-                                    Button(role: .destructive) {
-                                        Task {
-                                            await GestureManager.shared.performAction(for: .leftSwipe, in: .library, context: app)
-                                        }
-                                    } label: {
-                                        Label("Action", systemImage: "hand.tap")
-                                    }
-                                }
-                                .swipeActions(edge: .leading) {
-                                    Button {
-                                        Task {
-                                            await GestureManager.shared.performAction(for: .rightSwipe, in: .library, context: app)
-                                        }
-                                    } label: {
-                                        Label("Action", systemImage: "hand.tap")
-                                    }
-                                    .tint(.accentColor)
-                                }
-                                .contextMenu {
-                                    Button {
-                                        _selectedInfoAppPresenting = AnyApp(base: app)
-                                    } label: {
-                                        Label(String.localized("Details"), systemImage: "info.circle")
-                                    }
+                            if _filterMode == .all || _filterMode == .signed {
+                                let apps = _filterMode == .all ? filteredSignedApps : displayedApps.compactMap { $0 as? Signed }
+                                if !apps.isEmpty {
+                                    VStack(alignment: .leading, spacing: 12) {
+                                        Text("Signed")
+                                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                                            .foregroundStyle(.secondary)
+                                            .padding(.horizontal, 24)
 
-                                    if app.isSigned {
-                                        Button {
-                                            _selectedInstallAppPresenting = AnyApp(base: app)
-                                        } label: {
-                                            Label(String.localized("Install"), systemImage: "arrow.down.circle")
-                                        }
-                                        Button {
-                                            _selectedSigningAppPresenting = AnyApp(base: app)
-                                        } label: {
-                                            Label(String.localized("Sign Again"), systemImage: "signature")
-                                        }
-                                    } else {
-                                        Button {
-                                            _selectedSigningAppPresenting = AnyApp(base: app)
-                                        } label: {
-                                            Label(String.localized("Sign"), systemImage: "signature")
+                                        ForEach(apps, id: \.uuid) { app in
+                                            libraryAppRow(for: app)
                                         }
                                     }
+                                }
+                            }
 
-                                    Divider()
+                            if _filterMode == .all && !filteredSignedApps.isEmpty && !filteredImportedApps.isEmpty {
+                                Divider()
+                                    .padding(.horizontal, 24)
+                            }
 
-                                    Button(role: .destructive) {
-                                        Storage.shared.deleteApp(for: app)
-                                    } label: {
-                                        Label(String.localized("Delete"), systemImage: "trash")
+                            if _filterMode == .all || _filterMode == .unsigned {
+                                let apps = _filterMode == .all ? filteredImportedApps : displayedApps.compactMap { $0 as? Imported }
+                                if !apps.isEmpty {
+                                    VStack(alignment: .leading, spacing: 12) {
+                                        Text("Imported")
+                                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                                            .foregroundStyle(.secondary)
+                                            .padding(.horizontal, 24)
+
+                                        ForEach(apps, id: \.uuid) { app in
+                                            libraryAppRow(for: app)
+                                        }
                                     }
                                 }
                             }
@@ -623,6 +586,116 @@ extension LibraryView {
         UIActivityViewController.show(activityItems: [archiveURL])
         HapticsManager.shared.success()
     }
+
+    private func downloadIPA(for app: AppInfoPresentable) {
+        if app.isSigned {
+            exportApp(app)
+        } else {
+            // Zip the Unsigned Payload
+            guard let uuid = app.uuid else { return }
+            let unsignedDir = FileManager.default.unsigned(uuid)
+            let payloadDir = unsignedDir.appendingPathComponent("Payload")
+            let tempIPA = FileManager.default.temporaryDirectory.appendingPathComponent("\(app.name ?? "App").ipa")
+
+            try? FileManager.default.removeItem(at: tempIPA)
+
+            Task.detached {
+                do {
+                    try Zip.zipFiles(paths: [payloadDir], zipFilePath: tempIPA, password: nil, progress: nil)
+                    await MainActor.run {
+                        UIActivityViewController.show(activityItems: [tempIPA])
+                        HapticsManager.shared.success()
+                    }
+                } catch {
+                    await MainActor.run {
+                        ToastManager.shared.show("Failed to create IPA", type: .error)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func libraryAppRow(for app: AppInfoPresentable) -> some View {
+        LibraryAppRow(
+            app: app,
+            selectedInfoAppPresenting: $_selectedInfoAppPresenting,
+            selectedSigningAppPresenting: $_selectedSigningAppPresenting,
+            selectedInstallAppPresenting: $_selectedInstallAppPresenting,
+            selectedApps: $_selectedApps,
+            editMode: $_editMode
+        )
+        .padding(.horizontal, 16)
+        .onTapGesture(count: 2) {
+            Task {
+                await GestureManager.shared.performAction(for: .doubleTap, in: .library, context: app)
+            }
+        }
+        .onLongPressGesture {
+            Task {
+                await GestureManager.shared.performAction(for: .longPress, in: .library, context: app)
+            }
+        }
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                Task {
+                    await GestureManager.shared.performAction(for: .leftSwipe, in: .library, context: app)
+                }
+            } label: {
+                Label("Action", systemImage: "hand.tap")
+            }
+        }
+        .swipeActions(edge: .leading) {
+            Button {
+                Task {
+                    await GestureManager.shared.performAction(for: .rightSwipe, in: .library, context: app)
+                }
+            } label: {
+                Label("Action", systemImage: "hand.tap")
+            }
+            .tint(.accentColor)
+        }
+        .contextMenu {
+            Button {
+                _selectedInfoAppPresenting = AnyApp(base: app)
+            } label: {
+                Label(String.localized("Details"), systemImage: "info.circle")
+            }
+
+            if app.isSigned {
+                Button {
+                    _selectedInstallAppPresenting = AnyApp(base: app)
+                } label: {
+                    Label(String.localized("Install"), systemImage: "arrow.down.circle")
+                }
+                Button {
+                    _selectedSigningAppPresenting = AnyApp(base: app)
+                } label: {
+                    Label(String.localized("Sign Again"), systemImage: "signature")
+                }
+            } else {
+                Button {
+                    _selectedSigningAppPresenting = AnyApp(base: app)
+                } label: {
+                    Label(String.localized("Sign"), systemImage: "signature")
+                }
+            }
+
+            Button {
+                downloadIPA(for: app)
+            } label: {
+                Label(String.localized("Download IPA"), systemImage: "square.and.arrow.down")
+            }
+
+            Divider()
+
+            Button(role: .destructive) {
+                Storage.shared.deleteApp(for: app)
+            } label: {
+                Label(String.localized("Delete"), systemImage: "trash")
+            }
+        }
+    }
 }
 
 // MARK: - Simplified Library App Row
@@ -853,8 +926,3 @@ struct CompactFilterChip: View {
 
     }
 }
-
-
-
-
-

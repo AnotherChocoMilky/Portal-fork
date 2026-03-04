@@ -485,6 +485,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		_setupCrashHandler()
 		_createPipeline()
 		_createDocumentsDirectories()
+		_registerBackgroundTasks()
 		ResetView.clearWorkCache()
 		_addDefaultCertificates()
 		
@@ -619,6 +620,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 		}
 	}
 	
+	private func _registerBackgroundTasks() {
+		if #available(iOS 13.0, *) {
+			BackgroundRefreshManager.shared.registerBackgroundTasks()
+		}
+	}
+
 	private func _addDefaultCertificates() {
 		guard
 			UserDefaults.standard.bool(forKey: "feather.didImportDefaultCertificates") == false,

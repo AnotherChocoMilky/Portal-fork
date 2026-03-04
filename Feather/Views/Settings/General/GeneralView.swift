@@ -20,6 +20,8 @@ struct GeneralView: View {
 
             dataSection
 
+            backgroundRefreshSection
+
             systemSection
 
             resourcesSection
@@ -91,6 +93,34 @@ struct GeneralView: View {
             }
         } header: {
             SettingsSectionHeader(title: String.localized("Data & Maintenance"), icon: "externaldrive.fill")
+        }
+    }
+
+    private var backgroundRefreshSection: some View {
+        Section {
+            Toggle(isOn: AppStorage(wrappedValue: false, "Feather.useBackgroundRefresh").projectedValue) {
+                SettingsRowContent(icon: "arrow.triangle.2.circlepath", title: String.localized("Use Background Refresh"), color: .accentColor)
+            }
+            .padding(.trailing, 16)
+            .onChange(of: UserDefaults.standard.bool(forKey: "Feather.useBackgroundRefresh")) { newValue in
+                if newValue {
+                    BackgroundRefreshManager.shared.scheduleBackgroundRefresh()
+                }
+            }
+
+            Picker(selection: AppStorage(wrappedValue: 0, "Feather.backgroundRefreshConnection").projectedValue) {
+                Text(.localized("Both")).tag(0)
+                Text(.localized("WiFi")).tag(1)
+                Text(.localized("Cellular")).tag(2)
+            } label: {
+                SettingsRowContent(icon: "wifi", title: String.localized("Connection Preference"), color: .accentColor)
+            }
+            .pickerStyle(.menu)
+            .padding(.trailing, 16)
+        } header: {
+            SettingsSectionHeader(title: String.localized("Background Refresh"), icon: "arrow.clockwise")
+        } footer: {
+            Text(.localized("Automatically refreshes sources and checks for updates in the background. Respects your connection preference."))
         }
     }
 

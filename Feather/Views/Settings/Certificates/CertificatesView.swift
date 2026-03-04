@@ -414,5 +414,10 @@ struct CertificatesView: View {
 		Button(.localized("Export Entitlements"), systemImage: "square.and.arrow.up") {
 			_exportEntitlements(for: cert)
 		}
+		Button(.localized("Copy Password"), systemImage: "doc.on.clipboard") {
+			UIPasteboard.general.string = cert.password
+			HapticsManager.shared.success()
+			ToastManager.shared.show(.localized("Password Copied"), type: .success)
+		}
 	}
 }
