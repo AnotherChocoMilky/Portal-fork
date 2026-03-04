@@ -69,6 +69,8 @@ struct SourcesAddView: View {
 	@State private var _isExportMode = false
 	@State private var _selectedSourcesForExport: Set<String> = []
 	@State private var _showPortalExport = false
+	@State private var _showQRMode = false
+	@State private var _showWirelessMode = false
 	@State private var _portalExportData = ""
 	@State private var _showManageSources = false
 	
@@ -90,6 +92,12 @@ struct SourcesAddView: View {
 			}
 			.sheet(isPresented: $_showPortalExport) {
 				PortalTransferView(exportData: $_portalExportData)
+			}
+			.sheet(isPresented: $_showQRMode) {
+				SourcesQRView(data: _portalExportData)
+			}
+			.sheet(isPresented: $_showWirelessMode) {
+				TransferSourcesMP(sourceURLs: _getSelectedURLs())
 			}
 			.sheet(isPresented: $_showManageSources) {
 				EditSourcesView(sources: _sources)
@@ -141,20 +149,29 @@ struct SourcesAddView: View {
 			}
 			
 			ToolbarItem(placement: .confirmationAction) {
-				Button {
-				let sources = Storage.shared.getSources()
-				let selectedUrls = sources
-					.filter { _selectedSourcesForExport.contains($0.identifier ?? "") }
-					.compactMap { $0.sourceURL?.absoluteString }
-					.joined(separator: "\n")
+				Menu {
+					Button {
+						_exportThroughPortal()
+					} label: {
+						Label(.localized("Portal Transfer"), systemImage: "arrow.up.doc.fill")
+					}
 
-					UIPasteboard.general.string = selectedUrls
-					UIAlertController.showAlertWithOk(
-						title: .localized("Success"),
-						message: .localized("Sources Copied To Clipboard")
-					) {
-						_isExportMode = false
-						_selectedSourcesForExport.removeAll()
+					Button {
+						_exportThroughQR()
+					} label: {
+						Label(.localized("QR Code"), systemImage: "qrcode")
+					}
+
+					Button {
+						_exportAsPlainURLs()
+					} label: {
+						Label(.localized("Plain URLs"), systemImage: "link")
+					}
+
+					Button {
+						_showWirelessMode = true
+					} label: {
+						Label(.localized("Share Wirelessly"), systemImage: "antenna.radiowaves.left.and.right")
 					}
 				} label: {
 					Text(.localized("Export Selected"))
@@ -609,36 +626,6 @@ struct SourcesAddView: View {
 	}
 
 	@ViewBuilder
-	private func _exportSectionPortalButton() -> some View {
-		Button {
-			_exportThroughPortal()
-		} label: {
-			HStack(spacing: 12) {
-				Image(systemName: "arrow.up.doc.fill")
-					.font(.system(size: 18, weight: .bold))
-				Text(.localized("Portal Transfer"))
-					.font(.system(.headline, design: .rounded).bold())
-			}
-			.foregroundStyle(.white)
-			.frame(maxWidth: .infinity)
-			.padding(.vertical, 18)
-			.background(
-				LinearGradient(
-					colors: [Color.purple, Color.indigo.opacity(0.9)],
-					startPoint: .leading,
-					endPoint: .trailing
-				)
-			)
-			.clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
-			.shadow(color: Color.purple.opacity(0.3), radius: 12, x: 0, y: 6)
-		}
-		.disabled(_selectedSourcesForExport.isEmpty)
-		.opacity(_selectedSourcesForExport.isEmpty ? 0.5 : 1)
-		.scaleEffect(_selectedSourcesForExport.isEmpty ? 0.98 : 1.0)
-		.animation(.spring(), value: _selectedSourcesForExport.isEmpty)
-	}
-
-	@ViewBuilder
 	private func _exportSelectionSection() -> some View {
 		let sources = Storage.shared.getSources()
 
@@ -646,7 +633,55 @@ struct SourcesAddView: View {
 			_exportSectionHeader()
 			_exportSectionSelectButtons(sources: sources)
 			_exportSectionSourceList(sources: sources)
-			_exportSectionPortalButton()
+
+			Menu {
+				Button {
+					_exportThroughPortal()
+				} label: {
+					Label(.localized("Portal Transfer"), systemImage: "arrow.up.doc.fill")
+				}
+
+				Button {
+					_exportThroughQR()
+				} label: {
+					Label(.localized("QR Code"), systemImage: "qrcode")
+				}
+
+				Button {
+					_exportAsPlainURLs()
+				} label: {
+					Label(.localized("Plain URLs"), systemImage: "link")
+				}
+
+				Button {
+					_showWirelessMode = true
+				} label: {
+					Label(.localized("Share Wirelessly"), systemImage: "antenna.radiowaves.left.and.right")
+				}
+			} label: {
+				HStack(spacing: 12) {
+					Image(systemName: "square.and.arrow.up")
+						.font(.system(size: 18, weight: .bold))
+					Text(.localized("Export Options"))
+						.font(.system(.headline, design: .rounded).bold())
+				}
+				.foregroundStyle(.white)
+				.frame(maxWidth: .infinity)
+				.padding(.vertical, 18)
+				.background(
+					LinearGradient(
+						colors: [Color.purple, Color.indigo.opacity(0.9)],
+						startPoint: .leading,
+						endPoint: .trailing
+					)
+				)
+				.clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+				.shadow(color: Color.purple.opacity(0.3), radius: 12, x: 0, y: 6)
+			}
+			.disabled(_selectedSourcesForExport.isEmpty)
+			.opacity(_selectedSourcesForExport.isEmpty ? 0.5 : 1)
+			.scaleEffect(_selectedSourcesForExport.isEmpty ? 0.98 : 1.0)
+			.animation(.spring(), value: _selectedSourcesForExport.isEmpty)
 		}
 		.padding(.horizontal)
 	}
@@ -663,18 +698,44 @@ struct PlainGroupBoxStyle: GroupBoxStyle {
     }
 }
 	
-	// MARK: - Export through Portal
-	private func _exportThroughPortal() {
+	private func _getSelectedURLs() -> [String] {
 		let sources = Storage.shared.getSources()
-		let selectedUrls = sources
+		return sources
 			.filter { _selectedSourcesForExport.contains($0.identifier ?? "") }
 			.compactMap { $0.sourceURL?.absoluteString }
+	}
+
+	// MARK: - Export through Portal
+	private func _exportThroughPortal() {
+		let selectedUrls = _getSelectedURLs()
 
 		let exportData = PortalSourceExport.encode(urls: selectedUrls)
 		_portalExportData = exportData
 		_showPortalExport = true
 		
 		Logger.misc.info("[Portal Export] Encoded \(selectedUrls.count) sources to Base64")
+	}
+
+	private func _exportThroughQR() {
+		let selectedUrls = _getSelectedURLs()
+
+		let exportData = PortalSourceExport.encode(urls: selectedUrls)
+		_portalExportData = exportData
+		_showQRMode = true
+	}
+
+	private func _exportAsPlainURLs() {
+		let selectedUrls = _getSelectedURLs()
+			.joined(separator: "\n")
+
+		UIPasteboard.general.string = selectedUrls
+		UIAlertController.showAlertWithOk(
+			title: .localized("Success"),
+			message: .localized("Sources Copied To Clipboard")
+		) {
+			_isExportMode = false
+			_selectedSourcesForExport.removeAll()
+		}
 	}
 	
 	// MARK: - Open Portal Export Directly

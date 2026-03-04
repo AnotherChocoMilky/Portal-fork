@@ -255,6 +255,13 @@ struct AllAppsView: View {
                                         Label("Add App", systemImage: "plus")
                                     }
 
+                                    Button {
+                                        _loadAllSources(force: true)
+                                        HapticsManager.shared.softImpact()
+                                    } label: {
+                                        Label("Refresh", systemImage: "arrow.clockwise")
+                                    }
+
                                     if _showSorting {
                                         _sortingMenuContent
                                     }
@@ -448,6 +455,13 @@ struct AllAppsView: View {
                             HapticsManager.shared.softImpact()
                         } label: {
                             Label("Add App", systemImage: "plus")
+                        }
+
+                        Button {
+                            _loadAllSources(force: true)
+                            HapticsManager.shared.softImpact()
+                        } label: {
+                            Label("Refresh", systemImage: "arrow.clockwise")
                         }
 
                         if _showSorting {

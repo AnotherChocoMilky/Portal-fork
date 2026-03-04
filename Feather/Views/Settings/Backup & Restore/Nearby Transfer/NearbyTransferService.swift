@@ -6,34 +6,6 @@ import UIKit
 // MARK: - Constants
 private let kOTPExpirationSeconds = 300 // 5 minutes
 
-// MARK: - Transfer State
-enum TransferState: Equatable {
-    case idle
-    case discovering
-    case connecting
-    case transferring(progress: Double, bytesTransferred: Int64, totalBytes: Int64, speed: Double)
-    case completed
-    case failed(Error)
-
-    static func == (lhs: TransferState, rhs: TransferState) -> Bool {
-        switch (lhs, rhs) {
-        case (.idle, .idle), (.discovering, .discovering), (.connecting, .connecting), (.completed, .completed):
-            return true
-        case (.transferring, .transferring):
-            return true // Or compare progress/bytes if desired
-        case (.failed, .failed):
-            return true // Or compare error codes/messages for more accuracy
-        default:
-            return false
-        }
-    }
-}
-
-// MARK: - Transfer Mode
-enum TransferMode {
-    case send
-    case receive
-}
 
 // MARK: - Nearby Transfer Service
 class NearbyTransferService: NSObject, ObservableObject {
