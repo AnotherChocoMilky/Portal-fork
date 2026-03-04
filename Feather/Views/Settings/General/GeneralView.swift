@@ -136,28 +136,23 @@ struct GeneralView: View {
                 }
             }
             if !isEnterprise && !hideManager.isHidden("settings.updates") {
-                VStack(alignment: .leading, spacing: 0) {
-                    Button {
-                        navigateToCheckForUpdates = true
-                    } label: {
-                        SettingsRowContent(icon: "arrow.triangle.2.circlepath", title: String.localized("Check For Updates"), color: .accentColor)
-                    }
-                    .simultaneousGesture(
-                        LongPressGesture(minimumDuration: 2.0)
-                            .onEnded { _ in
-                                ToastManager.shared.show("🚀 Turbo Updates Enabled! (Just kidding)", type: .info)
-                                HapticsManager.shared.success()
-                            }
-                    )
-
-                    Divider()
-                        .padding(.leading, 50)
-
-                    Toggle(isOn: AppStorage(wrappedValue: true, "Feather.autoCheckUpdates").projectedValue) {
-                        SettingsRowContent(icon: "bolt.badge.clock.fill", title: String.localized("Check for Updates on Launch"), color: .accentColor)
-                    }
-                    .padding(.trailing, 16)
+                Button {
+                    navigateToCheckForUpdates = true
+                } label: {
+                    SettingsRowContent(icon: "arrow.triangle.2.circlepath", title: String.localized("Check For Updates"), color: .accentColor)
                 }
+                .simultaneousGesture(
+                    LongPressGesture(minimumDuration: 2.0)
+                        .onEnded { _ in
+                            ToastManager.shared.show("🚀 Turbo Updates Enabled! (Just kidding)", type: .info)
+                            HapticsManager.shared.success()
+                        }
+                )
+
+                Toggle(isOn: AppStorage(wrappedValue: true, "Feather.autoCheckUpdates").projectedValue) {
+                    SettingsRowContent(icon: "bolt.badge.clock.fill", title: String.localized("Check for Updates on Launch"), color: .accentColor)
+                }
+                .padding(.trailing, 16)
                 .navigationDestination(isPresented: $navigateToCheckForUpdates) {
                     CheckForUpdatesView()
                 }
