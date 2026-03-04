@@ -1,5 +1,57 @@
 import SwiftUI
 
+struct ScreenshotPreventingView<Content: View>: View {
+    let content: Content
+
+    init(@ViewBuilder content: () -> Content) {
+        self.content = content()
+    }
+
+    var body: some View {
+        _ScreenshotPreventingView(content: content)
+    }
+}
+
+private struct _ScreenshotPreventingView<Content: View>: UIViewRepresentable {
+    let content: Content
+
+    func makeUIView(context: Context) -> UIView {
+        let textField = UITextField()
+        textField.isSecureTextEntry = true
+
+        let hostingController = UIHostingController(rootView: content)
+        hostingController.view.backgroundColor = .clear
+
+        // Find the canvas/container view that actually hides content
+        // In iOS 13+ this is usually a private subview of the textfield
+        if let canvas = textField.subviews.first(where: { type(of: $0).description().contains("Canvas") }) {
+            canvas.addSubview(hostingController.view)
+            hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                hostingController.view.leadingAnchor.constraint(equalTo: canvas.leadingAnchor),
+                hostingController.view.trailingAnchor.constraint(equalTo: canvas.trailingAnchor),
+                hostingController.view.topAnchor.constraint(equalTo: canvas.topAnchor),
+                hostingController.view.bottomAnchor.constraint(equalTo: canvas.bottomAnchor)
+            ])
+        } else {
+            // Fallback for different iOS versions/TextField internal changes
+            textField.addSubview(hostingController.view)
+            hostingController.view.translatesAutoresizingMaskIntoConstraints = false
+            NSLayoutConstraint.activate([
+                hostingController.view.leadingAnchor.constraint(equalTo: textField.leadingAnchor),
+                hostingController.view.trailingAnchor.constraint(equalTo: textField.trailingAnchor),
+                hostingController.view.topAnchor.constraint(equalTo: textField.topAnchor),
+                hostingController.view.bottomAnchor.constraint(equalTo: textField.bottomAnchor)
+            ])
+        }
+
+        textField.isUserInteractionEnabled = true
+        return textField
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {}
+}
+
 struct ScreenshotPreventionView: View {
     @Environment(\.dismiss) private var dismiss
 

@@ -129,8 +129,12 @@ struct LibraryView: View {
                                 if !apps.isEmpty {
                                     VStack(alignment: .leading, spacing: 12) {
                                         Text("Signed")
-                                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                                            .font(.system(size: 12, weight: .bold, design: .rounded))
                                             .foregroundStyle(.secondary)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 4)
+                                            .background(Color.secondary.opacity(0.1))
+                                            .clipShape(Capsule())
                                             .padding(.horizontal, 24)
 
                                         ForEach(apps, id: \.uuid) { app in
@@ -150,8 +154,12 @@ struct LibraryView: View {
                                 if !apps.isEmpty {
                                     VStack(alignment: .leading, spacing: 12) {
                                         Text("Imported")
-                                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                                            .font(.system(size: 12, weight: .bold, design: .rounded))
                                             .foregroundStyle(.secondary)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 4)
+                                            .background(Color.secondary.opacity(0.1))
+                                            .clipShape(Capsule())
                                             .padding(.horizontal, 24)
 
                                         ForEach(apps, id: \.uuid) { app in
@@ -588,31 +596,8 @@ extension LibraryView {
     }
 
     private func downloadIPA(for app: AppInfoPresentable) {
-        if app.isSigned {
-            exportApp(app)
-        } else {
-            // Zip the Unsigned Payload
-            guard let uuid = app.uuid else { return }
-            let unsignedDir = FileManager.default.unsigned(uuid)
-            let payloadDir = unsignedDir.appendingPathComponent("Payload")
-            let tempIPA = FileManager.default.temporaryDirectory.appendingPathComponent("\(app.name ?? "App").ipa")
-
-            try? FileManager.default.removeItem(at: tempIPA)
-
-            Task.detached {
-                do {
-                    try Zip.zipFiles(paths: [payloadDir], zipFilePath: tempIPA, password: nil, progress: nil)
-                    await MainActor.run {
-                        UIActivityViewController.show(activityItems: [tempIPA])
-                        HapticsManager.shared.success()
-                    }
-                } catch {
-                    await MainActor.run {
-                        ToastManager.shared.show("Failed to create IPA", type: .error)
-                    }
-                }
-            }
-        }
+        _selectedInstallAppPresenting = AnyApp(base: app, archive: true)
+        HapticsManager.shared.softImpact()
     }
 
     @ViewBuilder

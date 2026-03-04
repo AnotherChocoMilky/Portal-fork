@@ -16,13 +16,15 @@ struct DeveloperView: View {
     @Environment(\.scenePhase) private var scenePhase
     
     var body: some View {
-        Group {
-            if authManager.isAuthenticated {
-                DeveloperControlPanelView()
-            } else {
-                DeveloperAuthView(onAuthenticated: {
-                    showAuthSheet = false
-                })
+        ScreenshotPreventingView {
+            Group {
+                if authManager.isAuthenticated {
+                    DeveloperControlPanelView()
+                } else {
+                    DeveloperAuthView(onAuthenticated: {
+                        showAuthSheet = false
+                    })
+                }
             }
         }
         .onChange(of: scenePhase) { newPhase in

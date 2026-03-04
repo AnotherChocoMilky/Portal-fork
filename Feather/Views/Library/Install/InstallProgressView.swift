@@ -47,7 +47,7 @@ struct InstallProgressView<Footer: View>: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(app.name ?? "App")
-                    .font(.subheadline)
+                    .font(.headline)
                     .bold()
                     .foregroundColor(colorManager.primaryColor.adaptiveForeground)
                     .lineLimit(1)
@@ -65,7 +65,7 @@ struct InstallProgressView<Footer: View>: View {
             footer()
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+        .padding(.vertical, 16)
         .background(_cardBackground())
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .shadow(color: .black.opacity(0.25), radius: 24, x: 0, y: 8)
@@ -123,11 +123,11 @@ struct InstallProgressView<Footer: View>: View {
     @ViewBuilder
     private func _appIcon() -> some View {
         FRAppIconView(app: app)
-            .frame(width: 48, height: 48)
+            .frame(width: 60, height: 60)
             .shadow(color: colorManager.primaryColor.opacity(0.6), radius: 6, x: 0, y: 3)
             .overlay {
-                RoundedRectangle(cornerRadius: 48 * 0.2237)
-                    .stroke(colorManager.primaryColor.opacity(0.3), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 60 * 0.2237)
+                    .stroke(colorManager.primaryColor.opacity(0.3), lineWidth: 2)
             }
     }
 
