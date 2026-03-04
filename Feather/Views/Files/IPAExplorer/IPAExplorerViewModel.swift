@@ -119,19 +119,21 @@ class IPAExplorerViewModel: ObservableObject {
         let minOS = plist["MinimumOSVersion"] as? String ?? "13.0"
 
         // Icon
-        var appIcon: UIImage?
-        if let icons = plist["CFBundleIcons"] as? [String: Any],
-           let primaryIcon = icons["CFBundlePrimaryIcon"] as? [String: Any],
-           let iconFiles = primaryIcon["CFBundleIconFiles"] as? [String],
-           let lastIcon = iconFiles.last {
-            // Note: iOS app icons usually don't have extension in Info.plist, and might have @2x/@3x
-            // For simplicity, we try to find a matching file
-            if let files = try? fileManager.contentsOfDirectory(at: appBundle, includingPropertiesForKeys: nil) {
-                if let matchedIcon = files.first(where: { $0.lastPathComponent.hasPrefix(lastIcon) }) {
-                    appIcon = UIImage(contentsOfFile: matchedIcon.path)
+        let appIcon: UIImage? = {
+            if let icons = plist["CFBundleIcons"] as? [String: Any],
+               let primaryIcon = icons["CFBundlePrimaryIcon"] as? [String: Any],
+               let iconFiles = primaryIcon["CFBundleIconFiles"] as? [String],
+               let lastIcon = iconFiles.last {
+                // Note: iOS app icons usually don't have extension in Info.plist, and might have @2x/@3x
+                // For simplicity, we try to find a matching file
+                if let files = try? fileManager.contentsOfDirectory(at: appBundle, includingPropertiesForKeys: nil) {
+                    if let matchedIcon = files.first(where: { $0.lastPathComponent.hasPrefix(lastIcon) }) {
+                        return UIImage(contentsOfFile: matchedIcon.path)
+                    }
                 }
             }
-        }
+            return nil
+        }()
 
         let provisionURL = appBundle.appendingPathComponent("embedded.mobileprovision")
         let hasProvision = fileManager.fileExists(atPath: provisionURL.path)

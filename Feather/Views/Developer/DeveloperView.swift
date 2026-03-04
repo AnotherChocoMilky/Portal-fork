@@ -4274,7 +4274,7 @@ struct SourcesLibraryDevView: View {
     private func reloadAllSources() {
         isReloading = true
         Task {
-            await viewModel.fetchSources(sources, refresh: true)
+            await viewModel.fetchSources(Array(sources), refresh: true)
             await MainActor.run {
                 isReloading = false
                 HapticsManager.shared.success()
@@ -4301,7 +4301,7 @@ struct SourcesLibraryDevView: View {
     
     private func refetchMetadata() {
         Task {
-            await viewModel.fetchSources(sources, refresh: true)
+            await viewModel.fetchSources(Array(sources), refresh: true)
             HapticsManager.shared.success()
             ToastManager.shared.show("✅ Metadata re-fetched successfully", type: .success)
             AppLogManager.shared.success("Metadata re-fetched", category: "Developer")
@@ -4325,7 +4325,7 @@ struct SourcesLibraryDevView: View {
     private func testOfflineSourceHandling() {
         UserDefaults.standard.set(true, forKey: "dev.simulateOffline")
         Task {
-            await viewModel.fetchSources(sources, refresh: true)
+            await viewModel.fetchSources(Array(sources), refresh: true)
             await MainActor.run {
                 UserDefaults.standard.set(false, forKey: "dev.simulateOffline")
                 ToastManager.shared.show("ℹ️ Offline source handling test completed", type: .info)

@@ -155,14 +155,14 @@ final class SourcesViewModel: ObservableObject {
     }
     
     // MARK: - Full Manual Fetch
-    func forceFetchAllSources(_ sources: FetchedResults<AltSource>) async {
+    func forceFetchAllSources(_ sources: [AltSource]) async {
         _cacheManager.clearCache()
         errorMessage = nil
         await fetchSources(sources, refresh: true)
     }
 
     // MARK: - Optimized Fetch with Cancellation Support
-    func fetchSources(_ sources: FetchedResults<AltSource>, refresh: Bool = false, batchSize: Int = 10) async {
+    func fetchSources(_ sources: [AltSource], refresh: Bool = false, batchSize: Int = 10) async {
         AppLogManager.shared.info("Starting source fetch (refresh: \(refresh), count: \(sources.count))", category: "Sources")
 
         // Cancel any existing fetch task
