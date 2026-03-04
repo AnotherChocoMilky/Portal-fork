@@ -94,12 +94,13 @@ struct InstallPreviewView: View {
             onDismiss()
         } label: {
             Text(viewModel.isCompleted ? "Close" : "Cancel")
+                .font(.footnote)
                 .bold()
-                .padding(.horizontal, 24)
-                .padding(.vertical, 12)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
                 .background(.ultraThinMaterial)
                 .foregroundColor(colorManager.primaryColor.adaptiveForeground)
-                .cornerRadius(12)
+                .cornerRadius(20)
         }
         .animation(.easeInOut(duration: 0.3), value: viewModel.isCompleted)
         .compatTransition()

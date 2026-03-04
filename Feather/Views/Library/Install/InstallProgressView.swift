@@ -22,17 +22,14 @@ struct InstallProgressView<Footer: View>: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.45)
+            Color.black.opacity(0.3)
                 .ignoresSafeArea()
 
             VStack {
                 Spacer()
-                    .frame(minHeight: 0, maxHeight: .infinity)
 
                 _card()
-
-                Spacer()
-                    .frame(minHeight: 0, idealHeight: 80, maxHeight: .infinity)
+                    .padding(.bottom, 20)
             }
         }
         .onAppear {
@@ -43,37 +40,36 @@ struct InstallProgressView<Footer: View>: View {
 
     @ViewBuilder
     private func _card() -> some View {
-        VStack(spacing: 16) {
+        HStack(spacing: 14) {
             _appIcon()
                 .scaleEffect(_isPulsing ? 1.02 : 1.0)
                 .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: _isPulsing)
 
-            VStack(spacing: 10) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(app.name ?? "App")
-                    .font(.headline)
+                    .font(.subheadline)
                     .bold()
-                    .multilineTextAlignment(.center)
                     .foregroundColor(colorManager.primaryColor.adaptiveForeground)
+                    .lineLimit(1)
 
                 _progressBar()
-                    .padding(.horizontal, 4)
 
                 Text(viewModel.statusLabel)
-                    .font(.subheadline)
+                    .font(.caption)
                     .fontWeight(.medium)
                     .kerning(-0.2)
                     .foregroundColor(colorManager.primaryColor.adaptiveForeground.opacity(0.7))
-                    .multilineTextAlignment(.center)
+                    .lineLimit(1)
             }
 
             footer()
         }
-        .padding(.horizontal, 28)
-        .padding(.vertical, 24)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
         .background(_cardBackground())
-        .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
         .shadow(color: .black.opacity(0.25), radius: 24, x: 0, y: 8)
-        .padding(.horizontal, 40)
+        .padding(.horizontal, 16)
     }
 
     @ViewBuilder
@@ -127,10 +123,10 @@ struct InstallProgressView<Footer: View>: View {
     @ViewBuilder
     private func _appIcon() -> some View {
         FRAppIconView(app: app)
-            .frame(width: 72, height: 72)
-            .shadow(color: colorManager.primaryColor.opacity(0.6), radius: 12, x: 0, y: 6)
+            .frame(width: 48, height: 48)
+            .shadow(color: colorManager.primaryColor.opacity(0.6), radius: 6, x: 0, y: 3)
             .overlay {
-                RoundedRectangle(cornerRadius: 72 * 0.2237)
+                RoundedRectangle(cornerRadius: 48 * 0.2237)
                     .stroke(colorManager.primaryColor.opacity(0.3), lineWidth: 1)
             }
     }
