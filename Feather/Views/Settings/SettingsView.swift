@@ -196,7 +196,7 @@ struct SettingsView: View {
                         _isFetchingFullData = true
                         BackgroundAudioManager.shared.start()
                         // Fetch both manager's data
-                        await SourcesViewModel.shared.forceFetchAllSources(_sources)
+                        await SourcesViewModel.shared.forceFetchAllSources(Array(_sources))
                         await AppUpdateTrackingManager.shared.manualFetchAllSources()
                         BackgroundAudioManager.shared.stop()
                         _isFetchingFullData = false
