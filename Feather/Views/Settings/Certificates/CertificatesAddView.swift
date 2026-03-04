@@ -107,41 +107,49 @@ struct CertificatesAddView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .fileImporter(isPresented: $_isImportingP12Presenting, allowedContentTypes: [.p12]) { result in
-                switch result {
-                case .success(let url):
-                    withAnimation {
-                        self._p12URL = url
-                        self._p12Done = true
+            .sheet(isPresented: $_isImportingP12Presenting) {
+                FileImporterRepresentableView(allowedContentTypes: [.p12]) { urls in
+                    if let url = urls.first {
+                        withAnimation {
+                            self._p12URL = url
+                            self._p12Done = true
+                        }
+                        HapticsManager.shared.softImpact()
                     }
-                    HapticsManager.shared.softImpact()
-                case .failure: break
+                    _isImportingP12Presenting = false
                 }
+                .ignoresSafeArea()
             }
-            .fileImporter(isPresented: $_isImportingMobileProvisionPresenting, allowedContentTypes: [.mobileProvision]) { result in
-                switch result {
-                case .success(let url):
-                    withAnimation {
-                        self._provisionURL = url
-                        self._provisionDone = true
+            .sheet(isPresented: $_isImportingMobileProvisionPresenting) {
+                FileImporterRepresentableView(allowedContentTypes: [.mobileProvision]) { urls in
+                    if let url = urls.first {
+                        withAnimation {
+                            self._provisionURL = url
+                            self._provisionDone = true
+                        }
+                        HapticsManager.shared.softImpact()
                     }
-                    HapticsManager.shared.softImpact()
-                case .failure: break
+                    _isImportingMobileProvisionPresenting = false
                 }
+                .ignoresSafeArea()
             }
-            .fileImporter(isPresented: $_isImportingZipPresenting, allowedContentTypes: [.certificateZip]) { result in
-                switch result {
-                case .success(let url):
-                    _handleZipImport(url)
-                case .failure: break
+            .sheet(isPresented: $_isImportingZipPresenting) {
+                FileImporterRepresentableView(allowedContentTypes: [.certificateZip]) { urls in
+                    if let url = urls.first {
+                        _handleZipImport(url)
+                    }
+                    _isImportingZipPresenting = false
                 }
+                .ignoresSafeArea()
             }
-            .fileImporter(isPresented: $_isImportingPortalCertPresenting, allowedContentTypes: [.portalCert, .data]) { result in
-                switch result {
-                case .success(let url):
-                    portalCertImportSheet_picked(url)
-                case .failure: break
+            .sheet(isPresented: $_isImportingPortalCertPresenting) {
+                FileImporterRepresentableView(allowedContentTypes: [.portalCert, .data]) { urls in
+                    if let url = urls.first {
+                        portalCertImportSheet_picked(url)
+                    }
+                    _isImportingPortalCertPresenting = false
                 }
+                .ignoresSafeArea()
             }
             .alert(.localized("Certificate"), isPresented: $_showAlert) {
                 Button(.localized("OK"), role: .cancel) { }
