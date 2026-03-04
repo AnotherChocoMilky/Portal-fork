@@ -1,6 +1,7 @@
 import SwiftUI
 import NimbleViews
 import UniformTypeIdentifiers
+import UIKit
 
 struct AppAddView: View {
     @Environment(\.dismiss) private var dismiss
@@ -25,8 +26,8 @@ struct AppAddView: View {
     }
 
     var body: some View {
-        VStack(spacing: 24) {
-            VStack(spacing: 8) {
+        VStack(spacing: 20) {
+            VStack(spacing: 4) {
                 Text(String.localized("Import App"))
                     .font(.system(size: 28, weight: .black, design: .rounded))
                     .foregroundStyle(.primary)
@@ -36,7 +37,7 @@ struct AppAddView: View {
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
-            .padding(.top, 40)
+            .padding(.top, 24)
 
             HStack(spacing: 20) {
                 ImportOptionButton(
@@ -57,8 +58,6 @@ struct AppAddView: View {
                     }
                 )
             }
-
-            Spacer()
         }
         .padding(30)
         .background(Color.clear)
@@ -115,14 +114,14 @@ struct ImportOptionButton: View {
 
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 12) {
+            VStack(spacing: 8) {
                 ZStack {
                     Circle()
                         .fill(color.opacity(0.12))
-                        .frame(width: 56, height: 56)
+                        .frame(width: 48, height: 48)
 
                     Image(systemName: icon)
-                        .font(.system(size: 24, weight: .bold))
+                        .font(.system(size: 20, weight: .bold))
                         .foregroundStyle(color)
                 }
 
@@ -131,14 +130,14 @@ struct ImportOptionButton: View {
                     .foregroundStyle(.primary)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 20)
+            .padding(.vertical, 14)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color.clear)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
                     .shadow(color: .black.opacity(0.05), radius: 10, x: 0, y: 5)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(color.opacity(0.1), lineWidth: 1)
             )
             .contentShape(Rectangle())
