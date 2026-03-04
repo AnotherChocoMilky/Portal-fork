@@ -6,127 +6,111 @@ import WidgetKit
 @available(iOS 16.1, *)
 struct InstallationLiveActivityView: View {
     let context: ActivityViewContext<InstallationActivityAttributes>
-    @AppStorage("liveActivityStyle") private var style: LiveActivityStyle = .modern
-    @AppStorage("liveActivityShowTimeRemaining") private var showTimeRemaining: Bool = true
-    @AppStorage("liveActivityShowIcon") private var showIcon: Bool = true
+    
+    private var currentStep: Int {
+        switch context.state.status {
+        case .preparing, .downloading, .unzipping:
+            return 1
+        case .signing, .rezipping:
+            return 2
+        case .installing, .verifying, .completed, .failed, .paused, .cancelled:
+            return 3
+        }
+    }
     
     var body: some View {
-        Group {
-            switch style {
-            case .modern:
-                modernStyle
-            case .compact:
-                compactStyle
-            case .minimal:
-                minimalStyle
-            }
-        }
-    }
-    
-    // MARK: - Modern Style
-    private var modernStyle: some View {
-        HStack(spacing: 12) {
-            // App Icon
-            if showIcon {
+        VStack(spacing: 15) {
+            // Top Row
+            HStack(alignment: .top, spacing: 12) {
+                // App Icon
                 appIconView
-            }
-            
-            VStack(alignment: .leading, spacing: 6) {
-                // App Name
-                Text(context.attributes.appName)
-                    .font(.system(size: 14, weight: .semibold))
-                    .lineLimit(1)
+                    .frame(width: 38, height: 38)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
                 
-                // Status
-                HStack(spacing: 4) {
-                    Image(systemName: context.state.status.icon)
-                        .font(.system(size: 10))
-                        .foregroundColor(context.state.status.color)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(context.attributes.appName)
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
                     
-                    Text(context.state.status.rawValue)
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
+                    Text("Step \(currentStep)/3")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.7))
                 }
-                
-                // Progress Bar
-                progressBar
-                
-                // Details
-                HStack {
-                    Text("\(context.state.formattedBytesDownloaded) Of \(context.state.formattedTotalBytes)")
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    if showTimeRemaining, let timeStr = context.state.formattedTimeRemaining {
-                        Text(timeStr)
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundColor(.secondary)
-                    }
-                }
-            }
-            
-            // Percentage
-            Text(context.state.progressPercentage)
-                .font(.system(size: 16, weight: .bold, design: .rounded))
-                .foregroundColor(context.state.status.color)
-        }
-        .padding(12)
-    }
-    
-    // MARK: - Compact Style
-    private var compactStyle: some View {
-        HStack(spacing: 10) {
-            if showIcon {
-                appIconView
-                    .frame(width: 32, height: 32)
-            }
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(context.attributes.appName)
-                    .font(.system(size: 13, weight: .semibold))
-                    .lineLimit(1)
-                
-                progressBar
-                
-                HStack {
-                    Text(context.state.status.rawValue)
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                    
-                    Spacer()
-                    
-                    Text(context.state.progressPercentage)
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundColor(context.state.status.color)
-                }
-            }
-        }
-        .padding(10)
-    }
-    
-    // MARK: - Minimal Style
-    private var minimalStyle: some View {
-        VStack(spacing: 8) {
-            HStack {
-                Text(context.attributes.appName)
-                    .font(.system(size: 12, weight: .semibold))
-                    .lineLimit(1)
                 
                 Spacer()
                 
+                VStack(alignment: .trailing, spacing: 4) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "signature")
+                            .font(.system(size: 10, weight: .bold))
+                        Text(context.state.status.rawValue)
+                            .font(.system(size: 11, weight: .bold, design: .rounded))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.white.opacity(0.15))
+                    .clipShape(Capsule())
+                }
+            }
+            .overlay(alignment: .topTrailing) {
                 Text(context.state.progressPercentage)
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(context.state.status.color)
+                    .font(.system(size: 14, weight: .black, design: .rounded))
+                    .foregroundColor(.white)
+                    .offset(y: -2)
             }
             
-            progressBar
+            // Middle: Segmented Progress Bar
+            HStack(spacing: 6) {
+                ForEach(1...3, id: \.self) { step in
+                    Capsule()
+                        .fill(step <= currentStep ? Color(red: 0, green: 1, blue: 0.25) : Color(red: 0, green: 0.1, blue: 0.25))
+                        .frame(height: 6)
+                        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: currentStep)
+                }
+            }
+
+            // Bottom Row
+            HStack {
+                // Flashlight Style Icon
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.15))
+                        .frame(width: 34, height: 34)
+                    Image(systemName: "flashlight.on.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white)
+                }
+                
+                Spacer()
+                
+                Text("• X Notification")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.8))
+
+                Spacer()
+
+                // Camera Style Icon
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.15))
+                        .frame(width: 34, height: 34)
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white)
+                }
+            }
         }
-        .padding(8)
+        .padding(16)
+        .background(
+            LinearGradient(
+                colors: [Color(red: 0, green: 0.1, blue: 0.25), Color(red: 0, green: 0.2, blue: 0.4)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
     }
-    
-    // MARK: - Components
     
     private var appIconView: some View {
         Group {
@@ -137,69 +121,13 @@ struct InstallationLiveActivityView: View {
                     .aspectRatio(contentMode: .fit)
             } else {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(
-                            LinearGradient(
-                                colors: [.blue.opacity(0.6), .purple.opacity(0.6)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                    Color.white.opacity(0.1)
                     
                     Image(systemName: "app.badge.fill")
-                        .font(.system(size: 20))
+                        .font(.system(size: 18))
                         .foregroundColor(.white)
                 }
             }
-        }
-        .frame(width: 40, height: 40)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-    
-    private var progressBar: some View {
-        GeometryReader { geometry in
-            ZStack(alignment: .leading) {
-                // Background
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(Color.gray.opacity(0.2))
-                
-                // Progress
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(
-                        LinearGradient(
-                            colors: [context.state.status.color.opacity(0.8), context.state.status.color],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        )
-                    )
-                    .frame(width: geometry.size.width * CGFloat(context.state.progress))
-                    .animation(.easeInOut(duration: 0.3), value: context.state.progress)
-            }
-        }
-        .frame(height: 6)
-    }
-}
-
-// MARK: - Live Activity Style Enum
-
-enum LiveActivityStyle: String, CaseIterable, Codable {
-    case modern = "Modern"
-    case compact = "Compact"
-    case minimal = "Minimal"
-    
-    var description: String {
-        switch self {
-        case .modern: return "Full details with icon and progress"
-        case .compact: return "Condensed view with essential info"
-        case .minimal: return "Minimal progress bar only"
-        }
-    }
-    
-    var icon: String {
-        switch self {
-        case .modern: return "rectangle.fill"
-        case .compact: return "rectangle.compress.vertical"
-        case .minimal: return "minus"
         }
     }
 }

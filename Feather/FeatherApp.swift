@@ -169,6 +169,7 @@ struct FeatherApp: App {
 						_checkForUpdates()
 						_handlePendingWidgetAction()
 						_checkForPendingNearbyRestore()
+						CheckUpdatesManager.shared.checkIfNeeded()
 					}
 					.overlay(StatusBarOverlay())
 					.overlay(PortalTopView())
