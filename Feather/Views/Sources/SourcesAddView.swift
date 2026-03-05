@@ -541,52 +541,58 @@ struct SourcesAddView: View {
 	// MARK: - Export Selection Section
 	@ViewBuilder
 	private func _exportSectionHeader() -> some View {
-		VStack(alignment: .leading, spacing: 4) {
+		VStack(alignment: .leading, spacing: 6) {
 			Text(.localized("Select Sources To Export"))
-				.font(.system(.title3, design: .rounded).bold())
+				.font(.system(.title2, design: .rounded).bold())
 				.foregroundStyle(.primary)
 
 			Text(.localized("Choose the repositories you want to share"))
-				.font(.subheadline)
+				.font(.system(.subheadline, design: .rounded, weight: .medium))
 				.foregroundStyle(.secondary)
 		}
-		.padding(.horizontal, 4)
+		.padding(.horizontal, 16)
 	}
 
 	@ViewBuilder
 	private func _exportSectionSelectButtons(sources: [AltSource]) -> some View {
 		HStack(spacing: 12) {
 			Button {
-				withAnimation(.spring(response: 0.3)) {
+				withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
 					_selectedSourcesForExport = Set(sources.compactMap { $0.identifier })
 				}
-				HapticsManager.shared.softImpact()
+				HapticsManager.shared.impact()
 			} label: {
-				Label(.localized("Select All"), systemImage: "checkmark.circle.fill")
-					.font(.system(size: 13, weight: .bold, design: .rounded))
-					.foregroundStyle(.blue)
-					.padding(.horizontal, 14)
-					.padding(.vertical, 8)
-					.background(Color.blue.opacity(0.08))
-					.clipShape(Capsule())
+				HStack(spacing: 6) {
+					Image(systemName: "checkmark.circle.fill")
+					Text(.localized("Select All"))
+				}
+				.font(.system(size: 13, weight: .bold, design: .rounded))
+				.foregroundStyle(.blue)
+				.padding(.horizontal, 16)
+				.padding(.vertical, 10)
+				.background(Color.blue.opacity(0.1))
+				.clipShape(Capsule())
 			}
 
 			Button {
-				withAnimation(.spring(response: 0.3)) {
+				withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
 					_selectedSourcesForExport.removeAll()
 				}
 				HapticsManager.shared.softImpact()
 			} label: {
-				Label(.localized("Deselect All"), systemImage: "circle")
-					.font(.system(size: 13, weight: .bold, design: .rounded))
-					.foregroundStyle(.gray)
-					.padding(.horizontal, 14)
-					.padding(.vertical, 8)
-					.background(Color.gray.opacity(0.08))
-					.clipShape(Capsule())
+				HStack(spacing: 6) {
+					Image(systemName: "circle")
+					Text(.localized("Deselect All"))
+				}
+				.font(.system(size: 13, weight: .bold, design: .rounded))
+				.foregroundStyle(.secondary)
+				.padding(.horizontal, 16)
+				.padding(.vertical, 10)
+				.background(Color.secondary.opacity(0.1))
+				.clipShape(Capsule())
 			}
 		}
-		.padding(.horizontal, 4)
+		.padding(.horizontal, 16)
 	}
 
 	@ViewBuilder
@@ -630,10 +636,6 @@ struct SourcesAddView: View {
 		let sources = Storage.shared.getSources()
 
 		VStack(alignment: .leading, spacing: 20) {
-			_exportSectionHeader()
-			_exportSectionSelectButtons(sources: sources)
-			_exportSectionSourceList(sources: sources)
-
 			Menu {
 				Button {
 					_exportThroughPortal()
@@ -682,8 +684,14 @@ struct SourcesAddView: View {
 			.opacity(_selectedSourcesForExport.isEmpty ? 0.5 : 1)
 			.scaleEffect(_selectedSourcesForExport.isEmpty ? 0.98 : 1.0)
 			.animation(.spring(), value: _selectedSourcesForExport.isEmpty)
+			.padding(.horizontal, 16)
+
+			_exportSectionHeader()
+			_exportSectionSelectButtons(sources: sources)
+			_exportSectionSourceList(sources: sources)
+				.padding(.horizontal, 16)
 		}
-		.padding(.horizontal)
+		.padding(.top, 8)
 	}
 
 struct PlainGroupBoxStyle: GroupBoxStyle {
@@ -1176,28 +1184,34 @@ private struct ExportSourceRow: View {
             HStack(spacing: 16) {
                 ZStack {
                     Circle()
-                        .stroke(isSelected ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: 2)
-                        .frame(width: 24, height: 24)
+                        .stroke(isSelected ? Color.accentColor : Color.secondary.opacity(0.3), lineWidth: 1.5)
+                        .frame(width: 22, height: 22)
 
                     if isSelected {
-                        Circle()
-                            .fill(Color.accentColor)
-                            .frame(width: 14, height: 14)
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 22, height: 22)
+                            .background(Circle().fill(Color.accentColor))
                     }
                 }
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(source.name ?? .localized("Unknown"))
-                        .font(.system(.body, design: .rounded).bold())
+                        .font(.system(.body, design: .rounded, weight: .bold))
                         .foregroundStyle(.primary)
+
                     Text(source.sourceURL?.absoluteString ?? "")
                         .font(.system(.caption, design: .monospaced))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                 }
+
                 Spacer()
             }
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
             .padding(.horizontal, 16)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }

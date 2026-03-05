@@ -16,39 +16,61 @@ struct DeveloperView: View {
     @Environment(\.scenePhase) private var scenePhase
     
     var body: some View {
-        ScreenshotPreventingView {
-            Group {
-                if authManager.isAuthenticated {
-                    DeveloperControlPanelView()
-                } else {
-                    DeveloperAuthView(onAuthenticated: {
-                        showAuthSheet = false
-                    })
+        ZStack {
+            ScreenshotPreventingView {
+                Group {
+                    if authManager.isAuthenticated {
+                        DeveloperControlPanelView()
+                    } else {
+                        DeveloperAuthView(onAuthenticated: {
+                            showAuthSheet = false
+                        })
+                    }
                 }
             }
-        }
-        .onChange(of: scenePhase) { newPhase in
-            if newPhase == .background {
-                authManager.lockDeveloperMode()
+            .onChange(of: scenePhase) { newPhase in
+                if newPhase == .background {
+                    authManager.lockDeveloperMode()
+                } else if newPhase == .active {
+                    _checkScreenRecording()
+                }
+            }
+            .onAppear {
+                authManager.checkSessionValidity()
+                _checkScreenRecording()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.userDidTakeScreenshotNotification)) { _ in
+                _triggerWarning()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIScreen.capturedDidChangeNotification)) { _ in
+                _checkScreenRecording()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .gestureAuthenticateDeveloper)) { _ in
+                if !authManager.isAuthenticated {
+                    ToastManager.shared.show("😏 Nice try, but you need to authenticate!", type: .warning)
+                    HapticsManager.shared.error()
+                }
+            }
+
+            if showScreenshotWarning {
+                ScreenshotPreventionView {
+                    showScreenshotWarning = false
+                }
+                .transition(.opacity.combined(with: .scale(scale: 1.1)))
+                .zIndex(999)
             }
         }
-        .onAppear {
-            authManager.checkSessionValidity()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: UIApplication.userDidTakeScreenshotNotification)) { _ in
-            showScreenshotWarning = true
-            HapticsManager.shared.warning()
-            AppLogManager.shared.warning("Screenshot detected in Developer Mode!", category: "Security")
-        }
-        .sheet(isPresented: $showScreenshotWarning) {
-            ScreenshotPreventionView()
-                .interactiveDismissDisabled()
-        }
-        .onReceive(NotificationCenter.default.publisher(for: .gestureAuthenticateDeveloper)) { _ in
-            if !authManager.isAuthenticated {
-                ToastManager.shared.show("😏 Nice try, but you need to authenticate!", type: .warning)
-                HapticsManager.shared.error()
-            }
+    }
+
+    private func _triggerWarning() {
+        showScreenshotWarning = true
+        HapticsManager.shared.warning()
+        AppLogManager.shared.warning("Security threat detected in Developer Mode!", category: "Security")
+    }
+
+    private func _checkScreenRecording() {
+        if UIScreen.main.isCaptured {
+            _triggerWarning()
         }
     }
 }
@@ -127,7 +149,9 @@ struct DeveloperAuthView: View {
                         cancelButton
                     }
                     .fullScreenCover(isPresented: $showGlitchView) {
-                        GlitchDeveloperModeView()
+                        ScreenshotPreventingView {
+                            GlitchDeveloperModeView()
+                        }
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 20)
@@ -136,9 +160,11 @@ struct DeveloperAuthView: View {
             }
             .navigationBarHidden(true)
             .sheet(isPresented: $showSetupPasscode) {
-                ModernPasscodeSetupView(onComplete: { success in
-                    showSetupPasscode = false
-                })
+                ScreenshotPreventingView {
+                    ModernPasscodeSetupView(onComplete: { success in
+                        showSetupPasscode = false
+                    })
+                }
             }
         }
         .onAppear {
@@ -926,10 +952,12 @@ struct DeveloperControlPanelView: View {
             }
         }
         .sheet(isPresented: $showNearbyShareIntro) {
-            if #available(iOS 17.0, *) {
-                NearbyShareIntroView()
-            } else {
-                NearbyShareIntroViewLegacy()
+            ScreenshotPreventingView {
+                if #available(iOS 17.0, *) {
+                    NearbyShareIntroView()
+                } else {
+                    NearbyShareIntroViewLegacy()
+                }
             }
         }
     }
@@ -1512,7 +1540,9 @@ struct DeveloperSecurityView: View {
             .scrollContentBackground(.hidden)
         .navigationTitle("Security Settings")
         .sheet(isPresented: $showChangePasscode) {
-            ModernPasscodeSetupView(onComplete: { _ in })
+            ScreenshotPreventingView {
+                ModernPasscodeSetupView(onComplete: { _ in })
+            }
         }
         .alert("Remove Passcode", isPresented: $showRemovePasscode) {
             Button("Cancel", role: .cancel) { }
@@ -2444,15 +2474,17 @@ struct IPAInspectorView: View {
         .navigationTitle("IPA Inspector")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isImporting) {
-            FileImporterRepresentableView(
-                allowedContentTypes: [.ipa, .tipa],
-                onDocumentsPicked: { urls in
-                    guard let url = urls.first else { return }
-                    selectedFile = url
-                    analyzeIPA(url: url)
-                }
-            )
-            .ignoresSafeArea()
+            ScreenshotPreventingView {
+                FileImporterRepresentableView(
+                    allowedContentTypes: [.ipa, .tipa],
+                    onDocumentsPicked: { urls in
+                        guard let url = urls.first else { return }
+                        selectedFile = url
+                        analyzeIPA(url: url)
+                    }
+                )
+                .ignoresSafeArea()
+            }
         }
     }
     
@@ -2991,15 +3023,17 @@ struct IPAIntegrityCheckerView: View {
         .navigationTitle("Integrity Checker")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $isImporting) {
-            FileImporterRepresentableView(
-                allowedContentTypes: [.ipa, .tipa],
-                onDocumentsPicked: { urls in
-                    guard let url = urls.first else { return }
-                    selectedFile = url
-                    analyzeIntegrity(url: url)
-                }
-            )
-            .ignoresSafeArea()
+            ScreenshotPreventingView {
+                FileImporterRepresentableView(
+                    allowedContentTypes: [.ipa, .tipa],
+                    onDocumentsPicked: { urls in
+                        guard let url = urls.first else { return }
+                        selectedFile = url
+                        analyzeIntegrity(url: url)
+                    }
+                )
+                .ignoresSafeArea()
+            }
         }
     }
     
@@ -4521,8 +4555,10 @@ struct InstallIPADevView: View {
             .scrollContentBackground(.hidden)
         .navigationTitle("Install & IPA")
         .fullScreenCover(isPresented: $showInstallModifyDialog) {
-            if let app = selectedApp {
-                InstallModifyDialogView(app: app)
+            ScreenshotPreventingView {
+                if let app = selectedApp {
+                    InstallModifyDialogView(app: app)
+                }
             }
         }
     }
@@ -5832,10 +5868,14 @@ struct CertificateProfileManagerView: View {
         .searchable(text: $searchText, prompt: "Search Certificates")
         .navigationTitle("Certificate Manager")
         .sheet(isPresented: $showAddCertificate) {
-            CertificatesAddView()
+            ScreenshotPreventingView {
+                CertificatesAddView()
+            }
         }
         .sheet(item: $selectedCertificate) { cert in
-            CertificatesInfoView(cert: cert)
+            ScreenshotPreventingView {
+                CertificatesInfoView(cert: cert)
+            }
         }
     }
     

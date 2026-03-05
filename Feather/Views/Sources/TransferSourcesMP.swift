@@ -74,106 +74,225 @@ struct TransferSourcesMP: View {
     }
 
     private var headerSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(isReceiveMode ? Color.cyan.opacity(0.1) : Color.blue.opacity(0.1))
-                    .frame(width: 80, height: 80)
+                    .fill(isReceiveMode ? Color.cyan.opacity(0.15) : Color.blue.opacity(0.15))
+                    .frame(width: 90, height: 90)
 
-                Image(systemName: isReceiveMode ? "wave.3.left.circle.fill" : "dot.radiowaves.left.and.right")
-                    .font(.system(size: 40))
-                    .foregroundStyle(isReceiveMode ? Color.cyan : Color.blue)
+                if #available(iOS 18.0, *) {
+                    Image(systemName: "antenna.radiowaves.left.and.right")
+                        .font(.system(size: 40))
+                        .foregroundStyle(isReceiveMode ? Color.cyan : Color.blue)
+                        .symbolEffect(.variableColor.reversing)
+                } else {
+                    Image(systemName: isReceiveMode ? "wave.3.left.circle.fill" : "dot.radiowaves.left.and.right")
+                        .font(.system(size: 40))
+                        .foregroundStyle(isReceiveMode ? Color.cyan : Color.blue)
+                }
             }
+            .padding(.top, 10)
 
-            Text(isReceiveMode ? "Ready to Receive" : "Sharing \(sourceURLs.count) Sources")
-                .font(.headline)
+            VStack(spacing: 4) {
+                Text(isReceiveMode ? "Ready to Receive" : "Sharing \(sourceURLs.count) Sources")
+                    .font(.system(.title3, design: .rounded).bold())
 
-            Text(isReceiveMode ? "Stay on this screen to be discoverable" : "Select a nearby device to send sources")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                Text(isReceiveMode ? "Stay on this screen to be discoverable" : "Select a nearby device to send sources")
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+            }
         }
     }
 
     private var sendContent: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("Nearby Devices")
-                .font(.caption.bold())
-                .foregroundStyle(.secondary)
-                .padding(.horizontal)
+            HStack {
+                Text("Nearby Devices")
+                    .font(.system(.caption, design: .rounded).bold())
+                    .foregroundStyle(.secondary)
+
+                Spacer()
+
+                if !transferService.discoveredPeers.isEmpty {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                }
+            }
+            .padding(.horizontal, 20)
 
             if transferService.discoveredPeers.isEmpty {
-                VStack(spacing: 12) {
-                    ProgressView()
+                VStack(spacing: 20) {
+                    ZStack {
+                        Circle()
+                            .stroke(Color.accentColor.opacity(0.1), lineWidth: 2)
+                            .frame(width: 100, height: 100)
+
+                        Circle()
+                            .stroke(Color.accentColor.opacity(0.2), lineWidth: 2)
+                            .frame(width: 140, height: 140)
+                            .scaleEffect(1.2)
+
+                        ProgressView()
+                            .scaleEffect(1.5)
+                    }
+                    .padding(.vertical, 20)
+
                     Text("Looking for devices...")
-                        .font(.subheadline)
+                        .font(.system(.subheadline, design: .rounded, weight: .medium))
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 40)
             } else {
-                List(transferService.discoveredPeers, id: \.self) { peer in
-                    Button {
-                        transferService.sendSources(sourceURLs, to: peer)
-                    } label: {
-                        HStack {
-                            Image(systemName: "iphone")
-                                .foregroundStyle(Color.accentColor)
-                            Text(peer.displayName)
-                            Spacer()
-                            if case .connecting = transferService.state {
-                                ProgressView()
-                            } else {
-                                Image(systemName: "chevron.right")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                ScrollView {
+                    VStack(spacing: 12) {
+                        ForEach(transferService.discoveredPeers, id: \.self) { peer in
+                            Button {
+                                transferService.sendSources(sourceURLs, to: peer)
+                                HapticsManager.shared.impact()
+                            } label: {
+                                HStack(spacing: 16) {
+                                    ZStack {
+                                        Circle()
+                                            .fill(Color.accentColor.opacity(0.1))
+                                            .frame(width: 44, height: 44)
+                                        Image(systemName: "iphone")
+                                            .font(.system(size: 20))
+                                            .foregroundStyle(Color.accentColor)
+                                    }
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(peer.displayName)
+                                            .font(.system(.body, design: .rounded, weight: .bold))
+                                        Text("Available for transfer")
+                                            .font(.system(.caption, design: .rounded))
+                                            .foregroundStyle(.secondary)
+                                    }
+
+                                    Spacer()
+
+                                    if case .connecting = transferService.state {
+                                        ProgressView()
+                                    } else {
+                                        Image(systemName: "chevron.right")
+                                            .font(.system(size: 14, weight: .bold))
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                }
+                                .padding()
+                                .background(RoundedRectangle(cornerRadius: 20, style: .continuous).fill(Color.secondary.opacity(0.05)))
                             }
+                            .buttonStyle(.plain)
                         }
                     }
+                    .padding(.horizontal, 20)
                 }
-                .listStyle(.plain)
             }
 
             if case .completed = transferService.state {
-                HStack {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
+                HStack(spacing: 12) {
+                    if #available(iOS 18.0, *) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                            .symbolEffect(.bounce)
+                    } else {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                    }
                     Text("Sent successfully!")
+                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                        .foregroundStyle(.green)
                 }
                 .frame(maxWidth: .infinity)
                 .padding()
+                .background(Capsule().fill(Color.green.opacity(0.1)))
+                .padding(.horizontal, 20)
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
     }
 
     private var receiveContent: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 32) {
             if showSuccess {
-                VStack(spacing: 16) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 48))
-                        .foregroundStyle(.green)
+                VStack(spacing: 20) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.green.opacity(0.15))
+                            .frame(width: 100, height: 100)
 
-                    Text("\(receivedCount) Sources Added")
-                        .font(.headline)
-
-                    Button("Done") {
-                        dismiss()
+                        if #available(iOS 18.0, *) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 50))
+                                .foregroundStyle(.green)
+                                .symbolEffect(.bounce)
+                        } else {
+                            Image(systemName: "checkmark.circle.fill")
+                                .font(.system(size: 50))
+                                .foregroundStyle(.green)
+                        }
                     }
-                    .buttonStyle(.borderedProminent)
+
+                    VStack(spacing: 8) {
+                        Text("\(receivedCount) Sources Added")
+                            .font(.system(.title3, design: .rounded).bold())
+
+                        Text("Your sources are ready to use.")
+                            .font(.system(.subheadline, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Done")
+                            .font(.system(.headline, design: .rounded))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.green)
+                            .clipShape(Capsule())
+                    }
+                    .padding(.horizontal, 40)
+                    .padding(.top, 10)
                 }
-                .padding()
-                .background(Color.secondary.opacity(0.1))
-                .cornerRadius(16)
+                .padding(32)
+                .background(RoundedRectangle(cornerRadius: 32, style: .continuous).fill(Color.secondary.opacity(0.05)))
+                .padding(.horizontal, 20)
                 .transition(.scale.combined(with: .opacity))
             } else {
-                VStack(spacing: 12) {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                    Text("Discoverable as \(UIDevice.current.name)")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                VStack(spacing: 24) {
+                    ZStack {
+                        Circle()
+                            .stroke(Color.cyan.opacity(0.1), lineWidth: 4)
+                            .frame(width: 120, height: 120)
+
+                        Circle()
+                            .stroke(Color.cyan.opacity(0.2), lineWidth: 4)
+                            .frame(width: 160, height: 160)
+                            .scaleEffect(1.2)
+
+                        ProgressView()
+                            .scaleEffect(2.0)
+                    }
+                    .padding(.vertical, 20)
+
+                    VStack(spacing: 8) {
+                        Text("Discoverable as")
+                            .font(.system(.subheadline, design: .rounded))
+                            .foregroundStyle(.secondary)
+
+                        Text(UIDevice.current.name)
+                            .font(.system(.headline, design: .rounded, weight: .bold))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 8)
+                            .background(Capsule().fill(Color.cyan.opacity(0.1)))
+                            .foregroundStyle(.cyan)
+                    }
                 }
-                .padding(.vertical, 40)
+                .padding(.vertical, 20)
             }
         }
     }
