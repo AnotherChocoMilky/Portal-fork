@@ -57,18 +57,15 @@ struct GeneralView: View {
     private var notificationsSection: some View {
         Section {
             if !hideManager.isHidden("settings.notifications") {
-                SettingsRow(icon: "bell.badge.fill", title: String.localized("Notifications"), color: .accentColor, destination: NotificationsView())
+                SettingsRow(icon: "bell.badge.fill", title: String.localized("Notifications & Live Activities"), color: .accentColor, destination: NotificationsView())
             }
         } header: {
-            SettingsSectionHeader(title: String.localized("Notifications"), icon: "bell.fill")
+            SettingsSectionHeader(title: String.localized("Notifications & Live Activities"), icon: "bell.fill")
         }
     }
 
     private var signingSection: some View {
         Section {
-            if !hideManager.isHidden("settings.liveActivities") {
-                SettingsRow(icon: "widget.small.badge.plus", title: String.localized("Live Activities"), color: .accentColor, destination: LiveActivitySettingsView())
-            }
             if !hideManager.isHidden("settings.certificates") {
                 SettingsRow(icon: "person.badge.key.fill", title: String.localized("Certificates"), color: .accentColor, destination: CertificatesView())
             }
@@ -109,14 +106,22 @@ struct GeneralView: View {
             }
 
             Picker(selection: AppStorage(wrappedValue: 0, "Feather.backgroundRefreshConnection").projectedValue) {
-                Text(.localized("Both")).tag(0)
-                Text(.localized("WiFi")).tag(1)
-                Text(.localized("Cellular")).tag(2)
+                Label(.localized("Both"), systemImage: "arrow.up.left.and.arrow.down.right").tag(0)
+                Label(.localized("WiFi"), systemImage: "wifi").tag(1)
+                Label(.localized("Cellular"), systemImage: "antenna.radiowaves.left.and.right").tag(2)
             } label: {
                 SettingsRowContent(icon: "wifi", title: String.localized("Connection Preference"), color: .accentColor)
             }
             .pickerStyle(.menu)
             .padding(.trailing, 16)
+
+            Button {
+                if let url = URL(string: "App-Prefs:root=General&path=Background_App_Refresh") {
+                    UIApplication.shared.open(url)
+                }
+            } label: {
+                SettingsRowContent(icon: "gearshape.fill", title: String.localized("Open Background Refresh Settings"), color: .accentColor)
+            }
         } header: {
             SettingsSectionHeader(title: String.localized("Background Refresh"), icon: "arrow.clockwise")
         } footer: {

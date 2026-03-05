@@ -94,11 +94,6 @@ struct SourcesView: View {
                         // Main content
                         VStack(spacing: 20) {
                             if !_filteredSources.isEmpty {
-                                // All Apps Card
-                                if !hideManager.isHidden("sources.allAppsCard") {
-                                    allAppsCard
-                                }
-                                
                                 // Source Cards
                                 sourcesCardsSection
                             } else {
@@ -221,22 +216,6 @@ struct SourcesView: View {
                 .foregroundStyle(color)
         }
         .contentShape(Circle())
-    }
-    
-    // MARK: - All Apps Card
-    private var allAppsCard: some View {
-        NavigationLink {
-            AllAppsWrapperView(object: Array(_sources), viewModel: viewModel)
-        } label: {
-            ModernSourceCard(
-                title: String.localized("See All"),
-                subtitle: "\(_sources.reduce(0) { $0 + (viewModel.sources[$1]?.apps.count ?? 0) }) Apps Available",
-                iconSystemName: "app.badge.fill",
-                isPinned: false,
-                accentColor: .cyan
-            )
-        }
-        .buttonStyle(.plain)
     }
     
     // MARK: - Sources Cards Section

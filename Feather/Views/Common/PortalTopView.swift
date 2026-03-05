@@ -27,6 +27,7 @@ struct PortalTopView: View {
                     let safeAreaTop = geometry.safeAreaInsets.top
 
                     VStack(spacing: 0) {
+                        Spacer(minLength: 0)
                         HStack {
                             Spacer()
 
@@ -79,11 +80,12 @@ struct PortalTopView: View {
                                         )
                                 }
                             }
+
+                            Spacer()
                         }
                         .shadow(color: .black.opacity(0.12), radius: 12, x: 0, y: 6)
-                        .offset(y: 2) // Better positioning relative to the notch/dynamic island
 
-                        Spacer()
+                        Spacer(minLength: 0)
                     }
                     .frame(height: max(safeAreaTop, 20))
 
