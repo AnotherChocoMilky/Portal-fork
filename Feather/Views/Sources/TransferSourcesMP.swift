@@ -10,6 +10,12 @@ struct TransferSourcesMP: View {
     @State private var showSuccess = false
     @State private var receivedCount = 0
 
+    // Additional states for menu actions
+    @State private var _showManageSources = false
+    @State private var _showQRMode = false
+    @State private var _showPortalExport = false
+    @State private var _portalExportData = ""
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
@@ -43,12 +49,72 @@ struct TransferSourcesMP: View {
             .navigationTitle("Wireless Transfer")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Menu {
+                        Button {
+                            _showManageSources = true
+                        } label: {
+                            Label(.localized("Manage Sources"), systemImage: "list.bullet.rectangle.portrait")
+                        }
+
+                        Button {
+                            _importFromClipboard()
+                        } label: {
+                            Label(.localized("Import From Clipboard"), systemImage: "square.and.arrow.down")
+                        }
+
+                        Menu {
+                            Button {
+                                _exportThroughPortal()
+                            } label: {
+                                Label(.localized("Portal Transfer"), systemImage: "arrow.up.doc.fill")
+                            }
+
+                            Button {
+                                _exportThroughQR()
+                            } label: {
+                                Label(.localized("QR Code"), systemImage: "qrcode")
+                            }
+
+                            Button {
+                                _exportAsPlainURLs()
+                            } label: {
+                                Label(.localized("Plain URLs"), systemImage: "link")
+                            }
+
+                            Button {
+                                isReceiveMode = false
+                                transferService.stop()
+                                transferService.startSendMode()
+                            } label: {
+                                Label(.localized("Share Wirelessly"), systemImage: "antenna.radiowaves.left.and.right")
+                            }
+                        } label: {
+                            Label(.localized("Export Mode"), systemImage: "doc.on.doc")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
+                            .font(.system(size: 18))
+                    }
+                }
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         transferService.stop()
                         dismiss()
                     }
                 }
+            }
+            .sheet(isPresented: $_showManageSources) {
+                EditSourcesView(sources: _sourcesFetchedResults)
+                    .presentationDetents([.large])
+                    .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $_showQRMode) {
+                SourcesQRView(data: _portalExportData)
+            }
+            .sheet(isPresented: $_showPortalExport) {
+                PortalTransferView(exportData: $_portalExportData)
             }
             .onAppear {
                 transferService.startSendMode()
@@ -191,6 +257,22 @@ struct TransferSourcesMP: View {
                 }
             }
 
+            Button {
+                _exportThroughQR()
+            } label: {
+                HStack {
+                    Image(systemName: "qrcode")
+                        .font(.system(size: 18, weight: .bold))
+                    Text("Share QR Code")
+                        .font(.system(.subheadline, design: .rounded, weight: .bold))
+                }
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.accentColor.opacity(0.1)))
+                .foregroundStyle(Color.accentColor)
+            }
+            .padding(.horizontal, 20)
+
             if case .completed = transferService.state {
                 HStack(spacing: 12) {
                     if #available(iOS 18.0, *) {
@@ -296,4 +378,38 @@ struct TransferSourcesMP: View {
             }
         }
     }
+
+    @FetchRequest(
+        entity: AltSource.entity(),
+        sortDescriptors: [NSSortDescriptor(keyPath: \AltSource.order, ascending: true)]
+    ) private var _sourcesFetchedResults: FetchedResults<AltSource>
+
+    private func _importFromClipboard() {
+        guard let clipboard = UIPasteboard.general.string else { return }
+        let handler = ASDeobfuscator(with: clipboard)
+        let repoUrls = handler.decode()
+
+        for url in repoUrls {
+            Storage.shared.addSource(url: url)
+        }
+
+        HapticsManager.shared.success()
+    }
+
+    private func _exportThroughPortal() {
+        _portalExportData = PortalSourceExport.encode(urls: sourceURLs)
+        _showPortalExport = true
+    }
+
+    private func _exportThroughQR() {
+        _portalExportData = PortalSourceExport.encode(urls: sourceURLs)
+        _showQRMode = true
+    }
+
+    private func _exportAsPlainURLs() {
+        let text = sourceURLs.joined(separator: "\n")
+        UIPasteboard.general.string = text
+        HapticsManager.shared.success()
+    }
+
 }
