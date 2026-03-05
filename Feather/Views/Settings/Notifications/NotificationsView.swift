@@ -8,7 +8,7 @@ struct NotificationsView: View {
     @State private var showingAlert = false
     
     var body: some View {
-        NBList(.localized("Notifications")) {
+        NBList(.localized("Notifications & Live Activities")) {
             if showHeaderViews {
                 Section {
                     NotificationHeaderView()
@@ -53,6 +53,14 @@ struct NotificationsView: View {
                     Text(.localized("Notification Preferences"))
                 } footer: {
                     Text(.localized("Choose which events you want to be notified about."))
+                }
+
+                Section {
+                    SettingsRow(icon: "widget.small.badge.plus", title: String.localized("Live Activities"), color: .accentColor, destination: LiveActivitySettingsView())
+                } header: {
+                    Text(.localized("Services"))
+                } footer: {
+                    Text(.localized("Customize your Live Activities experience."))
                 }
 
                 Section {

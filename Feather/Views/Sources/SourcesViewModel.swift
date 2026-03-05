@@ -226,7 +226,7 @@ final class SourcesViewModel: ObservableObject {
         }
 
         // Use adaptive batch size based on source count - made more aggressive for speed
-        let adaptiveBatchSize = max(batchSize, totalSources / 2)
+        let adaptiveBatchSize = totalSources
         
         var currentProcessedCount = 0
         

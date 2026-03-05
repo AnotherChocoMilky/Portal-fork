@@ -898,7 +898,7 @@ struct AllAppsView: View {
 		}
 
 		// If we still don't have apps, show the loading screen
-		if force || _allApps.isEmpty {
+		if _allApps.isEmpty {
 			_isLoading = true
 			_loadedSourcesCount = 0
 			_currentFact = DidYouKnowFacts.random()
