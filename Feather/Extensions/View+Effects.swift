@@ -17,8 +17,10 @@ struct PulseEffectModifier<T: Equatable>: ViewModifier {
     let value: T
 
     func body(content: Content) -> some View {
-        if #available(iOS 17.0, *) {
+        if #available(iOS 18.0, *) {
             content.symbolEffect(.pulse, options: .repeating, value: value)
+        } else if #available(iOS 17.0, *) {
+            content.symbolEffect(.pulse, value: value)
         } else {
             if let trigger = value as? Bool {
                 content
@@ -34,8 +36,10 @@ struct PulseEffectModifier<T: Equatable>: ViewModifier {
 extension View {
     @ViewBuilder
     func pulseEffect() -> some View {
-        if #available(iOS 17.0, *) {
+        if #available(iOS 18.0, *) {
             self.symbolEffect(.pulse, options: .repeating)
+        } else if #available(iOS 17.0, *) {
+            self.symbolEffect(.pulse)
         } else {
             self
         }

@@ -1,5 +1,6 @@
 import SwiftUI
 import MultipeerConnectivity
+import AltSourceKit
 
 struct TransferSourcesMP: View {
     @Environment(\.dismiss) private var dismiss
