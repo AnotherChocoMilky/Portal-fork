@@ -13,6 +13,13 @@ struct AppearanceView: View {
     @AppStorage("Feather.showNews") private var showNews: Bool = true
     @AppStorage("Feather.showIconsInAppearance") private var showIconsInAppearance: Bool = true
     @AppStorage("Feather.showHeaderViews") private var showHeaderViews: Bool = true
+    @AppStorage("Feather.portalTopViewEnabled") private var portalTopViewEnabled: Bool = true
+    @AppStorage("Feather.portalTopViewColor") private var portalTopViewColor: String = "#0077BE"
+    @AppStorage("Feather.portalTopViewStyle") private var portalTopViewStyle: Int = 0 // 0: Ultra Thin, 1: Thin, 2: Regular, 3: Thick
+    @AppStorage("Feather.portalTopViewTitle") private var portalTopViewTitle: String = "Portal"
+    @AppStorage("Feather.portalTopViewTextColor") private var portalTopViewTextColor: String = "#FFFFFF"
+    @AppStorage("Feather.portalTopViewShowIcon") private var portalTopViewShowIcon: Bool = true
+    @AppStorage("Feather.portalTopViewShowVersion") private var portalTopViewShowVersion: Bool = true
     @AppStorage("Feather.useNewAllAppsView") private var useNewAllAppsView: Bool = true
     @AppStorage("Feather.greetingsName") private var greetingsName: String = ""
     @AppStorage("Feather.certificateExperience") private var certificateExperience: String = CertificateExperience.developer.rawValue
@@ -69,6 +76,110 @@ struct AppearanceView: View {
                 }
             } else {
                 EmptyView()
+            }
+
+            // MARK: - Top View
+            Section {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Preview
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Preview")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundStyle(.secondary)
+                            .padding(.leading, 4)
+
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 20, style: .continuous)
+                                .fill(Color.secondary.opacity(0.05))
+                                .frame(height: 100)
+
+                            PortalTopView()
+                                .scaleEffect(1.2)
+                                .frame(height: 40)
+                        }
+                    }
+                    .padding(.top, 8)
+
+                    Toggle(isOn: $portalTopViewEnabled) {
+                        Label("Enable Top View", systemImage: "uiwindow.split.2x1")
+                            .font(.system(.body, design: .rounded, weight: .medium))
+                    }
+                    .tint(Color.accentColor)
+
+                    if portalTopViewEnabled {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Customization")
+                                .font(.system(size: 12, weight: .bold, design: .rounded))
+                                .foregroundStyle(.secondary)
+                                .padding(.leading, 4)
+
+                            HStack(spacing: 12) {
+                                AppearanceRowLabel(icon: "textformat", title: "Custom Title", color: .blue)
+                                Spacer()
+                                TextField("Portal", text: $portalTopViewTitle)
+                                    .multilineTextAlignment(.trailing)
+                                    .font(.system(.body, design: .rounded))
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Divider()
+
+                            HStack(spacing: 12) {
+                                AppearanceRowLabel(icon: "paintpalette.fill", title: "Background Color", color: .purple)
+                                Spacer()
+                                ColorPicker("", selection: Binding(
+                                    get: { Color(hex: portalTopViewColor) },
+                                    set: { portalTopViewColor = $0.toHex() ?? "#0077BE" }
+                                ))
+                                .labelsHidden()
+                            }
+
+                            Divider()
+
+                            HStack(spacing: 12) {
+                                AppearanceRowLabel(icon: "paintbrush.fill", title: "Text Color", color: .pink)
+                                Spacer()
+                                ColorPicker("", selection: Binding(
+                                    get: { Color(hex: portalTopViewTextColor) },
+                                    set: { portalTopViewTextColor = $0.toHex() ?? "#FFFFFF" }
+                                ))
+                                .labelsHidden()
+                            }
+
+                            Divider()
+
+                            HStack(spacing: 12) {
+                                AppearanceRowLabel(icon: "sparkles", title: "Material Style", color: .cyan)
+                                Spacer()
+                                Picker("", selection: $portalTopViewStyle) {
+                                    Text("Ultra Thin").tag(0)
+                                    Text("Thin").tag(1)
+                                    Text("Regular").tag(2)
+                                    Text("Thick").tag(3)
+                                }
+                                .pickerStyle(.menu)
+                                .labelsHidden()
+                            }
+
+                            Divider()
+
+                            Toggle(isOn: $portalTopViewShowIcon) {
+                                AppearanceRowLabel(icon: "app.badge.fill", title: "Show App Icon", color: .orange)
+                            }
+
+                            Divider()
+
+                            Toggle(isOn: $portalTopViewShowVersion) {
+                                AppearanceRowLabel(icon: "number", title: "Show Version", color: .green)
+                            }
+                        }
+                        .padding(.top, 4)
+                    }
+                }
+            } header: {
+                Label("Top View", systemImage: "rectangle.inset.topthird.filled")
+            } footer: {
+                Text("Customize the Top View that shows on the top of when you take screenshots")
             }
 
             // MARK: - Display

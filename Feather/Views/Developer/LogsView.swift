@@ -170,7 +170,9 @@ struct AppLogsView: View {
             }
         }
         .sheet(isPresented: $showInfo) {
-            LogInfoView()
+            ScreenshotPreventingView {
+                LogInfoView()
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .gestureAuthenticateDeveloper)) { _ in
             UserDefaults.standard.set(true, forKey: "Feather.devModeUnlocked")
@@ -424,8 +426,10 @@ struct LogEntryRow: View {
                 }
             }
             .sheet(isPresented: $showErrorCodeDetail) {
-                if let code = entry.errorCode {
-                    ErrorCodeDetailView(code: code)
+                ScreenshotPreventingView {
+                    if let code = entry.errorCode {
+                        ErrorCodeDetailView(code: code)
+                    }
                 }
             }
 

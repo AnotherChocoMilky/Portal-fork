@@ -54,6 +54,7 @@ private struct _ScreenshotPreventingView<Content: View>: UIViewRepresentable {
 
 struct ScreenshotPreventionView: View {
     @Environment(\.dismiss) private var dismiss
+    var onDismiss: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 24) {
@@ -77,7 +78,11 @@ struct ScreenshotPreventionView: View {
             Spacer()
 
             Button {
-                dismiss()
+                if let onDismiss = onDismiss {
+                    onDismiss()
+                } else {
+                    dismiss()
+                }
             } label: {
                 Text("I Understand")
                     .font(.headline)
