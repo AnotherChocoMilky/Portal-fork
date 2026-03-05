@@ -1,15 +1,8 @@
-//
-//  JITAppSelectionView.swift
-//  Feather
-//
 
 import SwiftUI
 import NimbleViews
 import IDeviceSwift
 
-// MARK: - JITAppSelectionView
-
-/// Lists installed applications and allows the user to select one for JIT enabling.
 struct JITAppSelectionView: View, InstallationProxyAppsDelegate {
 
     @Environment(\.dismiss) private var dismiss
@@ -21,8 +14,6 @@ struct JITAppSelectionView: View, InstallationProxyAppsDelegate {
     @State private var errorMessage: String?
 
     private let proxy = InstallationAppProxy()
-
-    // MARK: - Body
 
     var body: some View {
         NavigationStack {
@@ -42,7 +33,7 @@ struct JITAppSelectionView: View, InstallationProxyAppsDelegate {
                     Button(String.localized("Cancel")) { dismiss() }
                 }
             }
-            .searchable(text: $searchText, prompt: String.localized("Search apps"))
+            .searchable(text: $searchText, prompt: String.localized("Search Apps"))
         }
         .onAppear {
             proxy.delegate = self
@@ -50,7 +41,6 @@ struct JITAppSelectionView: View, InstallationProxyAppsDelegate {
         }
     }
 
-    // MARK: - Sub-views
 
     private var appList: some View {
         List(filteredApps) { app in
@@ -131,8 +121,6 @@ struct JITAppSelectionView: View, InstallationProxyAppsDelegate {
         }
     }
 
-    // MARK: - Data loading
-
     private func loadApps() async {
         isLoading = true
         errorMessage = nil
@@ -143,8 +131,6 @@ struct JITAppSelectionView: View, InstallationProxyAppsDelegate {
         }
         isLoading = false
     }
-
-    // MARK: - InstallationProxyAppsDelegate
 
     func updateApplications(with apps: [AppInfo]) {
         DispatchQueue.main.async {

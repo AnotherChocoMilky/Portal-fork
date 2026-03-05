@@ -1,13 +1,8 @@
-//
-//  TunnelManager.swift
-//  Feather
-//
 
 import Foundation
 import NetworkExtension
 import OSLog
 
-/// Manages the lifecycle of the loopback VPN tunnel used for JIT.
 class TunnelManager {
     static let shared = TunnelManager()
 
@@ -16,9 +11,6 @@ class TunnelManager {
 
     private init() {}
 
-    /// Ensures the loopback VPN is active.
-    /// If not installed, it attempts to install the configuration.
-    /// If not running, it attempts to start it.
     func ensureTunnelActive() async throws {
         Logger.jit.info("TunnelManager: Ensuring loopback VPN is active")
 
@@ -49,14 +41,11 @@ class TunnelManager {
             manager.isEnabled = true
             try await manager.saveToPreferences()
         }
-
-        // If disabled, enable and save
         if !manager.isEnabled {
             manager.isEnabled = true
             try await manager.saveToPreferences()
         }
 
-        // Check status
         let status = manager.connection.status
         if status == .connected || status == .connecting {
             Logger.jit.info("TunnelManager: VPN is already active or connecting")
@@ -69,8 +58,6 @@ class TunnelManager {
         } catch {
             throw JITError.vpnStartFailed
         }
-
-        // Wait for connection with timeout
         let deadline = Date().addingTimeInterval(10)
         while manager.connection.status != .connected {
             if Date() > deadline {
@@ -84,7 +71,6 @@ class TunnelManager {
         Logger.jit.info("TunnelManager: VPN tunnel established")
     }
 
-    /// Stops the VPN tunnel if it is running.
     func stopTunnel() async throws {
         let managers = try await NETunnelProviderManager.loadAllFromPreferences()
         if let manager = managers.first(where: { ($0.protocolConfiguration as? NETunnelProviderProtocol)?.providerBundleIdentifier == bundleIdentifier }) {

@@ -1,19 +1,11 @@
-//
-//  DebugServerClient.swift
-//  Feather
-//
+
 
 import Foundation
 import IDevice
 import OSLog
 
-// MARK: - DebugServerClient
-
-/// Connects to the on-device debugserver via the RSD tunnel, attaches to a
-/// running process, and immediately detaches to leave JIT compilation enabled.
 class DebugServerClient {
 
-    // MARK: - Types
 
     typealias CoreDeviceProxyHandle = OpaquePointer
     typealias AdapterHandle = OpaquePointer
@@ -22,14 +14,11 @@ class DebugServerClient {
     typealias DebugProxyHandle = OpaquePointer
     typealias DebugserverCommandHandle = OpaquePointer
 
-    // MARK: - Private state
 
     private var adapter: AdapterHandle?
     private var handshake: RsdHandshakeHandle?
     private var remoteServer: RemoteServerHandle?
     private var debugProxy: DebugProxyHandle?
-
-    // MARK: - Init / teardown
 
     init() {}
 
@@ -37,13 +26,6 @@ class DebugServerClient {
         disconnect()
     }
 
-    // MARK: - Public API
-
-    /// Attaches the debugserver to the resulting PID and detaches — enabling JIT.
-    ///
-    /// - Parameter pid: The PID of the target app (resolved via ProcessResolver).
-    /// - Parameter provider: An authenticated TCP provider from `LockdownSession`.
-    /// - Throws: `JITError` on any failure in the pipeline.
     func attachAndEnableJIT(pid: Int64, provider: OpaquePointer) throws {
         defer { disconnect() }
 
@@ -56,7 +38,6 @@ class DebugServerClient {
         Logger.jit.info("DebugServerClient: JIT successfully enabled for PID \(pid)")
     }
 
-    // MARK: - Private: debug session setup
 
     private func connectDebugSession(provider: OpaquePointer) throws {
         var coreDevicePtr: OpaquePointer?
@@ -85,7 +66,6 @@ class DebugServerClient {
             throw JITError.debugServerUnavailable
         }
         self.adapter = adapterPtr
-        // coreDevice ownership transferred to adapter
 
         var streamPtr: OpaquePointer?
         err = adapter_connect(adapterPtr, rsdPort, &streamPtr)
@@ -119,18 +99,15 @@ class DebugServerClient {
         self.debugProxy = debugProxyPtr
     }
 
-    // MARK: - Private: attach and resume
 
     private func performAttachDetachSequence(pid: Int64) throws {
         guard let debugProxy else {
             throw JITError.attachFailed
         }
 
-        // 1. Send initial ACKs to synchronize
         debug_proxy_send_ack(debugProxy)
         debug_proxy_send_ack(debugProxy)
 
-        // 2. Disable ACK mode (QStartNoAckMode)
         var response: UnsafeMutablePointer<CChar>?
         let noAckCmd = debugserver_command_new("QStartNoAckMode", nil, 0)
         _ = debug_proxy_send_command(debugProxy, noAckCmd, &response)
@@ -139,7 +116,6 @@ class DebugServerClient {
 
         debug_proxy_set_ack_mode(debugProxy, 0)
 
-        // 3. Attach to process (vAttach;PID)
         let attachCmdStr = String(format: "vAttach;%llx", pid)
         let attachCmd = debugserver_command_new(attachCmdStr, nil, 0)
         var err = debug_proxy_send_command(debugProxy, attachCmd, &response)
@@ -160,7 +136,6 @@ class DebugServerClient {
             throw JITError.attachFailed
         }
 
-        // 4. Detach (D) — this leaves JIT enabled
         let detachCmd = debugserver_command_new("D", nil, 0)
         err = debug_proxy_send_command(debugProxy, detachCmd, &response)
         debugserver_command_free(detachCmd)
@@ -176,7 +151,6 @@ class DebugServerClient {
         }
     }
 
-    // MARK: - Disconnect / cleanup
 
     func disconnect() {
         if let dp = debugProxy { debug_proxy_free(dp); debugProxy = nil }

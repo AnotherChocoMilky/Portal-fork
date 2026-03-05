@@ -1,26 +1,15 @@
-//
-//  LockdownSession.swift
-//  Feather
-//
 
 import Foundation
 import IDevice
 import IDeviceSwift
 import OSLog
 
-// MARK: - LockdownSession
-
-/// Establishes an authenticated lockdown session using the pairing record
-/// and provides a TCP provider handle for downstream services (debugserver, etc.).
 class LockdownSession {
 
     // MARK: - Types
 
     typealias TcpProviderHandle = OpaquePointer
 
-    // MARK: - Properties
-
-    /// The TCP provider used for all idevice service connections.
     private(set) var provider: TcpProviderHandle?
 
     // MARK: - Init / teardown
@@ -33,11 +22,6 @@ class LockdownSession {
 
     // MARK: - Connect
 
-    /// Establishes a connection to the device and authenticates via the pairing file.
-    /// This utilizes the loopback VPN address (10.7.0.1).
-    ///
-    /// - Parameter timeout: Maximum seconds to wait for the connection.
-    /// - Throws: `JITError` if authentication or connection fails.
     func connect(timeout: TimeInterval = 5.0) throws {
         Logger.jit.info("LockdownSession: Attempting to connect to device")
 
@@ -80,9 +64,7 @@ class LockdownSession {
     // MARK: - Disconnect
 
     func disconnect() {
-        // TCP provider is managed by the C side usually, but if we allocated it we should be careful.
-        // In idevice-ffi, idevice_tcp_provider_new creates it. There isn't an explicit free for just the provider
-        // but it's typically cleaned up when the higher-level handles are closed or on deinit of the FFI side.
+
         provider = nil
     }
 }

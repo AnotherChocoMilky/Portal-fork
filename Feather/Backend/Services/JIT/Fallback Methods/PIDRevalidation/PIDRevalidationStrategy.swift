@@ -1,15 +1,7 @@
-//
-//  PIDRevalidationStrategy.swift
-//  Feather
-//
 
 import Foundation
 import OSLog
 
-// MARK: - PIDRevalidationStrategy
-
-/// Re-resolves the process PID, waits briefly, then retries attach if the PID changed.
-/// Suitable when the target app has restarted or its PID changed between attempts.
 struct PIDRevalidationStrategy: JITFallbackStrategy {
 
     let identifier = "pid-revalidation"
@@ -38,7 +30,6 @@ struct PIDRevalidationStrategy: JITFallbackStrategy {
             context.logger.info("PIDRevalidationStrategy: PID unchanged (\(newPID)); retrying attach anyway")
         }
 
-        // Brief pause to allow the process to reach a stable state
         try await Task.sleep(nanoseconds: 300_000_000) // 300ms
 
         context.logger.info("PIDRevalidationStrategy: Attaching to PID \(newPID)")

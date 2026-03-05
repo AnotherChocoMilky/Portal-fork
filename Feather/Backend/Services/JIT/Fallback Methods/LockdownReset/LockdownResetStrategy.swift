@@ -1,15 +1,7 @@
-//
-//  LockdownResetStrategy.swift
-//  Feather
-//
 
 import Foundation
 import OSLog
 
-// MARK: - LockdownResetStrategy
-
-/// Fully tears down the lockdown session, re-authenticates, and retries the full attach flow.
-/// Suitable for stale or corrupted session state that cannot be recovered by a simple retry.
 struct LockdownResetStrategy: JITFallbackStrategy {
 
     let identifier = "lockdown-reset"
@@ -19,14 +11,11 @@ struct LockdownResetStrategy: JITFallbackStrategy {
     func execute(context: JITContext) async throws {
         context.logger.info("LockdownResetStrategy: Tearing down lockdown session for \(context.bundleID)")
 
-        // 1. Disconnect existing session
         context.lockdownSession.disconnect()
         context.logger.info("LockdownResetStrategy: Lockdown session disconnected")
 
-        // 2. Brief pause before re-authentication
         try await Task.sleep(nanoseconds: 500_000_000) // 500ms
 
-        // 3. Re-authenticate
         context.logger.info("LockdownResetStrategy: Re-authenticating lockdown session")
         do {
             try context.lockdownSession.connect()
@@ -42,7 +31,6 @@ struct LockdownResetStrategy: JITFallbackStrategy {
 
         context.logger.info("LockdownResetStrategy: Re-authentication succeeded; re-resolving PID")
 
-        // 4. Re-resolve PID
         let newPID: Int64
         do {
             newPID = try ProcessResolver.shared.launchSuspended(bundleID: context.bundleID, provider: provider)
@@ -53,7 +41,6 @@ struct LockdownResetStrategy: JITFallbackStrategy {
 
         context.logger.info("LockdownResetStrategy: Resolved PID \(newPID); retrying attach")
 
-        // 5. Retry attach
         let client = DebugServerClient()
         do {
             try client.attachAndEnableJIT(pid: newPID, provider: provider)

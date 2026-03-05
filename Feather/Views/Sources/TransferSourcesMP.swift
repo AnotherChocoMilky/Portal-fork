@@ -94,10 +94,10 @@ struct TransferSourcesMP: View {
             .padding(.top, 10)
 
             VStack(spacing: 4) {
-                Text(isReceiveMode ? "Ready to Receive" : "Sharing \(sourceURLs.count) Sources")
+                Text(isReceiveMode ? "Ready To Receive" : "Sharing \(sourceURLs.count) Sources")
                     .font(.system(.title3, design: .rounded).bold())
 
-                Text(isReceiveMode ? "Stay on this screen to be discoverable" : "Select a nearby device to send sources")
+                Text(isReceiveMode ? "Stay on this screen so Portal can search for nearby devices." : "Select a nearby device to send sources to.")
                     .font(.system(.subheadline, design: .rounded))
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -139,7 +139,7 @@ struct TransferSourcesMP: View {
                     }
                     .padding(.vertical, 20)
 
-                    Text("Looking for devices...")
+                    Text("Looking For Devices...")
                         .font(.system(.subheadline, design: .rounded, weight: .medium))
                         .foregroundStyle(.secondary)
                 }
@@ -166,7 +166,7 @@ struct TransferSourcesMP: View {
                                     VStack(alignment: .leading, spacing: 2) {
                                         Text(peer.displayName)
                                             .font(.system(.body, design: .rounded, weight: .bold))
-                                        Text("Available for transfer")
+                                        Text("Available For Transfer")
                                             .font(.system(.caption, design: .rounded))
                                             .foregroundStyle(.secondary)
                                     }
@@ -201,7 +201,7 @@ struct TransferSourcesMP: View {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
                     }
-                    Text("Sent successfully!")
+                    Text("Sent Successfully!")
                         .font(.system(.subheadline, design: .rounded, weight: .bold))
                         .foregroundStyle(.green)
                 }
@@ -239,7 +239,7 @@ struct TransferSourcesMP: View {
                         Text("\(receivedCount) Sources Added")
                             .font(.system(.title3, design: .rounded).bold())
 
-                        Text("Your sources are ready to use.")
+                        Text("Your sources are ready to use on the other device!")
                             .font(.system(.subheadline, design: .rounded))
                             .foregroundStyle(.secondary)
                     }
@@ -280,7 +280,7 @@ struct TransferSourcesMP: View {
                     .padding(.vertical, 20)
 
                     VStack(spacing: 8) {
-                        Text("Discoverable as")
+                        Text("Discoverable As")
                             .font(.system(.subheadline, design: .rounded))
                             .foregroundStyle(.secondary)
 

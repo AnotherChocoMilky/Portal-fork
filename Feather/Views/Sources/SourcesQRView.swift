@@ -24,7 +24,7 @@ struct SourcesQRView: View {
                     .cornerRadius(20)
                     .shadow(radius: 10)
 
-                Text("Sharing \(data.count) bytes of data")
+                Text("Sharing \(data.count) Bytes Of Data")
                     .font(.caption)
                     .foregroundStyle(.secondary)
 

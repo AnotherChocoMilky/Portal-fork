@@ -1,15 +1,9 @@
-//
-//  RetryAttachStrategy.swift
-//  Feather
-//
+
 
 import Foundation
 import OSLog
 
-// MARK: - RetryAttachStrategy
 
-/// Reconnects the debug socket and attempts a single additional attach.
-/// Suitable for transient socket errors such as a broken pipe.
 struct RetryAttachStrategy: JITFallbackStrategy {
 
     let identifier = "retry-attach"

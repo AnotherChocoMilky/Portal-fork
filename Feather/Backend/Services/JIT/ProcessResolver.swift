@@ -1,38 +1,16 @@
-//
-//  ProcessResolver.swift
-//  Feather
-//
 
 import Foundation
 import IDevice
 import OSLog
 
-// MARK: - ProcessResolver
-
-/// Resolves the PID of an installed application from its bundle identifier.
-///
-/// It launches the app in a suspended state via `process_control_launch_app`.
 class ProcessResolver {
-
-    // MARK: - Types
 
     typealias RemoteServerHandle = OpaquePointer
     typealias ProcessControlHandle = OpaquePointer
 
-    // MARK: - Singleton
-
     static let shared = ProcessResolver()
     private init() {}
 
-    // MARK: - Public API
-
-    /// Launches the app suspended and returns its PID.
-    ///
-    /// - Parameters:
-    ///   - bundleID: The CFBundleIdentifier of the target app.
-    ///   - provider: An authenticated TCP provider from `LockdownSession`.
-    /// - Returns: The PID of the launched (suspended) process.
-    /// - Throws: `JITError.pidResolutionFailed` on failure.
     func launchSuspended(bundleID: String, provider: OpaquePointer) throws -> Int64 {
         Logger.jit.info("ProcessResolver: Opening RSD session for process control")
 
@@ -69,8 +47,6 @@ class ProcessResolver {
         Logger.jit.info("ProcessResolver: Successfully launched \(bundleID) with PID \(pid)")
         return Int64(pid)
     }
-
-    // MARK: - Private helpers
 
     private struct RsdSession {
         let adapter: OpaquePointer

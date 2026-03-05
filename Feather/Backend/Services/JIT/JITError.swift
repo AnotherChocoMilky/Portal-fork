@@ -1,7 +1,3 @@
-//
-//  JITError.swift
-//  Feather
-//
 
 import Foundation
 
@@ -28,9 +24,7 @@ enum JITError: LocalizedError {
     case lockdownHandshakeFailed
     case subnetMismatch(vpnIP: String, physicalSubnet: String)
     case unknown(String)
-
-    /// Returns `true` for errors that may be resolved by a fallback strategy.
-    /// Fatal errors (unsupported iOS, missing/invalid pairing) return `false`.
+    
     var isRecoverable: Bool {
         switch self {
         case .unsupportedIOSVersion, .pairingMissing, .pairingInvalid:

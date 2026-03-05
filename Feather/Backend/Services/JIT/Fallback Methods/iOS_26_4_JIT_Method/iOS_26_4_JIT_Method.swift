@@ -1,52 +1,32 @@
-//
-//  iOS_26_4_JIT_Method.swift
-//  Feather
-//
 
 import Foundation
 import OSLog
 
-// MARK: - iOS_26_4_JIT_Method
 
-/// Fallback strategy designed for iOS 26.4 and later.
-///
-/// Uses the existing Lockdown → Debugserver → Attach → Resume flow with
-/// additional handling for subnet-mismatched VPN IPs and recovery from
-/// BrokenPipe, socket rejection, and lockdown handshake errors.
-///
-/// - Checks if the VPN interface IP falls within the physical network subnet.
-/// - If it does, proceeds with the standard attach flow.
-/// - If not, dynamically assigns a subnet-compatible IP and retries once.
-/// - All stages are logged internally for diagnostics.
 struct iOS_26_4_JIT_Method: JITFallbackStrategy {
 
     let identifier = "iOS_26_4_JIT_Method"
     let displayName = "iOS 26.4 Compatibility Mode"
     let strategyDescription = "Handles subnet-aware attach recovery for iOS 26.4+. Detects broken pipes, socket rejections, and lockdown handshake failures with automatic IP reassignment."
 
-    // MARK: - Execute
-
     func execute(context: JITContext) async throws {
         context.logger.info("iOS_26_4_JIT_Method: Starting fallback for \(context.bundleID)")
         context.logger.info("iOS_26_4_JIT_Method: Device version check — iOS >= 26.4 path active")
 
-        // Step 1: Validate lockdown provider
         guard let provider = context.lockdownSession.provider else {
             context.logger.error("iOS_26_4_JIT_Method: No active lockdown provider")
             throw JITError.lockdownAuthenticationFailed
         }
 
-        // Step 2: Inspect VPN interface IP and physical subnet
         let subnetStatus = evaluateVPNSubnet(logger: context.logger)
 
         switch subnetStatus {
         case .compatible:
-            // VPN IP is within the physical subnet — proceed directly
             context.logger.info("iOS_26_4_JIT_Method: VPN IP is within physical subnet; proceeding with standard attach")
             try await attemptAttach(context: context, provider: provider)
 
         case .incompatible(let vpnIP, let physicalSubnet, let suggestedIP):
-            // VPN IP is NOT within the physical subnet — assign compatible IP and retry
+           
             context.logger.warning("iOS_26_4_JIT_Method: VPN IP \(vpnIP) is outside physical subnet \(physicalSubnet)")
             context.logger.info("iOS_26_4_JIT_Method: Dynamically assigning subnet-compatible IP \(suggestedIP)")
 
@@ -57,7 +37,6 @@ struct iOS_26_4_JIT_Method: JITFallbackStrategy {
                 let mappedError = mapLowLevelError(error, logger: context.logger)
                 context.logger.warning("iOS_26_4_JIT_Method: First attempt failed (\(mappedError.localizedDescription)); retrying with adjusted IP")
 
-                // Reconnect lockdown with adjusted addressing
                 context.lockdownSession.disconnect()
                 try await Task.sleep(nanoseconds: 500_000_000) // 500ms
 
@@ -78,15 +57,12 @@ struct iOS_26_4_JIT_Method: JITFallbackStrategy {
             }
 
         case .unavailable:
-            // Could not determine network interfaces — attempt attach anyway
+
             context.logger.warning("iOS_26_4_JIT_Method: Unable to evaluate subnet; proceeding with best-effort attach")
             try await attemptAttach(context: context, provider: provider)
         }
     }
 
-    // MARK: - Private: Attach
-
-    /// Performs the Lockdown → Debugserver → Attach → Resume sequence.
     private func attemptAttach(context: JITContext, provider: OpaquePointer) async throws {
         context.logger.info("iOS_26_4_JIT_Method: Attempting attach for PID \(context.currentPID)")
 
@@ -101,9 +77,6 @@ struct iOS_26_4_JIT_Method: JITFallbackStrategy {
         }
     }
 
-    // MARK: - Private: Error Mapping
-
-    /// Maps low-level errors to structured JITError values with user-readable messages.
     private func mapLowLevelError(_ error: Error, logger: Logger) -> JITError {
         let description = error.localizedDescription.lowercased()
 
@@ -127,19 +100,13 @@ struct iOS_26_4_JIT_Method: JITFallbackStrategy {
         return .attachFailed
     }
 
-    // MARK: - Private: Subnet Evaluation
-
-    /// Result of VPN subnet evaluation.
     private enum SubnetEvaluation {
-        /// VPN IP falls within the physical network subnet.
+    
         case compatible
-        /// VPN IP is outside the physical subnet; includes suggested replacement IP.
         case incompatible(vpnIP: String, physicalSubnet: String, suggestedIP: String)
-        /// Could not determine interface addresses.
         case unavailable
     }
 
-    /// Evaluates whether the VPN interface IP falls within the physical network subnet.
     private func evaluateVPNSubnet(logger: Logger) -> SubnetEvaluation {
         var ifaddrPtr: UnsafeMutablePointer<ifaddrs>?
         guard getifaddrs(&ifaddrPtr) == 0, let firstAddr = ifaddrPtr else {
@@ -183,7 +150,6 @@ struct iOS_26_4_JIT_Method: JITFallbackStrategy {
             return .unavailable
         }
 
-        // Convert IPs to UInt32 for subnet comparison
         guard let vpnAddr = ipToUInt32(vpn),
               let physicalAddr = ipToUInt32(physical),
               let maskAddr = ipToUInt32(mask) else {
@@ -199,7 +165,6 @@ struct iOS_26_4_JIT_Method: JITFallbackStrategy {
             return .compatible
         }
 
-        // Compute a compatible IP: use the physical subnet base + the VPN host portion
         let vpnHost = vpnAddr & ~maskAddr
         let compatibleAddr = physicalSubnet | (vpnHost != 0 ? vpnHost : 0x02) // Use .2 as fallback
         let suggested = uint32ToIP(compatibleAddr)
@@ -209,7 +174,6 @@ struct iOS_26_4_JIT_Method: JITFallbackStrategy {
         return .incompatible(vpnIP: vpn, physicalSubnet: subnetString, suggestedIP: suggested)
     }
 
-    // MARK: - Private: IP Utilities
 
     private func ipToUInt32(_ ip: String) -> UInt32? {
         var addr = in_addr()

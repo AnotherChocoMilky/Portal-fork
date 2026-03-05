@@ -1,15 +1,9 @@
-//
-//  JITStatusView.swift
-//  Feather
-//
+
 
 import SwiftUI
 import NimbleViews
 
-// MARK: - JITStatusView
 
-/// Displays the real-time status of the JIT enabling pipeline.
-/// Each step shows a check, spinner, or failure icon depending on current state.
 struct JITStatusView: View {
 
     @ObservedObject var manager: JITManager
@@ -59,8 +53,6 @@ struct JITStatusView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    // MARK: - Step state resolution
-
     private enum StepState {
         case waiting, inProgress, completed, failed
     }
@@ -90,7 +82,6 @@ struct JITStatusView: View {
         return .waiting
     }
 
-    // MARK: - Row builder
 
     @ViewBuilder
     private func stepRow(icon: String, title: String, subtitle: String, stepState: StepState) -> some View {

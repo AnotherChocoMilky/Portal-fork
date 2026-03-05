@@ -159,7 +159,7 @@ struct SourcesAddView: View {
 					Button {
 						_exportThroughQR()
 					} label: {
-						Label(.localized("QR Code"), systemImage: "qrcode")
+						Label(.localized("QR Code (Beta)"), systemImage: "qrcode")
 					}
 
 					Button {

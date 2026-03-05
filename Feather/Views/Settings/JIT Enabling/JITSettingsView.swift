@@ -1,17 +1,10 @@
-//
-//  JITSettingsView.swift
-//  Feather
-//
+
 
 import SwiftUI
 import NimbleViews
 import IDeviceSwift
 import OSLog
 
-// MARK: - JITSettingsView
-
-/// Main JIT configuration interface.
-/// Allows pairing file import, shows pairing/VPN status, and triggers JIT enabling.
 struct JITSettingsView: View {
 
     @Environment(\.dismiss) var dismiss
@@ -25,8 +18,6 @@ struct JITSettingsView: View {
     @State private var vpnAvailable = false
     @State private var hasPairing = false
     @State private var showStatusSheet = false
-
-    // MARK: - Body
 
     var body: some View {
         List {
@@ -227,7 +218,6 @@ struct JITSettingsView: View {
     private var fallbackSection: some View {
         Section {
             if manager.isIOS264OrLater {
-                // Auto-selected mode: show the iOS 26.4 strategy as locked-in
                 HStack(spacing: 12) {
                     ZStack {
                         Circle()
@@ -381,7 +371,6 @@ struct JITSettingsView: View {
         }
     }
 
-    // MARK: - Status sheet
 
     private var jitStatusSheet: some View {
         NavigationStack {
@@ -413,7 +402,6 @@ struct JITSettingsView: View {
         }
     }
 
-    // MARK: - Computed helpers
 
     private var statusIcon: String {
         switch manager.state {
@@ -448,7 +436,6 @@ struct JITSettingsView: View {
         }
     }
 
-    // MARK: - Actions
 
     private func enableJIT(for bundleID: String) async {
         showStatusSheet = true

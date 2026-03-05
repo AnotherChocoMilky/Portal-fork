@@ -1,22 +1,14 @@
-//
-//  DelayedAttachStrategy.swift
-//  Feather
-//
 
 import Foundation
 import OSLog
 
-// MARK: - DelayedAttachStrategy
 
-/// Waits 500ms–1s before retrying the attach operation.
-/// Suitable when the target app has not fully initialised at the time of the first attempt.
 struct DelayedAttachStrategy: JITFallbackStrategy {
 
     let identifier = "delayed-attach"
     let displayName = "Delayed Attach"
     let strategyDescription = "Waits 500ms–1s before retrying attach. Useful when the app has not fully started up yet."
 
-    /// Configurable delay range in nanoseconds (default: 500ms–1000ms).
     private let minDelayNs: UInt64 = 500_000_000
     private let maxDelayNs: UInt64 = 1_000_000_000
 

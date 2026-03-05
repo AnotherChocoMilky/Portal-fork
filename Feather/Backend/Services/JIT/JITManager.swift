@@ -1,15 +1,8 @@
-//
-//  JITManager.swift
-//  Feather
-//
 
 import Foundation
 import UIKit
 import OSLog
 
-// MARK: - JITManager
-
-/// High-level orchestrator for the JIT enabling pipeline.
 @MainActor
 class JITManager: ObservableObject {
 
@@ -22,10 +15,7 @@ class JITManager: ObservableObject {
 
     @Published var state: JITState = .idle
     @Published var lastError: JITError?
-
-    // MARK: - Fallback strategy
-
-    /// Whether the device is running iOS 26.4 or later, requiring the automatic fallback.
+    
     var isIOS264OrLater: Bool {
         let version = UIDevice.current.systemVersion
         let components = version.split(separator: ".").compactMap { Int($0) }
@@ -35,15 +25,10 @@ class JITManager: ObservableObject {
         return major > 26 || (major == 26 && minor >= 4)
     }
 
-    /// Persisted identifier of the selected fallback strategy.
-    /// Defaults to `RetryAttachStrategy` when no selection has been saved.
-    /// Automatically overridden to `iOS_26_4_JIT_Method` on iOS 26.4+.
     @Published var selectedFallbackStrategyIdentifier: String = UserDefaults.standard.string(forKey: "Feather.jitFallbackStrategy") ?? "retry-attach" {
         didSet { UserDefaults.standard.set(selectedFallbackStrategyIdentifier, forKey: "Feather.jitFallbackStrategy") }
     }
 
-    /// The active fallback strategy resolved from the registry.
-    /// On iOS 26.4+, always returns `iOS_26_4_JIT_Method` regardless of user selection.
     var selectedFallbackStrategy: any JITFallbackStrategy {
         if isIOS264OrLater {
             return JITFallbackRegistry.availableStrategies.first { $0.identifier == "iOS_26_4_JIT_Method" }
@@ -53,39 +38,21 @@ class JITManager: ObservableObject {
             ?? JITFallbackRegistry.availableStrategies[0]
     }
 
-    // MARK: - Dependencies
 
     private let pairingManager = PairingManager.shared
     private let tunnelManager = TunnelManager.shared
 
-    // MARK: - Public API
-
-    /// Enables JIT for the application with the given bundle identifier.
-    ///
-    /// The flow:
-    /// 1. Validate iOS version (>= 17.4)
-    /// 2. Ensure loopback VPN is active
-    /// 3. Validate pairing record
-    /// 4. Establish lockdown session
-    /// 5. Start debugserver service
-    /// 6. Resolve PID by launching app suspended
-    /// 7. Attach and Resume (detach)
-    ///
-    /// - Parameter bundleID: The CFBundleIdentifier of the target app.
-    /// - Throws: `JITError` on failure.
     func enableJIT(for bundleID: String) async throws {
         lastError = nil
         Logger.jit.info("JITManager: Starting JIT pipeline for \(bundleID)")
 
         do {
-            // 1. Validate iOS Version (fatal — no fallback)
+
             try validateIOSVersion()
 
-            // 2. Ensure VPN is active
             state = .checkingVPN
             try await tunnelManager.ensureTunnelActive()
 
-            // 3. Validate Pairing (fatal — no fallback)
             state = .validatingPairing
             guard pairingManager.hasPairingFile else {
                 throw JITError.pairingMissing
@@ -94,7 +61,7 @@ class JITManager: ObservableObject {
                 throw JITError.pairingInvalid
             }
 
-            // 4. Lockdown Session
+
             state = .connectingLockdown
             let lockdown = LockdownSession()
             try lockdown.connect()
@@ -102,11 +69,9 @@ class JITManager: ObservableObject {
                 throw JITError.lockdownAuthenticationFailed
             }
 
-            // 5 & 6. Resolve PID (Launch Suspended)
             state = .connectingDebugServer
             let pid = try ProcessResolver.shared.launchSuspended(bundleID: bundleID, provider: provider)
 
-            // 7. Attach and Resume — attempt primary, then fallback on recoverable errors
             let client = DebugServerClient()
             do {
                 try client.attachAndEnableJIT(pid: pid, provider: provider)
@@ -139,7 +104,6 @@ class JITManager: ObservableObject {
         }
     }
 
-    // MARK: - Helpers
 
     private func validateIOSVersion() throws {
         let version = UIDevice.current.systemVersion
@@ -159,7 +123,6 @@ class JITManager: ObservableObject {
     }
 }
 
-// MARK: - JITState
 
 enum JITState: Equatable {
     case idle
