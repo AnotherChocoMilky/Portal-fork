@@ -285,6 +285,8 @@
 		<string>_portal-sources._tcp</string>
 		<string>_portal-sources._udp</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Portal requires camera access to scan QR codes to add sources.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Portal needs access to your local network to discover nearby devices for wireless backup transfer.</string>
 	<key>NSSupportsLiveActivities</key>
