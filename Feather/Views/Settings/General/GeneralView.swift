@@ -7,7 +7,6 @@ struct GeneralView: View {
     @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @State private var navigateToCheckForUpdates = false
     @State private var showPairingView = false
-    @State private var showPairHistoryView = false
     @Environment(\.navigateToUpdates) private var navigateToUpdates
 
     private var isEnterprise: Bool { certificateExperience == CertificateExperience.enterprise.rawValue }
@@ -42,11 +41,6 @@ struct GeneralView: View {
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showPairingView) {
             PairingView()
-        }
-        .sheet(isPresented: $showPairHistoryView) {
-            NavigationStack {
-                PairHistoryView()
-            }
         }
     }
 
@@ -100,13 +94,6 @@ struct GeneralView: View {
                     showPairingView = true
                 } label: {
                     SettingsRowContent(icon: "personalhotspot", title: String.localized("Pairing"), color: .accentColor)
-                }
-            }
-            if !hideManager.isHidden("settings.pairing") {
-                Button {
-                    showPairHistoryView = true
-                } label: {
-                    SettingsRowContent(icon: "clock.arrow.circlepath", title: String.localized("Pair History"), color: .accentColor)
                 }
             }
             if !hideManager.isHidden("settings.logs") {
