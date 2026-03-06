@@ -6,6 +6,15 @@ import UIKit
 // MARK: - Constants
 private let kOTPExpirationSeconds = 300 // 5 minutes
 
+// NSNetServicesErrorDomain error -72008 (Bonjour advertising/browsing failure).
+// Common causes: network restrictions, service name collision, or Wi-Fi not
+// available.  We retry a configurable number of times before surfacing a
+// user-friendly fallback message.
+private let kNearbyNetServicesErrorDomain = "NSNetServicesErrorDomain"
+private let kNearbyNetServicesFailedCode = -72008
+private let kNearbyMaxRetries = 3
+private let kNearbyRetryDelay: TimeInterval = 2.0
+
 
 // MARK: - Nearby Transfer Service
 class NearbyTransferService: NSObject, ObservableObject {
@@ -31,6 +40,8 @@ class NearbyTransferService: NSObject, ObservableObject {
     var mode: TransferMode = .receive
     var currentOTP: String?
     var currentPairingMethod: String = "Nearby"
+    private var advertisingRetryCount = 0
+    private var browsingRetryCount = 0
     
     override init() {
         let deviceName = UIDevice.current.name
@@ -63,6 +74,8 @@ class NearbyTransferService: NSObject, ObservableObject {
         browser = nil
         session = nil
         
+        advertisingRetryCount = 0
+        browsingRetryCount = 0
         state = .idle
         discoveredPeers = []
     }
@@ -330,7 +343,31 @@ extension NearbyTransferService: MCNearbyServiceAdvertiserDelegate {
     
     func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
         DispatchQueue.main.async {
-            self.state = .failed(error)
+            let nsError = error as NSError
+            if nsError.domain == kNearbyNetServicesErrorDomain
+                && nsError.code == kNearbyNetServicesFailedCode {
+                // Retry with a short delay before surfacing an error.
+                guard self.advertisingRetryCount < kNearbyMaxRetries else {
+                    self.advertisingRetryCount = 0
+                    self.state = .failed(NSError(
+                        domain: kNearbyNetServicesErrorDomain,
+                        code: kNearbyNetServicesFailedCode,
+                        userInfo: [NSLocalizedDescriptionKey:
+                            "Unable to advertise for nearby devices. Please ensure Wi-Fi " +
+                            "is enabled and both devices are on the same network, then try again."]
+                    ))
+                    return
+                }
+                self.advertisingRetryCount += 1
+                DispatchQueue.main.asyncAfter(deadline: .now() + kNearbyRetryDelay) {
+                    self.advertiser?.stopAdvertisingPeer()
+                    self.advertiser = nil
+                    self.startAdvertising()
+                }
+            } else {
+                self.advertisingRetryCount = 0
+                self.state = .failed(error)
+            }
         }
     }
 }
@@ -368,7 +405,31 @@ extension NearbyTransferService: MCNearbyServiceBrowserDelegate {
     
     func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
         DispatchQueue.main.async {
-            self.state = .failed(error)
+            let nsError = error as NSError
+            if nsError.domain == kNearbyNetServicesErrorDomain
+                && nsError.code == kNearbyNetServicesFailedCode {
+                // Retry with a short delay before surfacing an error.
+                guard self.browsingRetryCount < kNearbyMaxRetries else {
+                    self.browsingRetryCount = 0
+                    self.state = .failed(NSError(
+                        domain: kNearbyNetServicesErrorDomain,
+                        code: kNearbyNetServicesFailedCode,
+                        userInfo: [NSLocalizedDescriptionKey:
+                            "Unable to search for nearby devices. Please ensure Wi-Fi " +
+                            "is enabled and both devices are on the same network, then try again."]
+                    ))
+                    return
+                }
+                self.browsingRetryCount += 1
+                DispatchQueue.main.asyncAfter(deadline: .now() + kNearbyRetryDelay) {
+                    self.browser?.stopBrowsingForPeers()
+                    self.browser = nil
+                    self.startBrowsing()
+                }
+            } else {
+                self.browsingRetryCount = 0
+                self.state = .failed(error)
+            }
         }
     }
     
