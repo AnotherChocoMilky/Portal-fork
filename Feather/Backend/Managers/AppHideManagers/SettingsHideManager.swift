@@ -20,6 +20,7 @@ class SettingsHideManager: BaseHideManager, AppHideManaging {
             HideableItem(id: "settings.files", title: "Files", description: "Show/Hide Files row.", defaultValue: false),
             HideableItem(id: "settings.storage", title: "Storage", description: "Show/Hide Storage row.", defaultValue: false),
             HideableItem(id: "settings.backupRestore", title: "Backup & Restore", description: "Show/Hide Backup & Restore row.", defaultValue: false),
+            HideableItem(id: "settings.pairing", title: "Pairing", description: "Show/Hide Pairing row.", defaultValue: false),
             HideableItem(id: "settings.logs", title: "Logs", description: "Show/Hide Logs row.", defaultValue: false),
             HideableItem(id: "settings.repoBuilder", title: "Repository Builder", description: "Show/Hide Repository Builder row.", defaultValue: false),
             HideableItem(id: "settings.fetchData", title: "Fetch Full Data", description: "Show/Hide Fetch Full Data button.", defaultValue: false),
