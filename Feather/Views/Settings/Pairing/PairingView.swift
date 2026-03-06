@@ -6,11 +6,15 @@ import NimbleViews
 ///
 /// The pairing code is generated **automatically** the moment this view appears —
 /// no button press required.  A 3D morphing-dot sphere (chaos → Fibonacci order)
-/// plays throughout the session and a complex success animation (expanding rings +
-/// orbiting sparkles + bounce checkmark) plays when pairing and transfer complete.
+/// plays throughout the session.
 ///
-/// The **Scan Pairing Code** button lets the receiving device enter the code that
-/// is displayed on the sending device.
+/// Pairing happens **only** via the pairing code: the user on the other device
+/// taps **Scan Pairing Code** and enters the 6-digit code shown on the sending
+/// device's `LoadingPairView` header.
+///
+/// - `LoadingPairView` is shown on both devices as soon as the transfer starts.
+/// - `SuccessfulPairView` is shown when the transfer completes.
+/// - `PairHistoryView` is reachable via the toolbar History button.
 ///
 /// When `isEmbedded` is `true` the view skips its own `NavigationStack` wrapper
 /// and relies on the parent navigation context (e.g. a `NavigationLink`).
@@ -27,13 +31,11 @@ struct PairingView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = PairingViewModel()
 
-    // Success animation state
-    @State private var ringScales: [CGFloat] = [1, 1, 1, 1, 1]
-    @State private var ringOpacities: [Double] = [0, 0, 0, 0, 0]
-    @State private var checkmarkScale: CGFloat = 0.0
-    @State private var checkmarkGlow: CGFloat = 0
-    @State private var sparkleAngle: Double = 0
-    @State private var sparklesVisible: Bool = false
+    // Full-screen cover flags
+    @State private var showLoadingCover: Bool = false
+    @State private var showSuccessCover: Bool = false
+    @State private var successReceivedURL: URL? = nil
+    @State private var showHistory: Bool = false
 
     // Scan sheet
     @State private var scanInput: String = ""
@@ -62,18 +64,11 @@ struct PairingView: View {
                 VStack(spacing: 28) {
                     sphereSection
                     statusSection
-                    codeSection
                     actionSection
-                    transferSection
                     errorSection
                 }
                 .padding(.horizontal, 24)
                 .padding(.vertical, 32)
-            }
-
-            // Full-screen success overlay (plays after transfer completes)
-            if case .complete = viewModel.transferPhase {
-                successFullscreenOverlay
             }
         }
         .navigationTitle(.localized("Pair Devices"))
@@ -85,9 +80,57 @@ struct PairingView: View {
                     dismiss()
                 }
             }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showHistory = true
+                } label: {
+                    Image(systemName: "clock.arrow.circlepath")
+                }
+            }
         }
         .sheet(isPresented: $viewModel.showScanSheet) {
             scanSheet
+        }
+        .sheet(isPresented: $showHistory) {
+            NavigationStack {
+                PairHistoryView()
+            }
+        }
+        .fullScreenCover(isPresented: $showLoadingCover) {
+            LoadingPairView(
+                transferPhase: viewModel.transferPhase,
+                isHost: viewModel.isHost,
+                pairedDeviceName: viewModel.pairedDeviceName,
+                transferStartTime: viewModel.transferStartTime
+            )
+            .preferredColorScheme(.dark)
+        }
+        .fullScreenCover(isPresented: $showSuccessCover) {
+            SuccessfulPairView(
+                receivedURL: successReceivedURL,
+                deviceName: viewModel.pairedDeviceName,
+                onDone: {
+                    showSuccessCover = false
+                    dismiss()
+                }
+            )
+            .preferredColorScheme(.dark)
+        }
+        .onChange(of: viewModel.transferPhase) { phase in
+            switch phase {
+            case .preparingData, .sending, .receiving:
+                showSuccessCover = false
+                showLoadingCover = true
+            case .complete(let url):
+                successReceivedURL = url
+                showLoadingCover = false
+                showSuccessCover = true
+            case .failed:
+                showLoadingCover = false
+                showSuccessCover = false
+            default:
+                break
+            }
         }
         .onAppear {
             viewModel.autoStart()
@@ -174,50 +217,6 @@ struct PairingView: View {
         }
     }
 
-    // MARK: - Code Section (colorful rainbow digits)
-
-    @ViewBuilder
-    private var codeSection: some View {
-        if let code = viewModel.generatedCode, viewModel.isHost, viewModel.status != .idle {
-            VStack(spacing: 10) {
-                Text(.localized("Your Pairing Code"))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-
-                HStack(spacing: 8) {
-                    ForEach(Array(code.enumerated()), id: \.offset) { index, char in
-                        colorfulDigit(String(char), index: index, total: code.count)
-                    }
-                }
-
-                Text(.localized("Enter this code on the other device"))
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-                    .multilineTextAlignment(.center)
-            }
-            .transition(.move(edge: .bottom).combined(with: .opacity))
-        }
-    }
-
-    private func colorfulDigit(_ digit: String, index: Int, total: Int) -> some View {
-        // Each digit gets a distinct hue cycling through the rainbow
-        let hue = Double(index) / Double(max(total, 1)) * 0.82 + 0.05
-        let digitColor = Color(hue: hue, saturation: 0.88, brightness: 1.0)
-        return Text(digit)
-            .font(.system(size: 28, weight: .bold, design: .monospaced))
-            .foregroundStyle(digitColor)
-            .frame(width: 42, height: 52)
-            .background(
-                RoundedRectangle(cornerRadius: 10)
-                    .fill(digitColor.opacity(0.12))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(digitColor.opacity(0.35), lineWidth: 1.5)
-                    )
-            )
-            .shadow(color: digitColor.opacity(0.4), radius: 8)
-    }
-
     // MARK: - Action Section
 
     private var actionSection: some View {
@@ -243,17 +242,6 @@ struct PairingView: View {
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
-            } else if case .connected = viewModel.status {
-                if case .complete = viewModel.transferPhase {
-                    Button(action: { dismiss() }) {
-                        Label(.localized("Done"), systemImage: "checkmark")
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity, minHeight: 50)
-                            .background(Color.green.opacity(0.75))
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
-                    }
-                }
             }
 
             if viewModel.canRetry {
@@ -265,89 +253,6 @@ struct PairingView: View {
             }
         }
         .animation(.easeInOut(duration: 0.3), value: viewModel.status)
-    }
-
-    // MARK: - Transfer Progress Section
-
-    @ViewBuilder
-    private var transferSection: some View {
-        switch viewModel.transferPhase {
-        case .preparingData:
-            transferCard(
-                icon: "archivebox.fill",
-                label: .localized("Preparing data…"),
-                progress: nil,
-                color: .blue
-            )
-        case .sending(let p):
-            transferCard(
-                icon: "arrow.up.circle.fill",
-                label: .localized("Sending \(Int(p * 100))%"),
-                progress: p,
-                color: .purple
-            )
-        case .receiving(let p):
-            transferCard(
-                icon: "arrow.down.circle.fill",
-                label: .localized("Receiving \(Int(p * 100))%"),
-                progress: p,
-                color: .cyan
-            )
-        case .failed(let msg):
-            HStack(spacing: 8) {
-                Image(systemName: "exclamationmark.circle.fill")
-                    .foregroundStyle(.orange)
-                Text(msg)
-                    .font(.footnote)
-                    .foregroundStyle(.orange.opacity(0.9))
-                    .multilineTextAlignment(.leading)
-            }
-            .padding(12)
-            .background(Color.orange.opacity(0.12))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .transition(.move(edge: .bottom).combined(with: .opacity))
-        default:
-            EmptyView()
-        }
-    }
-
-    private func transferCard(icon: String, label: String, progress: Double?, color: Color) -> some View {
-        VStack(spacing: 8) {
-            HStack(spacing: 10) {
-                Image(systemName: icon)
-                    .foregroundStyle(color)
-                Text(label)
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
-                Spacer()
-                if let p = progress {
-                    Text("\(Int(p * 100))%")
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                } else {
-                    ProgressView()
-                        .scaleEffect(0.8)
-                }
-            }
-            if let p = progress {
-                GeometryReader { geo in
-                    ZStack(alignment: .leading) {
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(Color.white.opacity(0.1))
-                            .frame(height: 4)
-                        RoundedRectangle(cornerRadius: 3)
-                            .fill(color)
-                            .frame(width: geo.size.width * p, height: 4)
-                            .animation(.easeInOut(duration: 0.2), value: p)
-                    }
-                }
-                .frame(height: 4)
-            }
-        }
-        .padding(14)
-        .background(color.opacity(0.08))
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-        .transition(.move(edge: .bottom).combined(with: .opacity))
     }
 
     // MARK: - Error Section
@@ -477,130 +382,6 @@ struct PairingView: View {
     private func scanInputCharacter(at index: Int) -> String {
         guard index < scanInput.count else { return " " }
         return String(scanInput[scanInput.index(scanInput.startIndex, offsetBy: index)])
-    }
-
-    // MARK: - Complex Success Animation (Apple Watch-style)
-
-    private var successFullscreenOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.55)
-                .ignoresSafeArea()
-                .transition(.opacity)
-
-            ZStack {
-                // 5 staggered expanding rings with angular gradient stroke
-                ForEach(0..<5, id: \.self) { i in
-                    Circle()
-                        .stroke(
-                            AngularGradient(
-                                colors: [.green, .cyan, .blue, .purple, .green],
-                                center: .center
-                            ),
-                            lineWidth: max(0.5, 2.5 - Double(i) * 0.4)
-                        )
-                        .frame(
-                            width: CGFloat(70 + i * 38),
-                            height: CGFloat(70 + i * 38)
-                        )
-                        .scaleEffect(ringScales[i])
-                        .opacity(ringOpacities[i])
-                }
-
-                // Central glow pulse
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            colors: [Color.green.opacity(0.45), .clear],
-                            center: .center,
-                            startRadius: 0,
-                            endRadius: 60
-                        )
-                    )
-                    .frame(width: 120, height: 120)
-                    .blur(radius: checkmarkGlow)
-
-                // 8 orbiting rainbow sparkles
-                if sparklesVisible {
-                    ForEach(0..<8, id: \.self) { i in
-                        let angle = Double(i) * 45.0 + sparkleAngle
-                        let rad: Double = 92
-                        let x = cos(angle * .pi / 180.0) * rad
-                        let y = sin(angle * .pi / 180.0) * rad
-                        let hue = Double(i) / 8.0
-                        Circle()
-                            .fill(Color(hue: hue, saturation: 0.9, brightness: 1.0))
-                            .frame(width: 7, height: 7)
-                            .offset(x: x, y: y)
-                            .shadow(
-                                color: Color(hue: hue, saturation: 0.9, brightness: 1.0).opacity(0.8),
-                                radius: 5
-                            )
-                    }
-                }
-
-                // Bouncing checkmark
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 72))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.green, .mint],
-                            startPoint: .top,
-                            endPoint: .bottom
-                        )
-                    )
-                    .scaleEffect(checkmarkScale)
-                    .shadow(color: .green.opacity(0.7), radius: 24)
-
-                // "Paired!" label below the checkmark
-                VStack(spacing: 6) {
-                    Spacer().frame(height: 90)
-                    Text(.localized("Paired & Transferred!"))
-                        .font(.system(.title3, design: .rounded, weight: .bold))
-                        .foregroundStyle(.white)
-                        .scaleEffect(checkmarkScale)
-                    Text(.localized("Your data has been transferred successfully."))
-                        .font(.system(.subheadline, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.75))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 40)
-                        .scaleEffect(checkmarkScale)
-                }
-            }
-        }
-        .onAppear(perform: triggerSuccessAnimation)
-        .transition(.opacity)
-    }
-
-    private func triggerSuccessAnimation() {
-        HapticsManager.shared.success()
-
-        // Set initial ring opacities to visible, then fade+expand them outward
-        for i in 0..<5 {
-            ringOpacities[i] = 0.85
-            let delay = Double(i) * 0.14
-            withAnimation(.easeOut(duration: 1.4).delay(delay)) {
-                ringScales[i] = 2.2 + Double(i) * 0.25
-                ringOpacities[i] = 0.0
-            }
-        }
-
-        // Bounce checkmark in
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.50).delay(0.08)) {
-            checkmarkScale = 1.0
-        }
-
-        // Glow pulse
-        withAnimation(.easeInOut(duration: 0.9).repeatForever(autoreverses: true).delay(0.1)) {
-            checkmarkGlow = 28
-        }
-
-        // Sparkles appear and spin
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            sparklesVisible = true
-            withAnimation(.linear(duration: 5).repeatForever(autoreverses: false)) {
-                sparkleAngle = 360
-            }
-        }
     }
 }
 
