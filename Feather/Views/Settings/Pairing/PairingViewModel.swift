@@ -79,6 +79,18 @@ class PairingViewModel: ObservableObject {
     private var transferTask: Task<Void, Never>?
     private let service = PairingService.shared
 
+    // MARK: - Transfer Timing
+
+    /// Set when the connection is confirmed and the transfer begins.
+    @Published var transferStartTime: Date?
+
+    // MARK: - Computed – Peer Info
+
+    /// Display name of the remote peer device, if connected.
+    var pairedDeviceName: String? {
+        service.connectedPeer?.displayName
+    }
+
     // MARK: - Computed Properties
 
     var canRetry: Bool {
@@ -188,6 +200,7 @@ class PairingViewModel: ObservableObject {
     func confirmConnected() {
         pollingTask?.cancel()
         progressTask?.cancel()
+        transferStartTime = Date()
         status = .connected
         withAnimation(.easeInOut(duration: 0.8)) {
             progress = 1.0
@@ -242,6 +255,7 @@ class PairingViewModel: ObservableObject {
                 try? FileManager.default.removeItem(at: backupDir)
                 transferPhase = .complete(receivedURL: nil)
                 HapticsManager.shared.success()
+                await saveHistoryRecord(receivedURL: nil)
             } catch {
                 transferPhase = .failed(error.localizedDescription)
             }
@@ -260,6 +274,7 @@ class PairingViewModel: ObservableObject {
             Task { @MainActor in
                 self?.transferPhase = .complete(receivedURL: url)
                 HapticsManager.shared.success()
+                await self?.saveHistoryRecord(receivedURL: url)
             }
         }
         service.onTransferError = { [weak self] error in
@@ -278,6 +293,82 @@ class PairingViewModel: ObservableObject {
         }
     }
 
+    // MARK: - Pair History
+
+    /// Reads counts from the extracted backup directory and appends a record
+    /// to `PairHistoryStore`.
+    private func saveHistoryRecord(receivedURL: URL?) async {
+        let fm = FileManager.default
+        var sourcesCount = 0
+        var certsCount = 0
+        var signedCount = 0
+        var importedCount = 0
+        var fwCount = 0
+        var archivesCount = 0
+        var settingsIncluded = false
+
+        if let url = receivedURL {
+            if let data = try? Data(contentsOf: url.appendingPathComponent("sources.json")),
+               let arr = try? JSONDecoder().decode([[String: String]].self, from: data) {
+                sourcesCount = arr.count
+            }
+            if let data = try? Data(contentsOf: url.appendingPathComponent("certificates_metadata.json")),
+               let arr = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] {
+                certsCount = arr.count
+            }
+            if let data = try? Data(contentsOf: url.appendingPathComponent("signed_apps_metadata.json")),
+               let arr = try? JSONDecoder().decode([[String: String]].self, from: data) {
+                signedCount = arr.count
+            }
+            if let data = try? Data(contentsOf: url.appendingPathComponent("imported_apps_metadata.json")),
+               let arr = try? JSONDecoder().decode([[String: String]].self, from: data) {
+                importedCount = arr.count
+            }
+            let fwDir = url.appendingPathComponent("default_frameworks")
+            if let items = try? fm.contentsOfDirectory(atPath: fwDir.path) {
+                fwCount = items.filter { !$0.hasPrefix(".") }.count
+            }
+            let archDir = url.appendingPathComponent("archives")
+            if let items = try? fm.contentsOfDirectory(atPath: archDir.path) {
+                archivesCount = items.filter { !$0.hasPrefix(".") }.count
+            }
+            settingsIncluded = fm.fileExists(atPath: url.appendingPathComponent("settings.plist").path)
+        } else {
+            // Host side — use counts from the data we just sent
+            sourcesCount  = Storage.shared.getSources().count
+            let certs = Storage.shared.getAllCertificates()
+            certsCount = certs.count
+            let signedApps = (try? Storage.shared.context.fetch(Signed.fetchRequest())) ?? []
+            signedCount = signedApps.count
+            let importedApps = (try? Storage.shared.context.fetch(Imported.fetchRequest())) ?? []
+            importedCount = importedApps.count
+            let fwSrc = Storage.shared.documentsURL.appendingPathComponent("DefaultFrameworks")
+            if let items = try? FileManager.default.contentsOfDirectory(atPath: fwSrc.path) {
+                fwCount = items.filter { !$0.hasPrefix(".") }.count
+            }
+            let archSrc = FileManager.default.archives
+            if let items = try? FileManager.default.contentsOfDirectory(atPath: archSrc.path) {
+                archivesCount = items.filter { !$0.hasPrefix(".") }.count
+            }
+            settingsIncluded = true
+        }
+
+        let record = PairRecord(
+            id: UUID(),
+            date: Date(),
+            deviceName: pairedDeviceName ?? "",
+            sourcesCount: sourcesCount,
+            certificatesCount: certsCount,
+            signedAppsCount: signedCount,
+            importedAppsCount: importedCount,
+            frameworksCount: fwCount,
+            archivesCount: archivesCount,
+            settingsIncluded: settingsIncluded,
+            wasHost: isHost
+        )
+        PairHistoryStore.shared.append(record)
+    }
+
     private func reset() {
         pollingTask?.cancel()
         progressTask?.cancel()
@@ -288,6 +379,7 @@ class PairingViewModel: ObservableObject {
         errorMessage = nil
         isLoading = false
         transferPhase = .idle
+        transferStartTime = nil
     }
 
     /// Polls `PairingService.checkStatus` every 3 s until connected or failed.
