@@ -141,7 +141,7 @@ struct CustomAnimationView: View {
                                 )
                             )
                             .symbolRenderingMode(.hierarchical)
-                            .applySymbolEffect()
+                            .bounceEffect()
                     }
                     .offset(x: CGFloat(motion.roll * 20), y: CGFloat(motion.pitch * 20))
                     .scaleEffect(isAnimating ? 1.0 : 0.4)
@@ -262,20 +262,6 @@ struct CustomAnimationView: View {
             newParticles.append(particle)
         }
         particles = newParticles
-    }
-}
-
-// Helper to handle iOS 17 symbol effects
-extension View {
-    @ViewBuilder
-    func applySymbolEffect() -> some View {
-        if #available(iOS 18.0, *) {
-            self.symbolEffect(.bounce, options: .repeating)
-        } else if #available(iOS 17.0, *) {
-            self.symbolEffect(.bounce)
-        } else {
-            self
-        }
     }
 }
 

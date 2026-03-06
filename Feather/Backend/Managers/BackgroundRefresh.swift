@@ -57,31 +57,34 @@ class BackgroundRefreshManager: ObservableObject {
         let connectionPreference = UserDefaults.standard.integer(forKey: "Feather.backgroundRefreshConnection")
         // 0: Both, 1: WiFi, 2: Cellular
 
-        let pathMonitor = NWPathMonitor()
-        let semaphore = DispatchSemaphore(value: 0)
-        var isAllowed = false
+        let isAllowed = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
+            let pathMonitor = NWPathMonitor()
+            var resumed = false
 
-        pathMonitor.pathUpdateHandler = { path in
-            if path.status == .satisfied {
-                switch connectionPreference {
-                case 0: // Both
-                    isAllowed = true
-                case 1: // WiFi
-                    isAllowed = path.usesInterfaceType(.wifi)
-                case 2: // Cellular
-                    isAllowed = path.usesInterfaceType(.cellular)
-                default:
-                    isAllowed = true
+            pathMonitor.pathUpdateHandler = { path in
+                guard !resumed else { return }
+                resumed = true
+                pathMonitor.cancel()
+
+                var allowed = false
+                if path.status == .satisfied {
+                    switch connectionPreference {
+                    case 0: // Both
+                        allowed = true
+                    case 1: // WiFi
+                        allowed = path.usesInterfaceType(.wifi)
+                    case 2: // Cellular
+                        allowed = path.usesInterfaceType(.cellular)
+                    default:
+                        allowed = true
+                    }
                 }
+                continuation.resume(returning: allowed)
             }
-            semaphore.signal()
+
+            let queue = DispatchQueue(label: "BackgroundRefreshNetworkMonitor")
+            pathMonitor.start(queue: queue)
         }
-
-        let queue = DispatchQueue(label: "BackgroundRefreshNetworkMonitor")
-        pathMonitor.start(queue: queue)
-
-        _ = semaphore.wait(timeout: .now() + 2.0)
-        pathMonitor.cancel()
 
         if !isAllowed {
             logger.info("Background refresh skipped: Connection does not match user preference (\(connectionPreference))")
