@@ -6,6 +6,7 @@ struct GeneralView: View {
     @AppStorage("Feather.certificateExperience") private var certificateExperience: String = CertificateExperience.developer.rawValue
     @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @State private var navigateToCheckForUpdates = false
+    @State private var showPairingView = false
     @Environment(\.navigateToUpdates) private var navigateToUpdates
 
     private var isEnterprise: Bool { certificateExperience == CertificateExperience.enterprise.rawValue }
@@ -38,6 +39,9 @@ struct GeneralView: View {
         .listStyle(.insetGrouped)
         .navigationTitle(.localized("General"))
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showPairingView) {
+            PairingView()
+        }
     }
 
     // MARK: - Sections
@@ -84,6 +88,13 @@ struct GeneralView: View {
             }
             if !hideManager.isHidden("settings.backupRestore") {
                 SettingsRow(icon: "externaldrive.fill.badge.timemachine", title: String.localized("Backup & Restore"), color: .accentColor, destination: BackupRestoreView())
+            }
+            if !hideManager.isHidden("settings.pairing") {
+                Button {
+                    showPairingView = true
+                } label: {
+                    SettingsRowContent(icon: "personalhotspot", title: String.localized("Pairing"), color: .accentColor)
+                }
             }
             if !hideManager.isHidden("settings.logs") {
                 SettingsRow(icon: "ecg.text.page", title: String.localized("Logs"), color: .accentColor, destination: AppLogsView())

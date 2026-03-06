@@ -1,55 +1,175 @@
 import Foundation
+import MultipeerConnectivity
+import UIKit
 
 // MARK: - Pairing Service
-/// Async service that manages the pairing session lifecycle.
-/// All methods run on their own async context via the `actor` model.
-/// Real networking / server logic should replace the stubs below.
-actor PairingService {
+/// Manages the device pairing session lifecycle using MultipeerConnectivity.
+/// Devices discover and authenticate each other over the local network using
+/// a shared 6-digit pairing code embedded in the MPC discovery info.
+///
+/// All mutable state is confined to the main actor; delegate callbacks hop
+/// back to `@MainActor` via `Task { @MainActor in … }`.
+@MainActor
+final class PairingService: NSObject {
 
     static let shared = PairingService()
-    private init() {}
+    static let serviceType = "portal-pair"
 
-    // MARK: - Generate Code
+    // MARK: - Private State
 
-    /// Generates a random 6-digit pairing code and returns it.
-    /// In a real implementation this would contact a relay server and
-    /// receive a server-issued code.
-    func generatePairingCode() async throws -> String {
-        // Simulate server round-trip latency
-        try await Task.sleep(nanoseconds: 800_000_000)
-        return String(format: "%06d", Int.random(in: 0...999_999))
+    private var peerID: MCPeerID
+    private var session: MCSession?
+    private var advertiser: MCNearbyServiceAdvertiser?
+    private var browser: MCNearbyServiceBrowser?
+    private var currentCode: String?
+    private var internalStatus: PairingStatus = .idle
+
+    private override init() {
+        self.peerID = MCPeerID(displayName: UIDevice.current.name)
+        super.init()
     }
 
-    // MARK: - Start Pairing
+    // MARK: - Generate Code (Host side)
 
-    /// Begins the active pairing handshake for the given `code`.
-    /// Stubs a short delay representing the initial handshake phase.
+    /// Generates a random 6-digit pairing code, begins advertising over the
+    /// local network, and returns the code for display on this device.
+    func generatePairingCode() async throws -> String {
+        let code = String(format: "%06d", Int.random(in: 0...999_999))
+        currentCode = code
+        internalStatus = .waiting
+        setupSession()
+        startAdvertising(with: code)
+        return code
+    }
+
+    // MARK: - Start Pairing (Join side)
+
+    /// Begins browsing the local network for a device advertising the given code.
     func startPairing(code: String) async throws {
-        try await Task.sleep(nanoseconds: 1_200_000_000)
+        currentCode = code
+        internalStatus = .waiting
+        setupSession()
+        startBrowsing(for: code)
     }
 
     // MARK: - Poll Status
 
-    /// Polls the server for the current pairing status of the given `code`.
-    /// Returns `.waiting` until the remote device connects.
+    /// Returns the current pairing status.
     func checkStatus(code: String) async throws -> PairingStatus {
-        try await Task.sleep(nanoseconds: 500_000_000)
-        // Stub: always return .waiting (real impl would query a server)
-        return .waiting
+        return internalStatus
     }
 
     // MARK: - Cancel
 
-    /// Cancels any in-progress pairing session and cleans up server state.
+    /// Stops any in-progress pairing session and tears down local network resources.
     func cancelPairing() async {
-        // Stub: cancel in-flight network requests and invalidate the code
+        stop()
+        internalStatus = .idle
+        currentCode = nil
     }
 
     // MARK: - Validate
 
     /// Returns `true` if the provided `code` is a valid 6-digit number.
     func validateCode(_ code: String) async throws -> Bool {
-        try await Task.sleep(nanoseconds: 300_000_000)
         return code.count == 6 && code.allSatisfy(\.isNumber)
+    }
+
+    // MARK: - Private Setup
+
+    private func setupSession() {
+        session = MCSession(peer: peerID, securityIdentity: nil, encryptionPreference: .required)
+        session?.delegate = self
+    }
+
+    private func startAdvertising(with code: String) {
+        let discoveryInfo: [String: String] = [
+            "code": code,
+            "timestamp": "\(Date().timeIntervalSince1970)"
+        ]
+        advertiser = MCNearbyServiceAdvertiser(
+            peer: peerID,
+            discoveryInfo: discoveryInfo,
+            serviceType: Self.serviceType
+        )
+        advertiser?.delegate = self
+        advertiser?.startAdvertisingPeer()
+    }
+
+    private func startBrowsing(for code: String) {
+        browser = MCNearbyServiceBrowser(peer: peerID, serviceType: Self.serviceType)
+        browser?.delegate = self
+        browser?.startBrowsingForPeers()
+    }
+
+    private func stop() {
+        advertiser?.stopAdvertisingPeer()
+        browser?.stopBrowsingForPeers()
+        session?.disconnect()
+        advertiser = nil
+        browser = nil
+        session = nil
+    }
+}
+
+// MARK: - MCSessionDelegate
+
+extension PairingService: MCSessionDelegate {
+    nonisolated func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
+        Task { @MainActor in
+            switch state {
+            case .connected:
+                self.internalStatus = .connected
+            case .notConnected:
+                if self.internalStatus == .waiting {
+                    self.internalStatus = .failed("Connection lost. Please try again.")
+                }
+            default:
+                break
+            }
+        }
+    }
+
+    nonisolated func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {}
+
+    nonisolated func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {}
+
+    nonisolated func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {}
+
+    nonisolated func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {}
+}
+
+// MARK: - MCNearbyServiceAdvertiserDelegate
+
+extension PairingService: MCNearbyServiceAdvertiserDelegate {
+    nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
+        Task { @MainActor in
+            invitationHandler(true, self.session)
+        }
+    }
+
+    nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
+        Task { @MainActor in
+            self.internalStatus = .failed(error.localizedDescription)
+        }
+    }
+}
+
+// MARK: - MCNearbyServiceBrowserDelegate
+
+extension PairingService: MCNearbyServiceBrowserDelegate {
+    nonisolated func browser(_ browser: MCNearbyServiceBrowser, foundPeer peerID: MCPeerID, withDiscoveryInfo info: [String: String]?) {
+        Task { @MainActor in
+            guard let code = info?["code"], code == self.currentCode, let session = self.session else { return }
+            browser.invitePeer(peerID, to: session, withContext: nil, timeout: 30)
+        }
+    }
+
+    nonisolated func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {}
+
+    nonisolated func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
+        Task { @MainActor in
+            self.internalStatus = .failed(error.localizedDescription)
+        }
     }
 }
