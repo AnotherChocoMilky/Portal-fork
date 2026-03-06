@@ -1,5 +1,6 @@
 import SwiftUI
 import NimbleViews
+import CoreImage
 
 // MARK: - Pairing View
 /// The main "Pair Devices" screen.
@@ -37,9 +38,8 @@ struct PairingView: View {
     @State private var successReceivedURL: URL? = nil
     @State private var showHistory: Bool = false
 
-    // Scan sheet
-    @State private var scanInput: String = ""
-    @FocusState private var isScanInputFocused: Bool
+    // Demo sheet
+    @State private var showDemo: Bool = false
 
     // MARK: - Body
 
@@ -89,12 +89,17 @@ struct PairingView: View {
             }
         }
         .sheet(isPresented: $viewModel.showScanSheet) {
-            scanSheet
+            QRCodeScannerSheet { code in
+                connectWithScannedCode(code)
+            }
         }
         .sheet(isPresented: $showHistory) {
             NavigationStack {
                 PairHistoryView()
             }
+        }
+        .sheet(isPresented: $showDemo) {
+            PairingDemoView()
         }
         .fullScreenCover(isPresented: $showLoadingCover) {
             LoadingPairView(
@@ -175,7 +180,63 @@ struct PairingView: View {
                 pairingStatus: viewModel.status
             )
             .frame(width: 280, height: 280)
+
+            // Sender side: show the pairing code as a scannable QR code
+            if viewModel.isHost, let code = viewModel.generatedCode {
+                VStack {
+                    HStack {
+                        Spacer()
+                        pairingQRCode(for: code)
+                    }
+                    Spacer()
+                }
+                .frame(width: 280, height: 280)
+                .transition(.scale.combined(with: .opacity))
+                .animation(.spring(response: 0.5, dampingFraction: 0.7), value: viewModel.generatedCode)
+            }
         }
+    }
+
+    // MARK: - QR Code View
+
+    private func pairingQRCode(for code: String) -> some View {
+        Group {
+            if let image = generateQRCode(from: code) {
+                Image(uiImage: image)
+                    .interpolation(.none)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 80, height: 80)
+                    .padding(6)
+                    .background(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .shadow(color: .black.opacity(0.5), radius: 8)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .strokeBorder(
+                                LinearGradient(
+                                    colors: [Color(hue: 0.65, saturation: 0.8, brightness: 0.9),
+                                             Color(hue: 0.75, saturation: 0.7, brightness: 0.85)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ),
+                                lineWidth: 2
+                            )
+                    )
+            }
+        }
+    }
+
+    private func generateQRCode(from string: String) -> UIImage? {
+        guard let data = string.data(using: .utf8),
+              let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
+        filter.setValue(data, forKey: "inputMessage")
+        filter.setValue("M", forKey: "inputCorrectionLevel")
+        guard let ciImage = filter.outputImage else { return nil }
+        let scaled = ciImage.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
+        let context = CIContext()
+        guard let cgImage = context.createCGImage(scaled, from: scaled.extent) else { return nil }
+        return UIImage(cgImage: cgImage)
     }
 
     // MARK: - Status Section
@@ -242,6 +303,15 @@ struct PairingView: View {
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
+
+                Button(action: { showDemo = true }) {
+                    Label(.localized("See Demo"), systemImage: "play.circle")
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.75))
+                        .frame(maxWidth: .infinity, minHeight: 42)
+                        .background(.white.opacity(0.08))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
             }
 
             if viewModel.canRetry {
@@ -275,113 +345,10 @@ struct PairingView: View {
         }
     }
 
-    // MARK: - Scan Pairing Code Sheet
-
-    private var scanSheet: some View {
-        NavigationStack {
-            VStack(spacing: 32) {
-                VStack(spacing: 12) {
-                    Image(systemName: "qrcode.viewfinder")
-                        .font(.system(size: 64))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.purple, .blue],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .padding(.top, 24)
-
-                    Text(.localized("Enter Pairing Code"))
-                        .font(.title2.bold())
-
-                    Text(.localized("Enter the 6-digit code displayed on the other device."))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 24)
-                }
-
-                // Colorful digit input
-                HStack(spacing: 8) {
-                    ForEach(0..<6, id: \.self) { i in
-                        let filled = i < scanInput.count
-                        let char = filled ? scanInputCharacter(at: i) : " "
-                        let hue = Double(i) / 6.0 * 0.82 + 0.05
-                        let col = Color(hue: hue, saturation: 0.88, brightness: 1.0)
-                        ZStack {
-                            RoundedRectangle(cornerRadius: 10)
-                                .fill(filled ? col.opacity(0.15) : Color.white.opacity(0.06))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .strokeBorder(filled ? col.opacity(0.5) : Color.white.opacity(0.15), lineWidth: 1.5)
-                                )
-                                .frame(width: 44, height: 56)
-                            Text(char)
-                                .font(.system(size: 24, weight: .bold, design: .monospaced))
-                                .foregroundStyle(filled ? col : Color.white.opacity(0.2))
-                        }
-                    }
-                }
-
-                // Hidden text field for input
-                TextField("", text: $scanInput)
-                    .keyboardType(.numberPad)
-                    .textContentType(.oneTimeCode)
-                    .focused($isScanInputFocused)
-                    .opacity(0)
-                    .frame(width: 1, height: 1)
-                    .onChange(of: scanInput) { newVal in
-                        let filtered = newVal.filter { $0.isNumber }
-                        scanInput = String(filtered.prefix(6))
-                    }
-
-                // Tap anywhere on digits to focus
-                Button(action: { isScanInputFocused = true }) {
-                    Text(.localized("Tap to type"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Button(action: connectWithScannedCode) {
-                    Text(.localized("Connect"))
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity, minHeight: 50)
-                        .background(scanInput.count == 6
-                            ? LinearGradient(colors: [.purple, .blue], startPoint: .leading, endPoint: .trailing)
-                            : LinearGradient(colors: [.gray, .gray], startPoint: .leading, endPoint: .trailing)
-                        )
-                        .clipShape(RoundedRectangle(cornerRadius: 14))
-                        .padding(.horizontal, 24)
-                }
-                .disabled(scanInput.count != 6)
-
-                Spacer()
-            }
-            .navigationTitle(.localized("Scan Pairing Code"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(.localized("Cancel")) {
-                        viewModel.showScanSheet = false
-                    }
-                }
-            }
-            .onAppear { isScanInputFocused = true }
-        }
-    }
-
-    private func connectWithScannedCode() {
+    private func connectWithScannedCode(_ code: String) {
         viewModel.showScanSheet = false
-        viewModel.scanCodeInput = scanInput
-        viewModel.startPairing(with: scanInput)
-    }
-
-    /// Safely returns the character at position `index` in `scanInput` as a String.
-    private func scanInputCharacter(at index: Int) -> String {
-        guard index < scanInput.count else { return " " }
-        return String(scanInput[scanInput.index(scanInput.startIndex, offsetBy: index)])
+        viewModel.scanCodeInput = code
+        viewModel.startPairing(with: code)
     }
 }
 
