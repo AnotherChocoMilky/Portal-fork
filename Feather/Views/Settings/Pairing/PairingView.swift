@@ -1,6 +1,5 @@
 import SwiftUI
 import NimbleViews
-import CoreImage
 
 // MARK: - Pairing View
 /// The main "Pair Devices" screen.
@@ -93,7 +92,7 @@ struct PairingView: View {
                 PairCodeScannerView { code in
                     connectWithScannedCode(code)
                 }
-                .navigationTitle(.localized("Scan Pairing Code"))
+                .navigationTitle(.localized("Enter Pairing Code"))
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .cancellationAction) {
@@ -190,62 +189,40 @@ struct PairingView: View {
             )
             .frame(width: 280, height: 280)
 
-            // Sender side: show the pairing code as a scannable QR code
+            // Sender side: show the pairing code as an animated code display
             if viewModel.isHost, let code = viewModel.generatedCode {
-                VStack {
-                    HStack {
-                        Spacer()
-                        pairingQRCode(for: code)
-                    }
-                    Spacer()
+                pairingCodeDisplay(for: code)
+                    .transition(.scale.combined(with: .opacity))
+                    .animation(.spring(response: 0.5, dampingFraction: 0.7), value: viewModel.generatedCode)
+            }
+        }
+    }
+
+    // MARK: - Pairing Code Display
+
+    /// Renders the 6-digit pairing code as an animated frosted-glass card
+    /// overlaid on the sphere.  Each digit is shown in its own rounded box
+    /// so the sender's device acts as the visual "code" that the other
+    /// device's user reads and enters into `PairCodeScannerView`.
+    private func pairingCodeDisplay(for code: String) -> some View {
+        VStack(spacing: 5) {
+            Text(.localized("PAIRING CODE"))
+                .font(.system(size: 9, weight: .semibold, design: .rounded))
+                .foregroundStyle(.white.opacity(0.55))
+                .tracking(2)
+
+            HStack(spacing: 5) {
+                let chars = Array(code)
+                ForEach(chars.indices, id: \.self) { index in
+                    AnimatedDigit(character: String(chars[index]), delay: Double(index) * 0.07)
                 }
-                .frame(width: 280, height: 280)
-                .transition(.scale.combined(with: .opacity))
-                .animation(.spring(response: 0.5, dampingFraction: 0.7), value: viewModel.generatedCode)
             }
         }
-    }
-
-    // MARK: - QR Code View
-
-    private func pairingQRCode(for code: String) -> some View {
-        Group {
-            if let image = generateQRCode(from: code) {
-                Image(uiImage: image)
-                    .interpolation(.none)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 80, height: 80)
-                    .padding(6)
-                    .background(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .shadow(color: .black.opacity(0.5), radius: 8)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 10)
-                            .strokeBorder(
-                                LinearGradient(
-                                    colors: [Color(hue: 0.65, saturation: 0.8, brightness: 0.9),
-                                             Color(hue: 0.75, saturation: 0.7, brightness: 0.85)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                ),
-                                lineWidth: 2
-                            )
-                    )
-            }
-        }
-    }
-
-    private func generateQRCode(from string: String) -> UIImage? {
-        guard let data = string.data(using: .utf8),
-              let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
-        filter.setValue(data, forKey: "inputMessage")
-        filter.setValue("M", forKey: "inputCorrectionLevel")
-        guard let ciImage = filter.outputImage else { return nil }
-        let scaled = ciImage.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
-        let context = CIContext()
-        guard let cgImage = context.createCGImage(scaled, from: scaled.extent) else { return nil }
-        return UIImage(cgImage: cgImage)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .shadow(color: .black.opacity(0.5), radius: 10)
     }
 
     // MARK: - Status Section
@@ -296,7 +273,7 @@ struct PairingView: View {
             // always show it so the receiver can enter the sender's code.
             if viewModel.status == .idle || viewModel.status == .waiting || viewModel.status == .generating {
                 Button(action: { viewModel.showScanSheet = true }) {
-                    Label(.localized("Scan Pairing Code"), systemImage: "qrcode.viewfinder")
+                    Label(.localized("Enter Pairing Code"), systemImage: "number.square.fill")
                         .font(.headline)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity, minHeight: 50)
@@ -358,6 +335,47 @@ struct PairingView: View {
         viewModel.showScanSheet = false
         viewModel.scanCodeInput = code
         viewModel.startPairing(with: code)
+    }
+}
+
+// MARK: - Animated Digit
+
+/// A single digit box used inside `pairingCodeDisplay`.
+/// Each digit scales and fades in with a staggered delay for an animated reveal.
+private struct AnimatedDigit: View {
+    let character: String
+    let delay: Double
+
+    @State private var appeared = false
+
+    var body: some View {
+        Text(character)
+            .font(.system(size: 22, weight: .bold, design: .monospaced))
+            .foregroundStyle(.white)
+            .frame(width: 28, height: 34)
+            .background(Color.white.opacity(0.12))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [
+                                Color(hue: 0.55, saturation: 0.7, brightness: 0.9),
+                                Color(hue: 0.75, saturation: 0.6, brightness: 0.85)
+                            ],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .scaleEffect(appeared ? 1.0 : 0.5)
+            .opacity(appeared ? 1.0 : 0.0)
+            .onAppear {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.65).delay(delay)) {
+                    appeared = true
+                }
+            }
     }
 }
 
