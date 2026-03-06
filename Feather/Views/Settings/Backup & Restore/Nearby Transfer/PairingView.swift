@@ -2,8 +2,8 @@ import SwiftUI
 import NimbleViews
 import MultipeerConnectivity
 
-// MARK: - Pairing View
-struct PairingView: View {
+// MARK: - Nearby Pairing View (Backup & Restore)
+struct NearbyPairingView: View {
     @Environment(\.dismiss) var dismiss
     @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @StateObject private var service = NearbyTransferService()

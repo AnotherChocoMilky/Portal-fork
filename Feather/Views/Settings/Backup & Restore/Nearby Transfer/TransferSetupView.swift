@@ -19,7 +19,7 @@ struct TransferSetupView: View {
             
             // Quick Start Section
             Section {
-                NavigationLink(destination: PairingView()) {
+                NavigationLink(destination: NearbyPairingView()) {
                     Label {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(.localized("Start New Transfer"))

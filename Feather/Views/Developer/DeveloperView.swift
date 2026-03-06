@@ -7514,7 +7514,7 @@ struct NearbyTransferSimulationView: View {
         case .main:
             TransferSetupView()
         case .pairingNearby:
-            PairingView()
+            NearbyPairingView()
                 .environment(\.nearbyTransferSimulation, true)
         case .pairingOTP:
             PairingThroughOTPView()
@@ -7698,9 +7698,9 @@ struct NearbyShareUITestingView: View {
         case .receiverAnimation:
             ReceiverAnimationView(state: .transferring(progress: 0.45, bytesTransferred: 450_000_000, totalBytes: 1_000_000_000, speed: 4_500_000))
         case .nearbyPairingSender:
-            PairingView()
+            NearbyPairingView()
         case .nearbyPairingReceiver:
-            PairingView()
+            NearbyPairingView()
         case .remotePairing:
             PairingThroughOTPView()
         case .transferProgress:
