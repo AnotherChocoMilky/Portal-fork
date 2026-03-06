@@ -103,34 +103,35 @@ struct CertificateQuickAddView: View {
     
     private func addCertificate() {
         errorMessage = nil
-        
-        // Validate password first
-        guard FR.checkPasswordForCertificate(for: p12URL, with: password, using: mobileprovisionURL) else {
-            errorMessage = .localized("Invalid password. Please check the password and try again.")
-            HapticsManager.shared.error()
-            return
-        }
-        
-        isProcessing = true
-        HapticsManager.shared.impact()
-        
-        FR.handleCertificateFiles(
-            p12URL: p12URL,
-            provisionURL: mobileprovisionURL,
-            p12Password: password,
-            certificateName: certificateName,
-            isDefault: false
-        ) { error in
-            isProcessing = false
-            
-            if let error = error {
-                errorMessage = error.localizedDescription
+        Task { @MainActor in
+            let isPasswordCorrect = await FR.checkPasswordForCertificate(for: p12URL, with: password, using: mobileprovisionURL)
+            guard isPasswordCorrect else {
+                errorMessage = .localized("Invalid password. Please check the password and try again.")
                 HapticsManager.shared.error()
-                AppLogManager.shared.error("Failed to add certificate: \(error.localizedDescription)", category: "Files")
-            } else {
-                HapticsManager.shared.success()
-                AppLogManager.shared.info("Certificate added successfully from Files tab", category: "Files")
-                dismiss()
+                return
+            }
+            
+            isProcessing = true
+            HapticsManager.shared.impact()
+            
+            FR.handleCertificateFiles(
+                p12URL: p12URL,
+                provisionURL: mobileprovisionURL,
+                p12Password: password,
+                certificateName: certificateName,
+                isDefault: false
+            ) { error in
+                isProcessing = false
+                
+                if let error = error {
+                    errorMessage = error.localizedDescription
+                    HapticsManager.shared.error()
+                    AppLogManager.shared.error("Failed to add certificate: \(error.localizedDescription)", category: "Files")
+                } else {
+                    HapticsManager.shared.success()
+                    AppLogManager.shared.info("Certificate added successfully from Files tab", category: "Files")
+                    dismiss()
+                }
             }
         }
     }

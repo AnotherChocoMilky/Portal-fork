@@ -319,29 +319,29 @@ struct FeatherApp: App {
 					let provisionBase64 = queryValue("mobileprovision"),
 					let passwordBase64 = queryValue("password"),
 					let passwordData = Data(base64Encoded: passwordBase64),
-					let password = String(data: passwordData, encoding: .utf8)
-				else {
-					return
-				}
-				
-				guard
+					let password = String(data: passwordData, encoding: .utf8),
 					let p12URL = FileManager.default.decodeAndWrite(base64: p12Base64, pathComponent: ".p12"),
-					let provisionURL = FileManager.default.decodeAndWrite(base64: provisionBase64, pathComponent: ".mobileprovision"),
-					FR.checkPasswordForCertificate(for: p12URL, with: password, using: provisionURL)
+					let provisionURL = FileManager.default.decodeAndWrite(base64: provisionBase64, pathComponent: ".mobileprovision")
 				else {
-					HapticsManager.shared.error()
 					return
 				}
 				
-				FR.handleCertificateFiles(
-					p12URL: p12URL,
-					provisionURL: provisionURL,
-					p12Password: password
-				) { error in
-					if let error = error {
-						UIAlertController.showAlertWithOk(title: .localized("Error"), message: error.localizedDescription)
-					} else {
-						HapticsManager.shared.success()
+				Task {
+					guard await FR.checkPasswordForCertificate(for: p12URL, with: password, using: provisionURL) else {
+						HapticsManager.shared.error()
+						return
+					}
+					
+					FR.handleCertificateFiles(
+						p12URL: p12URL,
+						provisionURL: provisionURL,
+						p12Password: password
+					) { error in
+						if let error = error {
+							UIAlertController.showAlertWithOk(title: .localized("Error"), message: error.localizedDescription)
+						} else {
+							HapticsManager.shared.success()
+						}
 					}
 				}
 				
