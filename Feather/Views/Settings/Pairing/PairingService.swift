@@ -25,8 +25,8 @@ final class PairingService: NSObject {
     // delay before surfacing a user-friendly message.
     private static let netServicesErrorDomain = "NSNetServicesErrorDomain"
     private static let kNetServicesFailedCode = -72008
-    private static let maxRetryCount = 3
-    private static let retryDelaySeconds: Double = 2.0
+    private static let maxRetryCount = 5
+    private static let retryDelaySeconds: Double = 3.0
 
     // MARK: - Private State
 
@@ -37,6 +37,7 @@ final class PairingService: NSObject {
     private var currentCode: String?
     private(set) var internalStatus: PairingStatus = .idle
     private var advertisingRetryCount = 0
+    private var browsingRetryCount = 0
 
     /// `true` when this device generated the pairing code (it will send data).
     private(set) var isHost: Bool = false
@@ -72,6 +73,7 @@ final class PairingService: NSObject {
         isHost = true
         internalStatus = .waiting
         advertisingRetryCount = 0
+        browsingRetryCount = 0
         setupSession()
         startAdvertising(with: code)
         return code
@@ -84,6 +86,7 @@ final class PairingService: NSObject {
         currentCode = code
         isHost = false
         internalStatus = .waiting
+        browsingRetryCount = 0
         setupSession()
         startBrowsing(for: code)
     }
@@ -103,6 +106,7 @@ final class PairingService: NSObject {
         internalStatus = .idle
         currentCode = nil
         advertisingRetryCount = 0
+        browsingRetryCount = 0
         isHost = false
     }
 
@@ -210,6 +214,29 @@ final class PairingService: NSObject {
         }
     }
 
+    /// Retries browsing after a Bonjour failure (error -72008).
+    /// Falls back to a user-friendly failure message after `maxRetryCount` attempts.
+    private func retryBrowsing() {
+        guard browsingRetryCount < Self.maxRetryCount, let code = currentCode else {
+            let msg: String = .localized(
+                "Network discovery is unavailable. Please ensure Wi-Fi is enabled, " +
+                "both devices are on the same network, and try again."
+            )
+            internalStatus = .failed(msg)
+            onStatusChanged?(.failed(msg))
+            return
+        }
+        browsingRetryCount += 1
+        Task {
+            try? await Task.sleep(
+                nanoseconds: UInt64(Self.retryDelaySeconds * 1_000_000_000)
+            )
+            browser?.stopBrowsingForPeers()
+            browser = nil
+            startBrowsing(for: code)
+        }
+    }
+
     // MARK: - Receive Data Processing
 
     private func processReceivedBackup() {
@@ -243,7 +270,7 @@ extension PairingService: MCSessionDelegate {
                 self.internalStatus = .connected
                 self.onStatusChanged?(.connected)
             case .notConnected:
-                if self.internalStatus == .waiting {
+                if self.internalStatus == .connected {
                     let msg: String = .localized("Connection lost. Please try again.")
                     self.internalStatus = .failed(msg)
                     self.onStatusChanged?(.failed(msg))
@@ -292,16 +319,7 @@ extension PairingService: MCNearbyServiceAdvertiserDelegate {
 
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
         Task { @MainActor in
-            let nsError = error as NSError
-            // Fallback for NSNetServicesErrorDomain error -72008 (Bonjour advertising
-            // failure, commonly caused by network restrictions or service collisions).
-            if nsError.domain == Self.netServicesErrorDomain
-                && nsError.code == Self.kNetServicesFailedCode {
-                self.retryAdvertising()
-            } else {
-                self.internalStatus = .failed(error.localizedDescription)
-                self.onStatusChanged?(.failed(error.localizedDescription))
-            }
+            self.retryAdvertising()
         }
     }
 }
@@ -324,15 +342,9 @@ extension PairingService: MCNearbyServiceBrowserDelegate {
             // Fallback for NSNetServicesErrorDomain error -72008.
             if nsError.domain == Self.netServicesErrorDomain
                 && nsError.code == Self.kNetServicesFailedCode {
-                let msg: String = .localized(
-                    "Network discovery is unavailable. Please ensure Wi-Fi is enabled, " +
-                    "both devices are on the same network, and try again."
-                )
-                self.internalStatus = .failed(msg)
-                self.onStatusChanged?(.failed(msg))
+                self.retryBrowsing()
             } else {
-                self.internalStatus = .failed(error.localizedDescription)
-                self.onStatusChanged?(.failed(error.localizedDescription))
+                self.retryBrowsing()
             }
         }
     }
