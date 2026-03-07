@@ -2,17 +2,6 @@ import SwiftUI
 import MultipeerConnectivity
 import NimbleViews
 
-// MARK: - Sender View
-
-/// Full-screen view shown when the user selects **Send Data** in the MPC pairing
-/// flow.  Advertises this device over Bonjour so nearby receivers can discover it
-/// automatically.
-///
-/// Animations:
-/// - Pulsing antenna icon while searching for a receiver
-/// - Sparkle burst + scale-in badge when a receiver connects
-/// - Shake effect when an error occurs
-/// - Smooth phase transitions via `.animation` modifiers
 struct SenderView: View {
 
     // MARK: - Dependencies
@@ -65,7 +54,7 @@ struct SenderView: View {
                         service.cancel()
                         onCancel()
                     } label: {
-                        Text(.localized("Cancel Pairing"))
+                        Text(.localized("Cancel"))
                             .foregroundStyle(.red)
                     }
                 }
@@ -289,7 +278,7 @@ struct SenderView: View {
         case .failed(let msg):
             return msg
         default:
-            return .localized("Preparing to broadcast…")
+            return .localized("Preparing To Broadcast…")
         }
     }
 

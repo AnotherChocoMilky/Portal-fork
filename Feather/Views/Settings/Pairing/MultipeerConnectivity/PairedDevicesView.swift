@@ -1,15 +1,6 @@
 import SwiftUI
 import NimbleViews
 
-// MARK: - Paired Devices View
-
-/// Shows every device that this device has paired with via the MPC Pairing flow,
-/// along with the data that was exchanged during each session:
-/// certificates count, source count, settings, and more.
-///
-/// Records are sourced from `PairHistoryStore` (same store used by
-/// `PairHistoryView`), grouped by the pairing date, and automatically
-/// discarded after 7 days.
 struct PairedDevicesView: View {
 
     @State private var records: [PairRecord] = []

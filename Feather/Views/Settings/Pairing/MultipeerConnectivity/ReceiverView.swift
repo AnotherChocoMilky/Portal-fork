@@ -2,17 +2,6 @@ import SwiftUI
 import MultipeerConnectivity
 import NimbleViews
 
-// MARK: - Receiver View
-
-/// Full-screen view shown when the user selects **Receive Data** in the MPC
-/// pairing flow.  Browses for nearby devices that are advertising and lists
-/// them so the user can tap to connect.
-///
-/// Animations:
-/// - Pulsing scan radar while searching
-/// - Bounce-in entrance for each newly discovered peer
-/// - Error shake when a connection fails
-/// - Smooth removal when a peer disappears
 struct ReceiverView: View {
 
     // MARK: - Dependencies
@@ -61,7 +50,7 @@ struct ReceiverView: View {
                         service.cancel()
                         onCancel()
                     } label: {
-                        Text(.localized("Cancel Pairing"))
+                        Text(.localized("Cancel"))
                             .foregroundStyle(.red)
                     }
                 }

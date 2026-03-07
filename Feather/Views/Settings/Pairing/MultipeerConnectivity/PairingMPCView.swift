@@ -2,18 +2,6 @@ import SwiftUI
 import MultipeerConnectivity
 import NimbleViews
 
-// MARK: - Pairing MPC View
-
-/// The **main** MPC pairing screen.  Acts as a role-selection hub — the user
-/// picks **Send Data** or **Receive Data** and is taken into a dedicated view
-/// (`SenderView` or `ReceiverView`) that manages the full connection lifecycle.
-///
-/// Additional entry points available from the toolbar:
-/// - **Paired Devices** — history of every device paired with via MPC
-/// - **How to Use** — interactive `MultipeerDemoView` walkthrough
-///
-/// This view is powered by `PairingMPCService` which handles all
-/// MultipeerConnectivity logic, Bonjour retry handling, and data transfer.
 struct PairingMPCView: View {
 
     var isEmbedded: Bool = false
@@ -171,7 +159,7 @@ struct PairingMPCView: View {
 
     private var headingSection: some View {
         VStack(spacing: 8) {
-            Text(.localized("Choose Your Role"))
+            Text(.localized("Choose Your Action"))
                 .font(.system(.title3, design: .rounded, weight: .semibold))
                 .foregroundStyle(.white)
 
@@ -193,7 +181,7 @@ struct PairingMPCView: View {
             roleCard(
                 icon: "arrow.up.circle.fill",
                 title: .localized("Send Data"),
-                detail: .localized("Copy your certificates, sources, and settings to another device."),
+                detail: .localized("Send your certificates, sources, and settings to another device."),
                 gradientColors: [
                     Color(hue: 0.70, saturation: 0.75, brightness: 0.88),
                     Color(hue: 0.82, saturation: 0.65, brightness: 0.83)

@@ -2,28 +2,12 @@ import SwiftUI
 import AudioToolbox
 import NimbleViews
 
-// MARK: - MPC Successful Pair View
-
-/// Full-screen success screen shown after a MultipeerConnectivity transfer
-/// completes.  Displays:
-/// - An expanding ring + orbiting sparkle + bouncing checkmark animation
-/// - A summary of the data that was transferred (certificates, sources, etc.)
-/// - A **Done** button to dismiss and return to Settings
-///
-/// Named `MPCSuccessfulPairView` to co-exist with the animation-pairing
-/// `SuccessfulPairView` that lives in the **Animation Pairing** folder.
 struct MPCSuccessfulPairView: View {
 
-    // MARK: - Input
-
-    /// URL of the extracted backup directory on the receiving device.
-    /// `nil` on the sending (host) device.
     let receivedURL: URL?
     let deviceName: String?
     let wasHost: Bool
     let onDone: () -> Void
-
-    // MARK: - Animation State
 
     @State private var ringScales: [CGFloat]   = Array(repeating: 1.0, count: 5)
     @State private var ringOpacities: [Double] = Array(repeating: 0.0, count: 5)
@@ -33,8 +17,6 @@ struct MPCSuccessfulPairView: View {
     @State private var sparklesVisible: Bool   = false
     @State private var contentOpacity: Double  = 0.0
 
-    // MARK: - Data State
-
     @State private var sourcesCount: Int      = 0
     @State private var certsCount: Int        = 0
     @State private var signedAppsCount: Int   = 0
@@ -43,7 +25,6 @@ struct MPCSuccessfulPairView: View {
     @State private var frameworksCount: Int   = 0
     @State private var archivesCount: Int     = 0
 
-    // MARK: - Body
 
     var body: some View {
         ZStack {
@@ -80,11 +61,8 @@ struct MPCSuccessfulPairView: View {
         }
     }
 
-    // MARK: - Success Animation
-
     private var successAnimation: some View {
         ZStack {
-            // Staggered expanding rings
             ForEach(0..<5, id: \.self) { i in
                 Circle()
                     .stroke(
@@ -102,7 +80,6 @@ struct MPCSuccessfulPairView: View {
                     .opacity(ringOpacities[i])
             }
 
-            // Central glow
             Circle()
                 .fill(
                     RadialGradient(
@@ -115,7 +92,6 @@ struct MPCSuccessfulPairView: View {
                 .frame(width: 116, height: 116)
                 .blur(radius: checkmarkGlow)
 
-            // Orbiting sparkles
             if sparklesVisible {
                 ForEach(0..<8, id: \.self) { i in
                     let angle = Double(i) * 45.0 + sparkleAngle
@@ -133,8 +109,6 @@ struct MPCSuccessfulPairView: View {
                         )
                 }
             }
-
-            // Bouncing checkmark
             Image(systemName: wasHost ? "arrow.up.circle.fill" : "checkmark.circle.fill")
                 .font(.system(size: 72))
                 .foregroundStyle(

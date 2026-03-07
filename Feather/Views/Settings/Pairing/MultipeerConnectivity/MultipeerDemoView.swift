@@ -1,13 +1,6 @@
 import SwiftUI
 import NimbleViews
 
-// MARK: - Multipeer Demo View
-
-/// A fully interactive, step-by-step guide explaining the MPC Pairing feature.
-///
-/// Presented as a swipeable page-based tour with animated illustrations,
-/// concise captions, and a final "Get Started" call-to-action.  Each step is
-/// short and visual-first — designed to be read in under 10 seconds per page.
 struct MultipeerDemoView: View {
 
     @Environment(\.dismiss) private var dismiss
@@ -216,7 +209,7 @@ private struct DemoPage {
         DemoPage(
             stepLabel: .localized("Overview"),
             title: .localized("Pair Devices Wirelessly"),
-            detail: .localized("MPC Pairing uses your Wi-Fi network to securely transfer your certificates, sources, and settings to another device — no cables or accounts needed."),
+            detail: .localized("Pairing uses your Wi-Fi network to securely transfer your certificates, sources, and settings to another device."),
             tips: .localized("Both devices must be on the same Wi-Fi network."),
             illustration: .overview,
             accentColor: Color(hue: 0.60, saturation: 0.75, brightness: 0.90)
@@ -224,7 +217,7 @@ private struct DemoPage {
         DemoPage(
             stepLabel: .localized("Step 1 — Sender"),
             title: .localized("Send Your Data"),
-            detail: .localized("Tap \"Send Data\" on the device you want to copy from. It will broadcast itself so nearby devices can find it automatically."),
+            detail: .localized("Tap \"Send Data\" on the device you want to transfer the data. It will broadcast itself so nearby devices can find it automatically."),
             tips: .localized("Keep the screen on while waiting for the receiver."),
             illustration: .sender,
             accentColor: Color(hue: 0.70, saturation: 0.75, brightness: 0.90)
@@ -241,7 +234,7 @@ private struct DemoPage {
             stepLabel: .localized("Step 3 — Transfer"),
             title: .localized("Watch the Transfer"),
             detail: .localized("A live progress screen appears on both devices, showing phase details and estimated time remaining. Just keep both devices nearby."),
-            tips: .localized("Do not close the app during transfer."),
+            tips: .localized("Do not close Portal during transfer."),
             illustration: .transfer,
             accentColor: Color(hue: 0.42, saturation: 0.65, brightness: 0.88)
         ),
@@ -371,10 +364,10 @@ private struct ReceiverIllustration: View {
                     .font(.title3)
                     .foregroundStyle(accentColor)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(.localized("Dylan's iPhone"))
+                    Text(.localized("My iPhone"))
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.white)
-                    Text(.localized("Tap to connect"))
+                    Text(.localized("Tap To Connect"))
                         .font(.caption2)
                         .foregroundStyle(.white.opacity(0.5))
                 }
@@ -464,8 +457,8 @@ private struct HistoryIllustration: View {
     @State private var rowsVisible = false
 
     private let sampleRows = [
-        ("Alex's iPhone", "Received", Color.green, "3 Certs · 12 Sources"),
-        ("Dylan's iPad", "Sent", Color.blue, "5 Certs · 8 Sources")
+        ("My iPhone", "Received", Color.green, "3 Certs · 12 Sources"),
+        ("My iPad", "Sent", Color.blue, "5 Certs · 8 Sources")
     ]
 
     var body: some View {
