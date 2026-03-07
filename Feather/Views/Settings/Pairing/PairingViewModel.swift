@@ -113,7 +113,7 @@ class PairingViewModel: ObservableObject {
             case .failed(let r):  return r
             default:
                 return isHost
-                    ? .localized("Waiting for the other device to scan the code…")
+                    ? .localized("Waiting for the other device to scan the animation…")
                     : .localized("Connecting to sender…")
             }
         case .connected:

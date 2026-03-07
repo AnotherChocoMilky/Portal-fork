@@ -282,12 +282,14 @@ struct SettingsView: View {
 
     private var allSettingsItems: [SettingsItem] {
         var items: [SettingsItem] = [
+            // Main settings
             SettingsItem(title: .localized("General"), icon: "gearshape.fill", color: .accentColor, destination: AnyView(GeneralView())),
             SettingsItem(title: .localized("JIT Enabling"), icon: "bolt.circle.fill", color: .accentColor, destination: AnyView(JITSettingsView())),
             SettingsItem(title: .localized("Display & Interface"), icon: "gear.badge", color: .accentColor, destination: AnyView(AppearanceView())),
             SettingsItem(title: .localized("Files"), icon: "folder.fill", color: .accentColor, destination: AnyView(FilesSettingsView())),
             SettingsItem(title: .localized("Repository Builder"), icon: "list.star", color: .accentColor, destination: AnyView(RepoBuilder())),
             SettingsItem(title: .localized("Guides With AI"), icon: "apple.intelligence", color: .accentColor, destination: AnyView(GuidesSettingsView())),
+
             // Items within General
             SettingsItem(title: .localized("Notifications"), icon: "bell.badge.fill", color: .accentColor, destination: AnyView(NotificationsView())),
             SettingsItem(title: .localized("Live Activities"), icon: "widget.small.badge.plus", color: .accentColor, destination: AnyView(LiveActivitySettingsView())),
@@ -298,11 +300,69 @@ struct SettingsView: View {
             SettingsItem(title: .localized("Logs"), icon: "ecg.text.page", color: .accentColor, destination: AnyView(AppLogsView())),
             SettingsItem(title: .localized("Credits"), icon: "person.crop.circle.fill.badge.checkmark", color: .accentColor, destination: AnyView(CreditsView())),
             SettingsItem(title: .localized("Feedback"), icon: "bubble.left.and.bubble.right.fill", color: .accentColor, destination: AnyView(FeedbackView())),
-            SettingsItem(title: .localized("Check For Updates"), icon: "arrow.triangle.2.circlepath", color: .accentColor, destination: AnyView(CheckForUpdatesView()))
+            SettingsItem(title: .localized("Check For Updates"), icon: "arrow.triangle.2.circlepath", color: .accentColor, destination: AnyView(CheckForUpdatesView())),
+
+            // Appearance sub-options
+            SettingsItem(title: .localized("Color Customization"), icon: "paintpalette.fill", color: .purple, destination: AnyView(ColorCustomizationView())),
+            SettingsItem(title: .localized("Top View Appearance"), icon: "rectangle.inset.topthird.filled", color: .blue, destination: AnyView(TopViewAppearance())),
+            SettingsItem(title: .localized("All Apps"), icon: "square.grid.2x2.fill", color: .accentColor, destination: AnyView(AllAppsCustomizationView())),
+            SettingsItem(title: .localized("Hide UI Elements"), icon: "eye.slash.fill", color: .accentColor, destination: AnyView(AppHideElementsView())),
+            SettingsItem(title: .localized("Status Bar"), icon: "rectangle.topthird.inset.filled", color: .accentColor, destination: AnyView(StatusBarCustomizationView())),
+            SettingsItem(title: .localized("Tab Bar"), icon: "dock.rectangle", color: .accentColor, destination: AnyView(TabBarCustomizationView())),
+            SettingsItem(title: .localized("Gestures"), icon: "hand.tap.fill", color: .accentColor, destination: AnyView(AppearanceView())),
+
+            // Signing sub-options
+            SettingsItem(title: .localized("Installation Options"), icon: "arrow.down.app.fill", color: .accentColor, destination: AnyView(ConfigurationView())),
+            SettingsItem(title: .localized("Default Frameworks"), icon: "shippingbox.fill", color: .accentColor, destination: AnyView(ConfigurationView())),
+
+            // Reset
+            SettingsItem(title: .localized("Reset"), icon: "arrow.counterclockwise.circle.fill", color: .red, destination: AnyView(ManageStorageView())),
+
+            // Pairing
+            SettingsItem(title: .localized("Pair Devices"), icon: "link.circle.fill", color: .cyan, destination: AnyView(PairingView())),
+
+            // File Settings sub-options
+            SettingsItem(title: .localized("Show Hidden Files"), icon: "eye.fill", color: .accentColor, destination: AnyView(FilesSettingsView())),
+            SettingsItem(title: .localized("File Extensions"), icon: "doc.text.fill", color: .accentColor, destination: AnyView(FilesSettingsView())),
+
+            // Notification sub-options
+            SettingsItem(title: .localized("App Downloaded"), icon: "arrow.down.circle.fill", color: .accentColor, destination: AnyView(NotificationsView())),
+            SettingsItem(title: .localized("Signing Failed"), icon: "exclamationmark.triangle.fill", color: .orange, destination: AnyView(NotificationsView())),
+            SettingsItem(title: .localized("App Updates"), icon: "arrow.triangle.2.circlepath.circle.fill", color: .accentColor, destination: AnyView(NotificationsView())),
+            SettingsItem(title: .localized("Certificate Expiry"), icon: "calendar.badge.exclamationmark", color: .orange, destination: AnyView(NotificationsView())),
+            SettingsItem(title: .localized("Security Alerts"), icon: "lock.shield.fill", color: .red, destination: AnyView(NotificationsView())),
+
+            // Appearance toggles
+            SettingsItem(title: .localized("Theme"), icon: "paintbrush.fill", color: .accentColor, destination: AnyView(AppearanceView())),
+            SettingsItem(title: .localized("Tint App Icons"), icon: "paintpalette", color: .accentColor, destination: AnyView(AppearanceView())),
+            SettingsItem(title: .localized("Enable Haptics"), icon: "iphone.radiowaves.left.and.right", color: .accentColor, destination: AnyView(AppearanceView())),
+            SettingsItem(title: .localized("Show News"), icon: "newspaper", color: .accentColor, destination: AnyView(AppearanceView())),
+            SettingsItem(title: .localized("Show Header Views"), icon: "dock.rectangle", color: .accentColor, destination: AnyView(AppearanceView())),
+            SettingsItem(title: .localized("Liquid Glass"), icon: "sparkles", color: .accentColor, destination: AnyView(AppearanceView())),
+            SettingsItem(title: .localized("Personalization"), icon: "person.crop.circle.fill", color: .accentColor, destination: AnyView(AppearanceView())),
+
+            // Storage sub-options
+            SettingsItem(title: .localized("Clear Network Cache"), icon: "xmark.icloud.fill", color: .accentColor, destination: AnyView(ManageStorageView())),
+            SettingsItem(title: .localized("Clear Work Cache"), icon: "trash.fill", color: .accentColor, destination: AnyView(ManageStorageView())),
+            SettingsItem(title: .localized("Storage Analyzer"), icon: "chart.bar.fill", color: .accentColor, destination: AnyView(ManageStorageView())),
+
+            // Signing toggles
+            SettingsItem(title: .localized("PPQ Protection"), icon: "shield.fill", color: .accentColor, destination: AnyView(ConfigurationView())),
+            SettingsItem(title: .localized("File Sharing"), icon: "doc.on.doc.fill", color: .accentColor, destination: AnyView(ConfigurationView())),
+            SettingsItem(title: .localized("Pro Motion"), icon: "gauge.with.dots.needle.67percent", color: .accentColor, destination: AnyView(ConfigurationView())),
+            SettingsItem(title: .localized("Game Mode"), icon: "gamecontroller.fill", color: .accentColor, destination: AnyView(ConfigurationView())),
+
+            // Backup sub-options
+            SettingsItem(title: .localized("Automatic Backups"), icon: "clock.arrow.circlepath", color: .accentColor, destination: AnyView(BackupRestoreView())),
+            SettingsItem(title: .localized("Nearby Transfer"), icon: "antenna.radiowaves.left.and.right", color: .accentColor, destination: AnyView(BackupRestoreView())),
         ]
 
         if showDashboard {
             items.append(SettingsItem(title: .localized("Home"), icon: "house.fill", color: .accentColor, destination: AnyView(HomeSettingsView())))
+        }
+
+        if !isEnterprise {
+            items.append(SettingsItem(title: .localized("App Icons"), icon: "app.badge.fill", color: .accentColor, destination: AnyView(AppIconView())))
         }
 
         if isDeveloperModeEnabled {

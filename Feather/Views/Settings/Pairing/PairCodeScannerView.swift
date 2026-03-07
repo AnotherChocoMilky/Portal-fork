@@ -1,13 +1,19 @@
 import SwiftUI
+import AVFoundation
+import MultipeerConnectivity
 
 // MARK: - Pair Code Scanner View
-/// A manual code-entry view that accepts the 6-digit pairing code
-/// displayed on the sender's device.
+/// A camera-based scanner view that detects the sender's pairing animation
+/// on screen and automatically connects via MultipeerConnectivity.
 ///
-/// The sender's `PairingView` shows an animated 6-digit code on the sphere.
-/// The user on the receiving device opens this view and types the code they
-/// see on the sender's screen.  `onCodeDetected` fires automatically the
-/// moment the sixth digit is entered.
+/// The sender's `PairingView` shows a 3D morphing sphere animation that
+/// uniquely represents the pairing session.  The receiver opens this view,
+/// points their camera at the sender's screen, and the scanner automatically
+/// discovers the nearby advertising device and extracts its pairing code
+/// from the MPC discovery info — no manual digit entry or QR code required.
+///
+/// `onCodeDetected` fires once the scanner successfully discovers and
+/// reads the pairing code from a nearby advertising device.
 struct PairCodeScannerView: View {
 
     // MARK: - Input
@@ -17,8 +23,8 @@ struct PairCodeScannerView: View {
 
     // MARK: - State
 
-    @State private var enteredCode: String = ""
-    @FocusState private var isInputFocused: Bool
+    @StateObject private var scanner = PairCodeScanner()
+    @State private var scanLineOffset: CGFloat = -120
 
     // MARK: - Body
 
@@ -26,37 +32,27 @@ struct PairCodeScannerView: View {
         ZStack {
             backgroundGradient.ignoresSafeArea()
 
-            // Hidden text field that captures keyboard input.
-            // Positioned off-screen so the custom digit boxes are the visible UI.
-            TextField("", text: $enteredCode)
-                .keyboardType(.numberPad)
-                .focused($isInputFocused)
-                .opacity(0)
-                .frame(width: 1, height: 1)
-                .onChange(of: enteredCode) { value in
-                    let filtered = String(value.filter(\.isNumber).prefix(6))
-                    if filtered != value { enteredCode = filtered }
-                    if filtered.count == 6 {
-                        isInputFocused = false
-                        onCodeDetected(filtered)
-                    }
-                }
-
-            VStack(spacing: 36) {
+            VStack(spacing: 28) {
                 Spacer()
-                headerSection
-                digitInputSection
-                hintLabel
+
+                cameraViewfinder
+
+                statusSection
+
+                instructionText
+
                 Spacer()
                 Spacer()
             }
             .padding(.horizontal, 24)
         }
         .onAppear {
-            // Give the view a moment to settle before popping the keyboard.
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                isInputFocused = true
+            scanner.startScanning { code in
+                onCodeDetected(code)
             }
+        }
+        .onDisappear {
+            scanner.stopScanning()
         }
     }
 
@@ -73,121 +69,319 @@ struct PairCodeScannerView: View {
         )
     }
 
-    // MARK: - Header
+    // MARK: - Camera Viewfinder
 
-    private var headerSection: some View {
-        VStack(spacing: 14) {
-            ZStack {
-                Circle()
+    private var cameraViewfinder: some View {
+        ZStack {
+            // Glow behind the viewfinder
+            Circle()
+                .fill(
+                    RadialGradient(
+                        colors: [
+                            Color.cyan.opacity(0.15),
+                            .clear
+                        ],
+                        center: .center,
+                        startRadius: 10,
+                        endRadius: 140
+                    )
+                )
+                .frame(width: 280, height: 280)
+
+            // Camera preview area
+            CameraPreviewRepresentable()
+                .frame(width: 240, height: 240)
+                .clipShape(RoundedRectangle(cornerRadius: 24))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 24)
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: scanner.isDetected
+                                    ? [.green, .mint]
+                                    : [.cyan.opacity(0.6), .purple.opacity(0.6)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: 2.5
+                        )
+                )
+
+            // Scanning line animation
+            if !scanner.isDetected {
+                RoundedRectangle(cornerRadius: 2)
                     .fill(
-                        RadialGradient(
-                            colors: [Color.cyan.opacity(0.22), .clear],
-                            center: .center,
-                            startRadius: 10,
-                            endRadius: 55
-                        )
-                    )
-                    .frame(width: 110, height: 110)
-
-                Image(systemName: "number.square.fill")
-                    .font(.system(size: 54))
-                    .foregroundStyle(
                         LinearGradient(
-                            colors: [.cyan, .purple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
+                            colors: [.clear, .cyan.opacity(0.6), .clear],
+                            startPoint: .leading,
+                            endPoint: .trailing
                         )
                     )
+                    .frame(width: 200, height: 3)
+                    .offset(y: scanLineOffset)
+                    .animation(
+                        .easeInOut(duration: 2.0).repeatForever(autoreverses: true),
+                        value: scanLineOffset
+                    )
+                    .onAppear { scanLineOffset = 120 }
             }
 
-            Text(.localized("Enter Pairing Code"))
-                .font(.title2.bold())
-                .foregroundStyle(.white)
+            // Corner brackets
+            scannerCorners
+                .frame(width: 240, height: 240)
 
-            Text(.localized("Enter the 6-digit code shown on the other device."))
+            // Detection indicator
+            if scanner.isDetected {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.green)
+                    .transition(.scale.combined(with: .opacity))
+                    .shadow(color: .green.opacity(0.5), radius: 10)
+            }
+        }
+        .animation(.spring(response: 0.4, dampingFraction: 0.7), value: scanner.isDetected)
+    }
+
+    // MARK: - Scanner Corners
+
+    private var scannerCorners: some View {
+        GeometryReader { geo in
+            let length: CGFloat = 30
+            let lineWidth: CGFloat = 3
+            let color = scanner.isDetected ? Color.green : Color.cyan
+
+            // Top-left
+            Path { p in
+                p.move(to: CGPoint(x: 0, y: length))
+                p.addLine(to: CGPoint(x: 0, y: 0))
+                p.addLine(to: CGPoint(x: length, y: 0))
+            }
+            .stroke(color, lineWidth: lineWidth)
+
+            // Top-right
+            Path { p in
+                p.move(to: CGPoint(x: geo.size.width - length, y: 0))
+                p.addLine(to: CGPoint(x: geo.size.width, y: 0))
+                p.addLine(to: CGPoint(x: geo.size.width, y: length))
+            }
+            .stroke(color, lineWidth: lineWidth)
+
+            // Bottom-left
+            Path { p in
+                p.move(to: CGPoint(x: 0, y: geo.size.height - length))
+                p.addLine(to: CGPoint(x: 0, y: geo.size.height))
+                p.addLine(to: CGPoint(x: length, y: geo.size.height))
+            }
+            .stroke(color, lineWidth: lineWidth)
+
+            // Bottom-right
+            Path { p in
+                p.move(to: CGPoint(x: geo.size.width - length, y: geo.size.height))
+                p.addLine(to: CGPoint(x: geo.size.width, y: geo.size.height))
+                p.addLine(to: CGPoint(x: geo.size.width, y: geo.size.height - length))
+            }
+            .stroke(color, lineWidth: lineWidth)
+        }
+    }
+
+    // MARK: - Status Section
+
+    private var statusSection: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 8) {
+                if scanner.isDetected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                } else {
+                    ProgressView()
+                        .tint(.cyan)
+                }
+
+                Text(scanner.statusText)
+                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                    .foregroundStyle(scanner.isDetected ? .green : .white)
+            }
+            .animation(.easeInOut(duration: 0.3), value: scanner.isDetected)
+        }
+    }
+
+    // MARK: - Instruction
+
+    private var instructionText: some View {
+        VStack(spacing: 10) {
+            Text(.localized("Point your camera at the pairing animation"))
                 .font(.subheadline)
                 .foregroundStyle(.white.opacity(0.65))
                 .multilineTextAlignment(.center)
-        }
-    }
 
-    // MARK: - Digit Input
-
-    private var digitInputSection: some View {
-        let chars = Array(enteredCode)
-        return HStack(spacing: 10) {
-            ForEach(0..<6, id: \.self) { index in
-                digitBox(at: index, char: index < chars.count ? String(chars[index]) : nil)
-            }
-        }
-        .onTapGesture { isInputFocused = true }
-    }
-
-    private func digitBox(at index: Int, char: String?) -> some View {
-        let isFilled = char != nil
-        let isActive = index == enteredCode.count && isInputFocused
-
-        return ZStack {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(isFilled
-                    ? Color(hue: 0.62, saturation: 0.3, brightness: 0.22)
-                    : Color.white.opacity(0.07))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .strokeBorder(
-                            isActive
-                                ? AnyShapeStyle(LinearGradient(
-                                    colors: [.cyan, .purple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing))
-                                : AnyShapeStyle(Color.white.opacity(isFilled ? 0.3 : 0.15)),
-                            lineWidth: isActive ? 2 : 1
-                        )
-                )
-                .frame(width: 46, height: 56)
-
-            if let char {
-                Text(char)
-                    .font(.system(size: 26, weight: .bold, design: .monospaced))
-                    .foregroundStyle(.white)
-                    .transition(.scale.combined(with: .opacity))
-            } else if isActive {
-                BlinkingCursor()
-            }
-        }
-        .animation(.spring(response: 0.2, dampingFraction: 0.7), value: enteredCode.count)
-    }
-
-    // MARK: - Hint
-
-    @ViewBuilder
-    private var hintLabel: some View {
-        if enteredCode.isEmpty {
-            Text(.localized("Tap the boxes to begin typing"))
+            Text(.localized("The scanner will automatically detect the animation on the other device"))
                 .font(.caption)
                 .foregroundStyle(.white.opacity(0.4))
-                .transition(.opacity)
-                .animation(.easeInOut, value: enteredCode.isEmpty)
+                .multilineTextAlignment(.center)
         }
     }
 }
 
-// MARK: - Blinking Cursor
+// MARK: - Pair Code Scanner (MPC Auto-Discovery)
 
-/// A simple blinking vertical bar shown in the active digit box.
-private struct BlinkingCursor: View {
-    @State private var visible = true
+/// Handles MultipeerConnectivity browsing to auto-discover nearby
+/// advertising devices and extract their pairing code from discovery info.
+@MainActor
+final class PairCodeScanner: NSObject, ObservableObject {
 
-    var body: some View {
-        Rectangle()
-            .fill(Color.cyan)
-            .frame(width: 2, height: 28)
-            .opacity(visible ? 1 : 0)
-            .animation(
-                .easeInOut(duration: 0.5).repeatForever(autoreverses: true),
-                value: visible
-            )
-            .onAppear { visible = false }
+    @Published var isDetected: Bool = false
+    @Published var statusText: String = String.localized("Scanning for pairing animation…")
+
+    private var browser: MCNearbyServiceBrowser?
+    private var peerID: MCPeerID?
+    private var onCodeFound: ((String) -> Void)?
+    private var hasReported = false
+
+    func startScanning(onDetected: @escaping (String) -> Void) {
+        onCodeFound = onDetected
+        hasReported = false
+        isDetected = false
+        statusText = .localized("Scanning for pairing animation…")
+
+        peerID = MCPeerID(displayName: "\(UIDevice.current.name)-scanner-\(UUID().uuidString.prefix(8))")
+        browser = MCNearbyServiceBrowser(
+            peer: peerID!,
+            serviceType: PairingService.serviceType
+        )
+        browser?.delegate = self
+        browser?.startBrowsingForPeers()
+    }
+
+    func stopScanning() {
+        browser?.stopBrowsingForPeers()
+        browser = nil
+    }
+}
+
+// MARK: - MCNearbyServiceBrowserDelegate
+
+extension PairCodeScanner: MCNearbyServiceBrowserDelegate {
+    nonisolated func browser(
+        _ browser: MCNearbyServiceBrowser,
+        foundPeer peerID: MCPeerID,
+        withDiscoveryInfo info: [String: String]?
+    ) {
+        Task { @MainActor in
+            guard !self.hasReported,
+                  let code = info?["code"],
+                  code.count == 6,
+                  code.allSatisfy(\.isNumber) else { return }
+
+            self.hasReported = true
+            self.isDetected = true
+            self.statusText = .localized("Pairing animation detected!")
+            self.browser?.stopBrowsingForPeers()
+
+            // Brief visual delay so the user sees the detection feedback
+            try? await Task.sleep(nanoseconds: 600_000_000)
+            self.onCodeFound?(code)
+        }
+    }
+
+    nonisolated func browser(
+        _ browser: MCNearbyServiceBrowser,
+        lostPeer peerID: MCPeerID
+    ) {}
+
+    nonisolated func browser(
+        _ browser: MCNearbyServiceBrowser,
+        didNotStartBrowsingForPeers error: Error
+    ) {
+        Task { @MainActor in
+            self.statusText = .localized("Unable to scan. Check Wi-Fi connection.")
+        }
+    }
+}
+
+// MARK: - Camera Preview (UIViewRepresentable)
+
+/// Wraps an `AVCaptureSession` rear-camera preview in a SwiftUI view.
+/// Used as the visual scanning element in `PairCodeScannerView`.
+private struct CameraPreviewRepresentable: UIViewRepresentable {
+    func makeUIView(context: Context) -> CameraPreviewUIView {
+        CameraPreviewUIView()
+    }
+    func updateUIView(_ uiView: CameraPreviewUIView, context: Context) {}
+}
+
+/// UIKit view that sets up and displays the rear camera feed.
+private class CameraPreviewUIView: UIView {
+    private var captureSession: AVCaptureSession?
+
+    override init(frame: CGRect) {
+        super.init(frame: frame)
+        backgroundColor = UIColor(white: 0.05, alpha: 1)
+        setupCamera()
+    }
+
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupCamera()
+    }
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        if let previewLayer = layer.sublayers?.first(where: { $0 is AVCaptureVideoPreviewLayer }) as? AVCaptureVideoPreviewLayer {
+            previewLayer.frame = bounds
+        }
+    }
+
+    private func setupCamera() {
+        let session = AVCaptureSession()
+        session.sessionPreset = .medium
+
+        guard let device = AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .back),
+              let input = try? AVCaptureDeviceInput(device: device) else {
+            showPlaceholder()
+            return
+        }
+
+        guard session.canAddInput(input) else {
+            showPlaceholder()
+            return
+        }
+        session.addInput(input)
+
+        let previewLayer = AVCaptureVideoPreviewLayer(session: session)
+        previewLayer.videoGravity = .resizeAspectFill
+        previewLayer.frame = bounds
+        layer.addSublayer(previewLayer)
+
+        captureSession = session
+        DispatchQueue.global(qos: .userInitiated).async {
+            session.startRunning()
+        }
+    }
+
+    private func showPlaceholder() {
+        // Fallback when camera is unavailable (e.g. simulator)
+        let gradient = CAGradientLayer()
+        gradient.colors = [
+            UIColor(red: 0.1, green: 0.12, blue: 0.18, alpha: 1).cgColor,
+            UIColor(red: 0.08, green: 0.1, blue: 0.15, alpha: 1).cgColor
+        ]
+        gradient.frame = bounds
+        layer.addSublayer(gradient)
+
+        let icon = UIImageView(image: UIImage(systemName: "camera.viewfinder"))
+        icon.tintColor = UIColor(white: 0.4, alpha: 1)
+        icon.contentMode = .scaleAspectFit
+        icon.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(icon)
+        NSLayoutConstraint.activate([
+            icon.centerXAnchor.constraint(equalTo: centerXAnchor),
+            icon.centerYAnchor.constraint(equalTo: centerYAnchor),
+            icon.widthAnchor.constraint(equalToConstant: 60),
+            icon.heightAnchor.constraint(equalToConstant: 60)
+        ])
+    }
+
+    deinit {
+        captureSession?.stopRunning()
     }
 }
 
