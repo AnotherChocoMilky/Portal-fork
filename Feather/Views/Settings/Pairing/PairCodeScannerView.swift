@@ -25,7 +25,6 @@ struct PairCodeScannerView: View {
 
     @StateObject private var scanner = PairCodeScanner()
     @State private var scanLineOffset: CGFloat = -120
-    @State private var pulseScale: CGFloat = 1.0
 
     // MARK: - Body
 
@@ -243,7 +242,7 @@ final class PairCodeScanner: NSObject, ObservableObject {
         isDetected = false
         statusText = .localized("Scanning for pairing animation…")
 
-        peerID = MCPeerID(displayName: UIDevice.current.name + "-scanner")
+        peerID = MCPeerID(displayName: "\(UIDevice.current.name)-scanner-\(UUID().uuidString.prefix(8))")
         browser = MCNearbyServiceBrowser(
             peer: peerID!,
             serviceType: PairingService.serviceType

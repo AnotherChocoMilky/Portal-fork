@@ -316,7 +316,7 @@ struct SettingsView: View {
             SettingsItem(title: .localized("Default Frameworks"), icon: "shippingbox.fill", color: .accentColor, destination: AnyView(ConfigurationView())),
 
             // Reset
-            SettingsItem(title: .localized("Reset"), icon: "arrow.counterclockwise.circle.fill", color: .red, destination: AnyView(GeneralView())),
+            SettingsItem(title: .localized("Reset"), icon: "arrow.counterclockwise.circle.fill", color: .red, destination: AnyView(ManageStorageView())),
 
             // Pairing
             SettingsItem(title: .localized("Pair Devices"), icon: "link.circle.fill", color: .cyan, destination: AnyView(PairingView())),

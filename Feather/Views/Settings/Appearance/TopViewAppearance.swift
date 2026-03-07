@@ -8,12 +8,9 @@ import NimbleViews
 /// Options include background color, text color, material style, version
 /// display, and visual effects like gradients and glass overlays.
 struct TopViewAppearance: View {
-    @AppStorage("Feather.portalTopViewEnabled") private var portalTopViewEnabled: Bool = true
     @AppStorage("Feather.portalTopViewColor") private var portalTopViewColor: String = "#0077BE"
     @AppStorage("Feather.portalTopViewStyle") private var portalTopViewStyle: Int = 0
-    @AppStorage("Feather.portalTopViewTitle") private var portalTopViewTitle: String = "Portal"
     @AppStorage("Feather.portalTopViewTextColor") private var portalTopViewTextColor: String = "#FFFFFF"
-    @AppStorage("Feather.portalTopViewShowIcon") private var portalTopViewShowIcon: Bool = true
     @AppStorage("Feather.portalTopViewShowVersion") private var portalTopViewShowVersion: Bool = true
     @AppStorage("Feather.portalTopViewUseGradient") private var useGradient: Bool = false
     @AppStorage("Feather.portalTopViewGradientColor") private var gradientEndColor: String = "#5856D6"
@@ -46,12 +43,14 @@ struct TopViewAppearance: View {
 
             // MARK: - Enable Toggle (always enabled, cannot be disabled)
             Section {
-                Toggle(isOn: .constant(true)) {
+                HStack {
                     Label("Enable Top View", systemImage: "uiwindow.split.2x1")
                         .font(.system(.body, design: .rounded, weight: .medium))
+                    Spacer()
+                    Text("Always On")
+                        .font(.system(.subheadline, design: .rounded))
+                        .foregroundStyle(.secondary)
                 }
-                .tint(Color.accentColor)
-                .disabled(true)
             } footer: {
                 Text("The Top View is always enabled to provide a consistent experience.")
             }
