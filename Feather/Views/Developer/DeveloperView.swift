@@ -3341,6 +3341,9 @@ struct FeatureFlagsView: View {
     @AppStorage("feature_advancedBackupTools") var advancedBackupTools = false
     @AppStorage("feature_newBackupOptions") var newBackupOptions = false
     @AppStorage("feature_passwordChanger") var passwordChanger = false
+    /// When `true`, the legacy sphere-animation pairing flow is used.
+    /// The default (`false`) uses direct MultipeerConnectivity discovery (MPC Direct).
+    @AppStorage("feature_useAnimationPairing") var useAnimationPairing = false
     
     var body: some View {
         List {
@@ -3384,6 +3387,14 @@ struct FeatureFlagsView: View {
                 Text("Files")
             } footer: {
                 Text("Enables advanced file management features including binary analysis, hex editing, file forensics, metadata extraction, batch operations, and more powerful file manipulation tools.")
+            }
+
+            Section {
+                Toggle("Use Animation Pairing", isOn: $useAnimationPairing)
+            } header: {
+                Text("Pairing")
+            } footer: {
+                Text("When enabled, uses the legacy sphere-animation pairing flow that requires scanning a visual code. By default, Pair Devices uses direct MultipeerConnectivity discovery — no code scanning needed.")
             }
         }
             .scrollContentBackground(.hidden)

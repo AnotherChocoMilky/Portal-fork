@@ -5,6 +5,7 @@ struct GeneralView: View {
     @StateObject private var hideManager = SettingsHideManager.shared
     @AppStorage("Feather.certificateExperience") private var certificateExperience: String = CertificateExperience.developer.rawValue
     @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
+    @AppStorage("feature_useAnimationPairing") private var useAnimationPairing = false
     @State private var navigateToCheckForUpdates = false
     @State private var showPairingView = false
     @Environment(\.navigateToUpdates) private var navigateToUpdates
@@ -40,7 +41,11 @@ struct GeneralView: View {
         .navigationTitle(.localized("General"))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showPairingView) {
-            PairingView()
+            if useAnimationPairing {
+                PairingView()
+            } else {
+                PairingMPCView()
+            }
         }
     }
 
