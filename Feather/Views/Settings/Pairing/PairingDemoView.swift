@@ -111,7 +111,7 @@ struct PairingDemoView: View {
                 .foregroundStyle(.white)
                 .frame(width: 44, height: 44)
                 .background(currentPage == totalPages - 1
-                    ? LinearGradient(colors: [.green, .cyan], startPoint: .leading, endPoint: .trailing)
+                    ? LinearGradient(colors: [Color.green, Color.cyan], startPoint: .leading, endPoint: .trailing)
                     : LinearGradient(colors: [.white.opacity(0.15), .white.opacity(0.15)],
                                      startPoint: .leading, endPoint: .trailing)
                 )
@@ -413,7 +413,7 @@ private struct ReceiverPage: View {
                     Rectangle()
                         .fill(
                             LinearGradient(
-                                colors: [.clear, (detected ? .green : .cyan).opacity(0.8), .clear],
+                                colors: [.clear, (detected ? Color.green : Color.cyan).opacity(0.8), .clear],
                                 startPoint: .leading, endPoint: .trailing
                             )
                         )
@@ -470,7 +470,7 @@ private struct ReceiverPage: View {
                                     RoundedRectangle(cornerRadius: 2)
                                         .fill(
                                             LinearGradient(
-                                                colors: [.cyan, .blue],
+                                                colors: [Color.cyan, Color.blue],
                                                 startPoint: .leading, endPoint: .trailing
                                             )
                                         )
@@ -707,7 +707,7 @@ private struct SuccessPage: View {
                         Circle()
                             .stroke(
                                 AngularGradient(
-                                    colors: [.green, .cyan, .blue, .purple, .green],
+                                    colors: [Color.green, Color.cyan, Color.blue, Color.purple, Color.green],
                                     center: .center
                                 ),
                                 lineWidth: max(0.5, 2.5 - Double(i) * 0.5)
@@ -732,9 +732,9 @@ private struct SuccessPage: View {
 
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 72))
-                        .foregroundStyle(LinearGradient(colors: [.green, .mint], startPoint: .top, endPoint: .bottom))
+                        .foregroundStyle(LinearGradient(colors: [Color.green, Color.mint], startPoint: .top, endPoint: .bottom))
                         .scaleEffect(checkmarkScale)
-                        .shadow(color: .green.opacity(0.7), radius: 24)
+                        .shadow(color: Color.green.opacity(0.7), radius: 24)
                 }
                 .frame(height: 200)
 
