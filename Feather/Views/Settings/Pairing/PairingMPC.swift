@@ -335,13 +335,7 @@ extension PairingMPCService: MCNearbyServiceAdvertiserDelegate {
 
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
         Task { @MainActor in
-            let nsError = error as NSError
-            if nsError.domain == Self.netServicesErrorDomain
-                && nsError.code == Self.kNetServicesFailedCode {
-                self.retryAdvertising()
-            } else {
-                self.retryAdvertising()
-            }
+            self.retryAdvertising()
         }
     }
 }
@@ -367,13 +361,7 @@ extension PairingMPCService: MCNearbyServiceBrowserDelegate {
 
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
         Task { @MainActor in
-            let nsError = error as NSError
-            if nsError.domain == Self.netServicesErrorDomain
-                && nsError.code == Self.kNetServicesFailedCode {
-                self.retryBrowsing()
-            } else {
-                self.retryBrowsing()
-            }
+            self.retryBrowsing()
         }
     }
 }
