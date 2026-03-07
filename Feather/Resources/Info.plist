@@ -284,6 +284,8 @@
 		<string>_portal-backup._udp</string>
 		<string>_portal-sources._tcp</string>
 		<string>_portal-sources._udp</string>
+		<string>_portal-pair._tcp</string>
+		<string>_portal-pair._udp</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>Portal requires camera access to scan QR codes to add sources.</string>
