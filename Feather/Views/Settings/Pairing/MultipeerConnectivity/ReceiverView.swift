@@ -295,7 +295,7 @@ struct ReceiverView: View {
                 ZStack {
                     Circle()
                         .fill(
-                            LinearGradient(
+                            RadialGradient(
                                 colors: [
                                     Color(hue: 0.55, saturation: 0.7, brightness: 0.4).opacity(0.4),
                                     .clear
