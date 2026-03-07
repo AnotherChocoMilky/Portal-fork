@@ -123,10 +123,10 @@ struct InstallProgressView<Footer: View>: View {
     @ViewBuilder
     private func _appIcon() -> some View {
         FRAppIconView(app: app)
-            .frame(width: 60, height: 60)
+            .frame(width: 44, height: 44)
             .shadow(color: colorManager.primaryColor.opacity(0.6), radius: 6, x: 0, y: 3)
             .overlay {
-                RoundedRectangle(cornerRadius: 60 * 0.2237)
+                RoundedRectangle(cornerRadius: 44 * 0.2237)
                     .stroke(colorManager.primaryColor.opacity(0.3), lineWidth: 2)
             }
     }
