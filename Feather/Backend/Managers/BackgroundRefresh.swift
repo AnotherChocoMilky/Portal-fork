@@ -59,27 +59,30 @@ class BackgroundRefreshManager: ObservableObject {
 
         let isAllowed = await withCheckedContinuation { (continuation: CheckedContinuation<Bool, Never>) in
             let pathMonitor = NWPathMonitor()
+            let lock = DispatchQueue(label: "BackgroundRefreshLock")
             var resumed = false
 
             pathMonitor.pathUpdateHandler = { path in
-                guard !resumed else { return }
-                resumed = true
-                pathMonitor.cancel()
+                lock.sync {
+                    guard !resumed else { return }
+                    resumed = true
+                    pathMonitor.cancel()
 
-                var allowed = false
-                if path.status == .satisfied {
-                    switch connectionPreference {
-                    case 0: // Both
-                        allowed = true
-                    case 1: // WiFi
-                        allowed = path.usesInterfaceType(.wifi)
-                    case 2: // Cellular
-                        allowed = path.usesInterfaceType(.cellular)
-                    default:
-                        allowed = true
+                    var allowed = false
+                    if path.status == .satisfied {
+                        switch connectionPreference {
+                        case 0: // Both
+                            allowed = true
+                        case 1: // WiFi
+                            allowed = path.usesInterfaceType(.wifi)
+                        case 2: // Cellular
+                            allowed = path.usesInterfaceType(.cellular)
+                        default:
+                            allowed = true
+                        }
                     }
+                    continuation.resume(returning: allowed)
                 }
-                continuation.resume(returning: allowed)
             }
 
             let queue = DispatchQueue(label: "BackgroundRefreshNetworkMonitor")
