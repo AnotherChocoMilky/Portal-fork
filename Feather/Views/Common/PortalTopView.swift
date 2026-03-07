@@ -54,6 +54,13 @@ struct PortalTopView: View {
             } else {
                 GeometryReader { geometry in
                     let safeAreaTop = geometry.safeAreaInsets.top
+                    // iPhones with Dynamic Island have a significantly larger top safe area
+                    // (~59 pt vs ~44 pt for notch).  Placing the pill within that region
+                    // positions it directly behind the Dynamic Island hardware, making it
+                    // invisible.  We detect this and shift the pill below the island instead.
+                    // Threshold: midpoint between notch (~44 pt) and Dynamic Island (~59 pt).
+                    let dynamicIslandThreshold: CGFloat = 54
+                    let hasDynamicIsland = safeAreaTop >= dynamicIslandThreshold
 
                     VStack(spacing: 0) {
                         Spacer(minLength: 0)
@@ -137,7 +144,11 @@ struct PortalTopView: View {
 
                         Spacer(minLength: 0)
                     }
-                    .frame(height: max(safeAreaTop, 20))
+                    // On Dynamic Island devices the pill sits below the island;
+                    // on notch / no-notch devices it is vertically centred inside
+                    // the top inset as before.
+                    .frame(height: hasDynamicIsland ? 52 : max(safeAreaTop, 20))
+                    .offset(y: hasDynamicIsland ? safeAreaTop + 4 : 0)
 
                     Spacer()
                 }
