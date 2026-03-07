@@ -8,12 +8,41 @@ struct PortalTopView: View {
     @AppStorage("Feather.portalTopViewTextColor") private var portalTopViewTextColor: String = "#FFFFFF"
     @AppStorage("Feather.portalTopViewShowIcon") private var portalTopViewShowIcon: Bool = true
     @AppStorage("Feather.portalTopViewShowVersion") private var portalTopViewShowVersion: Bool = true
+    @AppStorage("Feather.portalTopViewUseGradient") private var useGradient: Bool = false
+    @AppStorage("Feather.portalTopViewGradientColor") private var gradientEndColor: String = "#5856D6"
+    @AppStorage("Feather.portalTopViewGradientDirection") private var gradientDirection: Int = 0
+    @AppStorage("Feather.portalTopViewGlassEffect") private var glassEffect: Bool = false
+    @AppStorage("Feather.portalTopViewGlassIntensity") private var glassIntensity: Int = 0
 
     private var material: Material {
         switch portalTopViewStyle {
         case 1: return .thinMaterial
         case 2: return .regularMaterial
         case 3: return .thickMaterial
+        default: return .ultraThinMaterial
+        }
+    }
+
+    private var gradientStartPoint: UnitPoint {
+        switch gradientDirection {
+        case 1: return .top      // Vertical
+        case 2: return .topLeading // Diagonal
+        default: return .leading  // Horizontal
+        }
+    }
+
+    private var gradientEndPoint: UnitPoint {
+        switch gradientDirection {
+        case 1: return .bottom
+        case 2: return .bottomTrailing
+        default: return .trailing
+        }
+    }
+
+    private var glassMaterial: Material {
+        switch glassIntensity {
+        case 1: return .thinMaterial
+        case 2: return .regularMaterial
         default: return .ultraThinMaterial
         }
     }
@@ -64,17 +93,38 @@ struct PortalTopView: View {
                                     Capsule()
                                         .fill(material)
 
-                                    // Subtle Depth Layer
-                                    Capsule()
-                                        .fill(LinearGradient(colors: [Color(hex: portalTopViewColor).opacity(0.1), Color.blue.opacity(0.05)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                    // Gradient or solid color depth layer
+                                    if useGradient {
+                                        Capsule()
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [Color(hex: portalTopViewColor), Color(hex: gradientEndColor)],
+                                                    startPoint: gradientStartPoint,
+                                                    endPoint: gradientEndPoint
+                                                )
+                                            )
+                                            .opacity(0.45)
+                                    } else {
+                                        Capsule()
+                                            .fill(LinearGradient(colors: [Color(hex: portalTopViewColor).opacity(0.1), Color.blue.opacity(0.05)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                    }
+
+                                    // Glass effect overlay
+                                    if glassEffect {
+                                        Capsule()
+                                            .fill(glassMaterial)
+                                            .opacity(glassIntensity == 0 ? 0.3 : (glassIntensity == 1 ? 0.5 : 0.7))
+                                    }
                                 }
                                 .overlay {
                                     Capsule()
                                         .stroke(
                                             LinearGradient(
-                                                colors: [Color(hex: portalTopViewColor).opacity(0.5), Color.blue.opacity(0.3), Color(hex: portalTopViewColor).opacity(0.1)],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
+                                                colors: useGradient
+                                                    ? [Color(hex: portalTopViewColor).opacity(0.6), Color(hex: gradientEndColor).opacity(0.4), Color(hex: portalTopViewColor).opacity(0.1)]
+                                                    : [Color(hex: portalTopViewColor).opacity(0.5), Color.blue.opacity(0.3), Color(hex: portalTopViewColor).opacity(0.1)],
+                                                startPoint: gradientStartPoint,
+                                                endPoint: gradientEndPoint
                                             ),
                                             lineWidth: 0.5
                                         )

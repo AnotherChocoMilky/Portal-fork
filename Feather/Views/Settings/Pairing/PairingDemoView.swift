@@ -8,8 +8,8 @@ import NimbleViews
 ///
 /// Pages:
 ///  1. Introduction — what the Pairing feature does
-///  2. Sender side  — the animated sphere + QR code being shown
-///  3. Receiver side — camera scanner pointing at the QR code
+///  2. Sender side  — the animated sphere IS the pairing code
+///  3. Receiver side — camera scanner pointing at the animated sphere
 ///  4. Transfer in progress — animated progress with simulated data
 ///  5. Success        — the SuccessfulPairView recreation with sample data
 struct PairingDemoView: View {
@@ -254,8 +254,9 @@ private struct IntroPage: View {
 private struct SenderPage: View {
     @State private var morphProgress: Double = 0.0
     @State private var appeared = false
-    @State private var showQR = false
-    private let demoCode = "473829"
+    @State private var glowPulse = false
+    @State private var statusText: String = .localized("Initializing…")
+    @State private var showDetails = false
 
     var body: some View {
         ScrollView {
@@ -265,74 +266,95 @@ private struct SenderPage: View {
                 // Step badge
                 stepBadge(number: 1, label: .localized("On the sending device"))
 
-                // Sphere animation + QR overlay
+                // Sphere animation — THE pairing code itself
                 ZStack {
+                    // Pulsing glow halo
                     Circle()
                         .fill(
                             RadialGradient(
                                 colors: [
-                                    Color(hue: 0.65, saturation: 0.6, brightness: 0.45).opacity(0.25), .clear
+                                    Color(hue: 0.65, saturation: 0.6, brightness: 0.45).opacity(glowPulse ? 0.35 : 0.15),
+                                    .clear
                                 ],
-                                center: .center, startRadius: 10, endRadius: 140
+                                center: .center, startRadius: 10, endRadius: 160
                             )
                         )
-                        .frame(width: 280, height: 280)
+                        .frame(width: 300, height: 300)
+                        .animation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true), value: glowPulse)
 
                     PairingCodeSphere(morphProgress: morphProgress, pairingStatus: .waiting)
                         .frame(width: 260, height: 260)
 
-                    // QR code overlay in top-right corner
-                    if showQR {
-                        VStack {
-                            HStack {
-                                Spacer()
-                                DemoQRCodeView(code: demoCode)
-                                    .transition(.scale.combined(with: .opacity))
-                            }
-                            Spacer()
-                        }
-                        .frame(width: 260, height: 260)
-                    }
+                    // Animated ring around the sphere
+                    Circle()
+                        .stroke(
+                            AngularGradient(
+                                colors: [
+                                    Color(hue: 0.55, saturation: 0.8, brightness: 0.9).opacity(0.6),
+                                    Color(hue: 0.70, saturation: 0.7, brightness: 0.85).opacity(0.3),
+                                    .clear,
+                                    Color(hue: 0.55, saturation: 0.8, brightness: 0.9).opacity(0.6)
+                                ],
+                                center: .center
+                            ),
+                            lineWidth: 2
+                        )
+                        .frame(width: 275, height: 275)
+                        .rotationEffect(.degrees(glowPulse ? 360 : 0))
+                        .animation(.linear(duration: 8).repeatForever(autoreverses: false), value: glowPulse)
                 }
+                .scaleEffect(appeared ? 1.0 : 0.8)
+                .opacity(appeared ? 1.0 : 0.0)
+                .animation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1), value: appeared)
 
                 VStack(spacing: 8) {
                     Text(.localized("Animated Pairing Code"))
                         .font(.headline).foregroundStyle(.white)
-                    Text(.localized("Tap \"Pair Devices\" — a unique QR code\nappears in the corner of the animation."))
+                    Text(.localized("The sphere animation IS the pairing code.\nPoint the other device's camera at it."))
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.65))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
-                    // Simulated code label
-                    Text(.localized("Code:") + " \(demoCode)")
-                        .font(.system(.title3, design: .monospaced, weight: .bold))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [Color(hue: 0.55, saturation: 0.9, brightness: 1.0),
-                                         Color(hue: 0.75, saturation: 0.8, brightness: 0.9)],
-                                startPoint: .leading, endPoint: .trailing
-                            )
-                        )
-                        .padding(.top, 4)
+
+                    // Animated status indicator
+                    HStack(spacing: 8) {
+                        Circle()
+                            .fill(Color.green)
+                            .frame(width: 8, height: 8)
+                            .opacity(glowPulse ? 1.0 : 0.4)
+                            .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: glowPulse)
+                        Text(statusText)
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                    .padding(.top, 4)
                 }
+                .opacity(appeared ? 1.0 : 0.0)
+                .animation(.easeIn(duration: 0.4).delay(0.3), value: appeared)
 
                 // Simulated device status card
                 deviceCard(
                     name: "Dylan's iPhone 15 Pro",
-                    status: .localized("Generating pairing code…"),
+                    status: .localized("Broadcasting pairing animation…"),
                     icon: "iphone",
                     color: .blue
                 )
                 .padding(.horizontal, 24)
+                .opacity(showDetails ? 1.0 : 0.0)
+                .offset(y: showDetails ? 0 : 12)
+                .animation(.spring(response: 0.5, dampingFraction: 0.7).delay(0.6), value: showDetails)
 
                 Spacer(minLength: 24)
             }
         }
         .onAppear {
             appeared = true
-            withAnimation(.easeInOut(duration: 2.5)) { morphProgress = 0.72 }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                withAnimation(.spring()) { showQR = true }
+            glowPulse = true
+            showDetails = true
+            withAnimation(.easeInOut(duration: 3.0)) { morphProgress = 0.72 }
+            // Simulate status updates
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                withAnimation { statusText = .localized("Waiting for other device…") }
             }
         }
     }
@@ -344,6 +366,9 @@ private struct ReceiverPage: View {
     @State private var appeared = false
     @State private var scanLineOffset: CGFloat = -100
     @State private var bracketPulse = false
+    @State private var detectionProgress: Double = 0.0
+    @State private var sphereMorph: Double = 0.0
+    @State private var detected = false
 
     var body: some View {
         ScrollView {
@@ -352,7 +377,7 @@ private struct ReceiverPage: View {
 
                 stepBadge(number: 2, label: .localized("On the receiving device"))
 
-                // Simulated camera scanner UI
+                // Simulated camera scanner UI with sphere detection
                 ZStack {
                     RoundedRectangle(cornerRadius: 20)
                         .fill(Color.black.opacity(0.7))
@@ -371,15 +396,24 @@ private struct ReceiverPage: View {
                         )
                         .frame(width: 240, height: 240)
 
-                    // Simulated QR code in the viewfinder
-                    DemoQRCodeView(code: "473829")
+                    // Simulated sphere animation in the viewfinder (as seen through camera)
+                    PairingCodeSphere(morphProgress: sphereMorph, pairingStatus: .waiting)
+                        .frame(width: 120, height: 120)
                         .opacity(0.85)
+
+                    // Detection highlight ring when detected
+                    if detected {
+                        Circle()
+                            .stroke(Color.green, lineWidth: 2.5)
+                            .frame(width: 140, height: 140)
+                            .transition(.scale.combined(with: .opacity))
+                    }
 
                     // Scanning line
                     Rectangle()
                         .fill(
                             LinearGradient(
-                                colors: [.clear, .cyan.opacity(0.8), .clear],
+                                colors: [.clear, (detected ? .green : .cyan).opacity(0.8), .clear],
                                 startPoint: .leading, endPoint: .trailing
                             )
                         )
@@ -389,24 +423,75 @@ private struct ReceiverPage: View {
 
                     // Corner brackets
                     scannerBrackets
+
+                    // Detection badge
+                    if detected {
+                        VStack {
+                            HStack {
+                                Spacer()
+                                HStack(spacing: 4) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .font(.caption2)
+                                    Text(.localized("Detected"))
+                                        .font(.system(size: 10, weight: .bold))
+                                }
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color.green.opacity(0.85))
+                                .clipShape(Capsule())
+                                .padding(8)
+                            }
+                            Spacer()
+                        }
+                        .frame(width: 240, height: 240)
+                        .transition(.scale.combined(with: .opacity))
+                    }
                 }
                 .clipShape(RoundedRectangle(cornerRadius: 20))
 
                 VStack(spacing: 8) {
-                    Text(.localized("Scan with Camera"))
+                    Text(.localized("Scan the Animation"))
                         .font(.headline).foregroundStyle(.white)
-                    Text(.localized("Tap \"Scan Pairing Code\" on the other device —\npoint your camera at the animated code."))
+                    Text(.localized("Tap \"Scan Pairing Code\" — point your camera\nat the animated sphere on the other device."))
                         .font(.subheadline)
                         .foregroundStyle(.white.opacity(0.65))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 32)
+
+                    // Detection progress bar
+                    if detectionProgress > 0 && !detected {
+                        VStack(spacing: 4) {
+                            GeometryReader { geo in
+                                ZStack(alignment: .leading) {
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(Color.white.opacity(0.1))
+                                        .frame(height: 4)
+                                    RoundedRectangle(cornerRadius: 2)
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [.cyan, .blue],
+                                                startPoint: .leading, endPoint: .trailing
+                                            )
+                                        )
+                                        .frame(width: geo.size.width * detectionProgress, height: 4)
+                                }
+                            }
+                            .frame(maxWidth: 200, minHeight: 4, maxHeight: 4)
+                            Text(.localized("Detecting animation…"))
+                                .font(.caption2)
+                                .foregroundStyle(.white.opacity(0.4))
+                        }
+                        .padding(.top, 4)
+                        .transition(.opacity)
+                    }
                 }
 
                 // Simulated action buttons
                 VStack(spacing: 12) {
                     simulatedButton(
                         label: .localized("Scan Pairing Code"),
-                        icon: "qrcode.viewfinder",
+                        icon: "camera.viewfinder",
                         gradient: [Color(hue: 0.70, saturation: 0.75, brightness: 0.90),
                                    Color(hue: 0.82, saturation: 0.65, brightness: 0.85)]
                     )
@@ -423,6 +508,18 @@ private struct ReceiverPage: View {
             }
             withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {
                 bracketPulse = true
+            }
+            withAnimation(.easeInOut(duration: 2.0)) {
+                sphereMorph = 0.65
+            }
+            // Simulate detection progress
+            withAnimation(.easeInOut(duration: 2.5).delay(1.0)) {
+                detectionProgress = 1.0
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                    detected = true
+                }
             }
         }
     }
@@ -447,7 +544,7 @@ private struct ReceiverPage: View {
             path.addLine(to: CGPoint(x: 0, y: 4 * yFlip))
             path.addLine(to: CGPoint(x: 20 * xFlip, y: 0))
         }
-        .stroke(Color.cyan, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+        .stroke(detected ? Color.green : Color.cyan, style: StrokeStyle(lineWidth: 3, lineCap: .round))
         .offset(x: x, y: y)
     }
 }
@@ -713,38 +810,6 @@ private struct SuccessPage: View {
 }
 
 // MARK: - Shared Helpers
-
-/// A small QR code image generated from `code` using CoreImage.
-struct DemoQRCodeView: View {
-    let code: String
-    private let size: CGFloat = 80
-
-    var body: some View {
-        if let img = generateQRCode(from: code) {
-            Image(uiImage: img)
-                .interpolation(.none)
-                .resizable()
-                .scaledToFit()
-                .frame(width: size, height: size)
-                .padding(6)
-                .background(.white)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
-                .shadow(color: .black.opacity(0.4), radius: 6)
-        }
-    }
-
-    private func generateQRCode(from string: String) -> UIImage? {
-        guard let data = string.data(using: .utf8),
-              let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
-        filter.setValue(data, forKey: "inputMessage")
-        filter.setValue("M", forKey: "inputCorrectionLevel")
-        guard let ciImage = filter.outputImage else { return nil }
-        let scaled = ciImage.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
-        let context = CIContext()
-        guard let cgImage = context.createCGImage(scaled, from: scaled.extent) else { return nil }
-        return UIImage(cgImage: cgImage)
-    }
-}
 
 private func stepBadge(number: Int, label: String) -> some View {
     HStack(spacing: 10) {
