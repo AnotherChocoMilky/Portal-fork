@@ -92,7 +92,7 @@ struct GeneralView: View {
                 SettingsRow(icon: "externaldrive.fill.badge.person.crop", title: String.localized("Storage"), color: .accentColor, destination: ManageStorageView())
             }
             if !hideManager.isHidden("settings.backupRestore") {
-                SettingsRow(icon: "externaldrive.fill.badge.timemachine", title: String.localized("Backup & Restore"), color: .accentColor, destination: BackupRestoreView())
+                SettingsRow(icon: "externaldrive.fill.badge.timemachine", title: String.localized("Backup & Restore"), color: .accentColor, destination: SelfBackupRestoreView())
             }
             if !hideManager.isHidden("settings.pairing") {
                 Button {

@@ -441,7 +441,7 @@ struct PairingMPCView: View {
                     color: Color(hue: 0.55, saturation: 0.7, brightness: 0.9).opacity(0.5),
                     radius: 16
                 )
-                .symbolEffect(.pulse, isActive: service.state == .advertising || service.state == .browsing)
+                .ifAvailableiOS17SymbolPulse(isActive: service.state == .advertising || service.state == .browsing)
         }
     }
 

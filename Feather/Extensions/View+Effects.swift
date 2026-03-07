@@ -5,7 +5,7 @@ struct BounceEffectModifier<T: Equatable>: ViewModifier {
     let value: T
 
     func body(content: Content) -> some View {
-        if #available(iOS 17.0, *) {
+        if #available(iOS 18.0, *) {
             content.symbolEffect(.bounce, value: value)
         } else {
             content
@@ -47,7 +47,7 @@ extension View {
 
     @ViewBuilder
     func bounceEffect() -> some View {
-        if #available(iOS 17.0, *) {
+        if #available(iOS 18.0, *) {
             self.symbolEffect(.bounce)
         } else {
             self
@@ -60,6 +60,15 @@ extension View {
 
     func pulseEffect<T: Equatable>(_ value: T) -> some View {
         self.modifier(PulseEffectModifier(value: value))
+    }
+
+    @ViewBuilder
+    func ifAvailableiOS17SymbolPulse(isActive: Bool) -> some View {
+        if #available(iOS 17.0, *) {
+            self.symbolEffect(.pulse, isActive: isActive)
+        } else {
+            self
+        }
     }
 
     @ViewBuilder
