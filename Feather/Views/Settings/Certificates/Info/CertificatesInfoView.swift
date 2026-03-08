@@ -497,7 +497,7 @@ struct CertificatesInfoView: View {
         VStack(spacing: 10) {
             actionButton(
                 icon: "doc.badge.arrow.up",
-                title: "Open P12 In Files",
+                title: "Export P12",
                 action: {
                     if let p12URL = Storage.shared.getFile(.certificate, from: cert) {
                         exportedFileURL = p12URL
@@ -508,7 +508,7 @@ struct CertificatesInfoView: View {
             
             actionButton(
                 icon: "doc.badge.gearshape",
-                title: "Open Provision In Files",
+                title: "Export Provision",
                 action: {
                     if let provisionURL = Storage.shared.getFile(.provision, from: cert) {
                         exportedFileURL = provisionURL
