@@ -53,7 +53,7 @@ struct URLSchemeView: View {
                     Text(info.scheme)
                         .font(.system(.subheadline, design: .monospaced))
                         .fontWeight(.semibold)
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
 
                     Text(info.description)
                         .font(.footnote)

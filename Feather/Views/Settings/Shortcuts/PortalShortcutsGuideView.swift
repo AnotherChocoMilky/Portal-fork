@@ -85,32 +85,32 @@ struct PortalShortcutsGuideView: View {
             }
 
             VStack(spacing: 12) {
-                StepRow(
+                PortalShortcutStepRow(
                     number: "1",
                     title: "Open the Shortcuts App",
                     description: "Find the Shortcuts app on your Home Screen or in the App Library."
                 )
-                StepRow(
+                PortalShortcutStepRow(
                     number: "2",
                     title: "Create a New Shortcut",
                     description: "Tap the '+' button in the top-right corner to start a new shortcut."
                 )
-                StepRow(
+                PortalShortcutStepRow(
                     number: "3",
                     title: "Search for Portal Actions",
                     description: "Tap 'Add Action', then search for 'Portal' to see all available actions."
                 )
-                StepRow(
+                PortalShortcutStepRow(
                     number: "4",
                     title: "Add a Portal Action",
                     description: "Select the action you want, such as 'Install Portal App' or 'Refresh Portal Sources'."
                 )
-                StepRow(
+                PortalShortcutStepRow(
                     number: "5",
                     title: "Configure Parameters",
                     description: "Fill in any required fields, like an App ID or Source URL, to configure the action."
                 )
-                StepRow(
+                PortalShortcutStepRow(
                     number: "6",
                     title: "Run or Automate",
                     description: "Tap the play button to test your shortcut, or add it to an automation to run automatically."
@@ -287,7 +287,7 @@ private struct FeaturePill: View {
     }
 }
 
-private struct StepRow: View {
+private struct PortalShortcutStepRow: View {
     let number: String
     let title: String
     let description: String
