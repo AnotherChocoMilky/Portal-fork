@@ -45,12 +45,26 @@ struct InstallProgressView<Footer: View>: View {
                 .scaleEffect(_isPulsing ? 1.02 : 1.0)
                 .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: _isPulsing)
 
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(app.name ?? "App")
                     .font(.headline)
                     .bold()
                     .foregroundColor(colorManager.primaryColor.adaptiveForeground)
                     .lineLimit(1)
+
+                if let version = app.version {
+                    Text("v\(version)")
+                        .font(.caption2)
+                        .foregroundColor(colorManager.primaryColor.adaptiveForeground.opacity(0.6))
+                        .lineLimit(1)
+                }
+
+                if let bundleID = app.identifier {
+                    Text(bundleID)
+                        .font(.caption2)
+                        .foregroundColor(colorManager.primaryColor.adaptiveForeground.opacity(0.5))
+                        .lineLimit(1)
+                }
 
                 _progressBar()
 
@@ -99,18 +113,28 @@ struct InstallProgressView<Footer: View>: View {
     @ViewBuilder
     private func _progressBar() -> some View {
         GeometryReader { geometry in
+            let progressWidth = geometry.size.width * CGFloat(viewModel.overallProgress)
             ZStack(alignment: .leading) {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(colorManager.primaryColor.adaptiveForeground.opacity(0.2))
-                    .frame(height: 4)
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(colorManager.primaryColor.adaptiveForeground.opacity(0.15))
+                    .frame(height: 6)
 
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(colorManager.primaryColor)
-                    .frame(width: geometry.size.width * CGFloat(viewModel.overallProgress), height: 4)
-                    .animation(.smooth, value: viewModel.overallProgress)
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(
+                        LinearGradient(
+                            colors: [
+                                colorManager.primaryColor.adaptiveForeground.opacity(0.9),
+                                colorManager.primaryColor.adaptiveForeground
+                            ],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: max(progressWidth, 0), height: 6)
+                    .animation(.easeInOut(duration: 0.4), value: viewModel.overallProgress)
             }
         }
-        .frame(height: 4)
+        .frame(height: 6)
     }
 
     private func _loadIconColors() {
@@ -122,7 +146,7 @@ struct InstallProgressView<Footer: View>: View {
 
     @ViewBuilder
     private func _appIcon() -> some View {
-        FRAppIconView(app: app)
+        FRAppIconView(app: app, size: 44)
             .frame(width: 44, height: 44)
             .shadow(color: colorManager.primaryColor.opacity(0.6), radius: 6, x: 0, y: 3)
             .overlay {
