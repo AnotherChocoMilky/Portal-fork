@@ -211,11 +211,11 @@ final class URLSchemeHandlerManager: ObservableObject {
         // MARK: Bulk Source Import
 
         case "addbulksource":
-            let urls = queryItems.filter { $0.name == "url" }.compactMap { $0.value?.removingPercentEncoding }
-            guard !urls.isEmpty else {
+            let extractedURLs = extractBulkSourceURLs(queryItems: queryItems)
+            guard !extractedURLs.isEmpty else {
                 return .missingParameter("url")
             }
-            return .bulkSource(urls)
+            return .bulkSource(extractedURLs)
 
         // MARK: External Integration
 
