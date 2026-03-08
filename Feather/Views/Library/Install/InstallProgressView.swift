@@ -76,8 +76,20 @@ struct InstallProgressView<Footer: View>: View {
         .padding(.horizontal, 16)
         .padding(.top, 24)
         .padding(.bottom, 30)
-        .background(Color.clear)
+        .background {
+            ZStack {
+                RoundedRectangle(cornerRadius: 30, style: .continuous)
+                    .fill(.ultraThinMaterial)
+
+                RoundedRectangle(cornerRadius: 30, style: .continuous)
+                    .fill(Color.white.opacity(0.06))
+
+                RoundedRectangle(cornerRadius: 30, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)
+            }
+        }
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+        .shadow(color: .black.opacity(0.18), radius: 24, x: 0, y: -4)
     }
 
     @ViewBuilder
