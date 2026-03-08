@@ -17,6 +17,7 @@ struct LibraryView: View {
     @State private var _selectedSigningAppPresenting: AnyApp?
     @State private var _selectedInstallAppPresenting: AnyApp?
     @State private var _selectedInstallModifyAppPresenting: AnyApp?
+    @State private var _selectedExportIPAPresenting: AnyApp?
     @State private var _showImportSelection = false
     @State private var _importStatus: ImportStatus = .loading
     @State private var _importedAppName: String = ""
@@ -250,6 +251,22 @@ struct LibraryView: View {
                                 }
                             }
                             .animation(.easeInOut(duration: 0.25), value: _selectedInstallAppPresenting?.id)
+                        }
+                        .overlay {
+                            Group {
+                                if let exportApp = _selectedExportIPAPresenting {
+                                    ExportingIPAView(
+                                        app: exportApp.base,
+                                        onDismiss: {
+                                            withAnimation(.easeInOut(duration: 0.25)) {
+                                                _selectedExportIPAPresenting = nil
+                                            }
+                                        }
+                                    )
+                                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                                }
+                            }
+                            .animation(.easeInOut(duration: 0.25), value: _selectedExportIPAPresenting?.id)
                         }
             .fullScreenCover(isPresented: $_showBatchSigningSheet) {
                 BatchSigningView(
@@ -596,7 +613,7 @@ extension LibraryView {
     }
 
     private func downloadIPA(for app: AppInfoPresentable) {
-        _selectedInstallAppPresenting = AnyApp(base: app, archive: true)
+        _selectedExportIPAPresenting = AnyApp(base: app)
         HapticsManager.shared.softImpact()
     }
 
