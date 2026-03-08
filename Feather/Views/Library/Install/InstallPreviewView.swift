@@ -109,10 +109,17 @@ struct InstallPreviewView: View {
             onDismiss()
         } label: {
             Image(systemName: "xmark")
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.secondary)
-                .frame(width: 36, height: 36)
-                .background(Color.clear)
+                .frame(width: 30, height: 30)
+                .background {
+                    ZStack {
+                        Circle()
+                            .fill(Color.primary.opacity(0.06))
+                        Circle()
+                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                    }
+                }
                 .clipShape(Circle())
         }
     }

@@ -40,7 +40,7 @@ struct InstallProgressView<Footer: View>: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.001)
+            Color.black.opacity(0.15)
                 .ignoresSafeArea()
                 .onTapGesture {}
 
@@ -77,19 +77,11 @@ struct InstallProgressView<Footer: View>: View {
         .padding(.top, 24)
         .padding(.bottom, 30)
         .background {
-            ZStack {
-                RoundedRectangle(cornerRadius: 30, style: .continuous)
-                    .fill(.ultraThinMaterial)
-
-                RoundedRectangle(cornerRadius: 30, style: .continuous)
-                    .fill(Color.white.opacity(0.06))
-
-                RoundedRectangle(cornerRadius: 30, style: .continuous)
-                    .strokeBorder(Color.white.opacity(0.15), lineWidth: 0.5)
-            }
+            _liquidGlassBackground(cornerRadius: 30)
         }
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        .shadow(color: .black.opacity(0.18), radius: 24, x: 0, y: -4)
+        .shadow(color: .black.opacity(0.12), radius: 20, x: 0, y: -2)
+        .shadow(color: .white.opacity(0.04), radius: 1, x: 0, y: -1)
     }
 
     @ViewBuilder
@@ -125,8 +117,8 @@ struct InstallProgressView<Footer: View>: View {
                             .foregroundColor(.secondary)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color.clear)
-                            .cornerRadius(4)
+                            .background(Color.primary.opacity(0.06))
+                            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
                     }
                 }
 
@@ -143,7 +135,9 @@ struct InstallProgressView<Footer: View>: View {
             Spacer(minLength: 0)
         }
         .padding(16)
-        .background(Color.clear)
+        .background {
+            _liquidGlassBackground(cornerRadius: 20, tintOpacity: 0.04, borderOpacity: 0.12)
+        }
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
@@ -331,5 +325,44 @@ struct InstallProgressView<Footer: View>: View {
             }
         }
         return total
+    }
+
+    @ViewBuilder
+    private func _liquidGlassBackground(
+        cornerRadius: CGFloat,
+        tintOpacity: Double = 0.08,
+        borderOpacity: Double = 0.2
+    ) -> some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(Color(.systemBackground).opacity(tintOpacity))
+
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.12),
+                            Color.white.opacity(0.02),
+                            Color.white.opacity(0.04)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(borderOpacity),
+                            Color.white.opacity(borderOpacity * 0.3),
+                            Color.white.opacity(borderOpacity * 0.6)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 0.5
+                )
+        }
     }
 }
