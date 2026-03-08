@@ -10,7 +10,6 @@ import NimbleViews
 import IDeviceSwift
 import OSLog
 
-// MARK: - View
 struct InstallPreviewView: View {
     var onDismiss: () -> Void
 
@@ -19,27 +18,48 @@ struct InstallPreviewView: View {
     @AppStorage("Feather.serverMethod") private var _serverMethod: Int = 0
     @State private var _isWebviewPresenting = false
     @State private var progressTask: Task<Void, Never>?
-    @ObservedObject var colorManager = AppIconColorManager.shared
 
     var app: AppInfoPresentable
+    var ageRating: String
+    var installSource: InstallSource
     @StateObject var viewModel: InstallerStatusViewModel
     @StateObject var installer: ServerInstaller
 
     @State var isSharing: Bool
 
-    init(app: AppInfoPresentable, isSharing: Bool = false, onDismiss: @escaping () -> Void) {
+    init(
+        app: AppInfoPresentable,
+        isSharing: Bool = false,
+        ageRating: String = "4+",
+        installSource: InstallSource = .userImported,
+        onDismiss: @escaping () -> Void
+    ) {
         self.app = app
         self.isSharing = isSharing
+        self.ageRating = ageRating
+        self.installSource = installSource
         self.onDismiss = onDismiss
         let viewModel = InstallerStatusViewModel(isIdevice: UserDefaults.standard.integer(forKey: "Feather.installationMethod") == 1)
         self._viewModel = StateObject(wrappedValue: viewModel)
         self._installer = StateObject(wrappedValue: try! ServerInstaller(app: app, viewModel: viewModel))
     }
 
-    // MARK: Body
     var body: some View {
-        InstallProgressView(app: app, viewModel: viewModel) {
-            _button()
+        InstallProgressView(
+            app: app,
+            viewModel: viewModel,
+            ageRating: ageRating,
+            installSource: installSource,
+            onInstall: _install,
+            onOpen: {
+                if let bundleID = app.identifier,
+                   let url = URL(string: "portal://open?bundleID=\(bundleID)") {
+                    UIApplication.shared.open(url)
+                }
+                onDismiss()
+            }
+        ) {
+            _closeButton()
         }
         .sheet(isPresented: $_isWebviewPresenting) {
             SafariRepresentableView(url: installer.pageEndpoint).ignoresSafeArea()
@@ -77,7 +97,6 @@ struct InstallPreviewView: View {
                 }
             }
         }
-        .onAppear(perform: _install)
         .onAppear {
             BackgroundAudioManager.shared.start()
         }
@@ -89,28 +108,24 @@ struct InstallPreviewView: View {
     }
 
     @ViewBuilder
-    private func _button() -> some View {
+    private func _closeButton() -> some View {
         Button {
             onDismiss()
         } label: {
-            Text(viewModel.isCompleted ? "Close" : "Cancel")
-                .font(.footnote)
-                .bold()
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(.ultraThinMaterial)
-                .foregroundColor(colorManager.primaryColor.adaptiveForeground)
-                .cornerRadius(20)
+            Image(systemName: "xmark")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.secondary)
+                .frame(width: 36, height: 36)
+                .background(Color(.systemGray5))
+                .clipShape(Circle())
         }
-        .animation(.easeInOut(duration: 0.3), value: viewModel.isCompleted)
-        .compatTransition()
     }
 
     private func _install() {
         guard isSharing || app.identifier != Bundle.main.bundleIdentifier! || _installationMethod == 1 else {
             UIAlertController.showAlertWithOk(
                 title: .localized("Install"),
-                message: .localized("You cannot update ‘%@‘ with itself, please use an alternative tool to update it.", arguments: Bundle.main.name)
+                message: .localized("You cannot update '%@' with itself, please use an alternative tool to update it.", arguments: Bundle.main.name)
             )
             return
         }
@@ -182,11 +197,7 @@ struct InstallPreviewView: View {
     ) -> Task<Void, Never> {
 
         Task.detached(priority: .background) {
-            // Since UIApplication.installProgress(for:) is not available,
-            // we will simulate the completion of the installation.
-            // In the future, a proper progress tracking mechanism should be implemented.
-
-            try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds delay to simulate installation
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
 
             await MainActor.run {
                 viewModel.installProgress = 1.0

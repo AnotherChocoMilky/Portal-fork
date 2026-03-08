@@ -40,6 +40,14 @@ To build the actual iOS app, you need:
 - **Build System**: Makefile, xcodebuild
 
 ## Recent Changes
+- **Install Preview Sheet redesign**: Redesigned `InstallPreviewView.swift` and `InstallProgressView.swift` to match App Store-style install preview modal:
+  - Centered rounded card with `.ultraThinMaterial` background over dimmed overlay
+  - Header row with "Install App" title and circular xmark close button
+  - App info card showing icon (60x60), name + age badge, install source, bundle ID
+  - `InstallSource` enum (`.source(name:)` / `.userImported`) for source display
+  - Blue capsule "Install" button, progress bar during install, green "Open" button on completion
+  - Existing installation logic (server-based / IDeviceKitten) fully preserved
+
 - **Widget Extension setup**: Created proper Widget Extension structure in `/FeatherWidgets/` directory:
   - Added `FeatherWidgets.swift` with proper `@main` entry point
   - Created `Info.plist` with widget extension configuration
