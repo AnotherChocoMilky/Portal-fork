@@ -147,6 +147,7 @@ struct GeneralView: View {
 
     private var systemSection: some View {
         Section {
+            SettingsRow(icon: "link", title: String.localized("URL Schemes"), color: .accentColor, destination: URLSchemeView())
             if !hideManager.isHidden("settings.language") {
                 Button {
                     if let url = URL(string: UIApplication.openSettingsURLString) {
