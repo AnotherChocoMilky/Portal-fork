@@ -300,7 +300,7 @@ final class URLSchemeHandlerManager: ObservableObject {
 
     // MARK: - App Actions
 
-    private func findAppInSources(bundleID: String) -> (source: ASRepository, app: ASRepository.App)? {
+    @MainActor private func findAppInSources(bundleID: String) -> (source: ASRepository, app: ASRepository.App)? {
         let allApps = SourcesViewModel.shared.allApps
         return allApps.first(where: { $0.app.id == bundleID })
     }
