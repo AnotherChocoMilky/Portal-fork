@@ -73,6 +73,12 @@ To build the actual iOS app, you need:
   - Streamlined action buttons (text-only)
   - Clean empty state with subtle iconography
 
+- **Live Activity UI redesign**: Modernized the Live Activity interface across three files:
+  - `LiveActivityView.swift`: Redesigned with dynamic app name title, horizontal progress bar (vibrant green fill + muted track), "Step X/Y" indicator below the bar, bold percentage aligned right of the progress bar, bottom row with flashlight/camera circular buttons and notification indicator. All colors, fonts, and spacing driven dynamically from `LiveActivitySettings`.
+  - `InstallationLiveActivityWidget.swift`: Updated lock screen view to match redesigned layout with same progress bar style, step indicator, percentage display, and bottom icon row. Dynamic Island views updated with settings-driven font design and bold percentage.
+  - `LiveActivityManager.swift`: Verified data flow — all required fields (appName, progress, status, settings) are properly passed through to the UI layer. No changes needed.
+  - Progress bar clamped to prevent overflow when progress > 1.0.
+
 ## Links
 - [GitHub Repository](https://github.com/aoyn1xw/Portal)
 - [Releases](https://github.com/aoyn1xw/Portal/releases)
