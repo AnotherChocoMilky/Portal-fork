@@ -211,7 +211,7 @@ struct SelfBackupRestoreView: View {
                 Text(.localized("What's Included"))
             }
         }
-        .navigationTitle("Self Backup & Restore")
+        .navigationTitle("Backup & Restore")
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingBackupOptions) {
             BackupOptionsView(

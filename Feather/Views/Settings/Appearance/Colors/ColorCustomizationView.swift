@@ -190,7 +190,7 @@ struct ColorCustomizationView: View {
                 .disabled(appState.isSigning)
             }
         }
-        .navigationTitle("Appearance")
+        .navigationTitle("Visual Design")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
