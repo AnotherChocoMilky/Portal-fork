@@ -143,7 +143,13 @@ struct InstallationLiveActivityView: View {
             }
         }
         .padding(16)
-        .background(liveActivityBackground(settings: settings))
+        .background {
+            if #available(iOS 16.2, *) {
+                liveActivityBackground(settings: settings)
+            } else {
+                Color.clear.background(.ultraThinMaterial)
+            }
+        }
     }
 
     private var appIconView: some View {
