@@ -361,7 +361,7 @@ private struct CategorySection: View {
                 HStack {
                     Image(systemName: category.icon)
                         .font(.subheadline)
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                         .frame(width: 20)
                     Text(category.rawValue)
                         .font(.subheadline)
