@@ -165,7 +165,7 @@ struct InstallationLiveActivityView: View {
     }
 }
 
-private func fontDesign(for family: LiveActivitySettings.FontFamily) -> Font.Design {
+fileprivate func fontDesign(for family: LiveActivitySettings.FontFamily) -> Font.Design {
     switch family {
     case .system: return .default
     case .rounded: return .rounded
@@ -173,7 +173,7 @@ private func fontDesign(for family: LiveActivitySettings.FontFamily) -> Font.Des
     }
 }
 
-private func fontFor(_ textStyle: Font.TextStyle, settings: LiveActivitySettings) -> Font {
+fileprivate func fontFor(_ textStyle: Font.TextStyle, settings: LiveActivitySettings) -> Font {
     let weight = settings.fontWeight.fontWeight
     switch settings.fontFamily {
     case .system:
@@ -185,7 +185,7 @@ private func fontFor(_ textStyle: Font.TextStyle, settings: LiveActivitySettings
     }
 }
 
-private func animationFor(_ style: LiveActivitySettings.AnimationStyle) -> Animation? {
+fileprivate func animationFor(_ style: LiveActivitySettings.AnimationStyle) -> Animation? {
     switch style {
     case .none:
         return nil
