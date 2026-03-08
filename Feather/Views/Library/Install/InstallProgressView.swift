@@ -76,9 +76,8 @@ struct InstallProgressView<Footer: View>: View {
         .padding(.horizontal, 16)
         .padding(.top, 24)
         .padding(.bottom, 30)
-        .background(.ultraThinMaterial)
+        .background(Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        .shadow(color: .black.opacity(0.15), radius: 24, x: 0, y: -4)
     }
 
     @ViewBuilder
@@ -114,7 +113,7 @@ struct InstallProgressView<Footer: View>: View {
                             .foregroundColor(.secondary)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(Color(.systemGray5))
+                            .background(Color.clear)
                             .cornerRadius(4)
                     }
                 }
@@ -132,7 +131,7 @@ struct InstallProgressView<Footer: View>: View {
             Spacer(minLength: 0)
         }
         .padding(16)
-        .background(.regularMaterial)
+        .background(Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
