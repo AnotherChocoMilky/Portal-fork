@@ -186,6 +186,7 @@ struct GeneralView: View {
 
     private var resourcesSection: some View {
         Section {
+            SettingsRow(icon: "square.stack.3d.up", title: String.localized("Shortcuts Guide"), color: .accentColor, destination: PortalShortcutsGuideView())
             if !hideManager.isHidden("settings.credits") {
                 SettingsRow(icon: "person.crop.circle.fill.badge.checkmark", title: String.localized("Credits"), color: .accentColor, destination: CreditsView())
             }
