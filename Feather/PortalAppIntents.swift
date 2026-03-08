@@ -32,8 +32,9 @@ struct InstallPortalAppIntent: AppIntent {
         if let source, let encodedSource = source.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
             urlString += "&source=\(encodedSource)"
         }
+        let urlStringCopy = urlString
         await MainActor.run {
-            if let url = URL(string: urlString) {
+            if let url = URL(string: urlStringCopy) {
                 URLSchemeHandlerManager.shared.handleURL(url)
             }
         }
@@ -70,8 +71,9 @@ struct DownloadPortalAppIntent: AppIntent {
         if let source, let encodedSource = source.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) {
             urlString += "&source=\(encodedSource)"
         }
+        let urlStringCopy = urlString
         await MainActor.run {
-            if let url = URL(string: urlString) {
+            if let url = URL(string: urlStringCopy) {
                 URLSchemeHandlerManager.shared.handleURL(url)
             }
         }
