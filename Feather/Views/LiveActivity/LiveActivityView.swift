@@ -96,7 +96,7 @@ struct InstallationLiveActivityView: View {
                 .frame(height: 8)
 
                 Text(context.state.progressPercentage)
-                    .font(.system(size: 16, weight: .black, design: fontDesign(for: settings.fontFamily)))
+                    .font(.system(size: 16, weight: .black, design: liveActivityFontDesign(for: settings.fontFamily)))
                     .foregroundColor(primaryTextColor)
                     .frame(minWidth: 44, alignment: .trailing)
             }
@@ -104,7 +104,7 @@ struct InstallationLiveActivityView: View {
             HStack {
                 Spacer()
                 Text("Step \(currentStep)/\(totalSteps)")
-                    .font(.system(size: 11, weight: .medium, design: fontDesign(for: settings.fontFamily)))
+                    .font(.system(size: 11, weight: .medium, design: liveActivityFontDesign(for: settings.fontFamily)))
                     .foregroundColor(secondaryTextColor)
                 Spacer()
             }
@@ -126,7 +126,7 @@ struct InstallationLiveActivityView: View {
                         .fill(accentColor)
                         .frame(width: 6, height: 6)
                     Text("1 Notification")
-                        .font(.system(size: 12, weight: .semibold, design: fontDesign(for: settings.fontFamily)))
+                        .font(.system(size: 12, weight: .semibold, design: liveActivityFontDesign(for: settings.fontFamily)))
                         .foregroundColor(secondaryTextColor)
                 }
 
@@ -165,7 +165,7 @@ struct InstallationLiveActivityView: View {
     }
 }
 
-fileprivate func fontDesign(for family: LiveActivitySettings.FontFamily) -> Font.Design {
+fileprivate func liveActivityFontDesign(for family: LiveActivitySettings.FontFamily) -> Font.Design {
     switch family {
     case .system: return .default
     case .rounded: return .rounded
