@@ -68,17 +68,19 @@ struct InstallationLiveActivityView: View {
 
                 Spacer()
 
-                HStack(spacing: 4) {
-                    Image(systemName: context.state.status.icon)
-                        .font(.system(size: 10, weight: .bold))
-                    Text(context.state.status.rawValue)
-                        .font(fontFor(.caption2, settings: settings))
+                if settings.showStatusBadge {
+                    HStack(spacing: 4) {
+                        Image(systemName: context.state.status.icon)
+                            .font(.system(size: 10, weight: .bold))
+                        Text(context.state.status.rawValue)
+                            .font(fontFor(.caption2, settings: settings))
+                    }
+                    .foregroundColor(primaryTextColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.white.opacity(0.15))
+                    .clipShape(Capsule())
                 }
-                .foregroundColor(primaryTextColor)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.white.opacity(0.15))
-                .clipShape(Capsule())
             }
 
             HStack(spacing: 10) {
@@ -107,39 +109,6 @@ struct InstallationLiveActivityView: View {
                     .font(.system(size: 11, weight: .medium, design: liveActivityFontDesign(for: settings.fontFamily)))
                     .foregroundColor(secondaryTextColor)
                 Spacer()
-            }
-
-            HStack {
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.15))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: "flashlight.on.fill")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(primaryTextColor)
-                }
-
-                Spacer()
-
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(accentColor)
-                        .frame(width: 6, height: 6)
-                    Text("1 Notification")
-                        .font(.system(size: 12, weight: .semibold, design: liveActivityFontDesign(for: settings.fontFamily)))
-                        .foregroundColor(secondaryTextColor)
-                }
-
-                Spacer()
-
-                ZStack {
-                    Circle()
-                        .fill(Color.white.opacity(0.15))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: "camera.fill")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(primaryTextColor)
-                }
             }
         }
         .padding(16)

@@ -14,6 +14,7 @@ struct LiveActivitySettings: Codable, Hashable {
     var animationStyle: AnimationStyle
     var showEstimatedTime: Bool
     var highFrequencyUpdates: Bool
+    var showStatusBadge: Bool
     
     // New settings
     var glassSettings: GlassSettings
@@ -40,6 +41,7 @@ struct LiveActivitySettings: Codable, Hashable {
             animationStyle: .smooth,
             showEstimatedTime: true,
             highFrequencyUpdates: false,
+            showStatusBadge: true,
             glassSettings: .default,
             gradientSettings: .default,
             cornerRadius: 22,
