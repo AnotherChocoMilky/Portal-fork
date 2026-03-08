@@ -364,6 +364,13 @@ struct FeatherApp: App {
                                 
                                 FR.exportCertificateAndOpenUrl(using: callbackTemplate)
 
+                        case let host where host?.lowercased() == "addbulksource":
+                                let schemeResult = URLSchemeHandlerManager.shared.handleURL(url)
+                                if case .bulkSource(let extractedURLs) = schemeResult {
+                                        _bulkSourceURLs = extractedURLs
+                                        _showBulkSourceImport = true
+                                }
+
                         case "add-source":
                                 NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: TabEnum.sources)
 

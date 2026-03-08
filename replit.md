@@ -79,7 +79,7 @@ To build the actual iOS app, you need:
   - `LiveActivityManager.swift`: Verified data flow — all required fields (appName, progress, status, settings) are properly passed through to the UI layer. No changes needed.
   - Progress bar clamped to prevent overflow when progress > 1.0.
 
-- **Bulk Source Import URL Scheme**: Added `portal://addBulkSource` scheme that accepts multiple `url` query parameters, validates each source by fetching its repository data, adds valid sources to storage, generates a Portal Transfer code, and presents results in a dedicated `SourcesAddBulkView` sheet with an accent-colored progress bar, success/error states, and copy-to-clipboard transfer code. Documented in URLSchemeView.
+- **Bulk Source Import URL Scheme**: Added `portal://addBulkSource` scheme with four input formats: repeated `url` params, comma-separated `urls`, indexed `url0/url1/...`, and base64-encoded `data` payload for unlimited sources. Sources are fetched, validated, and added to Storage automatically with no user interaction. `SourcesAddBulkView` sheet shows accent-colored progress bar, per-source results (name, status, error reason), auto-generated Portal Transfer code with copy button, and retry on failure. Case-insensitive host matching in FeatherApp catches the scheme early before fallback handlers. All formats documented in URLSchemeView.
 
 ## Links
 - [GitHub Repository](https://github.com/aoyn1xw/Portal)

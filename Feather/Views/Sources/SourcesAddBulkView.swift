@@ -13,9 +13,23 @@ struct SourcesAddBulkView: View {
     @State private var addedCount: Int = 0
     @State private var skippedCount: Int = 0
     @State private var failedCount: Int = 0
+    @State private var sourceResults: [SourceResult] = []
     @State private var portalCode: String = ""
     @State private var errorMessage: String?
     @State private var showCopiedFeedback = false
+
+    struct SourceResult: Identifiable {
+        let id = UUID()
+        let url: String
+        let name: String?
+        let status: Status
+
+        enum Status {
+            case added
+            case skipped
+            case failed(String)
+        }
+    }
 
     enum Phase {
         case processing
@@ -38,6 +52,7 @@ struct SourcesAddBulkView: View {
 
                 if phase == .success {
                     successSection
+                    sourcesDetailSection
                 }
 
                 if phase == .error {
@@ -52,6 +67,7 @@ struct SourcesAddBulkView: View {
                     Button(.localized("Done")) { dismiss() }
                 }
             }
+            .interactiveDismissDisabled(phase == .processing)
             .task {
                 await processBulkSources()
             }
@@ -112,8 +128,15 @@ struct SourcesAddBulkView: View {
 
     private var headerSubtitle: String {
         switch phase {
-        case .processing: return .localized("Encoding \(sourceURLs.count) sources into a Portal Transfer code...")
-        case .success: return .localized("Successfully processed \(addedCount) sources.")
+        case .processing: return .localized("Adding \(sourceURLs.count) sources to Portal...")
+        case .success:
+            if addedCount > 0 && skippedCount > 0 {
+                return .localized("\(addedCount) added, \(skippedCount) already existed.")
+            } else if addedCount > 0 {
+                return .localized("\(addedCount) sources added to your library.")
+            } else {
+                return .localized("All sources were already in your library.")
+            }
         case .error: return errorMessage ?? .localized("An error occurred during import.")
         }
     }
@@ -137,7 +160,7 @@ struct SourcesAddBulkView: View {
 
                     RoundedRectangle(cornerRadius: 8)
                         .fill(Color.accentColor.gradient)
-                        .frame(width: geometry.size.width * progress, height: 12)
+                        .frame(width: geometry.size.width * min(progress, 1.0), height: 12)
                         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: progress)
                 }
             }
@@ -147,7 +170,7 @@ struct SourcesAddBulkView: View {
                 HStack(spacing: 6) {
                     ProgressView()
                         .scaleEffect(0.7)
-                    Text(.localized("Adding sources and generating transfer code..."))
+                    Text(.localized("Fetching and adding sources..."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -211,6 +234,75 @@ struct SourcesAddBulkView: View {
         }
     }
 
+    private var sourcesDetailSection: some View {
+        Section {
+            ForEach(sourceResults) { result in
+                HStack(spacing: 12) {
+                    Image(systemName: statusIcon(for: result.status))
+                        .foregroundStyle(statusColor(for: result.status))
+                        .font(.body)
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(result.name ?? result.url)
+                            .font(.subheadline)
+                            .lineLimit(1)
+
+                        if result.name != nil {
+                            Text(result.url)
+                                .font(.system(.caption2, design: .monospaced))
+                                .foregroundStyle(.tertiary)
+                                .lineLimit(1)
+                        }
+
+                        if case .failed(let reason) = result.status {
+                            Text(reason)
+                                .font(.caption2)
+                                .foregroundStyle(.red.opacity(0.8))
+                                .lineLimit(2)
+                        }
+                    }
+
+                    Spacer()
+
+                    Text(statusLabel(for: result.status))
+                        .font(.caption2.bold())
+                        .foregroundStyle(statusColor(for: result.status))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 3)
+                        .background(statusColor(for: result.status).opacity(0.12))
+                        .clipShape(Capsule())
+                }
+                .padding(.vertical, 4)
+            }
+        } header: {
+            SettingsSectionHeader(title: .localized("Source Details"), icon: "list.bullet.rectangle.fill")
+        }
+    }
+
+    private func statusIcon(for status: SourceResult.Status) -> String {
+        switch status {
+        case .added: return "checkmark.circle.fill"
+        case .skipped: return "arrow.uturn.right.circle.fill"
+        case .failed: return "xmark.circle.fill"
+        }
+    }
+
+    private func statusColor(for status: SourceResult.Status) -> Color {
+        switch status {
+        case .added: return .green
+        case .skipped: return .orange
+        case .failed: return .red
+        }
+    }
+
+    private func statusLabel(for status: SourceResult.Status) -> String {
+        switch status {
+        case .added: return .localized("Added")
+        case .skipped: return .localized("Exists")
+        case .failed: return .localized("Failed")
+        }
+    }
+
     private var errorSection: some View {
         Section {
             Label(errorMessage ?? .localized("Unknown Error"), systemImage: "exclamationmark.triangle.fill")
@@ -226,6 +318,7 @@ struct SourcesAddBulkView: View {
                     failedCount = 0
                     portalCode = ""
                     errorMessage = nil
+                    sourceResults = []
                 }
                 Task {
                     await processBulkSources()
@@ -262,8 +355,9 @@ struct SourcesAddBulkView: View {
         for urlString in sourceURLs {
             let trimmed = urlString.trimmingCharacters(in: .whitespacesAndNewlines)
 
-            guard !trimmed.isEmpty, URL(string: trimmed) != nil else {
+            guard !trimmed.isEmpty, let sourceURL = URL(string: trimmed) else {
                 failedCount += 1
+                sourceResults.append(SourceResult(url: trimmed, name: nil, status: .failed(.localized("Invalid URL"))))
                 processedCount += 1
                 withAnimation { progress = Double(processedCount) / total }
                 continue
@@ -271,29 +365,45 @@ struct SourcesAddBulkView: View {
 
             if Storage.shared.sourceExists(trimmed) {
                 skippedCount += 1
+                let existingName = Storage.shared.getSources()
+                    .first(where: { $0.sourceURL?.absoluteString == trimmed || $0.identifier == trimmed })?
+                    .name
+                sourceResults.append(SourceResult(url: trimmed, name: existingName, status: .skipped))
                 validURLs.append(trimmed)
             } else {
                 do {
-                    let url = URL(string: trimmed)!
-                    let (data, _) = try await URLSession.shared.data(from: url)
-                    let _ = try JSONDecoder().decode(ASRepository.self, from: data)
-                    Storage.shared.addSource(url: trimmed)
+                    let (data, _) = try await URLSession.shared.data(from: sourceURL)
+                    let repository = try JSONDecoder().decode(ASRepository.self, from: data)
+
+                    Storage.shared.addSource(sourceURL, repository: repository, id: trimmed) { _ in }
                     addedCount += 1
+                    sourceResults.append(SourceResult(url: trimmed, name: repository.name, status: .added))
                     validURLs.append(trimmed)
                 } catch {
                     Logger.misc.error("[Bulk Import] Failed to fetch/validate source: \(trimmed) - \(error.localizedDescription)")
                     failedCount += 1
+                    let reason: String
+                    if (error as? URLError)?.code == .notConnectedToInternet {
+                        reason = .localized("No internet connection")
+                    } else if (error as? URLError)?.code == .timedOut {
+                        reason = .localized("Request timed out")
+                    } else if error is DecodingError {
+                        reason = .localized("Not a valid source repository")
+                    } else {
+                        reason = .localized("Could not reach server")
+                    }
+                    sourceResults.append(SourceResult(url: trimmed, name: nil, status: .failed(reason)))
                 }
             }
 
             processedCount += 1
             withAnimation { progress = Double(processedCount) / total }
 
-            try? await Task.sleep(nanoseconds: 100_000_000)
+            try? await Task.sleep(nanoseconds: 80_000_000)
         }
 
         guard !validURLs.isEmpty else {
-            errorMessage = .localized("No valid source URLs found.")
+            errorMessage = .localized("No valid source URLs could be added.")
             withAnimation(.spring()) { phase = .error }
             HapticsManager.shared.error()
             return

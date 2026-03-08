@@ -399,6 +399,59 @@ final class URLSchemeHandlerManager: ObservableObject {
         }
     }
 
+    // MARK: - Bulk Source URL Extraction
+
+    private func extractBulkSourceURLs(queryItems: [URLQueryItem]) -> [String] {
+        var urls: [String] = []
+
+        let multipleURLParams = queryItems
+            .filter { $0.name.lowercased() == "url" }
+            .compactMap { $0.value?.removingPercentEncoding }
+            .filter { !$0.isEmpty }
+        urls.append(contentsOf: multipleURLParams)
+
+        if let commaSeparated = queryItems.first(where: { $0.name.lowercased() == "urls" })?.value?.removingPercentEncoding {
+            let split = commaSeparated
+                .components(separatedBy: ",")
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            urls.append(contentsOf: split)
+        }
+
+        if let base64Payload = queryItems.first(where: { $0.name.lowercased() == "data" })?.value,
+           let decoded = Data(base64Encoded: base64Payload),
+           let jsonString = String(data: decoded, encoding: .utf8) {
+            let split = jsonString
+                .components(separatedBy: "\n")
+                .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+            urls.append(contentsOf: split)
+        }
+
+        let indexedKeys = queryItems
+            .filter { $0.name.lowercased().hasPrefix("url") && $0.name.lowercased() != "url" && $0.name.lowercased() != "urls" }
+            .sorted {
+                let num0 = Int($0.name.lowercased().dropFirst(3)) ?? Int.max
+                let num1 = Int($1.name.lowercased().dropFirst(3)) ?? Int.max
+                return num0 < num1
+            }
+        for item in indexedKeys {
+            if let value = item.value?.removingPercentEncoding, !value.isEmpty {
+                if !urls.contains(value) {
+                    urls.append(value)
+                }
+            }
+        }
+
+        var seen = Set<String>()
+        return urls.filter { url in
+            let normalized = url.lowercased()
+            guard !seen.contains(normalized) else { return false }
+            seen.insert(normalized)
+            return true
+        }
+    }
+
     // MARK: - Supported Schemes (used by URLSchemeView)
 
     struct SchemeInfo: Identifiable {
@@ -452,7 +505,10 @@ final class URLSchemeHandlerManager: ObservableObject {
     ]
 
     static let bulkSourceImport: [SchemeInfo] = [
-        SchemeInfo(scheme: "portal://addBulkSource?url=&url=", example: "portal://addBulkSource?url=https://repo1.com/source.json&url=https://repo2.com/source.json", description: "Imports multiple sources at once and generates a Portal Transfer code."),
+        SchemeInfo(scheme: "portal://addBulkSource?url=&url=", example: "portal://addBulkSource?url=https://repo1.com/source.json&url=https://repo2.com/source.json", description: "Imports multiple sources using repeated url parameters."),
+        SchemeInfo(scheme: "portal://addBulkSource?urls=", example: "portal://addBulkSource?urls=https://repo1.com/s.json,https://repo2.com/s.json", description: "Imports sources from a comma-separated list of URLs."),
+        SchemeInfo(scheme: "portal://addBulkSource?url0=&url1=", example: "portal://addBulkSource?url0=https://repo1.com/s.json&url1=https://repo2.com/s.json", description: "Imports sources using indexed url parameters (url0, url1, url2, ...)."),
+        SchemeInfo(scheme: "portal://addBulkSource?data=", example: "portal://addBulkSource?data=<base64>", description: "Imports sources from a Base64-encoded newline-separated URL list. Best for large imports."),
     ]
 
     static let externalIntegration: [SchemeInfo] = [
