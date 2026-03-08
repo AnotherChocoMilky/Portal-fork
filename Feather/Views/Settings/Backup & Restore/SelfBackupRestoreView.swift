@@ -15,8 +15,14 @@ struct SelfBackupRestoreView: View {
     @State private var showingRenameAlert = false
     @State private var backupToRename: LocalBackup?
     @State private var newBackupName = ""
+    @State private var showingSecureSessionSheet = false
+    @State private var showingVerificationResults = false
+    @State private var showingChainValidation = false
+    @State private var chainValidation: BackupChainValidation?
     @AppStorage("feature_newBackupOptions") var newBackupOptions = false
     @ObservedObject private var advancedManager = BackupAdvancedManager.shared
+    @ObservedObject private var secureBackupManager = SecureBackupSessionManager.shared
+    @ObservedObject private var sessionManager = SecureTransferSessionManager.shared
     
     var body: some View {
         List {
@@ -143,6 +149,8 @@ struct SelfBackupRestoreView: View {
             if newBackupOptions {
                 _storageUsageSection
                 _advancedBackupSection
+                _secureSessionSection
+                _backupVerificationSection
             }
             
             // Current Operation Status
@@ -316,6 +324,33 @@ struct SelfBackupRestoreView: View {
         .onAppear {
             viewModel.loadBackups()
             advancedManager.refreshStats(backups: viewModel.localBackups)
+            if newBackupOptions {
+                secureBackupManager.refreshSessionBackupCount(backups: viewModel.localBackups)
+            }
+        }
+        .sheet(isPresented: $showingSecureSessionSheet) {
+            NavigationStack {
+                SecureSessionStatusView(onStartTransfer: {
+                    secureBackupManager.ensureSessionForBackup()
+                    showingSecureSessionSheet = false
+                })
+            }
+        }
+        .sheet(isPresented: $showingVerificationResults) {
+            NavigationStack {
+                BackupVerificationResultsView(
+                    entries: secureBackupManager.verificationLog,
+                    isVerifying: secureBackupManager.isVerifying,
+                    lastVerified: secureBackupManager.lastVerificationDate
+                )
+            }
+        }
+        .sheet(isPresented: $showingChainValidation) {
+            if let validation = chainValidation {
+                NavigationStack {
+                    BackupChainValidationView(validation: validation)
+                }
+            }
         }
     }
     
@@ -405,6 +440,176 @@ struct SelfBackupRestoreView: View {
     }
 
     @ViewBuilder
+    private var _secureSessionSection: some View {
+        Section {
+            // Session Status Summary
+            if let session = sessionManager.currentSession {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack(spacing: 6) {
+                            Image(systemName: sessionManager.isSessionValid(session) ? "checkmark.shield.fill" : "xmark.shield.fill")
+                                .foregroundStyle(sessionManager.isSessionValid(session) ? .green : .red)
+                            Text(sessionManager.isSessionValid(session) ? "Session Active" : "Session Expired")
+                                .font(.headline)
+                        }
+
+                        Text("Device: \(session.remoteDeviceName)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        Text("Encryption: \(session.encryptionType)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        HStack(spacing: 4) {
+                            Text("Fingerprint:")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(session.sessionFingerprint)
+                                .font(.system(size: 11, design: .monospaced))
+                                .foregroundStyle(.secondary)
+                        }
+
+                        if secureBackupManager.sessionBackupCount > 0 {
+                            Text("\(secureBackupManager.sessionBackupCount) backup(s) in this session")
+                                .font(.caption2)
+                                .foregroundStyle(.blue)
+                        }
+                    }
+
+                    Spacer()
+
+                    Button {
+                        showingSecureSessionSheet = true
+                    } label: {
+                        Image(systemName: "info.circle")
+                            .font(.title3)
+                    }
+                }
+                .padding(.vertical, 4)
+            } else {
+                VStack(alignment: .center, spacing: 10) {
+                    Image(systemName: "shield.slash")
+                        .font(.system(size: 32))
+                        .foregroundStyle(.secondary)
+
+                    Text("No Secure Session")
+                        .font(.headline)
+
+                    Text("Create a secure session to enable backup signing, integrity verification, and session-based encryption.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+
+                    Button {
+                        secureBackupManager.ensureSessionForBackup()
+                    } label: {
+                        Label("Create Session", systemImage: "plus.shield.checkmark.fill")
+                            .font(.subheadline.weight(.semibold))
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(.blue)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+            }
+
+            // View Full Session Details
+            Button {
+                showingSecureSessionSheet = true
+            } label: {
+                Label {
+                    Text("View Session Details")
+                        .font(.subheadline)
+                } icon: {
+                    Image(systemName: "lock.doc")
+                        .foregroundStyle(.blue)
+                }
+            }
+        } header: {
+            Text(.localized("Secure Session"))
+        } footer: {
+            if sessionManager.currentSession != nil {
+                Text("Backups created during an active session are signed with the session fingerprint for tamper detection.")
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var _backupVerificationSection: some View {
+        Section {
+            // Verify All Backups
+            Button {
+                Task {
+                    await secureBackupManager.verifyAllBackups(viewModel.localBackups)
+                    showingVerificationResults = true
+                }
+            } label: {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Verify Backup Integrity")
+                            .font(.headline)
+                        Text("Check all backups against the current session")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "checkmark.seal.fill")
+                        .foregroundStyle(.green)
+                }
+            }
+            .disabled(secureBackupManager.isVerifying || viewModel.localBackups.isEmpty)
+
+            // Validate Backup Chain
+            Button {
+                chainValidation = secureBackupManager.validateBackupChain(viewModel.localBackups)
+                showingChainValidation = true
+            } label: {
+                Label {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Validate Backup Chain")
+                            .font(.headline)
+                        Text("Verify incremental backup chain integrity")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } icon: {
+                    Image(systemName: "link.badge.plus")
+                        .foregroundStyle(.purple)
+                }
+            }
+            .disabled(viewModel.localBackups.isEmpty)
+
+            // Verification Status
+            if let lastDate = secureBackupManager.lastVerificationDate {
+                HStack {
+                    Text("Last Verified")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(lastDate, style: .relative)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack {
+                    Text("Verified Backups")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text("\(secureBackupManager.verifiedBackupIDs.count) of \(viewModel.localBackups.count)")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.green)
+                }
+            }
+        } header: {
+            Text(.localized("Backup Verification"))
+        } footer: {
+            Text("Integrity verification uses SHA-256 checksums and session-signed HMAC signatures to detect tampering.")
+        }
+    }
+
+    @ViewBuilder
     private func backupRow(backup: LocalBackup) -> some View {
         Label {
             VStack(alignment: .leading, spacing: 4) {
@@ -426,6 +631,12 @@ struct SelfBackupRestoreView: View {
                             .background(type == "full" ? Color.blue.opacity(0.2) : Color.green.opacity(0.2))
                             .foregroundStyle(type == "full" ? .blue : .green)
                             .clipShape(RoundedRectangle(cornerRadius: 4))
+                    }
+
+                    if newBackupOptions && secureBackupManager.isBackupVerified(backup.id) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.caption2)
+                            .foregroundStyle(.green)
                     }
                 }
                 
@@ -1024,7 +1235,7 @@ class SelfBackupRestoreViewModel: ObservableObject {
         let systemVersion = UIDevice.current.systemVersion
         let isoFormatter = ISO8601DateFormatter()
 
-        let metadataInfoDict: [String: Any] = [
+        var metadataInfoDict: [String: Any] = [
             "backupID": backupID.uuidString,
             "backupDate": timestamp.timeIntervalSince1970,
             "backupDateString": isoFormatter.string(from: timestamp),
@@ -1037,6 +1248,12 @@ class SelfBackupRestoreViewModel: ObservableObject {
             "snapshotType": options.snapshotType,
             "isIncremental": isIncremental
         ]
+
+        // Embed secure session metadata if a session is active
+        if let sessionMetadata = SecureBackupSessionManager.shared.createSessionMetadata(for: backupID) {
+            metadataInfoDict["secureSession"] = sessionMetadata
+        }
+
         let metadataInfoData = try JSONSerialization.data(withJSONObject: metadataInfoDict, options: [.prettyPrinted, .sortedKeys])
         try metadataInfoData.write(to: directory.appendingPathComponent("metadataInfo.json"))
 
