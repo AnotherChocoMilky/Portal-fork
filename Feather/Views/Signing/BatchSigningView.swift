@@ -158,7 +158,7 @@ struct BatchSigningView: View {
                     }
                 }
                 .font(.caption.bold())
-                .foregroundStyle(.accentColor)
+                .foregroundStyle(Color.accentColor)
                 .textCase(nil)
             }
         }
