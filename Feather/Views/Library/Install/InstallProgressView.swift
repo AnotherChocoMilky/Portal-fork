@@ -12,6 +12,7 @@ struct InstallProgressView<Footer: View>: View {
     @State private var _installStarted = false
     @State private var _appeared = false
     @State private var _appSizeString: String = ""
+    @State private var _ringRotation: Double = 0
 
     var app: AppInfoPresentable
     @ObservedObject var viewModel: InstallerStatusViewModel
@@ -39,17 +40,17 @@ struct InstallProgressView<Footer: View>: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.4)
+            Color.black.opacity(0.001)
                 .ignoresSafeArea()
                 .onTapGesture {}
 
             VStack {
                 Spacer()
                 _sheetCard()
-                    .offset(y: _appeared ? 0 : 300)
+                    .offset(y: _appeared ? 0 : 400)
                     .animation(.spring(response: 0.45, dampingFraction: 0.85), value: _appeared)
             }
-            .padding(.horizontal, 18)
+            .padding(.horizontal, 16)
             .padding(.bottom, 8)
         }
         .onAppear {
@@ -65,22 +66,19 @@ struct InstallProgressView<Footer: View>: View {
     private func _sheetCard() -> some View {
         VStack(spacing: 0) {
             _headerRow()
-                .padding(.bottom, 16)
+                .padding(.bottom, 20)
 
             _appInfoCard()
-                .padding(.bottom, 8)
-
-            Divider()
-                .opacity(0.3)
-                .padding(.vertical, 8)
 
             _actionArea()
-                .padding(.top, 4)
+                .padding(.top, 28)
         }
-        .padding(22)
+        .padding(.horizontal, 16)
+        .padding(.top, 24)
+        .padding(.bottom, 30)
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: -5)
+        .shadow(color: .black.opacity(0.15), radius: 24, x: 0, y: -4)
     }
 
     @ViewBuilder
@@ -133,9 +131,9 @@ struct InstallProgressView<Footer: View>: View {
 
             Spacer(minLength: 0)
         }
-        .padding(15)
+        .padding(16)
         .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
     }
 
     @ViewBuilder
@@ -159,28 +157,10 @@ struct InstallProgressView<Footer: View>: View {
         if viewModel.isCompleted {
             _completedSection()
         } else if _installStarted && viewModel.isInProgress {
-            if viewModel.status == .none {
-                _packagingSection()
-            } else {
-                _progressSection()
-            }
+            _circularProgressSection()
         } else {
             _installButton()
         }
-    }
-
-    @ViewBuilder
-    private func _packagingSection() -> some View {
-        VStack(spacing: 6) {
-            Text(viewModel.statusLabel)
-                .font(.caption)
-                .foregroundColor(.secondary)
-
-            ProgressView()
-                .progressViewStyle(.circular)
-                .scaleEffect(0.8)
-        }
-        .padding(.vertical, 8)
     }
 
     @ViewBuilder
@@ -192,48 +172,80 @@ struct InstallProgressView<Footer: View>: View {
             Text("Install")
                 .font(.headline)
                 .foregroundColor(.white)
-                .frame(width: 200, height: 46)
+                .frame(width: 220, height: 48)
                 .background(Color.blue)
                 .clipShape(Capsule())
         }
-        .padding(.vertical, 8)
+        .padding(.bottom, 4)
     }
 
     @ViewBuilder
-    private func _progressSection() -> some View {
-        VStack(spacing: 10) {
-            Text("Installing...")
-                .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundColor(.primary)
+    private func _circularProgressSection() -> some View {
+        VStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .stroke(Color.primary.opacity(0.1), lineWidth: 4)
+                    .frame(width: 56, height: 56)
 
-            ProgressView(value: viewModel.overallProgress)
-                .progressViewStyle(.linear)
-                .tint(.blue)
+                Circle()
+                    .trim(from: 0, to: max(viewModel.overallProgress, 0.05))
+                    .stroke(Color.blue, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    .frame(width: 56, height: 56)
+                    .rotationEffect(.degrees(-90 + _ringRotation))
+                    .animation(.easeInOut(duration: 0.4), value: viewModel.overallProgress)
 
-            Text(viewModel.formattedProgress)
+                if viewModel.overallProgress < 1.0 {
+                    Image(systemName: "arrow.down")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.blue)
+                } else {
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.green)
+                }
+            }
+            .onAppear {
+                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
+                    _ringRotation = 360
+                }
+            }
+
+            Text(viewModel.statusLabel)
                 .font(.caption)
                 .foregroundColor(.secondary)
-                .monospacedDigit()
         }
-        .padding(.vertical, 8)
+        .padding(.bottom, 4)
     }
 
     @ViewBuilder
     private func _completedSection() -> some View {
-        VStack(spacing: 8) {
+        VStack(spacing: 12) {
             if viewModel.isError {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.title2)
-                    .foregroundColor(.red)
+                ZStack {
+                    Circle()
+                        .stroke(Color.red.opacity(0.2), lineWidth: 4)
+                        .frame(width: 56, height: 56)
+
+                    Image(systemName: "xmark")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.red)
+                }
+
                 Text("Failed")
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundColor(.red)
             } else {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.title2)
-                    .foregroundColor(.green)
+                ZStack {
+                    Circle()
+                        .stroke(Color.green, lineWidth: 4)
+                        .frame(width: 56, height: 56)
+
+                    Image(systemName: "checkmark")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.green)
+                }
+
                 Text("Installed")
                     .font(.subheadline)
                     .fontWeight(.medium)
@@ -245,13 +257,13 @@ struct InstallProgressView<Footer: View>: View {
                     Text("Open")
                         .font(.headline)
                         .foregroundColor(.white)
-                        .frame(width: 200, height: 46)
+                        .frame(width: 220, height: 48)
                         .background(Color.blue)
                         .clipShape(Capsule())
                 }
             }
         }
-        .padding(.vertical, 8)
+        .padding(.bottom, 4)
     }
 
     @ViewBuilder
