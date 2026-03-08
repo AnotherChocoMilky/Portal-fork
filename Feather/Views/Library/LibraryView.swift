@@ -521,10 +521,11 @@ extension LibraryView {
                 Text("Import an IPA file to get started")
                     .font(.system(size: 15))
             } actions: {
-                Menu {
-                    _importActions()
+                Button {
+                    _showImportSelection = true
+                    HapticsManager.shared.softImpact()
                 } label: {
-                    Text("Import")
+                    Text("Import App")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(.white)
                         .padding(.horizontal, 24)
@@ -553,10 +554,11 @@ extension LibraryView {
                         .foregroundStyle(.secondary)
                 }
 
-                Menu {
-                    _importActions()
+                Button {
+                    _showImportSelection = true
+                    HapticsManager.shared.softImpact()
                 } label: {
-                    Text("Import")
+                    Text("Import App")
                         .font(.system(size: 17, weight: .semibold))
                         .foregroundStyle(Color.accentColor)
                 }
@@ -564,16 +566,6 @@ extension LibraryView {
 
                 Spacer(minLength: 80)
             }
-        }
-    }
-    
-    @ViewBuilder
-    private func _importActions() -> some View {
-        Button(String.localized("Import From Files"), systemImage: "folder.fill") {
-            _showImportSelection = true
-        }
-        Button(String.localized("Import From URL"), systemImage: "globe.americas.fill") {
-            _showImportSelection = true
         }
     }
     

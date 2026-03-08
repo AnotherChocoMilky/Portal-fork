@@ -16,6 +16,7 @@ struct BackupContentsView: View {
     @State private var frameworks: [String] = []
     @State private var archives: [String] = []
     @State private var errorMessage: String?
+    @State private var backupMetadata: BackupMetadataInfo?
 
     @State private var showDiffViewer = false
     @State private var showRestoreSimulation = false
@@ -43,6 +44,20 @@ struct BackupContentsView: View {
         let name: String
         let identifier: String
         let version: String
+    }
+
+    struct BackupMetadataInfo: Codable {
+        let backupID: String?
+        let backupDate: TimeInterval?
+        let backupDateString: String?
+        let deviceModel: String?
+        let systemVersion: String?
+        let appVersion: String?
+        let appBuildNumber: String?
+        let includedData: [String]?
+        let backupFormatVersion: String?
+        let snapshotType: String?
+        let isIncremental: Bool?
     }
 
     var body: some View {
@@ -183,7 +198,52 @@ struct BackupContentsView: View {
                         }
                     }
 
-                    if certificates.isEmpty && signedApps.isEmpty && importedApps.isEmpty && frameworks.isEmpty && archives.isEmpty {
+                    if let info = backupMetadata {
+                        Section {
+                            if let dateString = info.backupDateString {
+                                metadataRow(label: "Created", value: dateString, icon: "calendar", color: .blue)
+                            } else if let dateTS = info.backupDate {
+                                metadataRow(label: "Created", value: Date(timeIntervalSince1970: dateTS).formatted(date: .abbreviated, time: .shortened), icon: "calendar", color: .blue)
+                            }
+                            if let device = info.deviceModel {
+                                metadataRow(label: "Device", value: device, icon: "iphone", color: .gray)
+                            }
+                            if let ios = info.systemVersion {
+                                metadataRow(label: "iOS Version", value: ios, icon: "apple.logo", color: .primary)
+                            }
+                            if let version = info.appVersion, let build = info.appBuildNumber {
+                                metadataRow(label: "App Version", value: "\(version) (\(build))", icon: "app.badge", color: .accentColor)
+                            }
+                            if let format = info.backupFormatVersion {
+                                metadataRow(label: "Backup Format", value: "v\(format)", icon: "doc.badge.gearshape", color: .orange)
+                            }
+                            if let type = info.snapshotType {
+                                metadataRow(label: "Snapshot Type", value: type.capitalized, icon: "camera.viewfinder", color: .purple)
+                            }
+                            if let id = info.backupID {
+                                metadataRow(label: "Backup ID", value: id, icon: "number", color: .secondary)
+                                    .font(.system(.caption, design: .monospaced))
+                            }
+                            if let included = info.includedData, !included.isEmpty {
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Label {
+                                        Text("Included Data")
+                                            .font(.headline)
+                                    } icon: {
+                                        Image(systemName: "checklist")
+                                            .foregroundStyle(.teal)
+                                    }
+                                    FlowTagsView(tags: included)
+                                        .padding(.top, 4)
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        } header: {
+                            headerView(title: "Backup Info", icon: "info.circle.fill", color: .teal)
+                        }
+                    }
+
+                    if certificates.isEmpty && signedApps.isEmpty && importedApps.isEmpty && frameworks.isEmpty && archives.isEmpty && backupMetadata == nil {
                         Section {
                             Text("No recognizable metadata found in this backup.")
                                 .foregroundStyle(.secondary)
@@ -251,6 +311,25 @@ struct BackupContentsView: View {
         .padding(.vertical, 8)
     }
 
+    private func metadataRow(label: String, value: String, icon: String, color: Color) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 14))
+                .foregroundStyle(color)
+                .frame(width: 22)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(label)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+            }
+            Spacer()
+        }
+        .padding(.vertical, 2)
+    }
+
     private func decryptData(_ encryptedData: Data, with customPassword: String? = nil) throws -> Data {
         let password = "PortalLocalBackup2026"
         let decryptionPassword = customPassword ?? password
@@ -298,27 +377,23 @@ struct BackupContentsView: View {
             let fileData = try Data(contentsOf: backupURL)
             let zipData: Data
 
-            if isEncrypted {
-                // Try to get password from Keychain
-                var backupPassword: String? = nil
-                if let id = backupID {
-                    backupPassword = try? KeychainManager.shared.retrieve(account: "backup_\(id.uuidString)")
-                }
-
-                zipData = try decryptData(fileData, with: backupPassword)
+            // Support both new plain ZIP backups and legacy encrypted backups
+            if let decrypted = try? decryptData(fileData, with: nil) {
+                zipData = decrypted
             } else {
-                // Check if it's an old encrypted style or already a ZIP
-                if let decrypted = try? decryptData(fileData, with: nil) {
-                    zipData = decrypted
-                } else {
-                    zipData = fileData
-                }
+                zipData = fileData
             }
 
             let tempZipURL = tempDir.appendingPathComponent("backup.zip")
             try zipData.write(to: tempZipURL)
 
             try FileManager.default.unzipItem(at: tempZipURL, to: tempDir)
+
+            // Load Metadata Info
+            let metadataInfoURL = tempDir.appendingPathComponent("metadataInfo.json")
+            if let data = try? Data(contentsOf: metadataInfoURL) {
+                backupMetadata = try? JSONDecoder().decode(BackupMetadataInfo.self, from: data)
+            }
 
             // Load Certificates
             let certsURL = tempDir.appendingPathComponent("certificates_metadata.json")
@@ -362,6 +437,27 @@ struct BackupContentsView: View {
         } catch {
             errorMessage = "Failed to read backup: \(error.localizedDescription)"
             isLoading = false
+        }
+    }
+}
+
+// MARK: - Flow Tags View
+
+private struct FlowTagsView: View {
+    let tags: [String]
+
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 90), alignment: .leading)], alignment: .leading, spacing: 6) {
+            ForEach(tags, id: \.self) { tag in
+                Text(tag)
+                    .font(.caption2)
+                    .fontWeight(.medium)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.teal.opacity(0.12))
+                    .foregroundStyle(Color.teal)
+                    .clipShape(Capsule())
+            }
         }
     }
 }

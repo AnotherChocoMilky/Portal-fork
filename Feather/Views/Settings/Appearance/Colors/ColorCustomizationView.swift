@@ -113,15 +113,6 @@ struct ColorCustomizationView: View {
                 }
             }
 
-            // MARK: - Theme Gallery
-            Section {
-                themeGallerySection
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-            } header: {
-                Text("Theme Gallery")
-            }
-
             // MARK: - Custom Colors
             Section {
                 colorPickerRow(title: "Background", subtext: "Main app background color", color: $backgroundManager.baseColor, icon: "square.fill")
