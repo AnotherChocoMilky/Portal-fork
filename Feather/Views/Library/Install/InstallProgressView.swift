@@ -10,17 +10,20 @@ enum InstallSource {
 struct InstallProgressView<Footer: View>: View {
     @State private var _isPulsing = false
     @State private var _installStarted = false
+    @State private var _appeared = false
+    @State private var _appSizeString: String = ""
 
     var app: AppInfoPresentable
     @ObservedObject var viewModel: InstallerStatusViewModel
-    var ageRating: String
     var installSource: InstallSource
     let footer: () -> Footer
+
+    var onInstall: (() -> Void)?
+    var onOpen: (() -> Void)?
 
     init(
         app: AppInfoPresentable,
         viewModel: InstallerStatusViewModel,
-        ageRating: String = "4+",
         installSource: InstallSource = .userImported,
         onInstall: (() -> Void)? = nil,
         onOpen: (() -> Void)? = nil,
@@ -28,7 +31,6 @@ struct InstallProgressView<Footer: View>: View {
     ) {
         self.app = app
         self.viewModel = viewModel
-        self.ageRating = ageRating
         self.installSource = installSource
         self.onInstall = onInstall
         self.onOpen = onOpen
@@ -41,15 +43,21 @@ struct InstallProgressView<Footer: View>: View {
                 .ignoresSafeArea()
                 .onTapGesture {}
 
-            VStack(spacing: 0) {
+            VStack {
                 Spacer()
                 _sheetCard()
-                Spacer()
+                    .offset(y: _appeared ? 0 : 300)
+                    .animation(.spring(response: 0.45, dampingFraction: 0.85), value: _appeared)
             }
-            .padding(.horizontal, 16)
+            .padding(.horizontal, 18)
+            .padding(.bottom, 8)
         }
         .onAppear {
             _isPulsing = true
+            _computeAppSize()
+            withAnimation {
+                _appeared = true
+            }
         }
     }
 
@@ -72,7 +80,7 @@ struct InstallProgressView<Footer: View>: View {
         .padding(22)
         .background(.ultraThinMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        .shadow(color: .black.opacity(0.3), radius: 30, x: 0, y: 10)
+        .shadow(color: .black.opacity(0.2), radius: 20, x: 0, y: -5)
     }
 
     @ViewBuilder
@@ -101,13 +109,16 @@ struct InstallProgressView<Footer: View>: View {
                         .foregroundColor(.primary)
                         .lineLimit(1)
 
-                    Text(ageRating)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color(.systemGray5))
-                        .cornerRadius(4)
+                    if !_appSizeString.isEmpty {
+                        Text(_appSizeString)
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(Color(.systemGray5))
+                            .cornerRadius(4)
+                    }
                 }
 
                 _sourceLabel()
@@ -123,7 +134,7 @@ struct InstallProgressView<Footer: View>: View {
             Spacer(minLength: 0)
         }
         .padding(15)
-        .background(Color(.secondarySystemFill))
+        .background(.regularMaterial)
         .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
@@ -142,9 +153,6 @@ struct InstallProgressView<Footer: View>: View {
                 .lineLimit(1)
         }
     }
-
-    var onInstall: (() -> Void)?
-    var onOpen: (() -> Void)?
 
     @ViewBuilder
     private func _actionArea() -> some View {
@@ -194,7 +202,7 @@ struct InstallProgressView<Footer: View>: View {
     @ViewBuilder
     private func _progressSection() -> some View {
         VStack(spacing: 10) {
-            Text(viewModel.statusLabel)
+            Text("Installing...")
                 .font(.subheadline)
                 .fontWeight(.medium)
                 .foregroundColor(.primary)
@@ -238,7 +246,7 @@ struct InstallProgressView<Footer: View>: View {
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(width: 200, height: 46)
-                        .background(Color.green)
+                        .background(Color.blue)
                         .clipShape(Capsule())
                 }
             }
@@ -253,5 +261,52 @@ struct InstallProgressView<Footer: View>: View {
             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             .scaleEffect(_isPulsing && viewModel.isInProgress ? 1.02 : 1.0)
             .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: _isPulsing)
+    }
+
+    private func _computeAppSize() {
+        if let url = app.archiveURL {
+            do {
+                let attributes = try FileManager.default.attributesOfItem(atPath: url.path)
+                if let fileSize = attributes[.size] as? UInt64 {
+                    _appSizeString = _formatBytes(fileSize)
+                }
+            } catch {}
+        }
+
+        if _appSizeString.isEmpty {
+            if let uuidDir = Storage.shared.getUuidDirectory(for: app) {
+                let size = _directorySize(url: uuidDir)
+                if size > 0 {
+                    _appSizeString = _formatBytes(UInt64(size))
+                }
+            }
+        }
+    }
+
+    private func _formatBytes(_ bytes: UInt64) -> String {
+        let kb = Double(bytes) / 1024
+        let mb = kb / 1024
+        let gb = mb / 1024
+
+        if gb >= 1.0 {
+            return String(format: "%.1f GB", gb)
+        } else {
+            return String(format: "%.0f MB", max(mb, 1))
+        }
+    }
+
+    private func _directorySize(url: URL) -> Int64 {
+        let fm = FileManager.default
+        guard let enumerator = fm.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey], options: [.skipsHiddenFiles]) else {
+            return 0
+        }
+        var total: Int64 = 0
+        for case let fileURL as URL in enumerator {
+            if let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey]),
+               let size = values.fileSize {
+                total += Int64(size)
+            }
+        }
+        return total
     }
 }

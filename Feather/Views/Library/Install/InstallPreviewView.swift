@@ -20,7 +20,6 @@ struct InstallPreviewView: View {
     @State private var progressTask: Task<Void, Never>?
 
     var app: AppInfoPresentable
-    var ageRating: String
     var installSource: InstallSource
     @StateObject var viewModel: InstallerStatusViewModel
     @StateObject var installer: ServerInstaller
@@ -30,13 +29,11 @@ struct InstallPreviewView: View {
     init(
         app: AppInfoPresentable,
         isSharing: Bool = false,
-        ageRating: String = "4+",
         installSource: InstallSource = .userImported,
         onDismiss: @escaping () -> Void
     ) {
         self.app = app
         self.isSharing = isSharing
-        self.ageRating = ageRating
         self.installSource = installSource
         self.onDismiss = onDismiss
         let viewModel = InstallerStatusViewModel(isIdevice: UserDefaults.standard.integer(forKey: "Feather.installationMethod") == 1)
@@ -48,7 +45,6 @@ struct InstallPreviewView: View {
         InstallProgressView(
             app: app,
             viewModel: viewModel,
-            ageRating: ageRating,
             installSource: installSource,
             onInstall: _install,
             onOpen: {
