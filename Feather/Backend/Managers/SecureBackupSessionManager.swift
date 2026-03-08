@@ -38,8 +38,9 @@ class SecureBackupSessionManager: ObservableObject {
     /// a tamper-evident seal that ties the backup to the active session.
     func generateBackupSignature(backupID: UUID, sessionFingerprint: String) -> String {
         let message = "\(backupID.uuidString):\(sessionFingerprint)"
-        guard let messageData = message.data(using: .utf8) else { return "" }
-        let key = SymmetricKey(data: SHA256.hash(data: sessionFingerprint.data(using: .utf8)!))
+        guard let messageData = message.data(using: .utf8),
+              let fingerprintData = sessionFingerprint.data(using: .utf8) else { return "" }
+        let key = SymmetricKey(data: SHA256.hash(data: fingerprintData))
         let signature = HMAC<SHA256>.authenticationCode(for: messageData, using: key)
         return Data(signature).map { String(format: "%02x", $0) }.joined()
     }
