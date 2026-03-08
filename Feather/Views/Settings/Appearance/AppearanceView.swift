@@ -48,7 +48,7 @@ struct AppearanceView: View {
             // MARK: - Color
             Section {
                 NavigationLink(destination: ColorCustomizationView()) {
-                    Label("Customization", systemImage: "paintpalette.fill")
+                    Label("Visual Design", systemImage: "hand.rays")
                         .foregroundStyle(Color.accentColor)
                 }
             } header: {
@@ -79,7 +79,7 @@ struct AppearanceView: View {
             } header: {
                 Label("Top View", systemImage: "rectangle.inset.topthird.filled")
             } footer: {
-                Text("Customize the Top View that shows on the top of when you take screenshots")
+                Text("Customize the Top View that shows on the top of the screen when you take screenshots.")
             }
 
             // MARK: - Display
@@ -93,7 +93,7 @@ struct AppearanceView: View {
                         .foregroundStyle(Color.accentColor)
                 }
                 Toggle(isOn: $showHeaderViews) {
-                    Label("Show Header Views", systemImage: "dock.rectangle")
+                    Label("Show Header Views", systemImage: "platter.filled.top.and.arrow.up.iphone")
                         .foregroundStyle(Color.accentColor)
                 }
             } header: {

@@ -31,7 +31,7 @@ struct KeyboardCustomizationView: View {
             } header: {
                 AppearanceSectionHeader(title: "Status", icon: "power")
             } footer: {
-                Text("When enabled, a custom dynamic background will appear behind the keyboard. This works best to the transparent keyboard on iOS 26.")
+                Text("When enabled, a custom dynamic background will appear behind the keyboard as the backdrop.")
             }
 
             if manager.isEnabled {

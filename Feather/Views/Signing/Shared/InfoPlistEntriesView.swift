@@ -902,7 +902,7 @@ struct InfoPlistEntriesView: View {
                 Section {
                     PresetButton(
                         title: .localized("Third-Party Keyboards"),
-                        subtitle: .localized("Allow thRird Party Keyboard Extensions"),
+                        subtitle: .localized("Allow Third Party Keyboard Extensions"),
                         icon: "keyboard.badge.ellipsis"
                     ) {
                         addSimpleEntry(key: "UIKeyboardExtensionPointIdentifier", value: true)

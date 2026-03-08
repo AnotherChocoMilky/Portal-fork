@@ -47,12 +47,12 @@ struct TopViewAppearance: View {
                     Label("Enable Top View", systemImage: "uiwindow.split.2x1")
                         .font(.system(.body, design: .rounded, weight: .medium))
                     Spacer()
-                    Text("Always On")
+                    Text("Default")
                         .font(.system(.subheadline, design: .rounded))
                         .foregroundStyle(.secondary)
                 }
             } footer: {
-                Text("The Top View is always enabled to provide a consistent experience.")
+                Text("The Top View is always enabled to provide a consistent experience and show off Portal.")
             }
 
             // MARK: - Colors

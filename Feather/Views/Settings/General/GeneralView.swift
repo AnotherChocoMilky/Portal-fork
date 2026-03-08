@@ -98,7 +98,7 @@ struct GeneralView: View {
                 Button {
                     showPairingView = true
                 } label: {
-                    SettingsRowContent(icon: "personalhotspot", title: String.localized("Pairing"), color: .accentColor)
+                    SettingsRowContent(icon: "iphone.motion", title: String.localized("Pairing"), color: .accentColor)
                 }
             }
             if !hideManager.isHidden("settings.logs") {

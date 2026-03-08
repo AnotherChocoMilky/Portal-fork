@@ -136,7 +136,7 @@ struct PairingMPCView: View {
                 )
                 .frame(width: 160, height: 160)
 
-            Image(systemName: "personalhotspot")
+            Image(systemName: "iphone.and.arrow.right..outward")
                 .font(.system(size: 64))
                 .foregroundStyle(
                     LinearGradient(
