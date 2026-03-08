@@ -1033,7 +1033,7 @@ class SelfBackupRestoreViewModel: ObservableObject {
             "appVersion": appVersion,
             "appBuildNumber": buildNumber,
             "includedData": includedDataTypes,
-            "backupFormatVersion": "3",
+            "backupFormatVersion": "3",  // v1: JSON+AES, v2: binary AES (PORTAL_V2), v3: plain ZIP with metadataInfo.json
             "snapshotType": options.snapshotType,
             "isIncremental": isIncremental
         ]
