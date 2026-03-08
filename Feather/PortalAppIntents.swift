@@ -1,6 +1,11 @@
 import AppIntents
 import Foundation
 
+// Delay (in nanoseconds) applied before navigation intents post tab-switch notifications.
+// This ensures the SwiftUI view hierarchy has registered its observers when Portal
+// launches from a terminated state before the notification is dispatched.
+private let coldLaunchNavigationDelay: UInt64 = 300_000_000
+
 // MARK: - App Management Intents
 
 struct InstallPortalAppIntent: AppIntent {
@@ -172,11 +177,24 @@ struct UpdateAllPortalAppsIntent: AppIntent {
     static var openAppWhenRun = true
 
     func perform() async throws -> some IntentResult & ReturnsValue<String> {
-        let updateCount = await MainActor.run {
-            AppUpdateTrackingManager.shared.availableUpdates.count
+        let updates = await MainActor.run {
+            AppUpdateTrackingManager.shared.availableUpdates
+        }
+        let updateCount = updates.count
+        guard updateCount > 0 else {
+            return .result(value: "No updates available")
         }
         await MainActor.run {
-            NotificationCenter.default.post(name: Notification.Name("Portal.UpdateAllApps"), object: nil)
+            for update in updates {
+                guard let downloadURLString = update.downloadURL,
+                      let downloadURL = URL(string: downloadURLString) else { continue }
+                let downloadId = "PortalShortcutUpdate_\(UUID().uuidString)"
+                _ = DownloadManager.shared.startDownload(from: downloadURL, id: downloadId)
+                AppUpdateTrackingManager.shared.updateLastKnownVersion(
+                    bundleIdentifier: update.bundleIdentifier,
+                    version: update.newVersion
+                )
+            }
         }
         return .result(value: "Updating \(updateCount) app\(updateCount == 1 ? "" : "s")")
     }
@@ -545,6 +563,7 @@ struct OpenPortalHomeIntent: AppIntent {
     static var openAppWhenRun = true
 
     func perform() async throws -> some IntentResult {
+        try await Task.sleep(nanoseconds: coldLaunchNavigationDelay)
         await MainActor.run {
             if let url = URL(string: "portal://home") {
                 URLSchemeHandlerManager.shared.handleURL(url)
@@ -560,6 +579,7 @@ struct OpenPortalAppsIntent: AppIntent {
     static var openAppWhenRun = true
 
     func perform() async throws -> some IntentResult {
+        try await Task.sleep(nanoseconds: coldLaunchNavigationDelay)
         await MainActor.run {
             if let url = URL(string: "portal://apps") {
                 URLSchemeHandlerManager.shared.handleURL(url)
@@ -575,6 +595,7 @@ struct OpenPortalInstalledIntent: AppIntent {
     static var openAppWhenRun = true
 
     func perform() async throws -> some IntentResult {
+        try await Task.sleep(nanoseconds: coldLaunchNavigationDelay)
         await MainActor.run {
             if let url = URL(string: "portal://installed") {
                 URLSchemeHandlerManager.shared.handleURL(url)
@@ -590,6 +611,7 @@ struct OpenPortalUpdatesIntent: AppIntent {
     static var openAppWhenRun = true
 
     func perform() async throws -> some IntentResult {
+        try await Task.sleep(nanoseconds: coldLaunchNavigationDelay)
         await MainActor.run {
             if let url = URL(string: "portal://updates") {
                 URLSchemeHandlerManager.shared.handleURL(url)
@@ -605,6 +627,7 @@ struct OpenPortalSourcesIntent: AppIntent {
     static var openAppWhenRun = true
 
     func perform() async throws -> some IntentResult {
+        try await Task.sleep(nanoseconds: coldLaunchNavigationDelay)
         await MainActor.run {
             if let url = URL(string: "portal://sources") {
                 URLSchemeHandlerManager.shared.handleURL(url)
@@ -620,6 +643,7 @@ struct OpenPortalSettingsIntent: AppIntent {
     static var openAppWhenRun = true
 
     func perform() async throws -> some IntentResult {
+        try await Task.sleep(nanoseconds: coldLaunchNavigationDelay)
         await MainActor.run {
             if let url = URL(string: "portal://settings") {
                 URLSchemeHandlerManager.shared.handleURL(url)

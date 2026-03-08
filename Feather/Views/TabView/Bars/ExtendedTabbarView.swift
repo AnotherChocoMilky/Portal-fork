@@ -126,6 +126,11 @@ struct ExtendedTabbarView: View {
 				AppStateManager.shared.hasSelectedInitialTab = true
 			}
 		}
+		.onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.SwitchTab"))) { notification in
+			if let tab = notification.object as? TabEnum {
+				selectedTab = tab
+			}
+		}
 		.sheet(isPresented: $_isAddingPresenting) {
 			SourcesAddView()
 				.presentationDetents([.medium, .large])
