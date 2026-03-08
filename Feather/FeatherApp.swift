@@ -409,6 +409,7 @@ struct FeatherApp: App {
 				/// feather://source/<url>
 				if let fullPath = url.validatedScheme(after: "/source/") {
 					FR.handleSource(fullPath) { }
+					return
 				}
 				/// feather://install/<url.ipa>
 				if
@@ -416,7 +417,10 @@ struct FeatherApp: App {
 					let downloadURL = URL(string: fullPath)
 				{
 					_ = DownloadManager.shared.startDownload(from: downloadURL)
+					return
 				}
+				// Delegate remaining portal:// schemes to URLSchemeHandlerManager
+				URLSchemeHandlerManager.shared.handleURL(url)
 			}
 		} else {
 			// Handle file URLs (IPA/TIPA files)
