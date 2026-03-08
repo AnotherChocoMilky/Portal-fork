@@ -244,8 +244,8 @@ struct ExportingIPAView: View {
                 try await handler.move()
                 let packageUrl = try await handler.archive()
 
-                let name = app.name ?? "App"
-                let version = app.version ?? "1.0"
+                let name = await app.name ?? "App"
+                let version = await app.version ?? "1.0"
                 let ipaFileName = "\(name)_\(version)_\(Int(Date().timeIntervalSince1970)).ipa"
                 let dest = FileManager.default.archives.appendingPathComponent(ipaFileName)
                 try FileManager.default.moveItem(at: packageUrl, to: dest)

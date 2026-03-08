@@ -103,171 +103,38 @@ struct LibraryView: View {
     
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                if !downloadManager.manualDownloads.isEmpty {
-                    LibraryDownloadHeaderView(downloadManager: downloadManager)
-                        .padding(.top, 10)
-                }
-                
-                if !hideManager.isHidden("library.filterChips") {
-                    filterChips
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .shadow(color: _searchGlow ? .purple : .clear, radius: 15)
-                        .shadow(color: _searchGlow ? .cyan : .clear, radius: 10)
-                        .scaleEffect(_searchGlow ? 1.05 : 1.0)
-                        .animation(.spring(), value: _searchGlow)
-                }
+            navigationContent
+        }
+    }
 
-                ScrollView {
-                    LazyVStack(spacing: 24) {
-                        if displayedApps.isEmpty {
-                            emptyStateView
-                                .padding(.top, 40)
-                        } else {
-                            if _filterMode == .all || _filterMode == .signed {
-                                let apps = _filterMode == .all ? filteredSignedApps : displayedApps.compactMap { $0 as? Signed }
-                                if !apps.isEmpty {
-                                    VStack(alignment: .leading, spacing: 12) {
-                                        Text("Signed")
-                                            .font(.system(size: 12, weight: .bold, design: .rounded))
-                                            .foregroundStyle(.secondary)
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 4)
-                                            .background(Color.secondary.opacity(0.1))
-                                            .clipShape(Capsule())
-                                            .padding(.horizontal, 24)
-
-                                        ForEach(apps, id: \.uuid) { app in
-                                            libraryAppRow(for: app)
-                                        }
-                                    }
-                                }
-                            }
-
-                            if _filterMode == .all && !filteredSignedApps.isEmpty && !filteredImportedApps.isEmpty {
-                                Divider()
-                                    .padding(.horizontal, 24)
-                            }
-
-                            if _filterMode == .all || _filterMode == .unsigned {
-                                let apps = _filterMode == .all ? filteredImportedApps : displayedApps.compactMap { $0 as? Imported }
-                                if !apps.isEmpty {
-                                    VStack(alignment: .leading, spacing: 12) {
-                                        Text("Imported")
-                                            .font(.system(size: 12, weight: .bold, design: .rounded))
-                                            .foregroundStyle(.secondary)
-                                            .padding(.horizontal, 12)
-                                            .padding(.vertical, 4)
-                                            .background(Color.secondary.opacity(0.1))
-                                            .clipShape(Capsule())
-                                            .padding(.horizontal, 24)
-
-                                        ForEach(apps, id: \.uuid) { app in
-                                            libraryAppRow(for: app)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .padding(.vertical, 8)
-                }
-                .environment(\.editMode, $_editMode)
-
-                if _editMode == .active && !_selectedApps.isEmpty {
-                    selectionActionBar
-                        .padding(.horizontal, 20)
-                        .background(Color.clear)
-                }
-            }
+    private var navigationContent: some View {
+        mainContent
             .searchable(text: $_searchText)
             .onChange(of: _searchText) { newValue in
-                if newValue.uppercased() == "FEATHER" {
-                    _searchGlow = true
-                    HapticsManager.shared.success()
-                } else {
-                    _searchGlow = false
-                }
-
-                if newValue.uppercased() == "RAIN" {
-                    EasterEggManager.shared.activeEffect = .rain
-                    _searchText = ""
-                } else if newValue.uppercased() == "SNOW" {
-                    EasterEggManager.shared.activeEffect = .snow
-                    _searchText = ""
-                } else if newValue.uppercased() == "BALL" {
-                    EasterEggManager.shared.activeEffect = .ball
-                    _searchText = ""
-                }
+                handleSearchChange(newValue)
             }
             .navigationTitle("Library")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    if !hideManager.isHidden("library.importButton") {
-                        Button {
-                            _showImportSelection = true
-                            HapticsManager.shared.softImpact()
-                        } label: {
-                            Image(systemName: "document.badge.plus.fill")
-                                .font(.system(size: 20))
-                                .foregroundStyle(Color.accentColor)
-                                .symbolRenderingMode(.hierarchical)
-                        }
-                    }
-                }
+            .toolbar { libraryToolbar }
+            .sheet(item: $_selectedInfoAppPresenting) { app in
+                LibraryInfoView(app: app.base)
             }
-                        .sheet(item: $_selectedInfoAppPresenting) { app in
-                                LibraryInfoView(app: app.base)
-                        }
-                        .fullScreenCover(item: $_selectedSigningAppPresenting) { app in
-                                ModernSigningView(app: app.base)
-                        }
-                        .sheet(item: $_selectedInstallModifyAppPresenting) { app in
-                                InstallModifyDialogView(app: app.base)
-                                        .presentationDetents([.medium, .large])
-                                        .presentationDragIndicator(.visible)
-                        }
-                        .sheet(isPresented: $_showImportSelection) {
-                            AppAddView()
-                                .presentationDetents([.height(260)])
-                                .presentationDragIndicator(.visible)
-                                .compatPresentationRadius(24)
-                        }
-                        .overlay {
-                            Group {
-                                if let installApp = _selectedInstallAppPresenting {
-                                    InstallPreviewView(
-                                        app: installApp.base,
-                                        isSharing: installApp.archive,
-                                        onDismiss: {
-                                            withAnimation(.easeInOut(duration: 0.25)) {
-                                                _selectedInstallAppPresenting = nil
-                                            }
-                                        }
-                                    )
-                                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
-                                }
-                            }
-                            .animation(.easeInOut(duration: 0.25), value: _selectedInstallAppPresenting?.id)
-                        }
-                        .overlay {
-                            Group {
-                                if let exportApp = _selectedExportIPAPresenting {
-                                    ExportingIPAView(
-                                        app: exportApp.base,
-                                        onDismiss: {
-                                            withAnimation(.easeInOut(duration: 0.25)) {
-                                                _selectedExportIPAPresenting = nil
-                                            }
-                                        }
-                                    )
-                                    .transition(.opacity.combined(with: .scale(scale: 0.97)))
-                                }
-                            }
-                            .animation(.easeInOut(duration: 0.25), value: _selectedExportIPAPresenting?.id)
-                        }
+            .fullScreenCover(item: $_selectedSigningAppPresenting) { app in
+                ModernSigningView(app: app.base)
+            }
+            .sheet(item: $_selectedInstallModifyAppPresenting) { app in
+                InstallModifyDialogView(app: app.base)
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+            }
+            .sheet(isPresented: $_showImportSelection) {
+                AppAddView()
+                    .presentationDetents([.height(260)])
+                    .presentationDragIndicator(.visible)
+                    .compatPresentationRadius(24)
+            }
+            .overlay { installPreviewOverlay }
+            .overlay { exportIPAOverlay }
             .fullScreenCover(isPresented: $_showBatchSigningSheet) {
                 BatchSigningView(
                     apps: getSelectedUnsignedApps(),
@@ -280,9 +147,7 @@ struct LibraryView: View {
             }
             .alert("Delete Selected Apps", isPresented: $_showBatchDeleteConfirmation) {
                 Button("Cancel", role: .cancel) { }
-                Button("Delete", role: .destructive) {
-                    deleteSelectedApps()
-                }
+                Button("Delete", role: .destructive) { deleteSelectedApps() }
             } message: {
                 Text("Are you sure you want to delete \(_selectedApps.count) selected app(s)?")
             }
@@ -299,121 +164,227 @@ struct LibraryView: View {
                     Text("Are you sure you want to delete \(app.name ?? "this app")?")
                 }
             }
-                        // Listen for import success notifications
-                        .onReceive(NotificationCenter.default.publisher(for: DownloadManager.importDidSucceedNotification)) { notification in
-                                guard let userInfo = notification.userInfo,
-                                          let downloadId = userInfo["downloadId"] as? String,
-                                          downloadId == _currentDownloadId else { return }
-                                
-                                // Check for large app support (3GB+)
-                                if let latestApp = Storage.shared.getLatestImportedApp(),
-                                   latestApp.size > 3 * 1024 * 1024 * 1024 {
-                                    AppLogManager.shared.info("Large app detected (>3GB): \(latestApp.name ?? "Unknown"), enabling supportBigApps.", category: "Library")
-                                    OptionsManager.shared.options.supportBigApps = true
-                                    OptionsManager.shared.saveOptions()
-                                }
-
-                                // Auto-sign logic
-                                if _shouldAutoSignNext {
-                                    _shouldAutoSignNext = false
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                                        if let latestApp = Storage.shared.getLatestImportedApp() {
-                                            _selectedSigningAppPresenting = AnyApp(base: latestApp)
-                                        }
-                                    }
-                                }
-
-                                _currentDownloadId = ""
-                        }
-                        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.TriggerImport"))) { notification in
-                            if let userInfo = notification.userInfo, let autoSign = userInfo["autoSign"] as? Bool {
-                                _shouldAutoSignNext = autoSign
-                            }
-                            _showImportSelection = true
-                        }
-                        // Listen for import failure notifications
-                        .onReceive(NotificationCenter.default.publisher(for: DownloadManager.importDidFailNotification)) { notification in
-                                guard let userInfo = notification.userInfo,
-                                          let downloadId = userInfo["downloadId"] as? String,
-                                          downloadId == _currentDownloadId else { return }
-                                
-                                _importErrorMessage = userInfo["error"] as? String ?? "Unknown Error"
-                                _currentDownloadId = ""
-                        }
-                        // Listen for download failure notifications
-                        .onReceive(NotificationCenter.default.publisher(for: DownloadManager.downloadDidFailNotification)) { notification in
-                                guard let userInfo = notification.userInfo,
-                                          let downloadId = userInfo["downloadId"] as? String,
-                                          downloadId == _currentDownloadId else { return }
-                                
-                                _importErrorMessage = userInfo["error"] as? String ?? "Download Failed"
-                                _currentDownloadId = ""
-                        }
-                        // Listen for download progress notifications
-                        .onReceive(NotificationCenter.default.publisher(for: DownloadManager.downloadDidProgressNotification)) { notification in
-                                guard let userInfo = notification.userInfo,
-                                          let downloadId = userInfo["downloadId"] as? String,
-                                          downloadId == _currentDownloadId,
-                                          let progress = userInfo["progress"] as? Double else { return }
-                                
-                                // Check for large download (3GB+)
-                                if let totalBytes = userInfo["totalBytes"] as? Int64,
-                                   totalBytes > 3 * 1024 * 1024 * 1024 {
-                                    if !OptionsManager.shared.options.supportBigApps {
-                                        AppLogManager.shared.info("Large download detected (>3GB), enabling supportBigApps.", category: "Library")
-                                        OptionsManager.shared.options.supportBigApps = true
-                                        OptionsManager.shared.saveOptions()
-                                    }
-                                }
-
-                                _downloadProgress = progress
-                                
-                                // Switch to processing status when download is complete (progress >= 0.99)
-                                if progress >= 0.99 && _importStatus == .downloading {
-                                        _importStatus = .processing
-                                }
-                        }
-                        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.installApp"))) { _ in
-                                if let latest = _signedApps.first {
-                                        _selectedInstallAppPresenting = AnyApp(base: latest)
-                                }
-                        }
-                        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.openSigningView"))) { notification in
-                                if let app = notification.object as? AppInfoPresentable {
-                                        _selectedSigningAppPresenting = AnyApp(base: app)
-                                }
-                        }
-                        .onReceive(NotificationCenter.default.publisher(for: .gestureOpenDetails)) { notification in
-                            if let app = notification.object as? AppInfoPresentable {
-                                _selectedInfoAppPresenting = AnyApp(base: app)
-                            }
-                        }
-                        .onReceive(NotificationCenter.default.publisher(for: .gestureSignApp)) { notification in
-                            if let app = notification.object as? AppInfoPresentable {
-                                _selectedSigningAppPresenting = AnyApp(base: app)
-                            }
-                        }
-                        .onReceive(NotificationCenter.default.publisher(for: .gestureInstallApp)) { notification in
-                            if let app = notification.object as? AppInfoPresentable {
-                                _selectedInstallAppPresenting = AnyApp(base: app)
-                            }
-                        }
-                        .onReceive(NotificationCenter.default.publisher(for: .gestureShareApp)) { notification in
-                            if let app = notification.object as? AppInfoPresentable {
-                                exportApp(app)
-                            }
-                        }
-                        .onReceive(NotificationCenter.default.publisher(for: .gestureRequireConfirmation)) { notification in
-                            guard let userInfo = notification.userInfo,
-                                  let action = userInfo["action"] as? GestureAction,
-                                  action == .deleteApp,
-                                  let app = userInfo["context"] as? AppInfoPresentable else { return }
-
-                            _appToDelete = app
-                            _showGestureDeleteConfirmation = true
-                        }
+            .onReceive(NotificationCenter.default.publisher(for: DownloadManager.importDidSucceedNotification)) { notification in
+                handleImportSuccess(notification)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.TriggerImport"))) { notification in
+                handleTriggerImport(notification)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: DownloadManager.importDidFailNotification)) { notification in
+                handleImportFailure(notification)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: DownloadManager.downloadDidFailNotification)) { notification in
+                handleDownloadFailure(notification)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: DownloadManager.downloadDidProgressNotification)) { notification in
+                handleDownloadProgress(notification)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.installApp"))) { _ in
+                if let latest = _signedApps.first {
+                    _selectedInstallAppPresenting = AnyApp(base: latest)
                 }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: Notification.Name("Feather.openSigningView"))) { notification in
+                if let app = notification.object as? AppInfoPresentable {
+                    _selectedSigningAppPresenting = AnyApp(base: app)
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .gestureOpenDetails)) { notification in
+                if let app = notification.object as? AppInfoPresentable {
+                    _selectedInfoAppPresenting = AnyApp(base: app)
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .gestureSignApp)) { notification in
+                if let app = notification.object as? AppInfoPresentable {
+                    _selectedSigningAppPresenting = AnyApp(base: app)
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .gestureInstallApp)) { notification in
+                if let app = notification.object as? AppInfoPresentable {
+                    _selectedInstallAppPresenting = AnyApp(base: app)
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .gestureShareApp)) { notification in
+                if let app = notification.object as? AppInfoPresentable {
+                    exportApp(app)
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .gestureRequireConfirmation)) { notification in
+                guard let userInfo = notification.userInfo,
+                      let action = userInfo["action"] as? GestureAction,
+                      action == .deleteApp,
+                      let app = userInfo["context"] as? AppInfoPresentable else { return }
+                _appToDelete = app
+                _showGestureDeleteConfirmation = true
+            }
+    }
+
+    private var mainContent: some View {
+        VStack(spacing: 0) {
+            if !downloadManager.manualDownloads.isEmpty {
+                LibraryDownloadHeaderView(downloadManager: downloadManager)
+                    .padding(.top, 10)
+            }
+
+            if !hideManager.isHidden("library.filterChips") {
+                filterChips
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 12)
+                    .shadow(color: _searchGlow ? .purple : .clear, radius: 15)
+                    .shadow(color: _searchGlow ? .cyan : .clear, radius: 10)
+                    .scaleEffect(_searchGlow ? 1.05 : 1.0)
+                    .animation(.spring(), value: _searchGlow)
+            }
+
+            appListScrollView
+                .environment(\.editMode, $_editMode)
+
+            if _editMode == .active && !_selectedApps.isEmpty {
+                selectionActionBar
+                    .padding(.horizontal, 20)
+                    .background(Color.clear)
+            }
         }
+    }
+
+    private var appListScrollView: some View {
+        ScrollView {
+            LazyVStack(spacing: 24) {
+                if displayedApps.isEmpty {
+                    emptyStateView
+                        .padding(.top, 40)
+                } else {
+                    signedAppsSection
+                    sectionDivider
+                    importedAppsSection
+                }
+            }
+            .padding(.vertical, 8)
+        }
+    }
+
+    @ViewBuilder
+    private var signedAppsSection: some View {
+        if _filterMode == .all || _filterMode == .signed {
+            let apps = _filterMode == .all ? filteredSignedApps : displayedApps.compactMap { $0 as? Signed }
+            if !apps.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    sectionHeader("Signed")
+                    ForEach(apps, id: \.uuid) { app in
+                        libraryAppRow(for: app)
+                    }
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var sectionDivider: some View {
+        if _filterMode == .all && !filteredSignedApps.isEmpty && !filteredImportedApps.isEmpty {
+            Divider()
+                .padding(.horizontal, 24)
+        }
+    }
+
+    @ViewBuilder
+    private var importedAppsSection: some View {
+        if _filterMode == .all || _filterMode == .unsigned {
+            let apps = _filterMode == .all ? filteredImportedApps : displayedApps.compactMap { $0 as? Imported }
+            if !apps.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    sectionHeader("Imported")
+                    ForEach(apps, id: \.uuid) { app in
+                        libraryAppRow(for: app)
+                    }
+                }
+            }
+        }
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 12, weight: .bold, design: .rounded))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 4)
+            .background(Color.secondary.opacity(0.1))
+            .clipShape(Capsule())
+            .padding(.horizontal, 24)
+    }
+
+    @ToolbarContentBuilder
+    private var libraryToolbar: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
+            if !hideManager.isHidden("library.importButton") {
+                Button {
+                    _showImportSelection = true
+                    HapticsManager.shared.softImpact()
+                } label: {
+                    Image(systemName: "document.badge.plus.fill")
+                        .font(.system(size: 20))
+                        .foregroundStyle(Color.accentColor)
+                        .symbolRenderingMode(.hierarchical)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var installPreviewOverlay: some View {
+        Group {
+            if let installApp = _selectedInstallAppPresenting {
+                InstallPreviewView(
+                    app: installApp.base,
+                    isSharing: installApp.archive,
+                    onDismiss: {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            _selectedInstallAppPresenting = nil
+                        }
+                    }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.97)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: _selectedInstallAppPresenting?.id)
+    }
+
+    @ViewBuilder
+    private var exportIPAOverlay: some View {
+        Group {
+            if let exportApp = _selectedExportIPAPresenting {
+                ExportingIPAView(
+                    app: exportApp.base,
+                    onDismiss: {
+                        withAnimation(.easeInOut(duration: 0.25)) {
+                            _selectedExportIPAPresenting = nil
+                        }
+                    }
+                )
+                .transition(.opacity.combined(with: .scale(scale: 0.97)))
+            }
+        }
+        .animation(.easeInOut(duration: 0.25), value: _selectedExportIPAPresenting?.id)
+    }
+
+    private func handleSearchChange(_ newValue: String) {
+        if newValue.uppercased() == "FEATHER" {
+            _searchGlow = true
+            HapticsManager.shared.success()
+        } else {
+            _searchGlow = false
+        }
+
+        if newValue.uppercased() == "RAIN" {
+            EasterEggManager.shared.activeEffect = .rain
+            _searchText = ""
+        } else if newValue.uppercased() == "SNOW" {
+            EasterEggManager.shared.activeEffect = .snow
+            _searchText = ""
+        } else if newValue.uppercased() == "BALL" {
+            EasterEggManager.shared.activeEffect = .ball
+            _searchText = ""
+        }
+    }
 }
 
 // MARK: - Extension: View Components
@@ -615,6 +586,77 @@ extension LibraryView {
     private func downloadIPA(for app: AppInfoPresentable) {
         _selectedExportIPAPresenting = AnyApp(base: app)
         HapticsManager.shared.softImpact()
+    }
+
+    private func handleImportSuccess(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let downloadId = userInfo["downloadId"] as? String,
+              downloadId == _currentDownloadId else { return }
+
+        if let latestApp = Storage.shared.getLatestImportedApp(),
+           latestApp.size > 3 * 1024 * 1024 * 1024 {
+            AppLogManager.shared.info("Large app detected (>3GB): \(latestApp.name ?? "Unknown"), enabling supportBigApps.", category: "Library")
+            OptionsManager.shared.options.supportBigApps = true
+            OptionsManager.shared.saveOptions()
+        }
+
+        if _shouldAutoSignNext {
+            _shouldAutoSignNext = false
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                if let latestApp = Storage.shared.getLatestImportedApp() {
+                    _selectedSigningAppPresenting = AnyApp(base: latestApp)
+                }
+            }
+        }
+
+        _currentDownloadId = ""
+    }
+
+    private func handleTriggerImport(_ notification: Notification) {
+        if let userInfo = notification.userInfo, let autoSign = userInfo["autoSign"] as? Bool {
+            _shouldAutoSignNext = autoSign
+        }
+        _showImportSelection = true
+    }
+
+    private func handleImportFailure(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let downloadId = userInfo["downloadId"] as? String,
+              downloadId == _currentDownloadId else { return }
+
+        _importErrorMessage = userInfo["error"] as? String ?? "Unknown Error"
+        _currentDownloadId = ""
+    }
+
+    private func handleDownloadFailure(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let downloadId = userInfo["downloadId"] as? String,
+              downloadId == _currentDownloadId else { return }
+
+        _importErrorMessage = userInfo["error"] as? String ?? "Download Failed"
+        _currentDownloadId = ""
+    }
+
+    private func handleDownloadProgress(_ notification: Notification) {
+        guard let userInfo = notification.userInfo,
+              let downloadId = userInfo["downloadId"] as? String,
+              downloadId == _currentDownloadId,
+              let progress = userInfo["progress"] as? Double else { return }
+
+        if let totalBytes = userInfo["totalBytes"] as? Int64,
+           totalBytes > 3 * 1024 * 1024 * 1024 {
+            if !OptionsManager.shared.options.supportBigApps {
+                AppLogManager.shared.info("Large download detected (>3GB), enabling supportBigApps.", category: "Library")
+                OptionsManager.shared.options.supportBigApps = true
+                OptionsManager.shared.saveOptions()
+            }
+        }
+
+        _downloadProgress = progress
+
+        if progress >= 0.99 && _importStatus == .downloading {
+            _importStatus = .processing
+        }
     }
 
     @ViewBuilder
@@ -928,3 +970,4 @@ struct CompactFilterChip: View {
 
     }
 }
+
