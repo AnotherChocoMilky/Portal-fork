@@ -1,5 +1,7 @@
 import Foundation
 import SwiftUI
+import CoreData
+import AltSourceKit
 
 /// Centralized manager that parses incoming `portal://` URLs, validates parameters,
 /// and routes the action to the correct internal feature.
@@ -52,11 +54,11 @@ final class URLSchemeHandlerManager: ObservableObject {
             return .success
 
         case "refreshsources":
-            NotificationCenter.default.post(name: Notification.Name("Portal.RefreshSources"), object: nil)
+            refreshAllSources()
             return .success
 
         case "checkupdates":
-            NotificationCenter.default.post(name: Notification.Name("Portal.CheckUpdates"), object: nil)
+            refreshAllSources()
             return .success
 
         // MARK: Source Management
@@ -69,28 +71,28 @@ final class URLSchemeHandlerManager: ObservableObject {
             guard let urlString = queryValue("url"), !urlString.isEmpty else {
                 return .missingParameter("url")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.AddSource"), object: urlString)
+            addSource(urlString)
             return .success
 
         case "removesource":
             guard let sourceID = queryValue("id"), !sourceID.isEmpty else {
                 return .missingParameter("id")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.RemoveSource"), object: sourceID)
+            removeSource(identifier: sourceID)
             return .success
 
         case "editsource":
             guard let sourceID = queryValue("id"), !sourceID.isEmpty else {
                 return .missingParameter("id")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.EditSource"), object: sourceID)
+            switchTab(.sources)
             return .success
 
         case "refreshsource":
             guard let sourceID = queryValue("id"), !sourceID.isEmpty else {
                 return .missingParameter("id")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.RefreshSource"), object: sourceID)
+            refreshSource(identifier: sourceID)
             return .success
 
         // MARK: App Management
@@ -99,56 +101,56 @@ final class URLSchemeHandlerManager: ObservableObject {
             guard let appID = queryValue("id"), !appID.isEmpty else {
                 return .missingParameter("id")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.InstallApp"), object: appID)
+            downloadAndInstallApp(bundleID: appID)
             return .success
 
         case "download":
             guard let appID = queryValue("id"), !appID.isEmpty else {
                 return .missingParameter("id")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.DownloadApp"), object: appID)
+            downloadApp(bundleID: appID)
             return .success
 
         case "openapp":
             guard let appID = queryValue("id"), !appID.isEmpty else {
                 return .missingParameter("id")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.OpenApp"), object: appID)
+            switchTab(.library)
             return .success
 
         case "uninstall":
             guard let appID = queryValue("id"), !appID.isEmpty else {
                 return .missingParameter("id")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.UninstallApp"), object: appID)
+            uninstallApp(bundleID: appID)
             return .success
 
         case "reinstall":
             guard let appID = queryValue("id"), !appID.isEmpty else {
                 return .missingParameter("id")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.ReinstallApp"), object: appID)
+            downloadAndInstallApp(bundleID: appID)
             return .success
 
         case "updateapp":
             guard let appID = queryValue("id"), !appID.isEmpty else {
                 return .missingParameter("id")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.UpdateApp"), object: appID)
+            downloadAndInstallApp(bundleID: appID)
             return .success
 
         case "pausedownload":
             guard let appID = queryValue("id"), !appID.isEmpty else {
                 return .missingParameter("id")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.PauseDownload"), object: appID)
+            pauseDownload(id: appID)
             return .success
 
         case "resumedownload":
             guard let appID = queryValue("id"), !appID.isEmpty else {
                 return .missingParameter("id")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.ResumeDownload"), object: appID)
+            resumeDownload(id: appID)
             return .success
 
         // MARK: Navigation
@@ -162,8 +164,8 @@ final class URLSchemeHandlerManager: ObservableObject {
             return .success
 
         case "updates":
-            switchTab(.settings)
-            NotificationCenter.default.post(name: Notification.Name("Portal.NavigateToUpdates"), object: nil)
+            refreshAllSources()
+            switchTab(.sources)
             return .success
 
         case "library":
@@ -182,7 +184,7 @@ final class URLSchemeHandlerManager: ObservableObject {
             return .success
 
         case "resetsources":
-            NotificationCenter.default.post(name: Notification.Name("Portal.ResetSources"), object: nil)
+            resetSources()
             return .success
 
         case "logs":
@@ -196,11 +198,13 @@ final class URLSchemeHandlerManager: ObservableObject {
             return .success
 
         case "reloadui":
-            NotificationCenter.default.post(name: Notification.Name("Portal.ReloadUI"), object: nil)
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: Notification.Name("Portal.ReloadUI"), object: nil)
+            }
             return .success
 
         case "diagnostics":
-            NotificationCenter.default.post(name: Notification.Name("Portal.Diagnostics"), object: nil)
+            switchTab(.settings)
             return .success
 
         // MARK: External Integration
@@ -209,21 +213,21 @@ final class URLSchemeHandlerManager: ObservableObject {
             guard let urlString = queryValue("url"), !urlString.isEmpty else {
                 return .missingParameter("url")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.ImportRepo"), object: urlString)
+            addSource(urlString)
             return .success
 
         case "shareapp":
             guard let appID = queryValue("id"), !appID.isEmpty else {
                 return .missingParameter("id")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.ShareApp"), object: appID)
+            shareApp(bundleID: appID)
             return .success
 
         case "openrepo":
             guard let repoID = queryValue("id"), !repoID.isEmpty else {
                 return .missingParameter("id")
             }
-            NotificationCenter.default.post(name: Notification.Name("Portal.OpenRepo"), object: repoID)
+            switchTab(.sources)
             return .success
 
         case "installfromurl":
@@ -239,10 +243,150 @@ final class URLSchemeHandlerManager: ObservableObject {
         }
     }
 
-    // MARK: - Helpers
+    // MARK: - Tab Switching
 
     private func switchTab(_ tab: TabEnum) {
-        NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: tab)
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(name: Notification.Name("Feather.SwitchTab"), object: tab)
+        }
+    }
+
+    // MARK: - Source Actions
+
+    private func addSource(_ urlString: String) {
+        switchTab(.sources)
+        DispatchQueue.main.async {
+            FR.handleSource(urlString) {
+                HapticsManager.shared.success()
+            }
+        }
+    }
+
+    private func removeSource(identifier: String) {
+        DispatchQueue.main.async {
+            let sources = Storage.shared.getSources()
+            if let source = sources.first(where: { $0.identifier == identifier || $0.sourceURL?.absoluteString == identifier }) {
+                Storage.shared.deleteSource(for: source)
+                HapticsManager.shared.success()
+            }
+        }
+    }
+
+    private func refreshAllSources() {
+        Task { @MainActor in
+            let sources = Storage.shared.getSources()
+            await SourcesViewModel.shared.forceFetchAllSources(sources)
+        }
+    }
+
+    private func refreshSource(identifier: String) {
+        Task { @MainActor in
+            let sources = Storage.shared.getSources()
+            if let source = sources.first(where: { $0.identifier == identifier || $0.sourceURL?.absoluteString == identifier }) {
+                await SourcesViewModel.shared.refreshSource(source)
+            }
+        }
+    }
+
+    private func resetSources() {
+        DispatchQueue.main.async {
+            let sources = Storage.shared.getSources()
+            for source in sources {
+                Storage.shared.deleteSource(for: source)
+            }
+            HapticsManager.shared.success()
+        }
+    }
+
+    // MARK: - App Actions
+
+    private func findAppInSources(bundleID: String) -> (source: ASRepository, app: ASRepository.App)? {
+        let allApps = SourcesViewModel.shared.allApps
+        return allApps.first(where: { $0.app.id == bundleID })
+    }
+
+    private func downloadApp(bundleID: String) {
+        Task { @MainActor in
+            if let entry = findAppInSources(bundleID: bundleID),
+               let url = entry.app.currentDownloadUrl {
+                _ = DownloadManager.shared.startDownload(from: url, id: entry.app.currentUniqueId, fromSourcesView: true)
+                HapticsManager.shared.success()
+            } else {
+                HapticsManager.shared.error()
+            }
+        }
+    }
+
+    private func downloadAndInstallApp(bundleID: String) {
+        Task { @MainActor in
+            if let entry = findAppInSources(bundleID: bundleID),
+               let url = entry.app.currentDownloadUrl {
+                _ = DownloadManager.shared.startDownload(from: url, id: entry.app.currentUniqueId, fromSourcesView: true)
+                HapticsManager.shared.success()
+            } else {
+                HapticsManager.shared.error()
+            }
+        }
+    }
+
+    private func uninstallApp(bundleID: String) {
+        DispatchQueue.main.async {
+            let request: NSFetchRequest<Signed> = Signed.fetchRequest()
+            request.predicate = NSPredicate(format: "identifier == %@", bundleID)
+            if let signed = try? Storage.shared.context.fetch(request).first {
+                Storage.shared.deleteApp(for: signed)
+                HapticsManager.shared.success()
+                return
+            }
+
+            let importRequest: NSFetchRequest<Imported> = Imported.fetchRequest()
+            importRequest.predicate = NSPredicate(format: "identifier == %@", bundleID)
+            if let imported = try? Storage.shared.context.fetch(importRequest).first {
+                Storage.shared.deleteApp(for: imported)
+                HapticsManager.shared.success()
+                return
+            }
+
+            HapticsManager.shared.error()
+        }
+    }
+
+    private func pauseDownload(id: String) {
+        DispatchQueue.main.async {
+            if let download = DownloadManager.shared.getDownload(by: id) {
+                DownloadManager.shared.cancelDownload(download)
+                HapticsManager.shared.success()
+            }
+        }
+    }
+
+    private func resumeDownload(id: String) {
+        DispatchQueue.main.async {
+            if let download = DownloadManager.shared.getDownload(by: id) {
+                DownloadManager.shared.resumeDownload(download)
+                HapticsManager.shared.success()
+            }
+        }
+    }
+
+    private func shareApp(bundleID: String) {
+        DispatchQueue.main.async {
+            let request: NSFetchRequest<Signed> = Signed.fetchRequest()
+            request.predicate = NSPredicate(format: "identifier == %@", bundleID)
+            if let signed = try? Storage.shared.context.fetch(request).first,
+               let archiveURL = signed.archiveURL {
+                UIActivityViewController.show(activityItems: [archiveURL])
+                return
+            }
+
+            let importRequest: NSFetchRequest<Imported> = Imported.fetchRequest()
+            importRequest.predicate = NSPredicate(format: "identifier == %@", bundleID)
+            if let imported = try? Storage.shared.context.fetch(importRequest).first,
+               let archiveURL = imported.archiveURL {
+                UIActivityViewController.show(activityItems: [archiveURL])
+                return
+            }
+        }
     }
 
     // MARK: - Supported Schemes (used by URLSchemeView)
