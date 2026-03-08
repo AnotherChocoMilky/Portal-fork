@@ -446,6 +446,11 @@ struct LiveActivitySettingsView: View {
             }
             .onChange(of: settings.highFrequencyUpdates) { _ in saveSettings() }
 
+            Toggle(isOn: $settings.showStatusBadge) {
+                Label("Show Status Badge", systemImage: "checkmark.seal.fill")
+            }
+            .onChange(of: settings.showStatusBadge) { _ in saveSettings() }
+
         } header: {
             Text("Progress Display")
                 .font(.system(size: 11, weight: .semibold))

@@ -128,39 +128,6 @@ struct InstallationLiveActivityLockScreenView: View {
                 Spacer()
             }
 
-            HStack {
-                ZStack {
-                    Circle()
-                        .fill(Color.primary.opacity(0.1))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: "flashlight.on.fill")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(primaryTextColor)
-                }
-
-                Spacer()
-
-                HStack(spacing: 4) {
-                    Circle()
-                        .fill(settings.accentColor.color)
-                        .frame(width: 6, height: 6)
-                    Text("1 Notification")
-                        .font(.system(size: 12, weight: .semibold, design: widgetFontDesign(for: settings.fontFamily)))
-                        .foregroundColor(secondaryTextColor.opacity(0.8))
-                }
-
-                Spacer()
-
-                ZStack {
-                    Circle()
-                        .fill(Color.primary.opacity(0.1))
-                        .frame(width: 36, height: 36)
-                    Image(systemName: "camera.fill")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(primaryTextColor)
-                }
-            }
-
             if settings.detailDensity != .minimal {
                 detailsView(context: context)
             }
