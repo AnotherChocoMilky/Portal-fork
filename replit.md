@@ -79,6 +79,8 @@ To build the actual iOS app, you need:
   - `LiveActivityManager.swift`: Verified data flow — all required fields (appName, progress, status, settings) are properly passed through to the UI layer. No changes needed.
   - Progress bar clamped to prevent overflow when progress > 1.0.
 
+- **Bulk Source Import URL Scheme**: Added `portal://addBulkSource` scheme that accepts multiple `url` query parameters, validates each source by fetching its repository data, adds valid sources to storage, generates a Portal Transfer code, and presents results in a dedicated `SourcesAddBulkView` sheet with an accent-colored progress bar, success/error states, and copy-to-clipboard transfer code. Documented in URLSchemeView.
+
 ## Links
 - [GitHub Repository](https://github.com/aoyn1xw/Portal)
 - [Releases](https://github.com/aoyn1xw/Portal/releases)

@@ -34,6 +34,12 @@ struct URLSchemeView: View {
             )
 
             schemeSection(
+                title: String.localized("Bulk Source Import"),
+                icon: "square.stack.3d.up.fill",
+                schemes: URLSchemeHandlerManager.bulkSourceImport
+            )
+
+            schemeSection(
                 title: String.localized("External Integration"),
                 icon: "square.and.arrow.up.fill",
                 schemes: URLSchemeHandlerManager.externalIntegration

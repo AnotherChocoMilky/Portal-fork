@@ -15,6 +15,7 @@ final class URLSchemeHandlerManager: ObservableObject {
         case missingParameter(String)
         case unknownScheme(String)
         case invalidURL
+        case bulkSource([String])
     }
 
     private init() {}
@@ -206,6 +207,15 @@ final class URLSchemeHandlerManager: ObservableObject {
         case "diagnostics":
             switchTab(.settings)
             return .success
+
+        // MARK: Bulk Source Import
+
+        case "addbulksource":
+            let urls = queryItems.filter { $0.name == "url" }.compactMap { $0.value?.removingPercentEncoding }
+            guard !urls.isEmpty else {
+                return .missingParameter("url")
+            }
+            return .bulkSource(urls)
 
         // MARK: External Integration
 
@@ -439,6 +449,10 @@ final class URLSchemeHandlerManager: ObservableObject {
         SchemeInfo(scheme: "portal://logs", example: "portal://logs", description: "Exports app logs as a JSON file."),
         SchemeInfo(scheme: "portal://reloadUI", example: "portal://reloadUI", description: "Forces a UI reload."),
         SchemeInfo(scheme: "portal://diagnostics", example: "portal://diagnostics", description: "Opens the diagnostics view."),
+    ]
+
+    static let bulkSourceImport: [SchemeInfo] = [
+        SchemeInfo(scheme: "portal://addBulkSource?url=&url=", example: "portal://addBulkSource?url=https://repo1.com/source.json&url=https://repo2.com/source.json", description: "Imports multiple sources at once and generates a Portal Transfer code."),
     ]
 
     static let externalIntegration: [SchemeInfo] = [
