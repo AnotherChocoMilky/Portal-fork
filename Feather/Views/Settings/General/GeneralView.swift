@@ -121,14 +121,18 @@ struct GeneralView: View {
                 }
             }
 
-            Picker(selection: AppStorage(wrappedValue: 0, "Feather.backgroundRefreshConnection").projectedValue) {
-                Label(.localized("Both"), systemImage: "arrow.up.left.and.arrow.down.right").tag(0)
-                Label(.localized("WiFi"), systemImage: "wifi").tag(1)
-                Label(.localized("Cellular"), systemImage: "antenna.radiowaves.left.and.right").tag(2)
-            } label: {
+            VStack(alignment: .leading, spacing: 10) {
                 SettingsRowContent(icon: "wifi", title: String.localized("Connection Preference"), color: .accentColor)
+
+                Picker(selection: AppStorage(wrappedValue: 0, "Feather.backgroundRefreshConnection").projectedValue) {
+                    Label(.localized("Both"), systemImage: "arrow.up.left.and.arrow.down.right").tag(0)
+                    Label(.localized("WiFi"), systemImage: "wifi").tag(1)
+                    Label(.localized("Cellular"), systemImage: "antenna.radiowaves.left.and.right").tag(2)
+                } label: {
+                    EmptyView()
+                }
+                .pickerStyle(.segmented)
             }
-            .pickerStyle(.menu)
             .padding(.trailing, 16)
 
             Button {

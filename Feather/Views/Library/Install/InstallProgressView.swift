@@ -40,9 +40,15 @@ struct InstallProgressView<Footer: View>: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.15)
-                .ignoresSafeArea()
-                .onTapGesture {}
+            ZStack {
+                Color.black.opacity(0.25)
+                    .ignoresSafeArea()
+                Color.clear
+                    .background(.ultraThinMaterial)
+                    .opacity(0.3)
+                    .ignoresSafeArea()
+            }
+            .onTapGesture {}
 
             VStack {
                 Spacer()
@@ -77,11 +83,11 @@ struct InstallProgressView<Footer: View>: View {
         .padding(.top, 24)
         .padding(.bottom, 30)
         .background {
-            _liquidGlassBackground(cornerRadius: 30)
+            _liquidGlassBackground(cornerRadius: 32)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
-        .shadow(color: .black.opacity(0.12), radius: 20, x: 0, y: -2)
-        .shadow(color: .white.opacity(0.04), radius: 1, x: 0, y: -1)
+        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+        .shadow(color: .black.opacity(0.18), radius: 30, x: 0, y: -4)
+        .shadow(color: .white.opacity(0.06), radius: 2, x: 0, y: -1)
     }
 
     @ViewBuilder
@@ -136,9 +142,9 @@ struct InstallProgressView<Footer: View>: View {
         }
         .padding(16)
         .background {
-            _liquidGlassBackground(cornerRadius: 20, tintOpacity: 0.04, borderOpacity: 0.12)
+            _liquidGlassBackground(cornerRadius: 22, tintOpacity: 0.03, borderOpacity: 0.15)
         }
-        .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
     }
 
     @ViewBuilder
@@ -335,28 +341,32 @@ struct InstallProgressView<Footer: View>: View {
     ) -> some View {
         ZStack {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .fill(Color(.systemBackground).opacity(tintOpacity))
+                .fill(.ultraThinMaterial)
 
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(
                     LinearGradient(
                         colors: [
-                            Color.white.opacity(0.12),
-                            Color.white.opacity(0.02),
-                            Color.white.opacity(0.04)
+                            Color.white.opacity(0.18),
+                            Color.white.opacity(0.04),
+                            Color.white.opacity(0.08)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
+                .blendMode(.overlay)
+
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                .fill(Color(.systemBackground).opacity(tintOpacity * 0.5))
 
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .strokeBorder(
                     LinearGradient(
                         colors: [
-                            Color.white.opacity(borderOpacity),
-                            Color.white.opacity(borderOpacity * 0.3),
-                            Color.white.opacity(borderOpacity * 0.6)
+                            Color.white.opacity(borderOpacity * 1.5),
+                            Color.white.opacity(borderOpacity * 0.2),
+                            Color.white.opacity(borderOpacity * 0.8)
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing

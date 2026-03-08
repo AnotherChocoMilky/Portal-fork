@@ -354,36 +354,37 @@ struct CheckForUpdatesView: View {
                         }
                     }
                 } else {
-                    // Up to Date
-                    HStack(spacing: 16) {
+                    VStack(spacing: 16) {
                         ZStack {
                             MetalIntegratedStateView(state: $updateManager.metalState)
-                                .frame(width: 56, height: 56)
-                                .clipShape(Circle())
+                                .frame(width: 64, height: 64)
+                                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 
                             if updateManager.metalState == .idle {
-                                Circle()
-                                    .fill(Color.blue.opacity(0.1))
-                                    .frame(width: 56, height: 56)
+                                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                    .fill(Color.accentColor.opacity(0.1))
+                                    .frame(width: 64, height: 64)
 
-                                Image(systemName: "gear.badge.checkmark")
-                                    .font(.system(size: 26))
-                                    .foregroundStyle(.blue)
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 30))
+                                    .foregroundStyle(Color.accentColor)
+                                    .symbolRenderingMode(.hierarchical)
                             }
                         }
 
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(spacing: 6) {
                             Text("No Updates Found")
-                                .font(.system(.headline, design: .rounded))
+                                .font(.system(size: 18, weight: .bold, design: .rounded))
 
                             Text("You're running the latest Portal version, keep looking for updates later.")
-                                .font(.subheadline)
+                                .font(.system(size: 14, weight: .medium))
                                 .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
                         }
-
-                        Spacer()
                     }
-                    .ifAvailableIOS26Glass()
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 24)
+                    .padding(.horizontal, 20)
                 }
             } else {
                 VStack(alignment: .leading, spacing: 16) {
@@ -415,27 +416,23 @@ struct CheckForUpdatesView: View {
                 }
             }
         }
-        .padding(isUpToDate && isAvailableIOS26() ? 0 : 20)
+        .padding(20)
         .background {
-            if isUpToDate && isAvailableIOS26() {
-                Color.clear
-            } else {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .fill(.ultraThinMaterial)
+            ZStack {
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .fill(.ultraThinMaterial)
 
-                    RoundedRectangle(cornerRadius: 24, style: .continuous)
-                        .stroke(
-                            LinearGradient(
-                                colors: [.white.opacity(0.5), .clear, .black.opacity(0.05)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
-                            lineWidth: 1
-                        )
-                }
-                .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
+                    .stroke(
+                        LinearGradient(
+                            colors: [.white.opacity(0.5), .clear, .black.opacity(0.05)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
             }
+            .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
         }
     }
 
@@ -486,13 +483,17 @@ struct CheckForUpdatesView: View {
                 }
                 .padding(16)
                 .background(Color.primary.opacity(0.03))
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
             }
         }
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 24, style: .continuous)
-                .fill(Color.clear)
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 28, style: .continuous)
+                        .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                )
                 .shadow(color: .black.opacity(0.04), radius: 15, x: 0, y: 8)
         )
     }
@@ -508,7 +509,7 @@ struct CheckForUpdatesView: View {
             }
             .padding(.horizontal, 4)
 
-            VStack(spacing: 12) {
+            VStack(spacing: 0) {
                 if updateManager.isCheckingUpdates {
                     LookingForReleasesView()
                         .frame(maxWidth: .infinity)
@@ -520,16 +521,21 @@ struct CheckForUpdatesView: View {
 
                         if index < releases.count - 1 {
                             Divider()
-                                .opacity(0.5)
+                                .padding(.leading, 52)
+                                .opacity(0.4)
                         }
                     }
                 }
             }
-            .padding(16)
             .background(
-                RoundedRectangle(cornerRadius: 20, style: .continuous)
-                    .fill(Color.primary.opacity(0.04))
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .stroke(Color.primary.opacity(0.06), lineWidth: 1)
+                    )
             )
+            .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
         }
     }
 
@@ -537,7 +543,16 @@ struct CheckForUpdatesView: View {
         Button {
             selectedReleaseForNotes = release
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(Color.accentColor.opacity(0.1))
+                        .frame(width: 36, height: 36)
+                    Image(systemName: "tag.fill")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.accentColor)
+                }
+
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 8) {
                         Text(release.tagName)
@@ -559,10 +574,11 @@ struct CheckForUpdatesView: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))
                     .foregroundStyle(.tertiary)
             }
-            .padding(.vertical, 12)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
         }
         .buttonStyle(.plain)
     }
@@ -644,10 +660,10 @@ struct CheckForUpdatesView: View {
         .padding(20)
         .background {
             ZStack {
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .fill(.ultraThinMaterial)
 
-                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                RoundedRectangle(cornerRadius: 28, style: .continuous)
                     .stroke(
                         LinearGradient(
                             colors: [.red.opacity(0.3), .clear],

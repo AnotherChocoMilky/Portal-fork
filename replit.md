@@ -40,6 +40,16 @@ To build the actual iOS app, you need:
 - **Build System**: Makefile, xcodebuild
 
 ## Recent Changes
+- **UI Modernization Pass**: Comprehensive visual updates across multiple views:
+  - InstallPreviewView/InstallProgressView: Enhanced glass effects with `.ultraThinMaterial`, stronger translucency for background visibility
+  - CheckForUpdatesView: Modernized No Updates Found card (centered layout, accent-colored icon), Previous Releases with tag icons and material background, increased rounded corners (28pt) throughout
+  - GeneralView: Connection Preference uses segmented picker for modern look
+  - CertificatesInfoView: Redesigned Validity & Timeline section with inset date cards, modernized Entitlements section with accent-colored icons, fixed "DAYS" → "Days" capitalization
+  - CertificatesAddView: All SF symbols now use accent color instead of hardcoded colors
+  - ServerView: Fixed Localhost Only SF symbol (was typo "extrernaldrive"), removed sparkles from SSL animation, cleaner success state
+  - ConfigurationView: All SF symbols unified to use accent color
+  - CreditsView: Full native SwiftUI ScrollView layout, grouped card design with rounded corners, modern spacing
+
 - **Install Preview Sheet redesign (v2)**: Bottom-anchored App Store-style install modal:
   - Bottom sheet with slide-up spring animation, anchored above tab bar
   - Layered glass effect: `.ultraThinMaterial` outer sheet + `.regularMaterial` inner card

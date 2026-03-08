@@ -115,9 +115,11 @@ struct InstallPreviewView: View {
                 .background {
                     ZStack {
                         Circle()
-                            .fill(Color.primary.opacity(0.06))
+                            .fill(.ultraThinMaterial)
                         Circle()
-                            .strokeBorder(Color.white.opacity(0.12), lineWidth: 0.5)
+                            .fill(Color.primary.opacity(0.04))
+                        Circle()
+                            .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5)
                     }
                 }
                 .clipShape(Circle())

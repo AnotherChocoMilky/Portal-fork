@@ -280,71 +280,75 @@ struct CertificatesInfoView: View {
     
     // MARK: - Validity Card
     private func validityCard(data: Certificate) -> some View {
-        VStack(spacing: 24) {
-            // Header
-            HStack {
+        VStack(spacing: 20) {
+            HStack(spacing: 8) {
                 Image(systemName: "clock.badge.checkmark.fill")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.blue)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Color.accentColor)
                 Text("Validity & Timeline")
-                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                    .foregroundStyle(.secondary)
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundStyle(.primary)
                 Spacer()
             }
-            
-            VStack(spacing: 20) {
-                // Timeline
-                HStack(spacing: 0) {
-                    // Created
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Issued")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.secondary)
-                        Text(data.CreationDate.formatted(date: .abbreviated, time: .omitted))
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(.primary)
-                    }
 
-                    Spacer()
-
-                    // Progress Ring
-                    progressRing(data: data)
-
-                    Spacer()
-
-                    // Expires
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("Expires")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.secondary)
-                        Text(data.ExpirationDate.formatted(date: .abbreviated, time: .omitted))
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(expirationColor(for: data.ExpirationDate))
-                    }
+            HStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Issued")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    Text(data.CreationDate.formatted(date: .abbreviated, time: .omitted))
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(.primary)
                 }
-                
-                // Remaining time large badge
-                HStack {
-                    Image(systemName: "hourglass.circle.fill")
-                        .font(.system(size: 16))
-                    Text(data.ExpirationDate.expirationInfo().formatted.uppercased())
-                        .font(.system(size: 13, weight: .bold, design: .rounded))
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .background(
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [expirationColor(for: data.ExpirationDate), expirationColor(for: data.ExpirationDate).opacity(0.8)],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
+                        .fill(Color.accentColor.opacity(0.06))
                 )
-                .shadow(color: expirationColor(for: data.ExpirationDate).opacity(0.3), radius: 8, x: 0, y: 4)
+
+                Spacer(minLength: 12)
+
+                progressRing(data: data)
+
+                Spacer(minLength: 12)
+
+                VStack(alignment: .trailing, spacing: 6) {
+                    Text("Expires")
+                        .font(.system(size: 10, weight: .bold, design: .rounded))
+                        .foregroundStyle(.secondary)
+                    Text(data.ExpirationDate.formatted(date: .abbreviated, time: .omitted))
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(expirationColor(for: data.ExpirationDate))
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .trailing)
+                .background(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .fill(expirationColor(for: data.ExpirationDate).opacity(0.06))
+                )
             }
+
+            HStack(spacing: 8) {
+                Image(systemName: "hourglass.circle.fill")
+                    .font(.system(size: 16))
+                Text(data.ExpirationDate.expirationInfo().formatted)
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+            }
+            .foregroundStyle(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .background(
+                RoundedRectangle(cornerRadius: 18, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [expirationColor(for: data.ExpirationDate), expirationColor(for: data.ExpirationDate).opacity(0.75)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+            )
+            .shadow(color: expirationColor(for: data.ExpirationDate).opacity(0.25), radius: 10, x: 0, y: 5)
         }
         .padding(24)
         .background(cardBackground)
@@ -434,56 +438,62 @@ struct CertificatesInfoView: View {
     // MARK: - Entitlements Card
     private func entitlementsCard(entitlements: [String: Any]) -> some View {
         VStack(spacing: 0) {
-            // Header
             Button {
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     isEntitlementsExpanded.toggle()
                 }
             } label: {
-                HStack {
-                    Image(systemName: "key.fill")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(.purple)
+                HStack(spacing: 10) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
+                            .fill(Color.accentColor.opacity(0.1))
+                            .frame(width: 36, height: 36)
+                        Image(systemName: "key.fill")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundStyle(Color.accentColor)
+                    }
+
                     Text("Entitlements")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
-                    
+
                     Spacer()
-                    
+
                     Text("\(entitlements.count)")
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.system(size: 11, weight: .bold))
                         .foregroundStyle(.white)
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(Color.purple))
-                    
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Capsule().fill(Color.accentColor))
+
                     Image(systemName: isEntitlementsExpanded ? "chevron.up" : "chevron.down")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(.secondary)
                 }
                 .padding(16)
             }
-            
-            // Entitlements list
+
             if isEntitlementsExpanded {
-                Divider()
+                Divider().padding(.leading, 62)
                 VStack(spacing: 0) {
                     ForEach(Array(entitlements.keys.sorted()), id: \.self) { key in
-                        HStack {
+                        HStack(spacing: 12) {
+                            Image(systemName: "checkmark.seal.fill")
+                                .font(.system(size: 14))
+                                .foregroundStyle(Color.accentColor)
+
                             Text(EntitlementMapping.humanReadableName(for: key))
                                 .font(.system(size: 13, weight: .medium))
                                 .foregroundStyle(.primary)
                                 .lineLimit(1)
+
                             Spacer()
-                            Image(systemName: "checkmark.circle.fill")
-                                .font(.system(size: 14))
-                                .foregroundStyle(.green)
                         }
                         .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
-                        
+                        .padding(.vertical, 12)
+
                         if key != entitlements.keys.sorted().last {
-                            Divider().padding(.leading, 16)
+                            Divider().padding(.leading, 44)
                         }
                     }
                 }

@@ -239,7 +239,7 @@ struct CertificatesAddView: View {
             Image(systemName: "lock.fill")
                 .font(.system(size: 18))
                 .frame(width: 24)
-                .foregroundStyle(.orange)
+                .foregroundStyle(Color.accentColor)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Password")
@@ -260,7 +260,7 @@ struct CertificatesAddView: View {
             Image(systemName: "tag.fill")
                 .font(.system(size: 18))
                 .frame(width: 24)
-                .foregroundStyle(.blue)
+                .foregroundStyle(Color.accentColor)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("Nickname")
@@ -280,7 +280,7 @@ struct CertificatesAddView: View {
                 Image(systemName: "star.fill")
                     .font(.system(size: 18))
                     .frame(width: 24)
-                    .foregroundStyle(.yellow)
+                    .foregroundStyle(Color.accentColor)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Set As Default")
@@ -358,13 +358,13 @@ struct CertificatesAddView: View {
         Button(action: action) {
             HStack(spacing: 16) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(color.opacity(0.15))
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.accentColor.opacity(0.12))
                         .frame(width: 40, height: 40)
 
                     Image(systemName: icon)
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(color)
+                        .foregroundStyle(Color.accentColor)
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -390,7 +390,7 @@ struct CertificatesAddView: View {
                 if isDone {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 20))
-                        .foregroundStyle(.green)
+                        .foregroundStyle(Color.accentColor)
                         .transition(.scale.combined(with: .opacity))
                 } else {
                     Image(systemName: "plus.circle.fill")
@@ -399,7 +399,7 @@ struct CertificatesAddView: View {
                         .transition(.opacity)
                 }
             }
-            .padding(12)
+            .padding(14)
         }
         .buttonStyle(.plain)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isDone)
@@ -457,7 +457,7 @@ struct CertificatesAddView: View {
 
 // MARK: - Extension: View (import)
 extension CertificatesAddView {
-	private func _saveCertificate() {
+        private func _saveCertificate() {
         guard let p12URL = _p12URL, let provisionURL = _provisionURL else { return }
 
         Task.detached {
@@ -493,9 +493,9 @@ extension CertificatesAddView {
                 }
             }
         }
-	}
-	
-	private func _handleZipImport(_ zipURL: URL) {
+        }
+        
+        private func _handleZipImport(_ zipURL: URL) {
         Task.detached {
             let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
 
@@ -571,23 +571,23 @@ extension CertificatesAddView {
                 }
             }
         }
-	}
+        }
 }
 
 // MARK: - Certificate Import Errors
 enum CertificateImportError: LocalizedError {
-	case invalidZipFile
-	case missingCertificateFiles(String)
-	case extractionFailed
-	
-	var errorDescription: String? {
-		switch self {
-		case .invalidZipFile:
-			return NSLocalizedString("The selected file is not a valid ZIP archive.", comment: "")
-		case .missingCertificateFiles(let files):
-			return String(format: NSLocalizedString("Cannot find certificate files in uploaded ZIP. Missing: %@", comment: ""), files)
-		case .extractionFailed:
-			return NSLocalizedString("Failed to extract the ZIP file. The file may be corrupted or password protected.", comment: "")
-		}
-	}
+        case invalidZipFile
+        case missingCertificateFiles(String)
+        case extractionFailed
+        
+        var errorDescription: String? {
+                switch self {
+                case .invalidZipFile:
+                        return NSLocalizedString("The selected file is not a valid ZIP archive.", comment: "")
+                case .missingCertificateFiles(let files):
+                        return String(format: NSLocalizedString("Cannot find certificate files in uploaded ZIP. Missing: %@", comment: ""), files)
+                case .extractionFailed:
+                        return NSLocalizedString("Failed to extract the ZIP file. The file may be corrupted or password protected.", comment: "")
+                }
+        }
 }
