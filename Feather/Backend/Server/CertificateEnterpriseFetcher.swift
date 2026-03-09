@@ -14,12 +14,15 @@ struct EnterpriseCertificate: Identifiable {
 
 enum EnterpriseFetcherError: LocalizedError {
 	case downloadFailed
+	case zipNotFound
 	case extractionFailed
 
 	var errorDescription: String? {
 		switch self {
 		case .downloadFailed:
 			return NSLocalizedString("Failed to download the certificates archive.", comment: "")
+		case .zipNotFound:
+			return NSLocalizedString("The downloaded archive could not be found on disk.", comment: "")
 		case .extractionFailed:
 			return NSLocalizedString("Failed to extract the certificates archive.", comment: "")
 		}
@@ -33,82 +36,81 @@ final class CertificateEnterpriseFetcher: ObservableObject {
 	static let shared = CertificateEnterpriseFetcher()
 
 	@Published var certificates: [EnterpriseCertificate] = []
-	@Published var isLoading = false
-	@Published var errorMessage: String? = nil
+	@Published var isFetching: Bool = false
+	@Published var errorMessage: String?
 
-	private let remoteZipURL = URL(string: "https://github.com/WSF-Team/WSF/raw/refs/heads/main/portal/resources/certificates.zip")!
-	private let cacheIntervalSeconds: TimeInterval = 24 * 60 * 60
-	private let lastFetchKey = "Feather.enterpriseCertLastFetch"
+	private let repositoryURL = URL(string: "https://github.com/WSF-Team/WSF/raw/refs/heads/main/portal/resources/certificates.zip")!
 
-	private var cacheDirectory: URL {
-		let cachesDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
-		return cachesDir.appendingPathComponent("enterpriseCertificates")
-	}
+	private let cacheRoot = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!
+	private var enterpriseFolder: URL { cacheRoot.appendingPathComponent("enterpriseCertificates") }
+	private var zipFile: URL { enterpriseFolder.appendingPathComponent("certificates.zip") }
+	private var extractedFolder: URL { enterpriseFolder.appendingPathComponent("extracted") }
 
 	// MARK: Public
 
 	func fetchEnterpriseCertificates(forceRefresh: Bool) {
-		guard !isLoading else { return }
-		isLoading = true
+		guard !isFetching else { return }
+		isFetching = true
 		errorMessage = nil
 
 		Task {
-			defer { isLoading = false }
+			defer { self.isFetching = false }
 			do {
-				let dir = cacheDirectory
-				let zipPath = dir.appendingPathComponent("certificates.zip")
+				print("[EnterpriseFetcher] Starting certificate fetch")
+
 				let fm = FileManager.default
 
+				// Step 1 – Prepare directories
 				if forceRefresh {
-					try? fm.removeItem(at: dir)
+					try? fm.removeItem(at: enterpriseFolder)
+				}
+				if !fm.fileExists(atPath: enterpriseFolder.path) {
+					try fm.createDirectory(at: enterpriseFolder, withIntermediateDirectories: true)
+				}
+
+				// Step 2 – Download the ZIP archive
+				let (data, _) = try await URLSession.shared.data(from: repositoryURL)
+				print("[EnterpriseFetcher] Download complete")
+
+				try data.write(to: zipFile)
+
+				guard fm.fileExists(atPath: zipFile.path) else {
+					self.errorMessage = EnterpriseFetcherError.zipNotFound.localizedDescription
+					return
+				}
+
+				if let attrs = try? fm.attributesOfItem(atPath: zipFile.path),
+				   let size = attrs[.size] as? Int {
+					print("[EnterpriseFetcher] ZIP written to disk (\(size) bytes)")
 				} else {
-					let lastFetch = UserDefaults.standard.object(forKey: lastFetchKey) as? Date
-					let cacheIsValid = lastFetch.map { Date().timeIntervalSince($0) < cacheIntervalSeconds } ?? false
-					if cacheIsValid && fm.fileExists(atPath: dir.path) {
-						print("[EnterpriseFetcher] Using cached certificates")
-						let certs = try parseDirectories(in: dir)
-						certificates = certs
-						return
-					}
+					print("[EnterpriseFetcher] ZIP written to disk")
 				}
 
-				try fm.createDirectory(at: dir, withIntermediateDirectories: true)
-
-				print("[EnterpriseFetcher] Starting certificate download")
-				let (data, response) = try await URLSession.shared.data(from: remoteZipURL)
-				guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-					throw EnterpriseFetcherError.downloadFailed
+				// Step 3 – Extract the ZIP
+				if fm.fileExists(atPath: extractedFolder.path) {
+					try fm.removeItem(at: extractedFolder)
 				}
-				print("[EnterpriseFetcher] ZIP download completed")
+				try fm.createDirectory(at: extractedFolder, withIntermediateDirectories: true)
 
-				try data.write(to: zipPath)
-
-				// Remove any previously extracted certificate folders before extraction
-				let existingItems = (try? fm.contentsOfDirectory(atPath: dir.path)) ?? []
-				for item in existingItems {
-					if item == "certificates.zip" { continue }
-					do {
-						try fm.removeItem(at: dir.appendingPathComponent(item))
-					} catch {
-						print("[EnterpriseFetcher] Warning: could not remove stale item '\(item)': \(error.localizedDescription)")
-					}
-				}
-
-				print("[EnterpriseFetcher] ZIP extraction started")
+				print("[EnterpriseFetcher] Extraction started")
 				do {
-					try Zip.unzipFile(zipPath, destination: dir, overwrite: true, password: nil)
+					try Zip.unzipFile(zipFile, destination: extractedFolder, overwrite: true, password: nil)
 				} catch {
 					print("[EnterpriseFetcher] Extraction failed: \(error.localizedDescription)")
 					throw EnterpriseFetcherError.extractionFailed
 				}
-				print("[EnterpriseFetcher] ZIP extraction completed")
+				print("[EnterpriseFetcher] Extraction finished")
 
-				let certs = try parseDirectories(in: dir)
-				certificates = certs
+				if fm.fileExists(atPath: extractedFolder.path),
+				   let extractedContents = try? fm.contentsOfDirectory(atPath: extractedFolder.path) {
+					print("[EnterpriseFetcher] Extracted directory contents: \(extractedContents)")
+				}
 
-				UserDefaults.standard.set(Date(), forKey: lastFetchKey)
+				// Step 4 – Parse certificate folders
+				let certs = try parseDirectories(in: extractedFolder)
+				self.certificates = certs
 			} catch {
-				errorMessage = error.localizedDescription
+				self.errorMessage = error.localizedDescription
 			}
 		}
 	}
@@ -117,46 +119,54 @@ final class CertificateEnterpriseFetcher: ObservableObject {
 
 	private func parseDirectories(in directory: URL) throws -> [EnterpriseCertificate] {
 		let fm = FileManager.default
-		let items = try fm.contentsOfDirectory(atPath: directory.path)
+		let items = try fm.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)
 
 		print("[EnterpriseFetcher] Number of folders discovered: \(items.count)")
 
 		var result: [EnterpriseCertificate] = []
 
-		for item in items {
-			if item == "certificates.zip" { continue }
-
-			let itemURL = directory.appendingPathComponent(item)
+		for folder in items {
 			var isDirectory: ObjCBool = false
-			guard fm.fileExists(atPath: itemURL.path, isDirectory: &isDirectory),
+			guard fm.fileExists(atPath: folder.path, isDirectory: &isDirectory),
 				  isDirectory.boolValue else { continue }
 
-			let subItems = (try? fm.contentsOfDirectory(atPath: itemURL.path)) ?? []
+			let files = (try? fm.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
 
-			var p12URL: URL?
-			var provisionURL: URL?
-
-			for file in subItems {
-				let fileURL = itemURL.appendingPathComponent(file)
-				let ext = fileURL.pathExtension.lowercased()
-				if ext == "p12", p12URL == nil {
-					p12URL = fileURL
-				} else if ext == "mobileprovision", provisionURL == nil {
-					provisionURL = fileURL
-				}
+			guard let p12URL = files.first(where: { $0.pathExtension.lowercased() == "p12" }),
+				  let provisionURL = files.first(where: { $0.pathExtension.lowercased() == "mobileprovision" }) else {
+				continue
 			}
 
-			if let p12 = p12URL, let provision = provisionURL {
-				result.append(EnterpriseCertificate(
-					certificateName: itemURL.lastPathComponent,
-					p12URL: p12,
-					provisionURL: provision
-				))
-				print("[EnterpriseFetcher] Valid certificate: \(itemURL.lastPathComponent)")
-			}
+			result.append(EnterpriseCertificate(
+				certificateName: folder.lastPathComponent,
+				p12URL: p12URL,
+				provisionURL: provisionURL
+			))
+			print("[EnterpriseFetcher] Valid certificate: \(folder.lastPathComponent)")
 		}
 
 		print("[EnterpriseFetcher] Number of valid certificates parsed: \(result.count)")
+
+		if result.isEmpty {
+			print("[EnterpriseFetcher] No certificates found. Full extracted directory structure:")
+			printDirectoryStructure(at: directory, indent: "  ")
+		}
+
 		return result.sorted { $0.certificateName.localizedCompare($1.certificateName) == .orderedAscending }
+	}
+
+	private func printDirectoryStructure(at url: URL, indent: String) {
+		let fm = FileManager.default
+		guard let items = try? fm.contentsOfDirectory(at: url, includingPropertiesForKeys: nil) else { return }
+		for item in items {
+			var isDirectory: ObjCBool = false
+			fm.fileExists(atPath: item.path, isDirectory: &isDirectory)
+			if isDirectory.boolValue {
+				print("\(indent)\(item.lastPathComponent)/")
+				printDirectoryStructure(at: item, indent: indent + "  ")
+			} else {
+				print("\(indent)\(item.lastPathComponent)")
+			}
+		}
 	}
 }
