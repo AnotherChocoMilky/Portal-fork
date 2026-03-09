@@ -11,7 +11,7 @@ struct StorageCategory: Identifiable {
     let color: Color
     var size: Int64
     let action: (() -> Void)?
-    
+
     var formattedSize: String {
         ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
     }
@@ -19,7 +19,6 @@ struct StorageCategory: Identifiable {
 
 // MARK: - ManageStorageView
 struct ManageStorageView: View {
-    @AppStorage("Feather.showHeaderViews") private var showHeaderViews = true
     @State private var cleanupPeriod: CleanupPeriod = .thirtyDays
     @State private var isCalculating = false
     @State private var showStorageAnalyzer = false
@@ -27,12 +26,12 @@ struct ManageStorageView: View {
     @State private var showLargeFilesFinder = false
     @State private var animateProgress = false
     @State private var selectedCategory: StorageCategory?
-    
+
     // Storage data
     @State private var usedSpace: Int64 = 0
     @State private var totalSpace: Int64 = 0
     @State private var availableSpace: Int64 = 0
-    
+
     // Breakdown data
     @State private var signedAppsSize: Int64 = 0
     @State private var importedAppsSize: Int64 = 0
@@ -41,378 +40,72 @@ struct ManageStorageView: View {
     @State private var archivesSize: Int64 = 0
     @State private var logsSize: Int64 = 0
     @State private var tempFilesSize: Int64 = 0
-    
+
     // Cleanup data
     @State private var reclaimableSpace: Int64 = 0
     @State private var duplicateFilesCount: Int = 0
     @State private var largeFilesCount: Int = 0
-    
+
     // Animation states
     @State private var ringProgress: CGFloat = 0
-    
+
     private var storageCategories: [StorageCategory] {
         [
             StorageCategory(name: .localized("Signed Apps"), icon: "checkmark.seal.fill", color: .blue, size: signedAppsSize, action: deleteSignedApps),
-            StorageCategory(name: .localized("Imported Apps"), icon: "arrow.down.circle.fill", color: .green, size: importedAppsSize, action: deleteImportedApps),
-            StorageCategory(name: .localized("Certificates"), icon: "key.fill", color: .orange, size: certificatesSize, action: resetCertificates),
-            StorageCategory(name: .localized("Cache"), icon: "arrow.triangle.2.circlepath.circle.fill", color: .purple, size: cacheSize, action: clearNetworkCache),
+            StorageCategory(name: .localized("Imported Apps"), icon: "square.and.arrow.down.fill", color: .green, size: importedAppsSize, action: deleteImportedApps),
+            StorageCategory(name: .localized("Certificates"), icon: "key.horizontal.fill", color: .orange, size: certificatesSize, action: resetCertificates),
+            StorageCategory(name: .localized("Cache"), icon: "arrow.clockwise.circle.fill", color: .purple, size: cacheSize, action: clearNetworkCache),
             StorageCategory(name: .localized("Archives"), icon: "archivebox.fill", color: .cyan, size: archivesSize, action: nil),
             StorageCategory(name: .localized("Logs"), icon: "doc.text.fill", color: .pink, size: logsSize, action: clearLogs),
-            StorageCategory(name: .localized("Temp Files"), icon: "trash.circle.fill", color: .gray, size: tempFilesSize, action: clearWorkCache)
+            StorageCategory(name: .localized("Temp Files"), icon: "clock.arrow.circlepath", color: .gray, size: tempFilesSize, action: clearWorkCache)
         ]
     }
-    
-    @State private var metalState: MetalAnimationState = .idle
 
     var body: some View {
-        ZStack {
-            List {
-                sectionHeaderView
-                sectionDeviceStorage
-                sectionTools
-                sectionStorageBreakdown
-                sectionSmartCleanup
-                sectionAdvancedTools
-                sectionDangerZone
+        NBNavigationView(.localized("Manage Storage"), displayMode: .inline) {
+            ScrollView {
+                VStack(spacing: 20) {
+                    // Modern Storage Ring Card
+                    storageRingCard
+
+                    // Quick Actions Grid
+                    quickActionsGrid
+
+                    // Storage Breakdown with Interactive Cards
+                    storageBreakdownCards
+
+                    // Smart Cleanup Section
+                    smartCleanupCard
+
+                    // Advanced Tools Section
+                    advancedToolsSection
+
+                    // Danger Zone
+                    dangerZoneSection
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
             }
-            .navigationTitle(.localized("Manage Storage"))
-            .navigationBarTitleDisplayMode(.inline)
-            .refreshable {
-                await refreshStorageData()
-            }
+            .background(Color(UIColor.systemGroupedBackground))
             .onAppear {
                 calculateStorageData()
-            }
-            .overlay {
-                if isCalculating {
-                    FullScreenMetalStateView(state: .constant(.loading), appName: "Storage Data")
-                        .ignoresSafeArea()
-                        .transition(.opacity)
+                withAnimation(.easeInOut(duration: 1.0).delay(0.3)) {
+                    animateProgress = true
                 }
+            }
+            .refreshable {
+                await refreshStorageData()
             }
         }
         .sheet(isPresented: $showStorageAnalyzer) {
             StorageAnalyzerView()
         }
         .sheet(isPresented: $showDuplicateFinder) {
-            StorageDuplicateFinderView()
+            DuplicateFinderView()
         }
         .sheet(isPresented: $showLargeFilesFinder) {
             LargeFilesFinderView()
         }
-    }
-
-    private var sectionHeaderView: some View {
-        Group {
-            if showHeaderViews {
-                Section {
-                    StorageHeaderView()
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                }
-            }
-        }
-    }
-
-    private var sectionDeviceStorage: some View {
-        Section {
-            VStack(alignment: .leading, spacing: 10) {
-                deviceStorageHeader
-                deviceStorageProgressBar
-                deviceStorageFooter
-            }
-            .padding(.vertical, 6)
-        } header: {
-            Text(.localized("Device Storage"))
-        }
-    }
-
-    private var deviceStorageHeader: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 4) {
-                Text(formatBytes(usedSpace))
-                    .font(.system(.title2, design: .rounded).bold())
-                Text(.localized("Used Of \(formatBytes(totalSpace))"))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer()
-            if isCalculating {
-                ProgressView()
-            } else {
-                Button {
-                    calculateStorageData()
-                } label: {
-                    Image(systemName: "arrow.clockwise.circle.fill")
-                        .font(.title2)
-                        .symbolRenderingMode(.hierarchical)
-                        .foregroundStyle(Color.accentColor)
-                }
-            }
-        }
-    }
-
-    private var deviceStorageProgressBar: some View {
-        ProgressView(value: Double(usedSpace), total: Double(max(totalSpace, 1)))
-            .tint(.accentColor)
-            .scaleEffect(y: 1.5)
-    }
-
-    private var deviceStorageFooter: some View {
-        HStack {
-            Text(formatBytes(availableSpace) + " " + .localized("available"))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Spacer()
-            if totalSpace > 0 {
-                Text("\(Int((Double(usedSpace) / Double(totalSpace)) * 100))%")
-                    .font(.caption.bold())
-                    .foregroundStyle(.accentColor)
-            }
-        }
-    }
-
-    private var sectionTools: some View {
-        Section {
-            toolRow(icon: "chart.pie.fill", color: .purple, title: .localized("Storage Analyzer"), subtitle: .localized("Deep scan of all files")) {
-                showStorageAnalyzer = true
-            }
-            toolRow(icon: "doc.on.doc.fill", color: .blue, title: .localized("Duplicate Finder"), subtitle: duplicateFilesCount > 0 ? "\(duplicateFilesCount) " + .localized("found") : .localized("Scan for duplicates")) {
-                showDuplicateFinder = true
-            }
-            toolRow(icon: "doc.richtext.fill", color: .pink, title: .localized("Large Files"), subtitle: largeFilesCount > 0 ? "\(largeFilesCount) " + .localized("found") : .localized("Find files over 50MB")) {
-                showLargeFilesFinder = true
-            }
-        } header: {
-            Text(.localized("Tools"))
-        }
-    }
-
-    private var sectionStorageBreakdown: some View {
-        Section {
-            ForEach(storageCategories) { category in
-                HStack(spacing: 12) {
-                    Image(systemName: category.icon)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(category.color)
-                        .frame(width: 30, height: 30)
-                        .background(category.color.opacity(0.12), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-
-                    Text(category.name)
-                        .font(.subheadline)
-
-                    Spacer()
-
-                    Text(category.formattedSize)
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.secondary)
-
-                    if category.action != nil && category.size > 0 {
-                        Button {
-                            if let action = category.action {
-                                showResetAlert(
-                                    title: String(format: .localized("Clear %@"), category.name),
-                                    message: category.formattedSize,
-                                    action: action
-                                )
-                            }
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 18))
-                                .symbolRenderingMode(.hierarchical)
-                                .foregroundStyle(.red)
-                        }
-                        .buttonStyle(.borderless)
-                    }
-                }
-                .padding(.vertical, 3)
-            }
-        } header: {
-            Text(.localized("Storage Breakdown"))
-        }
-    }
-
-    private var sectionSmartCleanup: some View {
-        Section {
-            Picker(.localized("Remove items older than"), selection: $cleanupPeriod) {
-                ForEach(CleanupPeriod.allCases, id: \.self) { period in
-                    Text(period.displayName).tag(period)
-                }
-            }
-            .onChange(of: cleanupPeriod) { _ in
-                calculateReclaimableSpace()
-            }
-
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(.localized("Reclaimable Space"))
-                        .font(.subheadline.weight(.semibold))
-                    Text(formatBytes(reclaimableSpace))
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.orange)
-                }
-                Spacer()
-                Button {
-                    performCleanup()
-                } label: {
-                    Text(.localized("Clean"))
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 8)
-                        .background(Color.orange, in: Capsule())
-                }
-                .buttonStyle(.plain)
-                .disabled(reclaimableSpace == 0 || isCalculating)
-                .opacity(reclaimableSpace == 0 || isCalculating ? 0.4 : 1.0)
-            }
-            .padding(.vertical, 4)
-        } header: {
-            Text(.localized("Smart Cleanup"))
-        }
-    }
-
-    private var sectionAdvancedTools: some View {
-        Section {
-            advancedToolButton(icon: "wifi.circle.fill", color: .blue, title: .localized("Clear Network Cache")) {
-                let cacheSize = URLCache.shared.currentDiskUsage
-                showResetAlert(
-                    title: .localized("Clear Network Cache"),
-                    message: formatBytes(Int64(cacheSize)),
-                    action: clearNetworkCache
-                )
-            }
-            advancedToolButton(icon: "folder.fill", color: .teal, title: .localized("Clear Work Cache")) {
-                showResetAlert(
-                    title: .localized("Clear Work Cache"),
-                    message: "",
-                    action: clearWorkCache
-                )
-            }
-            advancedToolButton(icon: "doc.text.fill", color: .indigo, title: .localized("Clear Logs")) {
-                showResetAlert(
-                    title: .localized("Clear Logs"),
-                    message: formatBytes(logsSize),
-                    action: clearLogs
-                )
-            }
-            advancedToolButton(icon: "globe", color: .purple, title: .localized("Reset Source Cache")) {
-                showResetAlert(
-                    title: .localized("Reset Source Cache"),
-                    message: "",
-                    action: resetSourceCache
-                )
-            }
-        } header: {
-            Text(.localized("Advanced Tools"))
-        }
-    }
-
-    private var sectionDangerZone: some View {
-        Section {
-            dangerButton(icon: "app.badge.checkmark", title: .localized("Delete All Signed Apps"), size: formatBytes(signedAppsSize)) {
-                showResetAlert(
-                    title: .localized("Delete All Signed Apps"),
-                    message: formatBytes(signedAppsSize),
-                    action: deleteSignedApps
-                )
-            }
-            dangerButton(icon: "arrow.down.app", title: .localized("Delete All Imported Apps"), size: formatBytes(importedAppsSize)) {
-                showResetAlert(
-                    title: .localized("Delete All Imported Apps"),
-                    message: formatBytes(importedAppsSize),
-                    action: deleteImportedApps
-                )
-            }
-            dangerButton(icon: "key.fill", title: .localized("Delete All Certificates"), size: formatBytes(certificatesSize)) {
-                showResetAlert(
-                    title: .localized("Delete All Certificates"),
-                    message: formatBytes(certificatesSize),
-                    action: resetCertificates
-                )
-            }
-            dangerButton(icon: "globe", title: .localized("Reset All Sources"), size: nil) {
-                showResetAlert(
-                    title: .localized("Reset All Sources"),
-                    message: "",
-                    action: resetSources
-                )
-            }
-        } header: {
-            Text(.localized("Danger Zone"))
-        } footer: {
-            Text(.localized("These actions cannot be undone."))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private func toolRow(icon: String, color: Color, title: String, subtitle: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(color)
-                    .frame(width: 30, height: 30)
-                    .background(color.opacity(0.12), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(title)
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.primary)
-                    Text(subtitle)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption.bold())
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(.vertical, 3)
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func advancedToolButton(icon: String, color: Color, title: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .font(.system(size: 15))
-                    .foregroundStyle(color)
-                    .frame(width: 26)
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundStyle(.primary)
-            }
-        }
-        .buttonStyle(.plain)
-    }
-
-    private func dangerButton(icon: String, title: String, size: String?, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .font(.system(size: 15))
-                    .foregroundStyle(.red)
-                    .frame(width: 26)
-
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundStyle(.red)
-
-                Spacer()
-
-                if let size = size, !size.isEmpty {
-                    Text(size)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-        }
-        .buttonStyle(.plain)
     }
 
     // MARK: - Storage Ring Card
@@ -427,7 +120,7 @@ struct ManageStorageView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                
+
                 if isCalculating {
                     ProgressView()
                         .scaleEffect(0.8)
@@ -441,7 +134,7 @@ struct ManageStorageView: View {
                     }
                 }
             }
-            
+
             // Animated Ring Progress
             HStack(spacing: 30) {
                 ZStack {
@@ -449,7 +142,7 @@ struct ManageStorageView: View {
                     Circle()
                         .stroke(Color.gray.opacity(0.2), lineWidth: 16)
                         .frame(width: 140, height: 140)
-                    
+
                     // Progress ring with gradient
                     Circle()
                         .trim(from: 0, to: animateProgress ? CGFloat(usedSpace) / CGFloat(max(totalSpace, 1)) : 0)
@@ -463,7 +156,7 @@ struct ManageStorageView: View {
                         .frame(width: 140, height: 140)
                         .rotationEffect(.degrees(-90))
                         .animation(.easeInOut(duration: 1.2), value: animateProgress)
-                    
+
                     // Center content
                     VStack(spacing: 4) {
                         if totalSpace > 0 {
@@ -476,7 +169,7 @@ struct ManageStorageView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                
+
                 // Stats
                 VStack(alignment: .leading, spacing: 16) {
                     StorageStatRow(
@@ -497,7 +190,7 @@ struct ManageStorageView: View {
                 }
             }
             .padding(.vertical, 8)
-            
+
             // App Storage Bar
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
@@ -508,7 +201,7 @@ struct ManageStorageView: View {
                         .font(.subheadline.bold())
                         .foregroundStyle(.blue)
                 }
-                
+
                 GeometryReader { geometry in
                     HStack(spacing: 2) {
                         ForEach(storageCategories.filter { $0.size > 0 }) { category in
@@ -523,7 +216,7 @@ struct ManageStorageView: View {
                     RoundedRectangle(cornerRadius: 4)
                         .fill(Color.gray.opacity(0.2))
                 )
-                
+
                 // Legend
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
                     ForEach(storageCategories.filter { $0.size > 0 }.prefix(6)) { category in
@@ -543,10 +236,10 @@ struct ManageStorageView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color.clear)
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
         )
     }
-    
+
     // MARK: - Quick Actions Grid
     private var quickActionsGrid: some View {
         LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
@@ -557,7 +250,7 @@ struct ManageStorageView: View {
                 gradient: [.orange, .yellow],
                 action: performCleanup
             )
-            
+
             QuickActionCard(
                 icon: "chart.pie.fill",
                 title: .localized("Analyze"),
@@ -565,7 +258,7 @@ struct ManageStorageView: View {
                 gradient: [.purple, .pink],
                 action: { showStorageAnalyzer = true }
             )
-            
+
             QuickActionCard(
                 icon: "doc.on.doc.fill",
                 title: .localized("Duplicates"),
@@ -573,7 +266,7 @@ struct ManageStorageView: View {
                 gradient: [.blue, .cyan],
                 action: { showDuplicateFinder = true }
             )
-            
+
             QuickActionCard(
                 icon: "arrow.up.doc.fill",
                 title: .localized("Large Files"),
@@ -583,14 +276,14 @@ struct ManageStorageView: View {
             )
         }
     }
-    
+
     // MARK: - Storage Breakdown Cards
     private var storageBreakdownCards: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(.localized("Storage Breakdown"))
                 .font(.headline)
                 .padding(.horizontal, 4)
-            
+
             ForEach(storageCategories) { category in
                 StorageCategoryRow(category: category) {
                     if let action = category.action {
@@ -604,7 +297,7 @@ struct ManageStorageView: View {
             }
         }
     }
-    
+
     // MARK: - Smart Cleanup Card
     private var smartCleanupCard: some View {
         VStack(spacing: 16) {
@@ -619,12 +312,12 @@ struct ManageStorageView: View {
                             )
                         )
                         .frame(width: 44, height: 44)
-                    
+
                     Image(systemName: "wand.and.stars")
                         .font(.title3.bold())
                         .foregroundStyle(.white)
                 }
-                
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(.localized("Smart Cleanup"))
                         .font(.headline)
@@ -632,10 +325,10 @@ struct ManageStorageView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                
+
                 Spacer()
             }
-            
+
             // Cleanup Period Picker
             HStack {
                 Text(.localized("Remove items older than"))
@@ -658,13 +351,13 @@ struct ManageStorageView: View {
                     .foregroundStyle(.blue)
                 }
             }
-            
+
             // Reclaimable Space Indicator
             HStack(spacing: 12) {
                 Image(systemName: "arrow.down.circle.fill")
                     .font(.title2)
                     .foregroundStyle(.orange)
-                
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(.localized("Can Be Freed"))
                         .font(.caption)
@@ -673,9 +366,9 @@ struct ManageStorageView: View {
                         .font(.title3.bold())
                         .foregroundStyle(.orange)
                 }
-                
+
                 Spacer()
-                
+
                 Button {
                     performCleanup()
                 } label: {
@@ -707,17 +400,17 @@ struct ManageStorageView: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                .fill(Color.clear)
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
         )
     }
-    
+
     // MARK: - Advanced Tools Section
     private var advancedToolsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(.localized("Advanced Tools"))
                 .font(.headline)
                 .padding(.horizontal, 4)
-            
+
             VStack(spacing: 1) {
                 AdvancedToolRow(
                     icon: "network.badge.shield.half.filled",
@@ -732,9 +425,9 @@ struct ManageStorageView: View {
                         action: clearNetworkCache
                     )
                 }
-                
+
                 Divider().padding(.leading, 56)
-                
+
                 AdvancedToolRow(
                     icon: "folder.badge.minus",
                     title: .localized("Clear Work Cache"),
@@ -747,9 +440,9 @@ struct ManageStorageView: View {
                         action: clearWorkCache
                     )
                 }
-                
+
                 Divider().padding(.leading, 56)
-                
+
                 AdvancedToolRow(
                     icon: "doc.text.magnifyingglass",
                     title: .localized("Clear Logs"),
@@ -762,9 +455,9 @@ struct ManageStorageView: View {
                         action: clearLogs
                     )
                 }
-                
+
                 Divider().padding(.leading, 56)
-                
+
                 AdvancedToolRow(
                     icon: "square.stack.3d.down.right",
                     title: .localized("Reset Source Cache"),
@@ -780,11 +473,11 @@ struct ManageStorageView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.clear)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
             )
         }
     }
-    
+
     // MARK: - Danger Zone Section
     private var dangerZoneSection: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -795,7 +488,7 @@ struct ManageStorageView: View {
                     .font(.headline)
             }
             .padding(.horizontal, 4)
-            
+
             VStack(spacing: 1) {
                 DangerZoneRow(
                     icon: "doc.badge.minus",
@@ -808,9 +501,9 @@ struct ManageStorageView: View {
                         action: deleteSignedApps
                     )
                 }
-                
+
                 Divider().padding(.leading, 56)
-                
+
                 DangerZoneRow(
                     icon: "square.and.arrow.down.on.square",
                     title: .localized("Delete All Imported Apps"),
@@ -822,9 +515,9 @@ struct ManageStorageView: View {
                         action: deleteImportedApps
                     )
                 }
-                
+
                 Divider().padding(.leading, 56)
-                
+
                 DangerZoneRow(
                     icon: "key.horizontal",
                     title: .localized("Delete All Certificates"),
@@ -836,9 +529,9 @@ struct ManageStorageView: View {
                         action: resetCertificates
                     )
                 }
-                
+
                 Divider().padding(.leading, 56)
-                
+
                 DangerZoneRow(
                     icon: "square.stack.3d.down.right",
                     title: .localized("Reset All Sources"),
@@ -853,7 +546,7 @@ struct ManageStorageView: View {
             }
             .background(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .fill(Color.clear)
+                    .fill(Color(UIColor.secondarySystemGroupedBackground))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
@@ -862,7 +555,7 @@ struct ManageStorageView: View {
         }
         .padding(.bottom, 20)
     }
-    
+
     // MARK: - Storage Overview Section
     private var storageOverviewSection: some View {
         Section {
@@ -878,15 +571,15 @@ struct ManageStorageView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
-                    
+
                     Text(.localized("Device Storage"))
                         .font(.title3)
                         .fontWeight(.bold)
-                    
+
                     Spacer()
                 }
                 .padding(.bottom, 8)
-                
+
                 HStack(alignment: .top, spacing: 0) {
                     // Used column
                     VStack(spacing: 6) {
@@ -899,12 +592,12 @@ struct ManageStorageView: View {
                             .foregroundStyle(.blue)
                     }
                     .frame(maxWidth: .infinity)
-                    
+
                     // Divider
                     Rectangle()
                         .fill(Color.secondary.opacity(0.2))
                         .frame(width: 1, height: 50)
-                    
+
                     // Total column
                     VStack(spacing: 6) {
                         Text(.localized("Total"))
@@ -916,12 +609,12 @@ struct ManageStorageView: View {
                             .foregroundStyle(.primary)
                     }
                     .frame(maxWidth: .infinity)
-                    
+
                     // Divider
                     Rectangle()
                         .fill(Color.secondary.opacity(0.2))
                         .frame(width: 1, height: 50)
-                    
+
                     // Available column
                     VStack(spacing: 6) {
                         Text(.localized("Available"))
@@ -935,7 +628,7 @@ struct ManageStorageView: View {
                     .frame(maxWidth: .infinity)
                 }
                 .padding(.vertical, 8)
-                
+
                 // Progress bar with improved design
                 VStack(alignment: .leading, spacing: 8) {
                     GeometryReader { geometry in
@@ -943,7 +636,7 @@ struct ManageStorageView: View {
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(Color.secondary.opacity(0.15))
                                 .frame(height: 12)
-                            
+
                             if totalSpace > 0 {
                                 RoundedRectangle(cornerRadius: 6)
                                     .fill(
@@ -963,7 +656,7 @@ struct ManageStorageView: View {
                         }
                     }
                     .frame(height: 12)
-                    
+
                     // Percentage indicator
                     if totalSpace > 0 {
                         let percentage = Int((Double(usedSpace) / Double(totalSpace)) * 100)
@@ -981,7 +674,7 @@ struct ManageStorageView: View {
                 .foregroundStyle(.secondary)
         }
     }
-    
+
     // MARK: - Storage Breakdown Section
     private var storageBreakdownSection: some View {
         Section {
@@ -991,17 +684,17 @@ struct ManageStorageView: View {
                 storageBreakdownRow(label: .localized("Certificates"), size: certificatesSize, icon: "key.horizontal", color: .orange)
                 storageBreakdownRow(label: .localized("Cache"), size: cacheSize, icon: "arrow.clockwise.circle", color: .purple)
                 storageBreakdownRow(label: .localized("Archives"), size: archivesSize, icon: "archivebox", color: .cyan)
-                
+
                 Divider()
                     .padding(.vertical, 4)
-                
+
                 // Total row - emphasized with better design
                 HStack(spacing: 12) {
                     ZStack {
                         Circle()
                             .fill(Color.accentColor.opacity(0.15))
                             .frame(width: 36, height: 36)
-                        
+
                         Image(systemName: "chart.bar.fill")
                             .foregroundStyle(
                                 LinearGradient(
@@ -1012,13 +705,13 @@ struct ManageStorageView: View {
                             )
                             .font(.system(size: 18, weight: .semibold))
                     }
-                    
+
                     Text(.localized("Total"))
                         .font(.system(size: 17, weight: .bold, design: .default))
                         .foregroundStyle(.primary)
-                    
+
                     Spacer()
-                    
+
                     Text(formatBytes(totalFeatherStorage))
                         .font(.system(size: 20, weight: .bold, design: .rounded))
                         .foregroundStyle(Color.accentColor)
@@ -1035,7 +728,7 @@ struct ManageStorageView: View {
                 .foregroundStyle(.secondary)
         }
     }
-    
+
     // MARK: - Storage Cleanup Section
     private var storageCleanupSection: some View {
         Section {
@@ -1046,7 +739,7 @@ struct ManageStorageView: View {
                         Circle()
                             .fill(Color.orange.opacity(0.15))
                             .frame(width: 44, height: 44)
-                        
+
                         Image(systemName: "sparkles")
                             .font(.system(size: 20, weight: .semibold))
                             .foregroundStyle(
@@ -1057,29 +750,29 @@ struct ManageStorageView: View {
                                 )
                             )
                     }
-                    
+
                     VStack(alignment: .leading, spacing: 4) {
                         Text(.localized("Smart Cleanup"))
                             .font(.headline)
                             .foregroundStyle(.primary)
-                        
+
                         Text(.localized("Free up space automatically"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    
+
                     Spacer()
                 }
-                
+
                 Divider()
-                
+
                 // Cleanup period selector
                 VStack(alignment: .leading, spacing: 12) {
                     Text(.localized("Remove items older than"))
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(.primary)
-                    
+
                     Menu {
                         ForEach(CleanupPeriod.allCases, id: \.self) { period in
                             Button(period.displayName) {
@@ -1097,50 +790,50 @@ struct ManageStorageView: View {
                                 .foregroundStyle(.secondary)
                         }
                         .padding(12)
-                        .background(Color.clear)
+                        .background(Color(uiColor: .tertiarySystemGroupedBackground))
                         .cornerRadius(8)
                     }
                 }
-                
+
                 Divider()
-                
+
                 // Description and reclaimable space
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "info.circle.fill")
                             .font(.system(size: 14))
                             .foregroundStyle(.blue)
-                        
+
                         Text(.localized("This will remove temporary files, cached data, and old work files that are no longer needed."))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
-                    
+
                     // Reclaimable space highlight with better design
                     HStack(spacing: 12) {
                         Image(systemName: "arrow.down.circle.fill")
                             .font(.title2)
                             .foregroundStyle(.orange)
-                        
+
                         VStack(alignment: .leading, spacing: 2) {
                             Text(.localized("Can Be Removed"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            
+
                             Text(formatBytes(reclaimableSpace))
                                 .font(.title3)
                                 .fontWeight(.bold)
                                 .foregroundStyle(.orange)
                         }
-                        
+
                         Spacer()
                     }
                     .padding(12)
                     .background(Color.orange.opacity(0.1))
                     .cornerRadius(10)
                 }
-                
+
                 // Cleanup button with improved design
                 Button {
                     performCleanup()
@@ -1148,10 +841,10 @@ struct ManageStorageView: View {
                     HStack {
                         Image(systemName: "sparkles")
                             .font(.system(size: 16, weight: .semibold))
-                        
+
                         Text(.localized("Clean Up Storage"))
                             .font(.headline)
-                        
+
                         Spacer()
                     }
                     .foregroundStyle(.white)
@@ -1179,7 +872,7 @@ struct ManageStorageView: View {
                 .foregroundStyle(.secondary)
         }
     }
-    
+
     // MARK: - Advanced Cleanup Section
     private var advancedCleanupSection: some View {
         Section {
@@ -1197,10 +890,10 @@ struct ManageStorageView: View {
                         )
                     }
                 )
-                
+
                 Divider()
                     .padding(.leading, 52)
-                
+
                 // Reset Network Cache
                 cleanupOptionButton(
                     title: .localized("Reset Network Cache"),
@@ -1215,10 +908,10 @@ struct ManageStorageView: View {
                         )
                     }
                 )
-                
+
                 Divider()
                     .padding(.leading, 52)
-                
+
                 // Reset Sources
                 cleanupOptionButton(
                     title: .localized("Reset Sources"),
@@ -1232,10 +925,10 @@ struct ManageStorageView: View {
                         )
                     }
                 )
-                
+
                 Divider()
                     .padding(.leading, 52)
-                
+
                 // Delete Signed Apps
                 cleanupOptionButton(
                     title: .localized("Delete Signed Apps"),
@@ -1250,10 +943,10 @@ struct ManageStorageView: View {
                     },
                     isDestructive: true
                 )
-                
+
                 Divider()
                     .padding(.leading, 52)
-                
+
                 // Delete Imported Apps
                 cleanupOptionButton(
                     title: .localized("Delete Imported Apps"),
@@ -1268,10 +961,10 @@ struct ManageStorageView: View {
                     },
                     isDestructive: true
                 )
-                
+
                 Divider()
                     .padding(.leading, 52)
-                
+
                 // Delete Certificates
                 cleanupOptionButton(
                     title: .localized("Delete Certificates"),
@@ -1296,7 +989,7 @@ struct ManageStorageView: View {
                 .foregroundStyle(.secondary)
         }
     }
-    
+
     // MARK: - Helper Views
     private func storageBreakdownRow(label: LocalizedStringKey, size: Int64, icon: String, color: Color) -> some View {
         HStack(spacing: 12) {
@@ -1304,7 +997,7 @@ struct ManageStorageView: View {
                 Circle()
                     .fill(color.opacity(0.15))
                     .frame(width: 36, height: 36)
-                
+
                 Image(systemName: icon)
                     .foregroundStyle(
                         LinearGradient(
@@ -1315,20 +1008,20 @@ struct ManageStorageView: View {
                     )
                     .font(.system(size: 16, weight: .semibold))
             }
-            
+
             Text(label)
                 .font(.system(size: 15))
                 .foregroundStyle(.primary)
-            
+
             Spacer()
-            
+
             Text(formatBytes(size))
                 .font(.system(size: 15, weight: .medium, design: .rounded))
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 6)
     }
-    
+
     private func cleanupOptionButton(
         title: LocalizedStringKey,
         systemImage: String,
@@ -1347,25 +1040,25 @@ struct ManageStorageView: View {
                             : Color.blue.opacity(0.15)
                         )
                         .frame(width: 40, height: 40)
-                    
+
                     Image(systemName: systemImage)
                         .font(.system(size: 18))
                         .foregroundStyle(isDestructive ? Color.red : Color.blue)
                 }
-                
+
                 // Text
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.body)
                         .foregroundStyle(isDestructive ? .red : .primary)
-                    
+
                     Text(description)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 // Chevron
                 Image(systemName: "chevron.right")
                     .font(.caption)
@@ -1375,12 +1068,12 @@ struct ManageStorageView: View {
         }
         .buttonStyle(.plain)
     }
-    
+
     // MARK: - Computed Properties
     private var totalFeatherStorage: Int64 {
         signedAppsSize + importedAppsSize + certificatesSize + cacheSize + archivesSize + logsSize + tempFilesSize
     }
-    
+
     // MARK: - Async Refresh
     private func refreshStorageData() async {
         await MainActor.run {
@@ -1394,17 +1087,17 @@ struct ManageStorageView: View {
             }
         }
     }
-    
+
     // MARK: - Storage Calculation Methods
     private func calculateStorageData() {
         isCalculating = true
-        
+
         DispatchQueue.global(qos: .userInitiated).async {
             // Calculate device storage
             let fileSystemAttributes = try? FileManager.default.attributesOfFileSystem(forPath: NSHomeDirectory())
             let totalSpaceValue = (fileSystemAttributes?[.systemSize] as? NSNumber)?.int64Value ?? 0
             let freeSpaceValue = (fileSystemAttributes?[.systemFreeSize] as? NSNumber)?.int64Value ?? 0
-            
+
             // Calculate category sizes
             let signedSize = calculateDirectorySize(at: FileManager.default.signed)
             let importedSize = calculateDirectorySize(at: FileManager.default.unsigned)
@@ -1413,16 +1106,16 @@ struct ManageStorageView: View {
             let cacheSizeCalc = calculateCacheSize()
             let logsSizeCalc = calculateLogsSize()
             let tempFilesSizeCalc = calculateTempFilesSize()
-            
+
             // Count duplicates and large files
             let duplicates = findDuplicateFilesCount()
             let largeFiles = findLargeFilesCount()
-            
+
             DispatchQueue.main.async {
                 self.totalSpace = totalSpaceValue
                 self.availableSpace = freeSpaceValue
                 self.usedSpace = totalSpaceValue - freeSpaceValue
-                
+
                 self.signedAppsSize = signedSize
                 self.importedAppsSize = importedSize
                 self.certificatesSize = certificatesSizeCalc
@@ -1432,27 +1125,27 @@ struct ManageStorageView: View {
                 self.tempFilesSize = tempFilesSizeCalc
                 self.duplicateFilesCount = duplicates
                 self.largeFilesCount = largeFiles
-                
+
                 self.calculateReclaimableSpace()
                 self.isCalculating = false
             }
         }
     }
-    
+
     private func calculateLogsSize() -> Int64 {
         let logsDirectory = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first?.appendingPathComponent("Logs")
         guard let logsDir = logsDirectory else { return 0 }
         return calculateDirectorySize(at: logsDir)
     }
-    
+
     private func calculateTempFilesSize() -> Int64 {
         return calculateDirectorySize(at: FileManager.default.temporaryDirectory)
     }
-    
+
     private func findDuplicateFilesCount() -> Int {
         var fileHashes: [Int64: Int] = [:]
         let directories = [FileManager.default.signed, FileManager.default.unsigned]
-        
+
         for directory in directories {
             if let enumerator = FileManager.default.enumerator(at: directory, includingPropertiesForKeys: [.fileSizeKey]) {
                 for case let fileURL as URL in enumerator {
@@ -1462,15 +1155,15 @@ struct ManageStorageView: View {
                 }
             }
         }
-        
+
         return fileHashes.values.filter { $0 > 1 }.reduce(0, +)
     }
-    
+
     private func findLargeFilesCount() -> Int {
         var count = 0
         let threshold: Int64 = 50 * 1024 * 1024 // 50MB
         let directories = [FileManager.default.signed, FileManager.default.unsigned, FileManager.default.archives]
-        
+
         for directory in directories {
             if let enumerator = FileManager.default.enumerator(at: directory, includingPropertiesForKeys: [.fileSizeKey]) {
                 for case let fileURL as URL in enumerator {
@@ -1481,28 +1174,28 @@ struct ManageStorageView: View {
                 }
             }
         }
-        
+
         return count
     }
-    
+
     private func clearLogs() {
         let logsDirectory = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask).first?.appendingPathComponent("Logs")
         guard let logsDir = logsDirectory else { return }
         try? FileManager.default.removeItem(at: logsDir)
         try? FileManager.default.createDirectory(at: logsDir, withIntermediateDirectories: true)
     }
-    
+
     private func resetSourceCache() {
         RepositoryCacheManager.shared.clearCache()
     }
-    
+
     private func calculateDirectorySize(at url: URL) -> Int64 {
         guard FileManager.default.fileExists(atPath: url.path) else {
             return 0
         }
-        
+
         var totalSize: Int64 = 0
-        
+
         if let enumerator = FileManager.default.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey], options: [.skipsHiddenFiles]) {
             for case let fileURL as URL in enumerator {
                 if let fileSize = try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize {
@@ -1510,38 +1203,38 @@ struct ManageStorageView: View {
                 }
             }
         }
-        
+
         return totalSize
     }
-    
+
     private func calculateCacheSize() -> Int64 {
         var totalCacheSize = Int64(URLCache.shared.currentDiskUsage)
-        
+
         // Add temporary directory size
         let tmpDirectory = FileManager.default.temporaryDirectory
         totalCacheSize += calculateDirectorySize(at: tmpDirectory)
-        
+
         return totalCacheSize
     }
-    
+
     private func calculateReclaimableSpace() {
         DispatchQueue.global(qos: .userInitiated).async {
             let reclaimable = self.calculateOldCacheSize(olderThan: self.cleanupPeriod.days)
-            
+
             DispatchQueue.main.async {
                 self.reclaimableSpace = reclaimable
             }
         }
     }
-    
+
     private func calculateOldCacheSize(olderThan days: Int) -> Int64 {
         guard let cutoffDate = Calendar.current.date(byAdding: .day, value: -days, to: Date()) else {
             return 0
         }
         var oldCacheSize: Int64 = 0
-        
+
         let tmpDirectory = FileManager.default.temporaryDirectory
-        
+
         if let enumerator = FileManager.default.enumerator(at: tmpDirectory, includingPropertiesForKeys: [.fileSizeKey, .contentModificationDateKey], options: [.skipsHiddenFiles]) {
             for case let fileURL as URL in enumerator {
                 if let resourceValues = try? fileURL.resourceValues(forKeys: [.fileSizeKey, .contentModificationDateKey]),
@@ -1552,25 +1245,25 @@ struct ManageStorageView: View {
                 }
             }
         }
-        
+
         return oldCacheSize
     }
-    
+
     // MARK: - Cleanup Action
     private func performCleanup() {
         guard let cutoffDate = Calendar.current.date(byAdding: .day, value: -cleanupPeriod.days, to: Date()) else {
             return
         }
-        
+
         isCalculating = true
-        
+
         DispatchQueue.global(qos: .userInitiated).async {
             let fileManager = FileManager.default
             let tmpDirectory = fileManager.temporaryDirectory
-            
+
             // Collect files to delete first to avoid race conditions
             var filesToDelete: [URL] = []
-            
+
             if let enumerator = fileManager.enumerator(at: tmpDirectory, includingPropertiesForKeys: [.contentModificationDateKey], options: [.skipsHiddenFiles]) {
                 for case let fileURL as URL in enumerator {
                     if let modificationDate = try? fileURL.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate,
@@ -1579,27 +1272,27 @@ struct ManageStorageView: View {
                     }
                 }
             }
-            
+
             // Now delete the collected files
             for fileURL in filesToDelete {
                 try? fileManager.removeItem(at: fileURL)
             }
-            
+
             // Clear network cache
             URLCache.shared.removeAllCachedResponses()
-            
+
             DispatchQueue.main.async {
                 HapticsManager.shared.success()
                 self.calculateStorageData()
             }
         }
     }
-    
+
     // MARK: - Formatting
     private func formatBytes(_ bytes: Int64) -> String {
         ByteCountFormatter.string(fromByteCount: bytes, countStyle: .file)
     }
-    
+
     // MARK: - Alert Helper
     private func showResetAlert(
         title: String,
@@ -1614,15 +1307,15 @@ struct ManageStorageView: View {
             HapticsManager.shared.success()
             calculateStorageData()
         }
-        
+
         let style: UIAlertController.Style = UIDevice.current.userInterfaceIdiom == .pad
         ? .alert
         : .actionSheet
-        
+
         var msg = ""
         if !message.isEmpty { msg = message + "\n" }
         msg.append(.localized("This action cannot be undone. Would you like to proceed?"))
-    
+
         UIAlertController.showAlertWithCancel(
             title: title,
             message: msg,
@@ -1630,46 +1323,46 @@ struct ManageStorageView: View {
             actions: [alertAction]
         )
     }
-    
+
     // MARK: - Reset Methods (from ResetView)
     private func clearWorkCache() {
         let fileManager = FileManager.default
         let tmpDirectory = fileManager.temporaryDirectory
-        
+
         if let files = try? fileManager.contentsOfDirectory(atPath: tmpDirectory.path()) {
             for file in files {
                 try? fileManager.removeItem(atPath: tmpDirectory.appendingPathComponent(file).path())
             }
         }
     }
-    
+
     private func clearNetworkCache() {
         URLCache.shared.removeAllCachedResponses()
         HTTPCookieStorage.shared.removeCookies(since: Date.distantPast)
-        
+
         if let dataCache = ImagePipeline.shared.configuration.dataCache as? DataCache {
             dataCache.removeAll()
         }
-        
+
         if let imageCache = ImagePipeline.shared.configuration.imageCache as? Nuke.ImageCache {
             imageCache.removeAll()
         }
     }
-    
+
     private func resetSources() {
         Storage.shared.clearContext(request: AltSource.fetchRequest())
     }
-    
+
     private func deleteSignedApps() {
         Storage.shared.clearContext(request: Signed.fetchRequest())
         try? FileManager.default.removeFileIfNeeded(at: FileManager.default.signed)
     }
-    
+
     private func deleteImportedApps() {
         Storage.shared.clearContext(request: Imported.fetchRequest())
         try? FileManager.default.removeFileIfNeeded(at: FileManager.default.unsigned)
     }
-    
+
     private func resetCertificates() {
         Storage.shared.clearContext(request: CertificatePair.fetchRequest())
         try? FileManager.default.removeFileIfNeeded(at: FileManager.default.certificates)
@@ -1682,7 +1375,7 @@ enum CleanupPeriod: CaseIterable {
     case thirtyDays
     case ninetyDays
     case oneYear
-    
+
     var displayName: String {
         switch self {
         case .sevenDays: return .localized("7 Days")
@@ -1691,7 +1384,7 @@ enum CleanupPeriod: CaseIterable {
         case .oneYear: return .localized("1 Year")
         }
     }
-    
+
     var days: Int {
         switch self {
         case .sevenDays: return 7
@@ -1707,13 +1400,13 @@ struct StorageStatRow: View {
     let label: String
     let value: String
     let color: Color
-    
+
     var body: some View {
         HStack(spacing: 8) {
             Circle()
                 .fill(color)
                 .frame(width: 10, height: 10)
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(label)
                     .font(.caption)
@@ -1729,19 +1422,19 @@ struct StorageStatRow: View {
 struct StorageCategoryRow: View {
     let category: StorageCategory
     let onClear: () -> Void
-    
+
     var body: some View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
                     .fill(category.color.opacity(0.15))
                     .frame(width: 40, height: 40)
-                
+
                 Image(systemName: category.icon)
                     .font(.body.bold())
                     .foregroundStyle(category.color)
             }
-            
+
             VStack(alignment: .leading, spacing: 2) {
                 Text(category.name)
                     .font(.subheadline)
@@ -1750,9 +1443,9 @@ struct StorageCategoryRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            
+
             Spacer()
-            
+
             if category.action != nil && category.size > 0 {
                 Button {
                     onClear()
@@ -1773,33 +1466,360 @@ struct StorageCategoryRow: View {
         .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(Color.clear)
+                .fill(Color(UIColor.secondarySystemGroupedBackground))
         )
     }
 }
+
+// MARK: - Advanced Tool Row
+struct AdvancedToolRow: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let color: Color
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(color.opacity(0.15))
+                        .frame(width: 40, height: 40)
+
+                    Image(systemName: icon)
+                        .font(.body)
+                        .foregroundStyle(color)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline)
+                        .foregroundStyle(.primary)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(12)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Danger Zone Row
+struct DangerZoneRow: View {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(Color.red.opacity(0.15))
+                        .frame(width: 40, height: 40)
+
+                    Image(systemName: icon)
+                        .font(.body)
+                        .foregroundStyle(.red)
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.subheadline)
+                        .foregroundStyle(.red)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(12)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Storage Analyzer View
+struct StorageAnalyzerView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var isAnalyzing = true
+    @State private var analysisResults: [StorageAnalysisItem] = []
+
+    struct StorageAnalysisItem: Identifiable {
+        let id = UUID()
+        let name: String
+        let path: String
+        let size: Int64
+        let type: String
+        let color: Color
+    }
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if isAnalyzing {
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text(.localized("Analyzing Storage..."))
+                            .font(.headline)
+                        Text(.localized("This may take a moment"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
-            .scrollContentBackground(.hidden)
+                } else {
+                    List {
+                        ForEach(analysisResults) { item in
+                            HStack(spacing: 12) {
+                                Circle()
+                                    .fill(item.color)
+                                    .frame(width: 12, height: 12)
+
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(item.name)
+                                        .font(.subheadline)
+                                    Text(item.path)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+
+                                Spacer()
+
+                                Text(ByteCountFormatter.string(fromByteCount: item.size, countStyle: .file))
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle(.localized("Storage Analyzer"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(content: {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(.localized("Done")) { dismiss() }
+                }
+            })
+            .onAppear {
+                performAnalysis()
+            }
+        }
+    }
+
+    private func performAnalysis() {
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 1.5) {
+            var results: [StorageAnalysisItem] = []
+            let directories: [(String, URL, Color)] = [
+                ("Signed Apps", FileManager.default.signed, .blue),
+                ("Imported Apps", FileManager.default.unsigned, .green),
+                ("Certificates", FileManager.default.certificates, .orange),
+                ("Archives", FileManager.default.archives, .cyan)
+            ]
+
+            for (name, url, color) in directories {
+                if let enumerator = FileManager.default.enumerator(at: url, includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey]) {
+                    for case let fileURL as URL in enumerator {
+                        if let values = try? fileURL.resourceValues(forKeys: [.fileSizeKey, .isDirectoryKey]),
+                           let isDirectory = values.isDirectory, !isDirectory,
+                           let size = values.fileSize {
+                            results.append(StorageAnalysisItem(
+                                name: fileURL.lastPathComponent,
+                                path: fileURL.path,
+                                size: Int64(size),
+                                type: name,
+                                color: color
+                            ))
+                        }
+                    }
+                }
+            }
+
+            results.sort { $0.size > $1.size }
+
+            DispatchQueue.main.async {
+                self.analysisResults = Array(results.prefix(50))
+                self.isAnalyzing = false
+            }
+        }
+    }
+}
+
+// MARK: - Duplicate Finder View
+struct DuplicateFinderView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var isScanning = true
+    @State private var duplicates: [[URL]] = []
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if isScanning {
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text(.localized("Scanning For Duplicates..."))
+                            .font(.headline)
+                    }
+                } else if duplicates.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(.green)
+                        Text(.localized("No Duplicates Found"))
+                            .font(.title2.bold())
+                        Text(.localized("Your storage is clean!"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    List {
+                        ForEach(duplicates.indices, id: \.self) { index in
+                            Section("Group \(index + 1)") {
+                                ForEach(duplicates[index], id: \.absoluteString) { url in
+                                    HStack {
+                                        VStack(alignment: .leading) {
+                                            Text(url.lastPathComponent)
+                                                .font(.subheadline)
+                                            Text(url.deletingLastPathComponent().lastPathComponent)
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        Spacer()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            .navigationTitle(.localized("Duplicate Finder"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar(content: {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(.localized("Done")) { dismiss() }
+                }
+            })
+            .onAppear {
+                scanForDuplicates()
+            }
+        }
+    }
+
+    private func scanForDuplicates() {
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 2.0) {
+            var filesBySize: [Int64: [URL]] = [:]
+            let directories = [FileManager.default.signed, FileManager.default.unsigned]
+
+            for directory in directories {
+                if let enumerator = FileManager.default.enumerator(at: directory, includingPropertiesForKeys: [.fileSizeKey]) {
+                    for case let fileURL as URL in enumerator {
+                        if let size = try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize {
+                            filesBySize[Int64(size), default: []].append(fileURL)
+                        }
+                    }
+                }
+            }
+
+            let duplicateGroups = filesBySize.values.filter { $0.count > 1 }
+
+            DispatchQueue.main.async {
+                self.duplicates = Array(duplicateGroups)
+                self.isScanning = false
+            }
+        }
+    }
+}
+
+// MARK: - Large Files Finder View
+struct LargeFilesFinderView: View {
+    @Environment(\.dismiss) private var dismiss
+    @State private var isScanning = true
+    @State private var largeFiles: [(url: URL, size: Int64)] = []
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if isScanning {
+                    VStack(spacing: 20) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text(.localized("Finding Large Files..."))
+                            .font(.headline)
+                    }
+                } else if largeFiles.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 60))
+                            .foregroundStyle(.green)
+                        Text(.localized("No Large Files Found"))
+                            .font(.title2.bold())
+                        Text(.localized("No Files Over 50MB"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    List {
+                        ForEach(largeFiles, id: \.url.absoluteString) { file in
+                            HStack {
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(file.url.lastPathComponent)
+                                        .font(.subheadline)
+                                    Text(file.url.deletingLastPathComponent().lastPathComponent)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer()
+
+                                Text(ByteCountFormatter.string(fromByteCount: file.size, countStyle: .file))
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.pink)
+                            }
+                        }
+                        .onDelete { indexSet in
+                            for index in indexSet {
+                                try? FileManager.default.removeItem(at: largeFiles[index].url)
+                            }
+                            largeFiles.remove(atOffsets: indexSet)
+                        }
+                    }
                 }
             }
             .navigationTitle(.localized("Large Files"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
+            .toolbar(content: {
                 ToolbarItem(placement: .cancellationAction) {
                     Button(.localized("Done")) { dismiss() }
                 }
-            }
+            })
             .onAppear {
                 findLargeFiles()
             }
         }
     }
-    
+
     private func findLargeFiles() {
         DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 1.5) {
             var files: [(url: URL, size: Int64)] = []
             let threshold: Int64 = 50 * 1024 * 1024
             let directories = [FileManager.default.signed, FileManager.default.unsigned, FileManager.default.archives]
-            
+
             for directory in directories {
                 if let enumerator = FileManager.default.enumerator(at: directory, includingPropertiesForKeys: [.fileSizeKey]) {
                     for case let fileURL as URL in enumerator {
@@ -1810,9 +1830,9 @@ struct StorageCategoryRow: View {
                     }
                 }
             }
-            
+
             files.sort { $0.size > $1.size }
-            
+
             DispatchQueue.main.async {
                 self.largeFiles = files
                 self.isScanning = false
