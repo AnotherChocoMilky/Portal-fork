@@ -20,7 +20,7 @@ struct CertificateEnterpriseView: View {
 					.ignoresSafeArea()
 
 				VStack(spacing: 0) {
-					Text("Certificates Loaded: \(certificates.count)")
+					Text("Certificates Found: \(certificates.count)")
 						.font(.caption2)
 						.foregroundStyle(.secondary)
 						.padding(.vertical, 6)
@@ -75,7 +75,12 @@ struct CertificateEnterpriseView: View {
 			}
 		}
 		.onAppear {
-			startPipeline(forceRefresh: false)
+			let loaded = EnterpriseCertExtracter.loadExtractedCertificates()
+			if !loaded.isEmpty {
+				certificates = loaded
+			} else {
+				startPipeline(forceRefresh: false)
+			}
 		}
 	}
 
@@ -130,7 +135,7 @@ struct CertificateEnterpriseView: View {
 				.foregroundStyle(.secondary)
 			Text("No Certificates Found")
 				.font(.headline)
-			Text("No Enterprise certificates were found. Try fetching again.")
+			Text("No Enterprise certificates were found. Tap Fetch to download certificates.")
 				.font(.caption)
 				.foregroundStyle(.secondary)
 				.multilineTextAlignment(.center)
@@ -160,7 +165,7 @@ struct CertificateEnterpriseView: View {
 						Text(cert.certificateName)
 							.font(.system(size: 16, weight: .semibold))
 							.foregroundStyle(.primary)
-						Text("Tap to import certificate")
+						Text("Tap to install certificate")
 							.font(.caption)
 							.foregroundStyle(.secondary)
 					}
@@ -219,8 +224,8 @@ struct CertificateEnterpriseView: View {
 		do {
 			try await fetcher.fetchEnterpriseCertificates(forceRefresh: forceRefresh)
 			isExtracting = true
-			let parsed = try extractor.extractEnterpriseCertificates()
-			certificates = parsed
+			_ = try extractor.extractEnterpriseCertificates()
+			certificates = EnterpriseCertExtracter.loadExtractedCertificates()
 			importedIDs.removeAll()
 		} catch {
 			errorMessage = error.localizedDescription
