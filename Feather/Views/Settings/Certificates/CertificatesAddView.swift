@@ -9,6 +9,11 @@ struct CertificatesAddView: View {
     @Environment(\.dismiss) private var dismiss
     @Namespace private var _namespace
     @AppStorage("feature_usePortalCert") private var usePortalCert = false
+    @AppStorage("Feather.certificateExperience") private var _certificateExperience: String = CertificateExperience.developer.rawValue
+
+    private var _isEnterprise: Bool {
+        _certificateExperience == CertificateExperience.enterprise.rawValue
+    }
     
     @State private var _selectedMethod = 0
     @State private var _p12URL: URL? = nil
@@ -50,7 +55,9 @@ struct CertificatesAddView: View {
                                 methodButton(title: "Manual", icon: "hand.tap.fill", tag: 0)
                                 methodButton(title: "Portal Cert", icon: "shippingbox.fill", tag: 1, disabled: !usePortalCert)
                                 methodButton(title: "ZIP File", icon: "doc.zipper", tag: 2)
-                                enterpriseMethodButton
+                                if _isEnterprise {
+                                    enterpriseMethodButton
+                                }
                             }
                             .padding(4)
                             .background(Color(UIColor.secondarySystemGroupedBackground))

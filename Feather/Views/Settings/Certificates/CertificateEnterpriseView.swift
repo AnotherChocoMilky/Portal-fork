@@ -8,17 +8,29 @@ final class EnterpriseViewModel: ObservableObject {
 	@Published var isLoading = false
 	@Published var errorMessage: String? = nil
 	@Published var importedIDs: Set<UUID> = []
+	@Published var deletedCertificateAlert: String? = nil
 
-	func load() {
+	private let p12Password = "WSF"
+
+	func load(forceRefresh: Bool = false) {
 		guard !isLoading else { return }
 		isLoading = true
 		errorMessage = nil
 
 		Task {
 			do {
-				let certs = try await CertificateEnterpriseFetcher.shared.fetchEnterpriseCertificates()
-				certificates = certs
+				let result: (certificates: [EnterpriseCertificate], removedCertificateNames: [String])
+				if forceRefresh {
+					result = try await CertificateEnterpriseFetcher.shared.refreshEnterpriseCertificates()
+				} else {
+					result = try await CertificateEnterpriseFetcher.shared.fetchEnterpriseCertificates()
+				}
+				certificates = result.certificates
 				isLoading = false
+
+				if !result.removedCertificateNames.isEmpty {
+					checkDeletedCertificates(removedNames: result.removedCertificateNames)
+				}
 			} catch {
 				errorMessage = error.localizedDescription
 				isLoading = false
@@ -30,8 +42,8 @@ final class EnterpriseViewModel: ObservableObject {
 		FR.handleCertificateFiles(
 			p12URL: certificate.p12URL,
 			provisionURL: certificate.provisionURL,
-			p12Password: "",
-			certificateName: certificate.name,
+			p12Password: p12Password,
+			certificateName: certificate.certificateName,
 			isDefault: false
 		) { [weak self] error in
 			Task { @MainActor in
@@ -43,6 +55,13 @@ final class EnterpriseViewModel: ObservableObject {
 					HapticsManager.shared.success()
 				}
 			}
+		}
+	}
+
+	private func checkDeletedCertificates(removedNames: [String]) {
+		let installedNames = Set(Storage.shared.getCertificates().compactMap { $0.nickname })
+		if let first = removedNames.first(where: { installedNames.contains($0) }) {
+			deletedCertificateAlert = first
 		}
 	}
 }
@@ -74,6 +93,16 @@ struct CertificateEnterpriseView: View {
 			.navigationTitle("Enterprise Certificates")
 			.navigationBarTitleDisplayMode(.inline)
 			.toolbar {
+				ToolbarItem(placement: .topBarLeading) {
+					if !viewModel.isLoading {
+						Button {
+							viewModel.load(forceRefresh: true)
+						} label: {
+							Image(systemName: "arrow.clockwise")
+								.font(.system(size: 16, weight: .medium))
+						}
+					}
+				}
 				ToolbarItem(placement: .topBarTrailing) {
 					Button {
 						dismiss()
@@ -84,6 +113,19 @@ struct CertificateEnterpriseView: View {
 							.symbolRenderingMode(.hierarchical)
 					}
 					.buttonStyle(.plain)
+				}
+			}
+			.alert(
+				"Certificate Deleted",
+				isPresented: Binding(
+					get: { viewModel.deletedCertificateAlert != nil },
+					set: { if !$0 { viewModel.deletedCertificateAlert = nil } }
+				)
+			) {
+				Button("OK", role: .cancel) { viewModel.deletedCertificateAlert = nil }
+			} message: {
+				if let name = viewModel.deletedCertificateAlert {
+					Text("The certificate you have been using \(name) has been deleted on the server due to it being expired, please fetch again and try to add a new one")
 				}
 			}
 		}
@@ -98,7 +140,7 @@ struct CertificateEnterpriseView: View {
 		VStack(spacing: 16) {
 			ProgressView()
 				.scaleEffect(1.4)
-			Text("Downloading Certificates...")
+			Text("Fetching Enterprise Certificates")
 				.font(.subheadline)
 				.foregroundStyle(.secondary)
 		}
@@ -170,7 +212,7 @@ struct CertificateEnterpriseView: View {
 					}
 
 					VStack(alignment: .leading, spacing: 3) {
-						Text(cert.name)
+						Text(cert.certificateName)
 							.font(.system(size: 16, weight: .semibold))
 							.foregroundStyle(.primary)
 						Text("Tap to import certificate")
