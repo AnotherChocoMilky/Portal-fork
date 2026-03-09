@@ -30,6 +30,63 @@ enum EnterpriseExtracterError: LocalizedError {
 // MARK: - Extracter
 
 final class EnterpriseCertExtracter {
+
+	/// Reads already-extracted certificate folders from disk without re-extracting.
+	/// Path: Documents/Certificates/EnterpriseCerts/extracted/certificates
+	static func loadExtractedCertificates() -> [EnterpriseCertificate] {
+		let fm = FileManager.default
+
+		guard let documentsRoot = fm.urls(for: .documentDirectory, in: .userDomainMask).first else {
+			print("[EnterpriseCertExtracter] Could not resolve Documents directory")
+			return []
+		}
+
+		let certificatesDir = documentsRoot
+			.appendingPathComponent("Certificates")
+			.appendingPathComponent("EnterpriseCerts")
+			.appendingPathComponent("extracted")
+			.appendingPathComponent("certificates")
+
+		guard fm.fileExists(atPath: certificatesDir.path) else {
+			print("[EnterpriseCertExtracter] Extracted certificates directory does not exist: \(certificatesDir.path)")
+			return []
+		}
+
+		guard let items = try? fm.contentsOfDirectory(at: certificatesDir, includingPropertiesForKeys: nil) else {
+			print("[EnterpriseCertExtracter] Failed to list contents of: \(certificatesDir.path)")
+			return []
+		}
+
+		print("[EnterpriseCertExtracter] Number of certificate folders discovered: \(items.count)")
+
+		var certificates: [EnterpriseCertificate] = []
+
+		for folder in items {
+			var isDirectory: ObjCBool = false
+			guard fm.fileExists(atPath: folder.path, isDirectory: &isDirectory), isDirectory.boolValue else { continue }
+
+			let certificateName = folder.lastPathComponent
+			print("[EnterpriseCertExtracter] Found certificate folder: \(certificateName)")
+
+			let files = (try? fm.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? []
+
+			guard let p12URL = files.first(where: { $0.pathExtension == "p12" }),
+				  let provisionURL = files.first(where: { $0.pathExtension == "mobileprovision" }) else {
+				continue
+			}
+
+			certificates.append(EnterpriseCertificate(
+				certificateName: certificateName,
+				p12URL: p12URL,
+				provisionURL: provisionURL,
+				password: "WSF"
+			))
+		}
+
+		print("[EnterpriseCertExtracter] Number of valid certificates parsed: \(certificates.count)")
+		return certificates.sorted { $0.certificateName.localizedCompare($1.certificateName) == .orderedAscending }
+	}
+
 	func extractEnterpriseCertificates() throws -> [EnterpriseCertificate] {
 		let fm = FileManager.default
 
