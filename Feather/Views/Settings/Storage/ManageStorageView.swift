@@ -98,13 +98,13 @@ struct ManageStorageView: View {
             }
         }
         .sheet(isPresented: $showStorageAnalyzer) {
-            StorageAnalyzerView()
+            StorageDeepAnalyzerView()
         }
         .sheet(isPresented: $showDuplicateFinder) {
-            DuplicateFinderView()
+            StorageDuplicateFinderView()
         }
         .sheet(isPresented: $showLargeFilesFinder) {
-            LargeFilesFinderView()
+            StorageLargeFilesFinderView()
         }
     }
 
@@ -1555,7 +1555,7 @@ struct DangerZoneRow: View {
 }
 
 // MARK: - Storage Analyzer View
-struct StorageAnalyzerView: View {
+struct StorageDeepAnalyzerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isAnalyzing = true
     @State private var analysisResults: [StorageAnalysisItem] = []
@@ -1661,7 +1661,7 @@ struct StorageAnalyzerView: View {
 }
 
 // MARK: - Duplicate Finder View
-struct DuplicateFinderView: View {
+struct StorageDuplicateFinderView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isScanning = true
     @State private var duplicates: [[URL]] = []
@@ -1747,7 +1747,7 @@ struct DuplicateFinderView: View {
 }
 
 // MARK: - Large Files Finder View
-struct LargeFilesFinderView: View {
+struct StorageLargeFilesFinderView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var isScanning = true
     @State private var largeFiles: [(url: URL, size: Int64)] = []
