@@ -14,6 +14,7 @@ struct CertificatePasswordChangeView: View {
     @State private var _isProcessing = false
     @State private var _errorMessage: String? = nil
     @State private var _successData: Data? = nil
+    @State private var _validationResult: P12ValidationResult? = nil
 
     private var _passwordsMatch: Bool {
         _newPassword.trimmingCharacters(in: .whitespacesAndNewlines) == _confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -234,6 +235,51 @@ struct CertificatePasswordChangeView: View {
                     .stroke(Color.green.opacity(0.3), lineWidth: 1)
             )
 
+            if let result = _validationResult {
+                VStack(alignment: .leading, spacing: 10) {
+                    _certificateInfoRow(
+                        icon: "person.text.rectangle.fill",
+                        title: "Signing Identity",
+                        value: result.signingIdentity
+                    )
+
+                    if let teamID = result.teamID {
+                        _certificateInfoRow(
+                            icon: "person.2.fill",
+                            title: "Team ID",
+                            value: teamID
+                        )
+                    }
+
+                    if let expiration = result.expirationDate {
+                        _certificateInfoRow(
+                            icon: "calendar.badge.clock",
+                            title: "Expiration",
+                            value: _formatDate(expiration)
+                        )
+                    }
+
+                    HStack(spacing: 8) {
+                        Image(systemName: result.isVerified ? "checkmark.shield.fill" : "exclamationmark.shield.fill")
+                            .foregroundStyle(result.isVerified ? .green : .orange)
+                            .font(.system(size: 14))
+                        Text(result.isVerified ? "Certificate Verified" : "Certificate Untrusted")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundStyle(result.isVerified ? .green : .orange)
+                    }
+                    .padding(.top, 2)
+                }
+                .padding(14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color(.systemBackground).opacity(0.6))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(Color.primary.opacity(0.08), lineWidth: 1)
+                )
+            }
+
             Button {
                 if let data = _successData, let name = _p12URL?.lastPathComponent {
                     _handleSuccess(newData: data, originalName: name)
@@ -322,6 +368,7 @@ struct CertificatePasswordChangeView: View {
 
         _errorMessage = nil
         _successData = nil
+        _validationResult = nil
         _isProcessing = true
 
         // Start accessing the security scoped resource for files from Document Picker
@@ -338,6 +385,13 @@ struct CertificatePasswordChangeView: View {
 
             do {
                 let p12Data = try Data(contentsOf: p12URL)
+
+                // Validate the PKCS#12 structure and password before changing
+                let validation = try PasswordChanger.validateP12(
+                    p12Data: p12Data,
+                    password: currentPassword
+                )
+
                 let newData = try PasswordChanger.changePassword(
                     p12Data: p12Data,
                     oldPassword: currentPassword,
@@ -346,12 +400,13 @@ struct CertificatePasswordChangeView: View {
 
                 DispatchQueue.main.async {
                     _isProcessing = false
+                    _validationResult = validation
                     _successData = newData
                 }
             } catch let error as PasswordChangerError {
                 DispatchQueue.main.async {
                     _isProcessing = false
-                    _errorMessage = error.localizedDescription
+                    _errorMessage = _userFacingMessage(for: error)
                 }
             } catch {
                 DispatchQueue.main.async {
@@ -360,6 +415,43 @@ struct CertificatePasswordChangeView: View {
                 }
             }
         }
+    }
+
+    private func _userFacingMessage(for error: PasswordChangerError) -> String {
+        switch error {
+        case .authFailed:
+            return "The password for this certificate is incorrect."
+        case .unsupportedEncryption:
+            return "This certificate uses an unsupported encryption method. Re-export the certificate from Keychain Access as a standard PKCS#12 file."
+        case .decodeFailed:
+            return "The selected file is not a valid PKCS#12 certificate."
+        default:
+            return error.localizedDescription
+        }
+    }
+
+    private func _certificateInfoRow(icon: String, title: String, value: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .foregroundStyle(.secondary)
+                .font(.system(size: 14))
+                .frame(width: 20)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(title)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.system(size: 13, weight: .medium))
+                    .lineLimit(2)
+            }
+        }
+    }
+
+    private func _formatDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .medium
+        formatter.timeStyle = .short
+        return formatter.string(from: date)
     }
 
     private func _handleSuccess(newData: Data, originalName: String) {
