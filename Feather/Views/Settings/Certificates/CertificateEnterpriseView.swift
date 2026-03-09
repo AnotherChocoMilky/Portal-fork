@@ -185,7 +185,7 @@ struct CertificateEnterpriseView: View {
 				.foregroundStyle(.secondary)
 			Text("No Certificates Found")
 				.font(.headline)
-			Text("The archive did not contain any valid certificate pairs.")
+			Text("No Enterprise certificates were found. Try refreshing.")
 				.font(.caption)
 				.foregroundStyle(.secondary)
 				.multilineTextAlignment(.center)
