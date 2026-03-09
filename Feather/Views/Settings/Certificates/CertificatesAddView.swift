@@ -27,7 +27,8 @@ struct CertificatesAddView: View {
     @State private var _isImportingMobileProvisionPresenting = false
     @State private var _isImportingZipPresenting = false
     @State private var _isImportingPortalCertPresenting = false
-    
+    @State private var _isEnterprisePresenting = false
+
     @State private var _alertMessage = ""
     @State private var _showAlert = false
 
@@ -49,6 +50,7 @@ struct CertificatesAddView: View {
                                 methodButton(title: "Manual", icon: "hand.tap.fill", tag: 0)
                                 methodButton(title: "Portal Cert", icon: "shippingbox.fill", tag: 1, disabled: !usePortalCert)
                                 methodButton(title: "ZIP File", icon: "doc.zipper", tag: 2)
+                                enterpriseMethodButton
                             }
                             .padding(4)
                             .background(Color(UIColor.secondarySystemGroupedBackground))
@@ -150,6 +152,9 @@ struct CertificatesAddView: View {
                     _isImportingPortalCertPresenting = false
                 }
                 .ignoresSafeArea()
+            }
+            .sheet(isPresented: $_isEnterprisePresenting) {
+                CertificateEnterpriseView()
             }
             .alert(.localized("Certificate"), isPresented: $_showAlert) {
                 Button(.localized("OK"), role: .cancel) { }
@@ -352,6 +357,24 @@ struct CertificatesAddView: View {
         .buttonStyle(.plain)
         .disabled(disabled)
         .opacity(disabled ? 0.5 : 1.0)
+    }
+
+    private var enterpriseMethodButton: some View {
+        Button {
+            HapticsManager.shared.softImpact()
+            _isEnterprisePresenting = true
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "building.2.fill")
+                    .font(.system(size: 12))
+                Text("Enterprise")
+                    .font(.system(size: 12, weight: .medium))
+            }
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity)
+            .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
     }
 
     private func fileRowModern(title: String, subtitle: String?, icon: String, color: Color, isDone: Bool = false, action: @escaping () -> Void) -> some View {
