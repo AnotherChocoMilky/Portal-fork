@@ -384,29 +384,52 @@ struct CertificatePasswordChangeView: View {
             }
 
             do {
+                // Always read the certificate as raw binary data
                 let p12Data = try Data(contentsOf: p12URL)
 
-                // Validate the PKCS#12 structure and password before changing
-                let validation = try PasswordChanger.validateP12(
-                    p12Data: p12Data,
-                    password: currentPassword
-                )
+                // Attempt validation; if it fails due to unsupported encryption,
+                // still try the password change via the fallback strategies inside
+                // PasswordChanger.changePassword.
+                var validation: P12ValidationResult? = nil
 
-                let newData = try PasswordChanger.changePassword(
-                    p12Data: p12Data,
-                    oldPassword: currentPassword,
-                    newPassword: newPassword
-                )
+                do {
+                    validation = try PasswordChanger.validateP12(
+                        p12Data: p12Data,
+                        password: currentPassword
+                    )
+                } catch let error as PasswordChangerError {
+                    // Auth failed means wrong password — fail immediately
+                    if case .authFailed = error {
+                        DispatchQueue.main.async {
+                            _isProcessing = false
+                            _errorMessage = _userFacingMessage(for: error)
+                        }
+                        return
+                    }
+                    // For unsupported encryption or decode errors, continue to
+                    // changePassword which has its own fallback strategies.
+                }
+
+                // Attempt the password change (may use fallback strategies internally)
+                let newData: Data
+                do {
+                    newData = try PasswordChanger.changePassword(
+                        p12Data: p12Data,
+                        oldPassword: currentPassword,
+                        newPassword: newPassword
+                    )
+                } catch let error as PasswordChangerError {
+                    DispatchQueue.main.async {
+                        _isProcessing = false
+                        _errorMessage = _userFacingMessage(for: error)
+                    }
+                    return
+                }
 
                 DispatchQueue.main.async {
                     _isProcessing = false
                     _validationResult = validation
                     _successData = newData
-                }
-            } catch let error as PasswordChangerError {
-                DispatchQueue.main.async {
-                    _isProcessing = false
-                    _errorMessage = _userFacingMessage(for: error)
                 }
             } catch {
                 DispatchQueue.main.async {
@@ -420,13 +443,23 @@ struct CertificatePasswordChangeView: View {
     private func _userFacingMessage(for error: PasswordChangerError) -> String {
         switch error {
         case .authFailed:
-            return "The password for this certificate is incorrect."
+            return "The password for this certificate is incorrect. Please check your current password and try again."
         case .unsupportedEncryption:
-            return "This certificate uses an unsupported encryption method. Re-export the certificate from Keychain Access as a standard PKCS#12 file."
+            return "This certificate uses an encryption format that could not be processed. Try re-exporting the certificate from Keychain Access or your certificate management tool."
         case .decodeFailed:
-            return "The selected file is not a valid PKCS#12 certificate."
-        default:
-            return error.localizedDescription
+            return "The selected file could not be read as a valid PKCS#12 certificate."
+        case .importFailed(let status):
+            return "Certificate import failed (error \(status)). The file may use an incompatible format."
+        case .exportFailed(let status):
+            return "Failed to save the updated certificate (error \(status))."
+        case .noItemsFound:
+            return "No signing identity was found in the certificate file."
+        case .invalidData:
+            return "The selected file does not contain valid certificate data."
+        case .invalidParam:
+            return "A parameter error occurred while processing the certificate."
+        case .notSupported:
+            return "This operation is not supported on this device."
         }
     }
 
