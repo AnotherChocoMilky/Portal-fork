@@ -24,11 +24,11 @@ enum PasswordChangerError: LocalizedError {
         case .notSupported:
             return "This operation is not supported on this platform"
         case .authFailed:
-            return "Incorrect password for the certificate"
+            return "Incorrect password or unsupported encryption"
         case .decodeFailed:
-            return "The certificate file is corrupted or not a valid PKCS#12 file"
+            return "The file may be malformed or is not a valid PKCS#12 file"
         case .invalidParam:
-            return "Invalid PKCS#12 file or parameters"
+            return "A parameter error occurred; the PKCS#12 format may not be supported"
         }
     }
 }
@@ -41,7 +41,8 @@ class PasswordChanger {
         let trimmedOldPassword = oldPassword.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedNewPassword = newPassword.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // Always provide a valid password string (empty string is valid for passwordless P12 files)
+        #if os(macOS)
+        // On macOS use the Security framework: SecPKCS12Import for validation then SecItemExport to re-encrypt.
         let importOptions: NSDictionary = [
             kSecImportExportPassphrase: trimmedOldPassword
         ]
@@ -68,22 +69,27 @@ class PasswordChanger {
             throw PasswordChangerError.noItemsFound
         }
 
-        // Extract SecIdentity using kSecImportItemIdentity
-        var exportItems: [Any] = []
-        for item in items {
-            if let identity = item[kSecImportItemIdentity as String] {
-                exportItems.append(identity)
-            }
-            if let certChain = item[kSecImportItemCertChain as String] as? [Any] {
-                exportItems.append(contentsOf: certChain)
-            }
-        }
-
-        if exportItems.isEmpty {
+        // Extract SecIdentity using kSecImportItemIdentity and confirm both certificate and private key exist
+        guard let identity = items[0][kSecImportItemIdentity as String] as? SecIdentity else {
             throw PasswordChangerError.noItemsFound
         }
 
-        #if os(macOS)
+        var certificate: SecCertificate?
+        guard SecIdentityCopyCertificate(identity, &certificate) == errSecSuccess, certificate != nil else {
+            throw PasswordChangerError.noItemsFound
+        }
+
+        var privateKey: SecKey?
+        guard SecIdentityCopyPrivateKey(identity, &privateKey) == errSecSuccess, privateKey != nil else {
+            throw PasswordChangerError.noItemsFound
+        }
+
+        // Build the export items array with identity and any intermediate certificates
+        var exportItems: [Any] = [identity]
+        if let certChain = items[0][kSecImportItemCertChain as String] as? [Any] {
+            exportItems.append(contentsOf: certChain)
+        }
+
         var keyParams = SecItemImportExportKeyParameters()
         keyParams.version = UInt32(kSecKeyImportExportParamsVersion)
 
@@ -109,8 +115,24 @@ class PasswordChanger {
 
         return resultData
         #else
-        // On non-macOS platforms, SecItemExport for PKCS12 is not available in the public Security framework.
-        throw PasswordChangerError.notSupported
+        // On iOS, use the bundled OpenSSL (via Zsign) to change the PKCS#12 password entirely in memory.
+        // This avoids SecItemExport (unavailable on iOS for PKCS#12) and never touches the system keychain.
+        var outputData: NSData?
+        let status = p12_change_password_data(p12Data as NSData, trimmedOldPassword as NSString, trimmedNewPassword as NSString, &outputData)
+
+        switch Int32(status) {
+        case Int32(P12_CHANGE_SUCCESS):
+            guard let resultData = outputData as Data? else {
+                throw PasswordChangerError.exportFailed(0)
+            }
+            return resultData
+        case Int32(P12_CHANGE_DECODE_ERROR):
+            throw PasswordChangerError.decodeFailed
+        case Int32(P12_CHANGE_AUTH_ERROR):
+            throw PasswordChangerError.authFailed
+        default:
+            throw PasswordChangerError.exportFailed(OSStatus(status))
+        }
         #endif
     }
 }

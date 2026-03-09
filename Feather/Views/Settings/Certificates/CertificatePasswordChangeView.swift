@@ -13,13 +13,14 @@ struct CertificatePasswordChangeView: View {
     @State private var _isImportingP12Presenting = false
     @State private var _isProcessing = false
     @State private var _errorMessage: String? = nil
+    @State private var _successData: Data? = nil
 
     private var _passwordsMatch: Bool {
         _newPassword.trimmingCharacters(in: .whitespacesAndNewlines) == _confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var processButtonDisabled: Bool {
-        _p12URL == nil || _newPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !_passwordsMatch || _isProcessing
+        _p12URL == nil || _newPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !_passwordsMatch || _isProcessing || _successData != nil
     }
 
     var body: some View {
@@ -42,6 +43,10 @@ struct CertificatePasswordChangeView: View {
                                 .foregroundStyle(.red)
                                 .multilineTextAlignment(.center)
                                 .padding(.horizontal, 20)
+                        }
+
+                        if _successData != nil {
+                            successSection
                         }
 
                         Spacer(minLength: 30)
@@ -202,6 +207,56 @@ struct CertificatePasswordChangeView: View {
         }
     }
 
+    private var successSection: some View {
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 24))
+                    .foregroundStyle(.green)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Password Changed Successfully")
+                        .font(.system(size: 15, weight: .semibold))
+                    Text("Export the updated .p12 file to save it.")
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+            }
+            .padding(14)
+            .background(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .fill(Color.green.opacity(0.1))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                    .stroke(Color.green.opacity(0.3), lineWidth: 1)
+            )
+
+            Button {
+                if let data = _successData, let name = _p12URL?.lastPathComponent {
+                    _handleSuccess(newData: data, originalName: name)
+                }
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(.system(size: 16, weight: .semibold))
+                    Text("Export Updated Certificate")
+                        .font(.system(size: 15, weight: .semibold))
+                }
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.green)
+                )
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
     private var processButton: some View {
         Button {
             _processPasswordChange()
@@ -250,6 +305,13 @@ struct CertificatePasswordChangeView: View {
             return
         }
 
+        // Validate that the selected file has a PKCS#12 extension
+        let ext = p12URL.pathExtension.lowercased()
+        guard ext == "p12" || ext == "pfx" else {
+            _errorMessage = "Please select a valid PKCS#12 file (.p12 or .pfx)."
+            return
+        }
+
         let trimmedNew = _newPassword.trimmingCharacters(in: .whitespacesAndNewlines)
         let trimmedConfirm = _confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -259,12 +321,13 @@ struct CertificatePasswordChangeView: View {
         }
 
         _errorMessage = nil
+        _successData = nil
         _isProcessing = true
 
         // Start accessing the security scoped resource for files from Document Picker
         let accessing = p12URL.startAccessingSecurityScopedResource()
-        let currentPassword = _currentPassword
-        let newPassword = _newPassword
+        let currentPassword = _currentPassword.trimmingCharacters(in: .whitespacesAndNewlines)
+        let newPassword = trimmedNew
 
         DispatchQueue.global(qos: .userInitiated).async {
             defer {
@@ -283,7 +346,7 @@ struct CertificatePasswordChangeView: View {
 
                 DispatchQueue.main.async {
                     _isProcessing = false
-                    _handleSuccess(newData: newData, originalName: p12URL.lastPathComponent)
+                    _successData = newData
                 }
             } catch let error as PasswordChangerError {
                 DispatchQueue.main.async {
@@ -310,8 +373,11 @@ struct CertificatePasswordChangeView: View {
             // Present UIActivityViewController directly to set completion handler for cleanup
             let controller = UIActivityViewController(activityItems: [fileURL], applicationActivities: nil)
             controller.completionWithItemsHandler = { _, _, _, _ in
-                // Cleanup the temporary file after sharing is done
+                // Cleanup the temporary file and dismiss after the share sheet is done
                 try? FileManager.default.removeItem(at: fileURL)
+                DispatchQueue.main.async {
+                    dismiss()
+                }
             }
 
             if let topVC = UIApplication.topViewController() {
@@ -322,8 +388,6 @@ struct CertificatePasswordChangeView: View {
                 }
                 topVC.present(controller, animated: true)
             }
-
-            dismiss()
         } catch {
             _errorMessage = "Failed to save the new certificate: \(error.localizedDescription)"
         }
