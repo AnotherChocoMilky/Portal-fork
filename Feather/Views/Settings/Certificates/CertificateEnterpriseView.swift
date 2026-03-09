@@ -1,76 +1,14 @@
 import SwiftUI
 
-// MARK: - View Model
-
-@MainActor
-final class EnterpriseViewModel: ObservableObject {
-	@Published var certificates: [EnterpriseCertificate] = []
-	@Published var isLoading = false
-	@Published var errorMessage: String? = nil
-	@Published var importedIDs: Set<UUID> = []
-	@Published var deletedCertificateAlert: String? = nil
-
-	private let p12Password = "WSF"
-
-	func load(forceRefresh: Bool = false) {
-		guard !isLoading else { return }
-		isLoading = true
-		errorMessage = nil
-
-		Task {
-			do {
-				let result: (certificates: [EnterpriseCertificate], removedCertificateNames: [String])
-				if forceRefresh {
-					result = try await CertificateEnterpriseFetcher.shared.refreshEnterpriseCertificates()
-				} else {
-					result = try await CertificateEnterpriseFetcher.shared.fetchEnterpriseCertificates()
-				}
-				certificates = result.certificates
-				isLoading = false
-
-				if !result.removedCertificateNames.isEmpty {
-					checkDeletedCertificates(removedNames: result.removedCertificateNames)
-				}
-			} catch {
-				errorMessage = error.localizedDescription
-				isLoading = false
-			}
-		}
-	}
-
-	func importCertificate(_ certificate: EnterpriseCertificate) {
-		FR.handleCertificateFiles(
-			p12URL: certificate.p12URL,
-			provisionURL: certificate.provisionURL,
-			p12Password: p12Password,
-			certificateName: certificate.certificateName,
-			isDefault: false
-		) { [weak self] error in
-			Task { @MainActor in
-				guard let self else { return }
-				if let error = error {
-					self.errorMessage = error.localizedDescription
-				} else {
-					self.importedIDs.insert(certificate.id)
-					HapticsManager.shared.success()
-				}
-			}
-		}
-	}
-
-	private func checkDeletedCertificates(removedNames: [String]) {
-		let installedNames = Set(Storage.shared.getCertificates().compactMap { $0.nickname })
-		if let first = removedNames.first(where: { installedNames.contains($0) }) {
-			deletedCertificateAlert = first
-		}
-	}
-}
-
 // MARK: - View
 
 struct CertificateEnterpriseView: View {
 	@Environment(\.dismiss) private var dismiss
-	@StateObject private var viewModel = EnterpriseViewModel()
+	@StateObject private var fetcher = CertificateEnterpriseFetcher.shared
+	@State private var importedIDs: Set<UUID> = []
+	@State private var importErrorMessage: String? = nil
+
+	private let p12Password = "WSF"
 
 	var body: some View {
 		NavigationStack {
@@ -79,11 +17,11 @@ struct CertificateEnterpriseView: View {
 					.ignoresSafeArea()
 
 				Group {
-					if viewModel.isLoading {
+					if fetcher.isLoading {
 						loadingView
-					} else if let error = viewModel.errorMessage {
+					} else if let error = fetcher.errorMessage {
 						errorView(message: error)
-					} else if viewModel.certificates.isEmpty {
+					} else if fetcher.certificates.isEmpty {
 						emptyView
 					} else {
 						certificateList
@@ -94,9 +32,9 @@ struct CertificateEnterpriseView: View {
 			.navigationBarTitleDisplayMode(.inline)
 			.toolbar {
 				ToolbarItem(placement: .topBarLeading) {
-					if !viewModel.isLoading {
+					if !fetcher.isLoading {
 						Button {
-							viewModel.load(forceRefresh: true)
+							fetcher.fetchEnterpriseCertificates(forceRefresh: true)
 						} label: {
 							Image(systemName: "arrow.clockwise")
 								.font(.system(size: 16, weight: .medium))
@@ -116,21 +54,21 @@ struct CertificateEnterpriseView: View {
 				}
 			}
 			.alert(
-				"Certificate Deleted",
+				"Import Error",
 				isPresented: Binding(
-					get: { viewModel.deletedCertificateAlert != nil },
-					set: { if !$0 { viewModel.deletedCertificateAlert = nil } }
+					get: { importErrorMessage != nil },
+					set: { if !$0 { importErrorMessage = nil } }
 				)
 			) {
-				Button("OK", role: .cancel) { viewModel.deletedCertificateAlert = nil }
+				Button("OK", role: .cancel) { importErrorMessage = nil }
 			} message: {
-				if let name = viewModel.deletedCertificateAlert {
-					Text("The certificate you have been using \(name) has been deleted on the server due to it being expired, please fetch again and try to add a new one")
+				if let msg = importErrorMessage {
+					Text(msg)
 				}
 			}
 		}
 		.onAppear {
-			viewModel.load()
+			fetcher.fetchEnterpriseCertificates(forceRefresh: false)
 		}
 	}
 
@@ -162,7 +100,7 @@ struct CertificateEnterpriseView: View {
 				.multilineTextAlignment(.center)
 				.padding(.horizontal, 40)
 			Button {
-				viewModel.load()
+				fetcher.fetchEnterpriseCertificates(forceRefresh: false)
 			} label: {
 				Text("Retry")
 					.font(.headline)
@@ -185,7 +123,7 @@ struct CertificateEnterpriseView: View {
 				.foregroundStyle(.secondary)
 			Text("No Certificates Found")
 				.font(.headline)
-			Text("No Enterprise certificates were found. Try refreshing.")
+			Text("No Enterprise certificates were found. Try fetching again.")
 				.font(.caption)
 				.foregroundStyle(.secondary)
 				.multilineTextAlignment(.center)
@@ -197,9 +135,9 @@ struct CertificateEnterpriseView: View {
 	// MARK: - List
 
 	private var certificateList: some View {
-		List(viewModel.certificates) { cert in
+		List(fetcher.certificates) { cert in
 			Button {
-				viewModel.importCertificate(cert)
+				importCertificate(cert)
 			} label: {
 				HStack(spacing: 16) {
 					ZStack {
@@ -222,7 +160,7 @@ struct CertificateEnterpriseView: View {
 
 					Spacer()
 
-					if viewModel.importedIDs.contains(cert.id) {
+					if importedIDs.contains(cert.id) {
 						Image(systemName: "checkmark.circle.fill")
 							.font(.system(size: 20))
 							.foregroundStyle(.green)
@@ -232,8 +170,29 @@ struct CertificateEnterpriseView: View {
 				.padding(.vertical, 4)
 			}
 			.buttonStyle(.plain)
-			.animation(.spring(response: 0.3, dampingFraction: 0.7), value: viewModel.importedIDs)
+			.animation(.spring(response: 0.3, dampingFraction: 0.7), value: importedIDs)
 		}
 		.listStyle(.insetGrouped)
+	}
+
+	// MARK: - Import
+
+	private func importCertificate(_ certificate: EnterpriseCertificate) {
+		FR.handleCertificateFiles(
+			p12URL: certificate.p12URL,
+			provisionURL: certificate.provisionURL,
+			p12Password: p12Password,
+			certificateName: certificate.certificateName,
+			isDefault: false
+		) { error in
+			Task { @MainActor in
+				if let error = error {
+					importErrorMessage = error.localizedDescription
+				} else {
+					importedIDs.insert(certificate.id)
+					HapticsManager.shared.success()
+				}
+			}
+		}
 	}
 }
