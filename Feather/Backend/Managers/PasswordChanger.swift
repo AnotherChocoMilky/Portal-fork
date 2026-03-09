@@ -255,19 +255,19 @@ class PasswordChanger {
         }
     }
 
+    private static let _teamIDRegex = try? NSRegularExpression(pattern: #"\(([A-Z0-9]{10})\)\s*$"#)
+
     /// Attempts to extract a 10-character Apple Team ID from a signing identity
     /// string such as "iPhone Distribution: Company Name (ABCDE12345)".
     private static func _extractTeamID(from summary: String) -> String? {
-        // Match a 10-character alphanumeric team ID inside parentheses at the end
-        if let range = summary.range(of: #"\(([A-Z0-9]{10})\)\s*$"#, options: .regularExpression) {
-            let match = summary[range]
-            // Strip parentheses
-            let trimmed = match.trimmingCharacters(in: .whitespaces)
-                .replacingOccurrences(of: "(", with: "")
-                .replacingOccurrences(of: ")", with: "")
-            return trimmed.isEmpty ? nil : trimmed
+        guard let regex = _teamIDRegex else { return nil }
+        let range = NSRange(summary.startIndex..., in: summary)
+        guard let match = regex.firstMatch(in: summary, range: range),
+              match.numberOfRanges > 1,
+              let teamRange = Range(match.range(at: 1), in: summary) else {
+            return nil
         }
-        return nil
+        return String(summary[teamRange])
     }
 
     /// Extracts the certificate expiration date (notAfter) by walking the DER-
@@ -306,6 +306,22 @@ class PasswordChanger {
             return cs + cl
         }
 
+        // Reusable formatters for ASN.1 time parsing
+        let utcTimeFormatter: DateFormatter = {
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.timeZone = TimeZone(identifier: "UTC")
+            df.dateFormat = "yyMMddHHmmss'Z'"
+            return df
+        }()
+        let generalizedTimeFormatter: DateFormatter = {
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.timeZone = TimeZone(identifier: "UTC")
+            df.dateFormat = "yyyyMMddHHmmss'Z'"
+            return df
+        }()
+
         // Parse a UTCTime or GeneralizedTime value into a Date
         func parseTime(at pos: Int) -> Date? {
             guard pos < derData.count else { return nil }
@@ -315,18 +331,12 @@ class PasswordChanger {
             let bytes = derData[cs..<(cs + cl)]
             guard let str = String(data: bytes, encoding: .ascii) else { return nil }
 
-            let df = DateFormatter()
-            df.locale = Locale(identifier: "en_US_POSIX")
-            df.timeZone = TimeZone(identifier: "UTC")
-
             if tag == 0x17 { // UTCTime  YYMMDDHHmmssZ
-                df.dateFormat = "yyMMddHHmmss'Z'"
+                return utcTimeFormatter.date(from: str)
             } else if tag == 0x18 { // GeneralizedTime  YYYYMMDDHHmmssZ
-                df.dateFormat = "yyyyMMddHHmmss'Z'"
-            } else {
-                return nil
+                return generalizedTimeFormatter.date(from: str)
             }
-            return df.date(from: str)
+            return nil
         }
 
         // Outer SEQUENCE (Certificate)

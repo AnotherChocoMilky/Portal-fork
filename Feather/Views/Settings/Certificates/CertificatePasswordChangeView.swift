@@ -447,11 +447,15 @@ struct CertificatePasswordChangeView: View {
         }
     }
 
-    private func _formatDate(_ date: Date) -> String {
+    private static let _dateDisplayFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
-        return formatter.string(from: date)
+        return formatter
+    }()
+
+    private func _formatDate(_ date: Date) -> String {
+        Self._dateDisplayFormatter.string(from: date)
     }
 
     private func _handleSuccess(newData: Data, originalName: String) {
