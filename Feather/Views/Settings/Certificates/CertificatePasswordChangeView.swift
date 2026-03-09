@@ -8,12 +8,18 @@ struct CertificatePasswordChangeView: View {
     @State private var _p12URL: URL? = nil
     @State private var _currentPassword: String = ""
     @State private var _newPassword: String = ""
+    @State private var _confirmPassword: String = ""
 
     @State private var _isImportingP12Presenting = false
     @State private var _isProcessing = false
+    @State private var _errorMessage: String? = nil
+
+    private var _passwordsMatch: Bool {
+        _newPassword.trimmingCharacters(in: .whitespacesAndNewlines) == _confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 
     var processButtonDisabled: Bool {
-        _p12URL == nil || _newPassword.isEmpty || _isProcessing
+        _p12URL == nil || _newPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !_passwordsMatch || _isProcessing
     }
 
     var body: some View {
@@ -29,6 +35,14 @@ struct CertificatePasswordChangeView: View {
                             .padding(.vertical, 8)
 
                         passwordFieldsSection
+
+                        if let errorMessage = _errorMessage {
+                            Text(errorMessage)
+                                .font(.system(size: 13))
+                                .foregroundStyle(.red)
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 20)
+                        }
 
                         Spacer(minLength: 30)
                     }
@@ -64,7 +78,7 @@ struct CertificatePasswordChangeView: View {
             Text("Update Certificate Password")
                 .font(.headline)
 
-            Text("Change your certificates password using this tool. The processing happens entirely in device and OpenSSL.")
+            Text("Change your certificates password using this tool. The processing happens entirely on device.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
@@ -120,7 +134,7 @@ struct CertificatePasswordChangeView: View {
     private var passwordFieldsSection: some View {
         VStack(spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Cuurent Password")
+                Text("Current Password")
                     .font(.system(size: 11, weight: .bold, design: .rounded))
                     .foregroundStyle(.secondary)
                     .padding(.leading, 4)
@@ -157,6 +171,33 @@ struct CertificatePasswordChangeView: View {
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(Color.clear)
                 )
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Confirm New Password")
+                    .font(.system(size: 11, weight: .bold, design: .rounded))
+                    .foregroundStyle(.secondary)
+                    .padding(.leading, 4)
+
+                HStack(spacing: 12) {
+                    Image(systemName: "lock.shield.fill")
+                        .foregroundStyle(Color.accentColor)
+                    SecureField("Confirm New Password", text: $_confirmPassword)
+                        .font(.system(size: 15))
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.clear)
+                )
+
+                if !_confirmPassword.isEmpty && !_passwordsMatch {
+                    Text("Passwords do not match")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.red)
+                        .padding(.leading, 4)
+                }
             }
         }
     }
@@ -204,12 +245,26 @@ struct CertificatePasswordChangeView: View {
     }
 
     private func _processPasswordChange() {
-        guard let p12URL = _p12URL else { return }
+        guard let p12URL = _p12URL else {
+            _errorMessage = "Please select a .p12 certificate file."
+            return
+        }
 
+        let trimmedNew = _newPassword.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedConfirm = _confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard trimmedNew == trimmedConfirm else {
+            _errorMessage = "New passwords do not match."
+            return
+        }
+
+        _errorMessage = nil
         _isProcessing = true
 
         // Start accessing the security scoped resource for files from Document Picker
         let accessing = p12URL.startAccessingSecurityScopedResource()
+        let currentPassword = _currentPassword
+        let newPassword = _newPassword
 
         DispatchQueue.global(qos: .userInitiated).async {
             defer {
@@ -222,21 +277,23 @@ struct CertificatePasswordChangeView: View {
                 let p12Data = try Data(contentsOf: p12URL)
                 let newData = try PasswordChanger.changePassword(
                     p12Data: p12Data,
-                    oldPassword: _currentPassword,
-                    newPassword: _newPassword
+                    oldPassword: currentPassword,
+                    newPassword: newPassword
                 )
 
                 DispatchQueue.main.async {
                     _isProcessing = false
                     _handleSuccess(newData: newData, originalName: p12URL.lastPathComponent)
                 }
+            } catch let error as PasswordChangerError {
+                DispatchQueue.main.async {
+                    _isProcessing = false
+                    _errorMessage = error.localizedDescription
+                }
             } catch {
                 DispatchQueue.main.async {
                     _isProcessing = false
-                    UIAlertController.showAlertWithOk(
-                        title: "Error",
-                        message: error.localizedDescription
-                    )
+                    _errorMessage = "An unexpected error occurred: \(error.localizedDescription)"
                 }
             }
         }
@@ -268,10 +325,7 @@ struct CertificatePasswordChangeView: View {
 
             dismiss()
         } catch {
-            UIAlertController.showAlertWithOk(
-                title: "Error",
-                message: "Failed to save the new certificate: \(error.localizedDescription)"
-            )
+            _errorMessage = "Failed to save the new certificate: \(error.localizedDescription)"
         }
     }
 }
