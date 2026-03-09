@@ -16,15 +16,24 @@ struct CertificateEnterpriseView: View {
 				Color(UIColor.systemGroupedBackground)
 					.ignoresSafeArea()
 
-				Group {
-					if fetcher.isLoading {
-						loadingView
-					} else if let error = fetcher.errorMessage {
-						errorView(message: error)
-					} else if fetcher.certificates.isEmpty {
-						emptyView
-					} else {
-						certificateList
+				VStack(spacing: 0) {
+					#if DEBUG
+					Text("Certificates Loaded: \(fetcher.certificates.count)")
+						.font(.caption2)
+						.foregroundStyle(.secondary)
+						.padding(.vertical, 4)
+					#endif
+
+					Group {
+						if fetcher.isFetching {
+							loadingView
+						} else if let error = fetcher.errorMessage {
+							errorView(message: error)
+						} else if fetcher.certificates.isEmpty {
+							emptyView
+						} else {
+							certificateList
+						}
 					}
 				}
 			}
@@ -32,12 +41,9 @@ struct CertificateEnterpriseView: View {
 			.navigationBarTitleDisplayMode(.inline)
 			.toolbar {
 				ToolbarItem(placement: .topBarLeading) {
-					if !fetcher.isLoading {
-						Button {
+					if !fetcher.isFetching {
+						Button("Fetch") {
 							fetcher.fetchEnterpriseCertificates(forceRefresh: true)
-						} label: {
-							Image(systemName: "arrow.clockwise")
-								.font(.system(size: 16, weight: .medium))
 						}
 					}
 				}
