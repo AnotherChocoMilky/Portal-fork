@@ -129,7 +129,7 @@ public enum Zsign {
 	///   - newPassword: The new password
 	///   - outputData: On success, contains the re-encrypted PKCS#12 data
 	/// - Returns: A ``p12ChangeSuccess``, ``p12ChangeDecodeError``, ``p12ChangeAuthError``, or ``p12ChangeExportError`` status code.
-	static public func changeP12Password(p12Data: NSData, oldPassword: NSString, newPassword: NSString, outputData: UnsafeMutablePointer<NSData?>) -> Int32 {
+	static public func changeP12Password(p12Data: Data?, oldPassword: String?, newPassword: String?, outputData: AutoreleasingUnsafeMutablePointer<NSData?>) -> Int32 {
 		return Int32(p12_change_password_data(p12Data, oldPassword, newPassword, outputData))
 	}
 }
