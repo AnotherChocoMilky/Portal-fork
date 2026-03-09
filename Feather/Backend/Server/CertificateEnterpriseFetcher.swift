@@ -22,7 +22,7 @@ final class CertificateEnterpriseFetcher: ObservableObject {
 	@Published var isFetching: Bool = false
 	@Published var errorMessage: String?
 
-	private let repositoryURL = URL(string: "https://github.com/WSF-Team/WSF/raw/refs/heads/main/portal/resources/certificates.zip")!
+	private let repositoryURL = URL(string: "https://raw.githubusercontent.com/WSF-Team/WSF/refs/heads/main/portal/resources/certificates.zip")!
 
 	private let documentsRoot = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
 	private var enterpriseFolder: URL {
