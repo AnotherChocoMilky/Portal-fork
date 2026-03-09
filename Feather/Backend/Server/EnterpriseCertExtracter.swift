@@ -9,6 +9,7 @@ struct EnterpriseCertificate: Identifiable {
 	let p12URL: URL
 	let provisionURL: URL
 	let password: String
+	let expirationDate: Date?
 }
 
 // MARK: - Errors
@@ -30,6 +31,24 @@ enum EnterpriseExtracterError: LocalizedError {
 // MARK: - Extracter
 
 final class EnterpriseCertExtracter {
+
+	/// Parses the ExpirationDate from a .mobileprovision file.
+	static func parseProvisionExpiration(provisionURL: URL) -> Date? {
+		guard let data = try? Data(contentsOf: provisionURL) else { return nil }
+
+		// mobileprovision files embed a plist as an XML section; locate it by finding
+		// the <?xml … tag and the matching </plist> closing tag.
+		guard let xmlStart = data.range(of: Data("<?xml".utf8)),
+			  let xmlEnd   = data.range(of: Data("</plist>".utf8)) else { return nil }
+
+		let plistRange = xmlStart.lowerBound ..< xmlEnd.upperBound
+		let plistData  = data.subdata(in: plistRange)
+
+		guard let plist = try? PropertyListSerialization.propertyList(from: plistData, format: nil),
+			  let dict  = plist as? [String: Any] else { return nil }
+
+		return dict["ExpirationDate"] as? Date
+	}
 
 	/// Reads already-extracted certificate folders from disk without re-extracting.
 	/// Path: Documents/Certificates/EnterpriseCerts/extracted/certificates
@@ -75,11 +94,13 @@ final class EnterpriseCertExtracter {
 				continue
 			}
 
+			let expiration = EnterpriseCertExtracter.parseProvisionExpiration(provisionURL: provisionURL)
 			certificates.append(EnterpriseCertificate(
 				certificateName: certificateName,
 				p12URL: p12URL,
 				provisionURL: provisionURL,
-				password: "WSF"
+				password: "WSF",
+				expirationDate: expiration
 			))
 		}
 
@@ -132,11 +153,13 @@ final class EnterpriseCertExtracter {
 				continue
 			}
 
+			let expiration = EnterpriseCertExtracter.parseProvisionExpiration(provisionURL: provisionURL)
 			certificates.append(EnterpriseCertificate(
 				certificateName: folder.lastPathComponent,
 				p12URL: p12URL,
 				provisionURL: provisionURL,
-				password: "WSF"
+				password: "WSF",
+				expirationDate: expiration
 			))
 		}
 
