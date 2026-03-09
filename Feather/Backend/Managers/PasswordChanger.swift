@@ -101,9 +101,11 @@ class PasswordChanger {
         }
 
         // Extract the signing identity
-        guard let identity = items[0][kSecImportItemIdentity as String] as? SecIdentity else {
+        let identityValue = items[0][kSecImportItemIdentity as String] as AnyObject
+        guard CFGetTypeID(identityValue) == SecIdentityGetTypeID() else {
             throw PasswordChangerError.noItemsFound
         }
+        let identity = identityValue as! SecIdentity
 
         var certificate: SecCertificate?
         guard SecIdentityCopyCertificate(identity, &certificate) == errSecSuccess,
@@ -383,7 +385,9 @@ class PasswordChanger {
     /// provided by `SecPKCS12Import`.
     private static func _evaluateTrust(certificate: SecCertificate, items: [[String: Any]]) -> Bool {
         // Prefer the trust object returned by SecPKCS12Import
-        if let secTrust = items[0][kSecImportItemTrust as String] as? SecTrust {
+        let trustValue = items[0][kSecImportItemTrust as String] as AnyObject
+        if CFGetTypeID(trustValue) == SecTrustGetTypeID() {
+            let secTrust = trustValue as! SecTrust
             var error: CFError?
             let result = SecTrustEvaluateWithError(secTrust, &error)
             return result

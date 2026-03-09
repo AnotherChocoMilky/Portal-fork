@@ -96,19 +96,14 @@ class BackgroundRefreshManager: ObservableObject {
 
         logger.info("Performing background refresh...")
 
-        do {
-            // Refresh sources
-            let sources = Storage.shared.getSources()
-            await SourcesViewModel.shared.forceFetchAllSources(sources)
+        // Refresh sources
+        let sources = Storage.shared.getSources()
+        await SourcesViewModel.shared.forceFetchAllSources(sources)
 
-            // Check for app updates
-            await AppUpdateTrackingManager.shared.manualFetchAllSources()
+        // Check for app updates
+        await AppUpdateTrackingManager.shared.manualFetchAllSources()
 
-            logger.info("Background refresh completed successfully")
-            return true
-        } catch {
-            logger.error("Background refresh failed: \(error.localizedDescription)")
-            return false
-        }
+        logger.info("Background refresh completed successfully")
+        return true
     }
 }
