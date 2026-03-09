@@ -1,5 +1,8 @@
 import Foundation
 import Security
+#if !os(macOS)
+import ZsignSwift
+#endif
 
 enum PasswordChangerError: LocalizedError {
     case importFailed(OSStatus)
@@ -118,17 +121,17 @@ class PasswordChanger {
         // On iOS, use the bundled OpenSSL (via Zsign) to change the PKCS#12 password entirely in memory.
         // This avoids SecItemExport (unavailable on iOS for PKCS#12) and never touches the system keychain.
         var outputData: NSData?
-        let status = p12_change_password_data(p12Data as NSData, trimmedOldPassword as NSString, trimmedNewPassword as NSString, &outputData)
+        let status = Zsign.changeP12Password(p12Data: p12Data as NSData, oldPassword: trimmedOldPassword as NSString, newPassword: trimmedNewPassword as NSString, outputData: &outputData)
 
-        switch Int32(status) {
-        case Int32(P12_CHANGE_SUCCESS):
+        switch status {
+        case Zsign.p12ChangeSuccess:
             guard let resultData = outputData as Data? else {
                 throw PasswordChangerError.exportFailed(0)
             }
             return resultData
-        case Int32(P12_CHANGE_DECODE_ERROR):
+        case Zsign.p12ChangeDecodeError:
             throw PasswordChangerError.decodeFailed
-        case Int32(P12_CHANGE_AUTH_ERROR):
+        case Zsign.p12ChangeAuthError:
             throw PasswordChangerError.authFailed
         default:
             throw PasswordChangerError.exportFailed(OSStatus(status))

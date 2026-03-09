@@ -113,4 +113,23 @@ public enum Zsign {
 			completionHandler(status, expirationDate, error)
 		}
 	}
+
+	// MARK: - PKCS#12 Password Change
+
+	/// Status codes returned by ``changeP12Password(p12Data:oldPassword:newPassword:outputData:)``.
+	static public let p12ChangeSuccess     = Int32(P12_CHANGE_SUCCESS)
+	static public let p12ChangeDecodeError = Int32(P12_CHANGE_DECODE_ERROR)
+	static public let p12ChangeAuthError   = Int32(P12_CHANGE_AUTH_ERROR)
+	static public let p12ChangeExportError = Int32(P12_CHANGE_EXPORT_ERROR)
+
+	/// Changes the password of a PKCS#12 blob entirely in memory using OpenSSL.
+	/// - Parameters:
+	///   - p12Data: The PKCS#12 data
+	///   - oldPassword: The current password
+	///   - newPassword: The new password
+	///   - outputData: On success, contains the re-encrypted PKCS#12 data
+	/// - Returns: A ``p12ChangeSuccess``, ``p12ChangeDecodeError``, ``p12ChangeAuthError``, or ``p12ChangeExportError`` status code.
+	static public func changeP12Password(p12Data: NSData, oldPassword: NSString, newPassword: NSString, outputData: UnsafeMutablePointer<NSData?>) -> Int32 {
+		return Int32(p12_change_password_data(p12Data, oldPassword, newPassword, outputData))
+	}
 }
