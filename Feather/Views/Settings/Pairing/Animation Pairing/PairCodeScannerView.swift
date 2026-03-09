@@ -2,18 +2,6 @@ import SwiftUI
 import AVFoundation
 import MultipeerConnectivity
 
-// MARK: - Pair Code Scanner View
-/// A camera-based scanner view that detects the sender's pairing animation
-/// on screen and automatically connects via MultipeerConnectivity.
-///
-/// The sender's `PairingView` shows a 3D morphing sphere animation that
-/// uniquely represents the pairing session.  The receiver opens this view,
-/// points their camera at the sender's screen, and the scanner automatically
-/// discovers the nearby advertising device and extracts its pairing code
-/// from the MPC discovery info — no manual digit entry or QR code required.
-///
-/// `onCodeDetected` fires once the scanner successfully discovers and
-/// reads the pairing code from a nearby advertising device.
 struct PairCodeScannerView: View {
 
     // MARK: - Input
@@ -221,10 +209,6 @@ struct PairCodeScannerView: View {
     }
 }
 
-// MARK: - Pair Code Scanner (MPC Auto-Discovery)
-
-/// Handles MultipeerConnectivity browsing to auto-discover nearby
-/// advertising devices and extract their pairing code from discovery info.
 @MainActor
 final class PairCodeScanner: NSObject, ObservableObject {
 
@@ -273,7 +257,7 @@ extension PairCodeScanner: MCNearbyServiceBrowserDelegate {
 
             self.hasReported = true
             self.isDetected = true
-            self.statusText = .localized("Pairing animation detected!")
+            self.statusText = .localized("Pairing Animation Detected!")
             self.browser?.stopBrowsingForPeers()
 
             // Brief visual delay so the user sees the detection feedback
@@ -297,10 +281,6 @@ extension PairCodeScanner: MCNearbyServiceBrowserDelegate {
     }
 }
 
-// MARK: - Camera Preview (UIViewRepresentable)
-
-/// Wraps an `AVCaptureSession` rear-camera preview in a SwiftUI view.
-/// Used as the visual scanning element in `PairCodeScannerView`.
 private struct CameraPreviewRepresentable: UIViewRepresentable {
     func makeUIView(context: Context) -> CameraPreviewUIView {
         CameraPreviewUIView()

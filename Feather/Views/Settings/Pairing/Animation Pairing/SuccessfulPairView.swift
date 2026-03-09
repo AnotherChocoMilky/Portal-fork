@@ -2,17 +2,10 @@ import SwiftUI
 import AudioToolbox
 import NimbleViews
 
-// MARK: - Successful Pair View
-/// Full-screen success screen shown on the receiving device after all data has
-/// been transferred.  Presents:
-/// - An Apple Watch-style expanding-ring + orbiting-sparkle + bounce-checkmark animation
-/// - A list of every data category that was received (sources, certs, apps, settings…)
-/// - A "Done" button to dismiss and return to the previous screen
 struct SuccessfulPairView: View {
 
     // MARK: - Input
 
-    /// URL of the extracted backup directory; `nil` on the sending (host) device.
     let receivedURL: URL?
     let deviceName: String?
     let onDone: () -> Void
@@ -343,10 +336,6 @@ struct SuccessfulPairView: View {
         }
     }
 
-    // MARK: - Load Transferred Data
-
-    /// Reads metadata from the extracted backup directory to populate the
-    /// transferred-items list.  Falls back gracefully if any file is missing.
     private func loadTransferredData() async {
         guard let url = receivedURL else {
             // Host device — mark settings as included, no counts available
@@ -403,7 +392,7 @@ struct SuccessfulPairView: View {
 #Preview {
     SuccessfulPairView(
         receivedURL: nil,
-        deviceName: "Dylan's iPhone",
+        deviceName: "My iPhone",
         onDone: {}
     )
     .preferredColorScheme(.dark)

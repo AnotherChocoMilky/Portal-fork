@@ -45,12 +45,6 @@ enum TransferPhase: Equatable {
     }
 }
 
-// MARK: - Pairing View Model
-/// Manages the full lifecycle of a device-pairing and data-transfer session.
-///
-/// The view that owns this model should call `autoStart()` in `.onAppear`.
-/// `progress` (0…1) drives both the sphere morph animation and the UI
-/// progress indicator.
 @MainActor
 class PairingViewModel: ObservableObject {
 
@@ -101,20 +95,20 @@ class PairingViewModel: ObservableObject {
     var statusMessage: String {
         switch status {
         case .idle:
-            return .localized("Starting up…")
+            return .localized("Starting Up…")
         case .generating:
-            return .localized("Generating pairing code…")
+            return .localized("Generating Pairing Code…")
         case .waiting:
             switch transferPhase {
-            case .preparingData:  return .localized("Preparing data for transfer…")
-            case .sending(let p): return .localized("Sending data… \(Int(p * 100))%")
-            case .receiving(let p): return .localized("Receiving data… \(Int(p * 100))%")
-            case .complete:       return .localized("Transfer complete!")
+            case .preparingData:  return .localized("Preparing Data For Transfer…")
+            case .sending(let p): return .localized("Sending Data… \(Int(p * 100))%")
+            case .receiving(let p): return .localized("Receiving Data… \(Int(p * 100))%")
+            case .complete:       return .localized("Transfer Complete!")
             case .failed(let r):  return r
             default:
                 return isHost
                     ? .localized("Waiting for the other device to scan the animation…")
-                    : .localized("Connecting to sender…")
+                    : .localized("Connecting To Sender…")
             }
         case .connected:
             switch transferPhase {
@@ -123,17 +117,13 @@ class PairingViewModel: ObservableObject {
             case .receiving(let p): return .localized("Receiving data… \(Int(p * 100))%")
             case .complete:       return .localized("Devices paired and data transferred!")
             case .failed(let r):  return r
-            default:              return .localized("Devices connected successfully!")
+            default:              return .localized("Devices Connected Successfully!")
             }
         case .failed(let reason):
             return reason
         }
     }
-
-    // MARK: - Auto-Start (called from view's onAppear)
-
-    /// Starts the host flow immediately: generates the pairing code and
-    /// begins advertising.  Should be called once from `.onAppear`.
+    
     func autoStart() {
         guard status == .idle else { return }
         isHost = true

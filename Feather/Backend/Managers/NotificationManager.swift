@@ -99,7 +99,7 @@ final class NotificationManager: NSObject, ObservableObject {
     func sendAppSignedNotification(appName: String) {
         sendNotification(
             title: .localized("Downloaded App"),
-            body: String(format: .localized("%@ was downloaded successfully. Check the Library tab to sign the app now."), appName),
+            body: String(format: .localized("%@ was downloaded successfully! Check the Library tab to sign the app now."), appName),
             type: .appDownloaded
         )
     }
@@ -139,7 +139,7 @@ final class NotificationManager: NSObject, ObservableObject {
     func sendUpdateAvailableNotification(version: String) {
         sendNotification(
             title: .localized("Update Available"),
-            body: String(format: .localized("A new version of Portal (%@) is now available for updating."), version),
+            body: String(format: .localized("A new version of Portal (%@) is now available for updating! Check the Updates page to update and use new features."), version),
             type: .updateAvailable
         )
     }

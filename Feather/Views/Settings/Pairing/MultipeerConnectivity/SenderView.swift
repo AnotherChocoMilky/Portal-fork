@@ -270,11 +270,11 @@ struct SenderView: View {
     private var statusDetail: String {
         switch service.state {
         case .advertising:
-            return .localized("Open Portal on the other device and select \"Receive Data\". Both devices must be on the same Wi-Fi network.")
+            return .localized("Open Portal on the other device and select \"Receive Data\". Both devices must be on the same WiFi network and have the latest version of Portal.")
         case .connecting:
-            return .localized("A nearby device accepted the invitation. Establishing a secure connection…")
+            return .localized("A nearby device accepted the pairing request. Establishing a secure connection…")
         case .connected:
-            return .localized("Keep both devices nearby. Do not close the app.")
+            return .localized("Keep both devices nearby. Do NOT close Portal.")
         case .failed(let msg):
             return msg
         default:

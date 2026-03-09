@@ -373,7 +373,7 @@ struct MPCSuccessfulPairView: View {
 #Preview {
     MPCSuccessfulPairView(
         receivedURL: nil,
-        deviceName: "Alex's iPhone",
+        deviceName: "My iPhone",
         wasHost: false,
         onDone: {}
     )

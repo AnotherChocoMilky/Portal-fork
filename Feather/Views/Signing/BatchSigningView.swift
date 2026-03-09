@@ -129,7 +129,7 @@ struct BatchSigningView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "key.horizontal.fill")
                         .font(.title3)
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                         .frame(width: 36, height: 36)
                         .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 

@@ -163,7 +163,7 @@ struct PairingMPCView: View {
                 .font(.system(.title3, design: .rounded, weight: .semibold))
                 .foregroundStyle(.white)
 
-            Text(.localized("Both devices must be on the same Wi-Fi network. Choose whether this device will send its data or receive data from another device."))
+            Text(.localized("Both devices must be on the same WiFi network. Choose whether this device will send its data or receive data from another device."))
                 .font(.footnote)
                 .foregroundStyle(.white.opacity(0.6))
                 .multilineTextAlignment(.center)

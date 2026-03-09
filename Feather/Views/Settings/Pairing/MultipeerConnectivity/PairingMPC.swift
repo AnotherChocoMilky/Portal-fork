@@ -26,16 +26,6 @@ enum PairingMPCState: Equatable {
     }
 }
 
-// MARK: - Pairing MPC Service
-
-/// Lightweight MultipeerConnectivity service for direct device pairing without
-/// a sphere animation or manual code entry.  Devices on the same local network
-/// discover each other automatically; the user chooses which nearby device to
-/// connect to and the backup data is transferred automatically.
-///
-/// When Bonjour advertising or browsing fails (commonly error -72008 due to
-/// network restrictions or Wi-Fi not being available), the service retries a
-/// configurable number of times before reporting a user-facing failure.
 @MainActor
 final class PairingMPCService: NSObject, ObservableObject {
 
@@ -111,10 +101,6 @@ final class PairingMPCService: NSObject, ObservableObject {
         state = .connecting
     }
 
-    // MARK: - Send backup data
-
-    /// Packages the backup directory, encrypts it, and streams it to the
-    /// connected peer in 512 KB chunks.
     func sendBackupData(from backupDirectory: URL) async throws {
         guard let session = session, let peer = session.connectedPeers.first else {
             throw NSError(

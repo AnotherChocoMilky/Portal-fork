@@ -93,7 +93,7 @@ struct PairedDevicesView: View {
             }
 
             VStack(spacing: 8) {
-                Text(.localized("No Paired Devices"))
+                Text(.localized("No Devices Found"))
                     .font(.title3.bold())
 
                 Text(.localized("Devices you've paired with will appear here for 7 days after pairing."))

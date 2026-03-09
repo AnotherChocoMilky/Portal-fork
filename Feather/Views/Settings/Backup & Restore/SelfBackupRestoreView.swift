@@ -84,7 +84,7 @@ struct SelfBackupRestoreView: View {
                             .frame(width: 36)
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(.localized("Automatic Backups"))
+                            Text(.localized("Automatic Backups (Beta)"))
                                 .font(.subheadline.weight(.semibold))
                             Text(.localized("Configure Schedule & Content"))
                                 .font(.caption)
@@ -260,7 +260,7 @@ struct SelfBackupRestoreView: View {
             }
             Button("Later", role: .cancel) { }
         } message: { backup in
-            Text("Do you want to apply '\(backup.name)' now? This will overwrite your current data and the app will need to restart.")
+            Text("Do you want to apply '\(backup.name)' now? This will overwrite your current data and Portal will need to restart.")
         }
         .alert("Restart Required", isPresented: $viewModel.showingRestartAlert) {
             Button("Restart Portal") {
@@ -330,11 +330,11 @@ struct SelfBackupRestoreView: View {
                 .frame(height: 8)
 
                 HStack {
-                    Text(String(format: "%.1f%% consumed", advancedManager.storagePercentage * 100))
+                    Text(String(format: "%.1f%% Consumed", advancedManager.storagePercentage * 100))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
-                    Text("\(ByteCountFormatter.string(fromByteCount: advancedManager.availableStorage, countStyle: .file)) available")
+                    Text("\(ByteCountFormatter.string(fromByteCount: advancedManager.availableStorage, countStyle: .file)) Available")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }

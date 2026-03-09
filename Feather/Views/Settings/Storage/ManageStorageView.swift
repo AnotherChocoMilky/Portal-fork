@@ -81,7 +81,7 @@ struct ManageStorageView: View {
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(formatBytes(usedSpace))
                                     .font(.system(.title2, design: .rounded).bold())
-                                Text(.localized("Used of \(formatBytes(totalSpace))"))
+                                Text(.localized("Used Of \(formatBytes(totalSpace))"))
                                     .font(.subheadline)
                                     .foregroundStyle(.secondary)
                             }
@@ -95,7 +95,7 @@ struct ManageStorageView: View {
                                     Image(systemName: "arrow.clockwise.circle.fill")
                                         .font(.title2)
                                         .symbolRenderingMode(.hierarchical)
-                                        .foregroundStyle(.accentColor)
+                                        .foregroundStyle(Color.accentColor)
                                 }
                             }
                         }

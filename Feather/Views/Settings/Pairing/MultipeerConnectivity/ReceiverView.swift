@@ -220,7 +220,7 @@ struct ReceiverView: View {
         switch service.state {
         case .browsing:
             return service.nearbyPeers.isEmpty
-                ? .localized("Looking for Senders")
+                ? .localized("Looking For Senders")
                 : .localized("Devices Found!")
         case .connecting:
             return .localized("Connecting…")
@@ -237,12 +237,12 @@ struct ReceiverView: View {
         switch service.state {
         case .browsing:
             return service.nearbyPeers.isEmpty
-                ? .localized("Open Portal on the sender's device and select \"Send Data\". Both devices must be on the same Wi-Fi network.")
+                ? .localized("Open Portal on the sender's device and select \"Send Data\". Both devices must be on the same WiFi network and have the latest version of Portal.")
                 : .localized("Tap a device below to start receiving its data.")
         case .connecting:
-            return .localized("Establishing a secure peer-to-peer connection…")
+            return .localized("Establishing a secure network connection…")
         case .connected:
-            return .localized("Keep both devices nearby. Do not close the app.")
+            return .localized("Keep both devices nearby. Do NOT close Portal.")
         case .failed(let msg):
             return msg
         default:
@@ -313,7 +313,7 @@ struct ReceiverView: View {
                     Text(peer.displayName)
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
-                    Text(.localized("Tap to connect and receive data"))
+                    Text(.localized("Tap To Connect"))
                         .font(.caption)
                         .foregroundStyle(.white.opacity(0.5))
                 }

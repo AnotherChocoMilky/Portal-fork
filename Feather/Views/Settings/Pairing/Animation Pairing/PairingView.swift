@@ -1,31 +1,7 @@
 import SwiftUI
 import NimbleViews
 
-// MARK: - Pairing View
-/// The main "Pair Devices" screen.
-///
-/// The pairing code is generated **automatically** the moment this view appears —
-/// no button press required.  A 3D morphing-dot sphere (chaos → Fibonacci order)
-/// plays throughout the session and **IS** the visual pairing code.
-///
-/// The sphere animation uniquely represents the pairing session — there is no
-/// visible 6-digit code or QR code.  The user on the other device taps
-/// **Scan Pairing Code** which opens `PairCodeScannerView`, a camera-based
-/// scanner that detects the sphere animation on the sender's screen via
-/// MultipeerConnectivity auto-discovery.
-///
-/// - `LoadingPairView` is shown on both devices as soon as the transfer starts.
-/// - `SuccessfulPairView` is shown when the transfer completes.
-/// - `PairHistoryView` is reachable via the toolbar History button.
-///
-/// When `isEmbedded` is `true` the view skips its own `NavigationStack` wrapper
-/// and relies on the parent navigation context (e.g. a `NavigationLink`).
 struct PairingView: View {
-
-    // MARK: - Parameters
-
-    /// Pass `true` when this view is pushed via a `NavigationLink` so that it
-    /// doesn't add a redundant `NavigationStack`.
     var isEmbedded: Bool = false
 
     // MARK: - State
@@ -236,9 +212,6 @@ struct PairingView: View {
 
     private var actionSection: some View {
         VStack(spacing: 14) {
-            // "Scan Pairing Code" — the main CTA on both idle AND waiting states.
-            // When idle, auto-start hasn't fired yet (brief window);
-            // always show it so the receiver can enter the sender's code.
             if viewModel.status == .idle || viewModel.status == .waiting || viewModel.status == .generating {
                 Button(action: { viewModel.showScanSheet = true }) {
                     Label(.localized("Scan Pairing Code"), systemImage: "camera.viewfinder")
