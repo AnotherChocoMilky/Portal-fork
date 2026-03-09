@@ -7,8 +7,11 @@ struct CertificateEnterpriseView: View {
 	@StateObject private var fetcher = CertificateEnterpriseFetcher.shared
 	@State private var importedIDs: Set<UUID> = []
 	@State private var importErrorMessage: String? = nil
+	@State private var certificates: [EnterpriseCertificate] = []
+	@State private var isExtracting: Bool = false
+	@State private var errorMessage: String? = nil
 
-	private let p12Password = "WSF"
+	private let extractor = EnterpriseCertExtracter()
 
 	var body: some View {
 		NavigationStack {
@@ -17,19 +20,17 @@ struct CertificateEnterpriseView: View {
 					.ignoresSafeArea()
 
 				VStack(spacing: 0) {
-					#if DEBUG
-					Text("Certificates Loaded: \(fetcher.certificates.count)")
+					Text("Certificates Loaded: \(certificates.count)")
 						.font(.caption2)
 						.foregroundStyle(.secondary)
-						.padding(.vertical, 4)
-					#endif
+						.padding(.vertical, 6)
 
 					Group {
-						if fetcher.isFetching {
+						if fetcher.isFetching || isExtracting {
 							loadingView
-						} else if let error = fetcher.errorMessage {
+						} else if let error = errorMessage ?? fetcher.errorMessage {
 							errorView(message: error)
-						} else if fetcher.certificates.isEmpty {
+						} else if certificates.isEmpty {
 							emptyView
 						} else {
 							certificateList
@@ -41,9 +42,9 @@ struct CertificateEnterpriseView: View {
 			.navigationBarTitleDisplayMode(.inline)
 			.toolbar {
 				ToolbarItem(placement: .topBarLeading) {
-					if !fetcher.isFetching {
+					if !fetcher.isFetching && !isExtracting {
 						Button("Fetch") {
-							fetcher.fetchEnterpriseCertificates(forceRefresh: true)
+							startPipeline(forceRefresh: true)
 						}
 					}
 				}
@@ -74,7 +75,7 @@ struct CertificateEnterpriseView: View {
 			}
 		}
 		.onAppear {
-			fetcher.fetchEnterpriseCertificates(forceRefresh: false)
+			startPipeline(forceRefresh: false)
 		}
 	}
 
@@ -84,7 +85,7 @@ struct CertificateEnterpriseView: View {
 		VStack(spacing: 16) {
 			ProgressView()
 				.scaleEffect(1.4)
-			Text("Fetching Enterprise Certificates")
+			Text(fetcher.isFetching ? "Fetching Enterprise Certificates" : "Extracting Certificates")
 				.font(.subheadline)
 				.foregroundStyle(.secondary)
 		}
@@ -106,7 +107,7 @@ struct CertificateEnterpriseView: View {
 				.multilineTextAlignment(.center)
 				.padding(.horizontal, 40)
 			Button {
-				fetcher.fetchEnterpriseCertificates(forceRefresh: false)
+				startPipeline(forceRefresh: false)
 			} label: {
 				Text("Retry")
 					.font(.headline)
@@ -141,7 +142,7 @@ struct CertificateEnterpriseView: View {
 	// MARK: - List
 
 	private var certificateList: some View {
-		List(fetcher.certificates) { cert in
+		List(certificates) { cert in
 			Button {
 				importCertificate(cert)
 			} label: {
@@ -187,7 +188,7 @@ struct CertificateEnterpriseView: View {
 		FR.handleCertificateFiles(
 			p12URL: certificate.p12URL,
 			provisionURL: certificate.provisionURL,
-			p12Password: p12Password,
+			p12Password: certificate.password,
 			certificateName: certificate.certificateName,
 			isDefault: false
 		) { error in
@@ -200,5 +201,31 @@ struct CertificateEnterpriseView: View {
 				}
 			}
 		}
+	}
+
+	// MARK: - Pipeline
+
+	private func startPipeline(forceRefresh: Bool) {
+		Task {
+			await fetchAndExtract(forceRefresh: forceRefresh)
+		}
+	}
+
+	@MainActor
+	private func fetchAndExtract(forceRefresh: Bool) async {
+		errorMessage = nil
+		importErrorMessage = nil
+
+		do {
+			try await fetcher.fetchEnterpriseCertificates(forceRefresh: forceRefresh)
+			isExtracting = true
+			let parsed = try extractor.extractEnterpriseCertificates()
+			certificates = parsed
+			importedIDs.removeAll()
+		} catch {
+			errorMessage = error.localizedDescription
+		}
+
+		isExtracting = false
 	}
 }
