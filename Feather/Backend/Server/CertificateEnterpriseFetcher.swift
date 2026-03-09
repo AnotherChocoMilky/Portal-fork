@@ -54,6 +54,7 @@ final class CertificateEnterpriseFetcher {
 		let cacheIsStale = lastFetch.map { now.timeIntervalSince($0) >= cacheIntervalSeconds } ?? true
 
 		if cacheExists && !cacheIsStale {
+			print("[EnterpriseFetcher] Using cached certificates at \(dir.path)")
 			let certs = try parseDirectories(in: dir)
 			return (certs, [])
 		}
@@ -82,44 +83,56 @@ final class CertificateEnterpriseFetcher {
 		UserDefaults.standard.set(Array(currentNames), forKey: cachedNamesKey)
 		UserDefaults.standard.set(now, forKey: lastFetchKey)
 
+		print("[EnterpriseFetcher] Parsed \(certs.count) valid certificates")
 		return (certs, removedNames)
 	}
 
 	private func downloadAndExtract(to destination: URL) async throws {
-		let tempZipPath = FileManager.default.temporaryDirectory
-			.appendingPathComponent("certificates_enterprise_\(UUID().uuidString).zip")
+		let fm = FileManager.default
 
-		let (localURL, response) = try await URLSession.shared.download(from: remoteZipURL)
+		// Ensure the cache directory exists before writing anything
+		try fm.createDirectory(at: destination, withIntermediateDirectories: true)
+
+		let zipPath = destination.appendingPathComponent("certificates.zip")
+
+		// Download the ZIP data
+		print("[EnterpriseFetcher] Starting ZIP download from \(remoteZipURL.absoluteString)")
+		let (data, response) = try await URLSession.shared.data(from: remoteZipURL)
 		guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
-			try? FileManager.default.removeItem(at: localURL)
+			let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+			print("[EnterpriseFetcher] Download failed with status code: \(statusCode)")
 			throw EnterpriseFetcherError.downloadFailed
 		}
+		print("[EnterpriseFetcher] Download completed, \(data.count) bytes received")
 
-		try? FileManager.default.removeItem(at: tempZipPath)
-		try FileManager.default.moveItem(at: localURL, to: tempZipPath)
-		defer { try? FileManager.default.removeItem(at: tempZipPath) }
+		// Write the downloaded data to certificates.zip inside the cache directory
+		try data.write(to: zipPath)
+		print("[EnterpriseFetcher] ZIP written to \(zipPath.path)")
 
-		try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true)
-
-		try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
-			DispatchQueue.global(qos: .utility).async {
-				do {
-					try Zip.unzipFile(tempZipPath, destination: destination, overwrite: true, password: nil)
-					continuation.resume()
-				} catch {
-					try? FileManager.default.removeItem(at: destination)
-					continuation.resume(throwing: EnterpriseFetcherError.extractionFailed)
-				}
-			}
+		// Extract the ZIP contents into the enterpriseCertificates directory
+		print("[EnterpriseFetcher] Starting ZIP extraction")
+		do {
+			try Zip.unzipFile(zipPath, destination: destination, overwrite: true, password: nil)
+		} catch {
+			print("[EnterpriseFetcher] Extraction failed: \(error.localizedDescription)")
+			try? fm.removeItem(at: destination)
+			throw EnterpriseFetcherError.extractionFailed
 		}
+		print("[EnterpriseFetcher] Extraction finished")
+
+		// Clean up the ZIP file after extraction
+		try? fm.removeItem(at: zipPath)
 	}
 
 	private func parseDirectories(in directory: URL) throws -> [EnterpriseCertificate] {
-		let contents = try FileManager.default.contentsOfDirectory(
+		let fm = FileManager.default
+		let contents = try fm.contentsOfDirectory(
 			at: directory,
 			includingPropertiesForKeys: [.isDirectoryKey],
 			options: [.skipsHiddenFiles]
 		)
+
+		print("[EnterpriseFetcher] Found \(contents.count) items in \(directory.lastPathComponent)")
 
 		var certificates: [EnterpriseCertificate] = []
 
@@ -127,7 +140,7 @@ final class CertificateEnterpriseFetcher {
 			let resourceValues = try item.resourceValues(forKeys: [.isDirectoryKey])
 			guard resourceValues.isDirectory == true else { continue }
 
-			let subContents = (try? FileManager.default.contentsOfDirectory(
+			let subContents = (try? fm.contentsOfDirectory(
 				at: item,
 				includingPropertiesForKeys: nil,
 				options: [.skipsHiddenFiles]
@@ -151,9 +164,11 @@ final class CertificateEnterpriseFetcher {
 					p12URL: p12,
 					provisionURL: provision
 				))
+				print("[EnterpriseFetcher] Valid certificate: \(item.lastPathComponent)")
 			}
 		}
 
+		print("[EnterpriseFetcher] Total valid certificates parsed: \(certificates.count)")
 		return certificates.sorted { $0.certificateName.localizedCompare($1.certificateName) == .orderedAscending }
 	}
 }
