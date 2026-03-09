@@ -178,8 +178,8 @@ class PasswordChanger {
 
         // Iterate through the returned items to locate the SecIdentity
         for item in items {
-            guard CFGetTypeID(item) == SecIdentityGetTypeID() else { continue }
-            let identity = item as! SecIdentity
+            guard CFGetTypeID(item) == SecIdentityGetTypeID(),
+                  let identity = item as? SecIdentity else { continue }
 
             var cert: SecCertificate?
             guard SecIdentityCopyCertificate(identity, &cert) == errSecSuccess, let certificate = cert else { continue }
@@ -366,10 +366,12 @@ class PasswordChanger {
         var certChain: [SecCertificate] = []
 
         for item in items {
-            if CFGetTypeID(item) == SecIdentityGetTypeID() {
-                foundIdentity = item as! SecIdentity
-            } else if CFGetTypeID(item) == SecCertificateGetTypeID() {
-                certChain.append(item as! SecCertificate)
+            if CFGetTypeID(item) == SecIdentityGetTypeID(),
+               let identity = item as? SecIdentity {
+                foundIdentity = identity
+            } else if CFGetTypeID(item) == SecCertificateGetTypeID(),
+                      let certificate = item as? SecCertificate {
+                certChain.append(certificate)
             }
         }
 
