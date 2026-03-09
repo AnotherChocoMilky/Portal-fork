@@ -81,6 +81,33 @@ To build the actual iOS app, you need:
 
 - **Bulk Source Import URL Scheme**: Added `portal://addBulkSource` scheme with four input formats: repeated `url` params, comma-separated `urls`, indexed `url0/url1/...`, and base64-encoded `data` payload for unlimited sources. Sources are fetched, validated, and added to Storage automatically with no user interaction. `SourcesAddBulkView` sheet shows accent-colored progress bar, per-source results (name, status, error reason), auto-generated Portal Transfer code with copy button, and retry on failure. Case-insensitive host matching in FeatherApp catches the scheme early before fallback handlers. All formats documented in URLSchemeView.
 
+- **BatchSigningView modernization**: Complete UI overhaul:
+  - Apps are now pre-selected by default when opening from LibraryView batch selection
+  - Switched from List to ScrollView with card-based sections for a cleaner layout
+  - Edit App sheet now uses `.presentationDetents([.medium, .large])` with drag indicator for proper sheet behavior
+  - BatchAppEditSheet redesigned with inline field layout, icon-backed sections, and scroll-friendly structure
+  - Progress overlay enhanced with gradient stroke and scale transition
+  - Action button uses gradient background with smooth animation on state changes
+  - App selection rows show opacity dimming for deselected apps with smooth transitions
+  - Gear icon replaces slider icon for per-app options button
+
+- **SelfBackupRestoreView modernization**: Cleaner visual hierarchy without removing any features:
+  - Header section uses circular icon container with accent tint
+  - Quick Actions use filled circle SF symbols with consistent 28pt sizing
+  - Backup rows redesigned with rounded icon containers and capsule-style snapshot badges
+  - Added dedicated helper methods for action rows, feature info rows, and included item rows
+  - "What's Included" section uses reliable SF symbols (app.fill, arrow.down.circle.fill, globe, puzzlepiece.fill)
+  - All existing functionality preserved including context menus, secure sessions, and verification
+
+- **ManageStorageView cleanup and SF symbol fixes**:
+  - Fixed broken SF symbols: replaced `square.and.arrow.down.fill` with `arrow.down.circle.fill`, `key.horizontal.fill` with `key.fill`, `arrow.clockwise.circle.fill` with `arrow.triangle.2.circlepath.circle.fill`, `clock.arrow.circlepath` with `trash.circle.fill`
+  - Storage Breakdown rows now use icon containers with colored backgrounds for better visibility
+  - Tools section enhanced with subtitles and chevron indicators
+  - Advanced Tools use colored icons with consistent frame widths
+  - Danger Zone uses reliable SF symbols (`app.badge.checkmark`, `arrow.down.app`, `key.fill`, `globe`) with size labels
+  - Storage overview shows available space and percentage in footer
+  - Progress bar scaled 1.5x for better visibility
+
 ## Links
 - [GitHub Repository](https://github.com/aoyn1xw/Portal)
 - [Releases](https://github.com/aoyn1xw/Portal/releases)

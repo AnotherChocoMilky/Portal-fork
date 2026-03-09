@@ -31,6 +31,7 @@ struct BatchSigningView: View {
     @State private var appOptions: [String: Options] = [:]
     @State private var editingAppId: String? = nil
     @State private var showEditSheet = false
+    @State private var appeared = false
     
     @AppStorage("Feather.installationMethod") private var installationMethod: Int = 0
     @AppStorage("Feather.serverMethod") private var _serverMethod: Int = 0
@@ -49,13 +50,17 @@ struct BatchSigningView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                List {
-                    certificateSection
-                    optionsSection
-                    appSelectionSection
-                    if !batchResults.isEmpty { resultsSection }
+                ScrollView {
+                    VStack(spacing: 20) {
+                        certificateSection
+                        optionsSection
+                        appSelectionSection
+                        if !batchResults.isEmpty { resultsSection }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 100)
                 }
-                .listStyle(.insetGrouped)
                 .navigationTitle("Batch Signing")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
@@ -68,7 +73,11 @@ struct BatchSigningView: View {
                         }
                     }
                 }
-                .safeAreaInset(edge: .bottom) { actionSection }
+
+                VStack {
+                    Spacer()
+                    actionSection
+                }
 
                 if isSigningBatch { progressOverlay }
             }
@@ -83,6 +92,14 @@ struct BatchSigningView: View {
                         ),
                         onDismiss: { showEditSheet = false }
                     )
+                    .presentationDetents([.medium, .large])
+                    .presentationDragIndicator(.visible)
+                }
+            }
+            .onAppear {
+                if !appeared {
+                    appeared = true
+                    selectedApps = Set(apps.compactMap { $0.uuid })
                 }
             }
         }
@@ -91,62 +108,79 @@ struct BatchSigningView: View {
     // MARK: - Certificate Section
 
     private var certificateSection: some View {
-        Section {
-            if certificates.isEmpty {
-                Label("No Certificates Available", systemImage: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
-                    .font(.subheadline)
-            } else {
-                Picker("Certificate", selection: $selectedCertificateIndex) {
-                    ForEach(Array(certificates.enumerated()), id: \.element.uuid) { index, cert in
-                        Text(cert.nickname ?? "Certificate \(index + 1)").tag(index)
-                    }
-                }
-                .pickerStyle(.menu)
-            }
-        } header: {
+        VStack(alignment: .leading, spacing: 10) {
             Label("Certificate", systemImage: "seal.fill")
-                .textCase(nil)
-                .font(.caption.bold())
+                .font(.subheadline.bold())
+                .foregroundStyle(.secondary)
+
+            if certificates.isEmpty {
+                HStack(spacing: 10) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.orange)
+                        .font(.title3)
+                    Text("No Certificates Available")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            } else {
+                HStack(spacing: 12) {
+                    Image(systemName: "key.horizontal.fill")
+                        .font(.title3)
+                        .foregroundStyle(.accentColor)
+                        .frame(width: 36, height: 36)
+                        .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                    Picker("Certificate", selection: $selectedCertificateIndex) {
+                        ForEach(Array(certificates.enumerated()), id: \.element.uuid) { index, cert in
+                            Text(cert.nickname ?? "Certificate \(index + 1)").tag(index)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .tint(.primary)
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
         }
     }
 
     // MARK: - Options Section
 
     private var optionsSection: some View {
-        Section {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Options", systemImage: "slider.horizontal.3")
+                .font(.subheadline.bold())
+                .foregroundStyle(.secondary)
+
             Toggle(isOn: $autoInstall) {
-                Label("Auto Install After Signing", systemImage: "arrow.down.app.fill")
-                    .font(.subheadline)
+                HStack(spacing: 10) {
+                    Image(systemName: "arrow.down.app.fill")
+                        .font(.title3)
+                        .foregroundStyle(.green)
+                        .frame(width: 36, height: 36)
+                        .background(Color.green.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    Text("Auto Install After Signing")
+                        .font(.subheadline.weight(.medium))
+                }
             }
             .tint(.accentColor)
-        } header: {
-            Label("Options", systemImage: "slider.horizontal.3")
-                .textCase(nil)
-                .font(.caption.bold())
+            .padding(14)
+            .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
         }
     }
 
     // MARK: - App Selection Section
 
     private var appSelectionSection: some View {
-        Section {
-            if apps.isEmpty {
-                Text("No Apps Available")
-                    .foregroundStyle(.secondary)
-                    .font(.subheadline)
-                    .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 8)
-            } else {
-                ForEach(apps, id: \.uuid) { app in
-                    appSelectionRow(for: app)
-                }
-            }
-        } header: {
+        VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Label("Apps (\(selectedApps.count)/\(apps.count))", systemImage: "square.stack.fill")
-                    .textCase(nil)
-                    .font(.caption.bold())
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.secondary)
                 Spacer()
                 Button(selectedApps.count == apps.count ? "Deselect All" : "Select All") {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
@@ -157,32 +191,56 @@ struct BatchSigningView: View {
                         }
                     }
                 }
-                .font(.caption.bold())
+                .font(.subheadline.bold())
                 .foregroundStyle(Color.accentColor)
-                .textCase(nil)
+            }
+
+            if apps.isEmpty {
+                Text("No Apps Available")
+                    .foregroundStyle(.secondary)
+                    .font(.subheadline)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 24)
+                    .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(apps.enumerated()), id: \.element.uuid) { index, app in
+                        appSelectionRow(for: app)
+
+                        if index < apps.count - 1 {
+                            Divider()
+                                .padding(.leading, 62)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+                .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
         }
     }
 
     @ViewBuilder
     private func appSelectionRow(for app: AppInfoPresentable) -> some View {
+        let isSelected = selectedApps.contains(app.uuid ?? "")
+
         HStack(spacing: 12) {
             Button { toggleAppSelection(app) } label: {
                 HStack(spacing: 12) {
-                    Image(systemName: selectedApps.contains(app.uuid ?? "") ? "checkmark.circle.fill" : "circle")
-                        .font(.system(size: 20))
-                        .foregroundStyle(selectedApps.contains(app.uuid ?? "") ? Color.accentColor : Color.secondary.opacity(0.4))
-                        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: selectedApps.contains(app.uuid ?? ""))
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 22))
+                        .foregroundStyle(isSelected ? Color.accentColor : Color.secondary.opacity(0.35))
+                        .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isSelected)
 
-                    FRAppIconView(app: app, size: 36)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                    FRAppIconView(app: app, size: 40)
+                        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+                        .shadow(color: .black.opacity(0.06), radius: 3, y: 1)
 
-                    VStack(alignment: .leading, spacing: 1) {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text(app.name ?? "Unknown App")
                             .font(.subheadline.weight(.semibold))
                             .lineLimit(1)
                         Text(app.identifier ?? "")
-                            .font(.caption.monospaced())
+                            .font(.caption2.monospaced())
                             .foregroundStyle(.secondary)
                             .lineLimit(1)
                     }
@@ -196,58 +254,66 @@ struct BatchSigningView: View {
                 editingAppId = app.uuid
                 showEditSheet = true
             } label: {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(appOptions[app.uuid ?? ""] != nil ? .white : .accentColor)
-                    .padding(7)
-                    .background(appOptions[app.uuid ?? ""] != nil ? Color.orange : Color.accentColor.opacity(0.12), in: Circle())
+                Image(systemName: appOptions[app.uuid ?? ""] != nil ? "gearshape.fill" : "gearshape")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(appOptions[app.uuid ?? ""] != nil ? .white : .secondary)
+                    .frame(width: 32, height: 32)
+                    .background(
+                        appOptions[app.uuid ?? ""] != nil
+                            ? AnyShapeStyle(Color.orange)
+                            : AnyShapeStyle(Color(UIColor.tertiarySystemFill)),
+                        in: RoundedRectangle(cornerRadius: 8, style: .continuous)
+                    )
             }
             .buttonStyle(.plain)
         }
-        .padding(.vertical, 2)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .contentShape(Rectangle())
+        .opacity(isSelected ? 1.0 : 0.55)
+        .animation(.easeInOut(duration: 0.2), value: isSelected)
     }
 
     // MARK: - Results Section
 
     private var resultsSection: some View {
-        Section {
-            ForEach(batchResults) { result in
-                resultRow(for: result)
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 4, leading: 12, bottom: 4, trailing: 12))
-            }
-
-            if batchResults.contains(where: { $0.success && $0.installLink != nil }) {
-                Button { installAllSigned() } label: {
-                    Label("Install All Signed", systemImage: "arrow.down.circle.fill")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 10)
-                }
-                .buttonStyle(.borderedProminent)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: 8, leading: 12, bottom: 8, trailing: 12))
-            }
-        } header: {
+        VStack(alignment: .leading, spacing: 10) {
             Label("Results", systemImage: "checkmark.seal.fill")
-                .textCase(nil)
-                .font(.caption.bold())
+                .font(.subheadline.bold())
+                .foregroundStyle(.secondary)
+
+            VStack(spacing: 8) {
+                ForEach(batchResults) { result in
+                    resultRow(for: result)
+                }
+
+                if batchResults.contains(where: { $0.success && $0.installLink != nil }) {
+                    Button { installAllSigned() } label: {
+                        Label("Install All Signed", systemImage: "arrow.down.circle.fill")
+                            .font(.headline)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 12)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .padding(.top, 4)
+                }
+            }
         }
     }
 
     @ViewBuilder
     private func resultRow(for result: BatchSignResult) -> some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 12) {
             if let app = result.app {
                 FRAppIconView(app: app, size: 40)
                     .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
             } else {
                 ZStack {
                     RoundedRectangle(cornerRadius: 9, style: .continuous)
-                        .fill(Color(UIColor.secondarySystemFill))
+                        .fill(Color(UIColor.tertiarySystemFill))
                         .frame(width: 40, height: 40)
-                    Image(systemName: "app.badge.fill")
+                    Image(systemName: "app.fill")
                         .font(.system(size: 18))
                         .foregroundStyle(.secondary)
                 }
@@ -257,8 +323,8 @@ struct BatchSigningView: View {
                 Text(result.appName)
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .lineLimit(1)
-                HStack(spacing: 4) {
-                    Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.octagon.fill")
+                HStack(spacing: 5) {
+                    Image(systemName: result.success ? "checkmark.circle.fill" : "xmark.circle.fill")
                         .font(.caption2)
                         .foregroundStyle(result.success ? .green : .red)
                     Text(result.message)
@@ -275,14 +341,14 @@ struct BatchSigningView: View {
                     if let url = URL(string: link) { UIApplication.shared.open(url) }
                 } label: {
                     Image(systemName: "arrow.down.to.line.circle.fill")
-                        .font(.system(size: 22))
+                        .font(.system(size: 24))
                         .symbolRenderingMode(.hierarchical)
                         .foregroundStyle(.blue)
                 }
                 .buttonStyle(.plain)
             }
         }
-        .padding(10)
+        .padding(12)
         .background(
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .fill(Color(UIColor.secondarySystemGroupedBackground))
@@ -298,17 +364,23 @@ struct BatchSigningView: View {
             Button { startBatchSigning() } label: {
                 HStack(spacing: 8) {
                     Image(systemName: "signature")
+                        .font(.system(size: 16, weight: .bold))
                     Text(selectedApps.isEmpty ? "Select Apps to Sign" : "Sign \(selectedApps.count) App\(selectedApps.count == 1 ? "" : "s")")
+                        .font(.headline)
                 }
-                .font(.headline)
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(canSign ? Color.accentColor : Color.secondary.opacity(0.3))
+                .padding(.vertical, 15)
+                .background(
+                    canSign
+                        ? AnyShapeStyle(LinearGradient(colors: [Color.accentColor, Color.accentColor.opacity(0.85)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        : AnyShapeStyle(Color.secondary.opacity(0.2))
+                )
                 .foregroundStyle(canSign ? .white : Color.secondary)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .shadow(color: canSign ? Color.accentColor.opacity(0.25) : .clear, radius: 8, y: 4)
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                .shadow(color: canSign ? Color.accentColor.opacity(0.3) : .clear, radius: 10, y: 5)
             }
             .disabled(!canSign)
+            .animation(.easeInOut(duration: 0.2), value: canSign)
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
         }
@@ -323,22 +395,25 @@ struct BatchSigningView: View {
 
     private var progressOverlay: some View {
         ZStack {
-            Color.black.opacity(0.35)
+            Color.black.opacity(0.4)
                 .ignoresSafeArea()
 
-            VStack(spacing: 20) {
+            VStack(spacing: 24) {
                 ZStack {
                     Circle()
-                        .stroke(Color.accentColor.opacity(0.15), lineWidth: 6)
-                        .frame(width: 88, height: 88)
+                        .stroke(Color.accentColor.opacity(0.12), lineWidth: 7)
+                        .frame(width: 96, height: 96)
                     Circle()
                         .trim(from: 0, to: batchProgress)
-                        .stroke(Color.accentColor, style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                        .frame(width: 88, height: 88)
+                        .stroke(
+                            LinearGradient(colors: [.accentColor, .accentColor.opacity(0.7)], startPoint: .topLeading, endPoint: .bottomTrailing),
+                            style: StrokeStyle(lineWidth: 7, lineCap: .round)
+                        )
+                        .frame(width: 96, height: 96)
                         .rotationEffect(.degrees(-90))
-                        .animation(.easeInOut(duration: 0.3), value: batchProgress)
+                        .animation(.easeInOut(duration: 0.35), value: batchProgress)
 
-                    VStack(spacing: 1) {
+                    VStack(spacing: 2) {
                         Text("\(Int(batchProgress * 100))%")
                             .font(.system(.title3, design: .rounded).bold())
                         Text(currentPhase == .signing ? "Signing" : "Installing")
@@ -351,20 +426,20 @@ struct BatchSigningView: View {
 
                 VStack(spacing: 6) {
                     Text(currentSigningApp)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
                         .multilineTextAlignment(.center)
                         .lineLimit(2)
-                    Text(currentPhase == .signing ? "Signing in progress…" : "Installing…")
+                    Text(currentPhase == .signing ? "Signing in progress..." : "Installing...")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
-            .padding(28)
-            .frame(width: 260)
+            .padding(32)
+            .frame(width: 270)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .shadow(color: .black.opacity(0.18), radius: 24, x: 0, y: 8)
+            .shadow(color: .black.opacity(0.2), radius: 30, x: 0, y: 10)
         }
-        .transition(.opacity)
+        .transition(.opacity.combined(with: .scale(scale: 0.95)))
     }
 
     // MARK: - Logic
@@ -575,70 +650,140 @@ struct BatchAppEditSheet: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                Section {
-                    HStack(spacing: 12) {
-                        FRAppIconView(app: app, size: 52)
-                            .clipShape(RoundedRectangle(cornerRadius: 11, style: .continuous))
-                        VStack(alignment: .leading, spacing: 2) {
+            ScrollView {
+                VStack(spacing: 20) {
+                    HStack(spacing: 14) {
+                        FRAppIconView(app: app, size: 56)
+                            .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                            .shadow(color: .black.opacity(0.08), radius: 6, y: 2)
+
+                        VStack(alignment: .leading, spacing: 3) {
                             Text(app.name ?? "Unknown")
-                                .font(.system(size: 16, weight: .bold, design: .rounded))
+                                .font(.system(size: 17, weight: .bold, design: .rounded))
                             Text(app.identifier ?? "Unknown")
                                 .font(.system(size: 12, weight: .medium, design: .monospaced))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                         }
-                    }
-                    .padding(.vertical, 4)
-                }
 
-                Section("Identifier & Build") {
-                    TextField("App Name", text: $editedName)
-                    TextField("Bundle ID", text: $editedBundleId)
-                        .keyboardType(.URL)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                    TextField("Version", text: $editedVersion)
-                }
-
-                Section {
-                    NavigationLink {
-                        SigningTweaksView(options: $options)
-                    } label: {
-                        Label("Injection Options", systemImage: "wrench.and.screwdriver.fill")
-                            .foregroundStyle(.primary)
-                            .badge(options.injectionFiles.count > 0 ? "\(options.injectionFiles.count)" : "")
+                        Spacer()
                     }
-                } header: {
-                    Text("Tweaks & Files")
-                }
+                    .padding(16)
+                    .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
 
-                Section {
-                    Button(action: saveAndDismiss) {
-                        Text("Apply Changes")
-                            .font(.headline)
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                    .padding(.vertical, 4)
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Identifier & Build")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.secondary)
 
-                    Button(role: .destructive) { dismiss() } label: {
-                        Text("Discard")
-                            .frame(maxWidth: .infinity)
+                        VStack(spacing: 0) {
+                            editField(title: "App Name", text: $editedName)
+                            Divider().padding(.leading, 16)
+                            editField(title: "Bundle ID", text: $editedBundleId, keyboard: .URL, capitalize: false)
+                            Divider().padding(.leading, 16)
+                            editField(title: "Version", text: $editedVersion)
+                        }
+                        .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
-                    .listRowBackground(Color.clear)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Tweaks & Files")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.secondary)
+
+                        NavigationLink {
+                            SigningTweaksView(options: $options)
+                        } label: {
+                            HStack(spacing: 12) {
+                                Image(systemName: "wrench.and.screwdriver.fill")
+                                    .font(.title3)
+                                    .foregroundStyle(.purple)
+                                    .frame(width: 36, height: 36)
+                                    .background(Color.purple.opacity(0.12), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+
+                                Text("Injection Options")
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(.primary)
+
+                                Spacer()
+
+                                if options.injectionFiles.count > 0 {
+                                    Text("\(options.injectionFiles.count)")
+                                        .font(.caption.bold())
+                                        .foregroundStyle(.white)
+                                        .padding(.horizontal, 8)
+                                        .padding(.vertical, 3)
+                                        .background(Color.purple, in: Capsule())
+                                }
+
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(14)
+                        }
+                        .buttonStyle(.plain)
+                        .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                    }
+
+                    VStack(spacing: 10) {
+                        Button(action: saveAndDismiss) {
+                            Text("Apply Changes")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.accentColor, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                .foregroundStyle(.white)
+                        }
+
+                        Button(role: .destructive) { dismiss() } label: {
+                            Text("Discard")
+                                .font(.subheadline.weight(.medium))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                        }
+                    }
+                    .padding(.top, 4)
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .padding(.bottom, 20)
             }
+            .background(Color(UIColor.systemGroupedBackground))
             .navigationTitle("Customize App")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundStyle(.secondary)
+                            .symbolRenderingMode(.hierarchical)
+                            .font(.title3)
+                    }
+                }
+            }
             .onAppear {
                 editedName = options.appName ?? app.name ?? ""
                 editedBundleId = options.appIdentifier ?? app.identifier ?? ""
                 editedVersion = options.appVersion ?? app.version ?? ""
             }
         }
+    }
+
+    private func editField(title: String, text: Binding<String>, keyboard: UIKeyboardType = .default, capitalize: Bool = true) -> some View {
+        HStack {
+            Text(title)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .frame(width: 85, alignment: .leading)
+            TextField(title, text: text)
+                .font(.subheadline)
+                .keyboardType(keyboard)
+                .autocorrectionDisabled(keyboard == .URL)
+                .textInputAutocapitalization(capitalize ? .sentences : .never)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
 
     private func saveAndDismiss() {
