@@ -67,224 +67,13 @@ struct ManageStorageView: View {
     var body: some View {
         ZStack {
             List {
-                if showHeaderViews {
-                    Section {
-                        StorageHeaderView()
-                            .listRowInsets(EdgeInsets())
-                            .listRowBackground(Color.clear)
-                    }
-                }
-
-                Section {
-                    VStack(alignment: .leading, spacing: 10) {
-                        HStack {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(formatBytes(usedSpace))
-                                    .font(.system(.title2, design: .rounded).bold())
-                                Text(.localized("Used Of \(formatBytes(totalSpace))"))
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                            }
-                            Spacer()
-                            if isCalculating {
-                                ProgressView()
-                            } else {
-                                Button {
-                                    calculateStorageData()
-                                } label: {
-                                    Image(systemName: "arrow.clockwise.circle.fill")
-                                        .font(.title2)
-                                        .symbolRenderingMode(.hierarchical)
-                                        .foregroundStyle(Color.accentColor)
-                                }
-                            }
-                        }
-
-                        ProgressView(value: Double(usedSpace), total: Double(max(totalSpace, 1)))
-                            .tint(.accentColor)
-                            .scaleEffect(y: 1.5)
-
-                        HStack {
-                            Text(formatBytes(availableSpace) + " " + .localized("available"))
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Spacer()
-                            if totalSpace > 0 {
-                                Text("\(Int((Double(usedSpace) / Double(totalSpace)) * 100))%")
-                                    .font(.caption.bold())
-                                    .foregroundStyle(.accentColor)
-                            }
-                        }
-                    }
-                    .padding(.vertical, 6)
-                } header: {
-                    Text(.localized("Device Storage"))
-                }
-
-                Section {
-                    toolRow(icon: "chart.pie.fill", color: .purple, title: .localized("Storage Analyzer"), subtitle: .localized("Deep scan of all files")) {
-                        showStorageAnalyzer = true
-                    }
-                    toolRow(icon: "doc.on.doc.fill", color: .blue, title: .localized("Duplicate Finder"), subtitle: duplicateFilesCount > 0 ? "\(duplicateFilesCount) " + .localized("found") : .localized("Scan for duplicates")) {
-                        showDuplicateFinder = true
-                    }
-                    toolRow(icon: "doc.richtext.fill", color: .pink, title: .localized("Large Files"), subtitle: largeFilesCount > 0 ? "\(largeFilesCount) " + .localized("found") : .localized("Find files over 50MB")) {
-                        showLargeFilesFinder = true
-                    }
-                } header: {
-                    Text(.localized("Tools"))
-                }
-
-                Section {
-                    ForEach(storageCategories) { category in
-                        HStack(spacing: 12) {
-                            Image(systemName: category.icon)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(category.color)
-                                .frame(width: 30, height: 30)
-                                .background(category.color.opacity(0.12), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-
-                            Text(category.name)
-                                .font(.subheadline)
-
-                            Spacer()
-
-                            Text(category.formattedSize)
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(.secondary)
-
-                            if category.action != nil && category.size > 0 {
-                                Button {
-                                    if let action = category.action {
-                                        showResetAlert(
-                                            title: String(format: .localized("Clear %@"), category.name),
-                                            message: category.formattedSize,
-                                            action: action
-                                        )
-                                    }
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.system(size: 18))
-                                        .symbolRenderingMode(.hierarchical)
-                                        .foregroundStyle(.red)
-                                }
-                                .buttonStyle(.borderless)
-                            }
-                        }
-                        .padding(.vertical, 3)
-                    }
-                } header: {
-                    Text(.localized("Storage Breakdown"))
-                }
-
-                Section {
-                    Picker(.localized("Remove items older than"), selection: $cleanupPeriod) {
-                        ForEach(CleanupPeriod.allCases, id: \.self) { period in
-                            Text(period.displayName).tag(period)
-                        }
-                    }
-                    .onChange(of: cleanupPeriod) { _ in
-                        calculateReclaimableSpace()
-                    }
-
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(.localized("Reclaimable Space"))
-                                .font(.subheadline.weight(.semibold))
-                            Text(formatBytes(reclaimableSpace))
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(.orange)
-                        }
-                        Spacer()
-                        Button {
-                            performCleanup()
-                        } label: {
-                            Text(.localized("Clean"))
-                                .font(.subheadline.bold())
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 18)
-                                .padding(.vertical, 8)
-                                .background(Color.orange, in: Capsule())
-                        }
-                        .buttonStyle(.plain)
-                        .disabled(reclaimableSpace == 0 || isCalculating)
-                        .opacity(reclaimableSpace == 0 || isCalculating ? 0.4 : 1.0)
-                    }
-                    .padding(.vertical, 4)
-                } header: {
-                    Text(.localized("Smart Cleanup"))
-                }
-
-                Section {
-                    advancedToolButton(icon: "wifi.circle.fill", color: .blue, title: .localized("Clear Network Cache")) {
-                        let cacheSize = URLCache.shared.currentDiskUsage
-                        showResetAlert(
-                            title: .localized("Clear Network Cache"),
-                            message: formatBytes(Int64(cacheSize)),
-                            action: clearNetworkCache
-                        )
-                    }
-                    advancedToolButton(icon: "folder.fill", color: .teal, title: .localized("Clear Work Cache")) {
-                        showResetAlert(
-                            title: .localized("Clear Work Cache"),
-                            message: "",
-                            action: clearWorkCache
-                        )
-                    }
-                    advancedToolButton(icon: "doc.text.fill", color: .indigo, title: .localized("Clear Logs")) {
-                        showResetAlert(
-                            title: .localized("Clear Logs"),
-                            message: formatBytes(logsSize),
-                            action: clearLogs
-                        )
-                    }
-                    advancedToolButton(icon: "globe", color: .purple, title: .localized("Reset Source Cache")) {
-                        showResetAlert(
-                            title: .localized("Reset Source Cache"),
-                            message: "",
-                            action: resetSourceCache
-                        )
-                    }
-                } header: {
-                    Text(.localized("Advanced Tools"))
-                }
-
-                Section {
-                    dangerButton(icon: "app.badge.checkmark", title: .localized("Delete All Signed Apps"), size: formatBytes(signedAppsSize)) {
-                        showResetAlert(
-                            title: .localized("Delete All Signed Apps"),
-                            message: formatBytes(signedAppsSize),
-                            action: deleteSignedApps
-                        )
-                    }
-                    dangerButton(icon: "arrow.down.app", title: .localized("Delete All Imported Apps"), size: formatBytes(importedAppsSize)) {
-                        showResetAlert(
-                            title: .localized("Delete All Imported Apps"),
-                            message: formatBytes(importedAppsSize),
-                            action: deleteImportedApps
-                        )
-                    }
-                    dangerButton(icon: "key.fill", title: .localized("Delete All Certificates"), size: formatBytes(certificatesSize)) {
-                        showResetAlert(
-                            title: .localized("Delete All Certificates"),
-                            message: formatBytes(certificatesSize),
-                            action: resetCertificates
-                        )
-                    }
-                    dangerButton(icon: "globe", title: .localized("Reset All Sources"), size: nil) {
-                        showResetAlert(
-                            title: .localized("Reset All Sources"),
-                            message: "",
-                            action: resetSources
-                        )
-                    }
-                } header: {
-                    Text(.localized("Danger Zone"))
-                } footer: {
-                    Text(.localized("These actions cannot be undone."))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                sectionHeaderView
+                sectionDeviceStorage
+                sectionTools
+                sectionStorageBreakdown
+                sectionSmartCleanup
+                sectionAdvancedTools
+                sectionDangerZone
             }
             .navigationTitle(.localized("Manage Storage"))
             .navigationBarTitleDisplayMode(.inline)
@@ -312,7 +101,242 @@ struct ManageStorageView: View {
             LargeFilesFinderView()
         }
     }
-    
+
+    private var sectionHeaderView: some View {
+        Group {
+            if showHeaderViews {
+                Section {
+                    StorageHeaderView()
+                        .listRowInsets(EdgeInsets())
+                        .listRowBackground(Color.clear)
+                }
+            }
+        }
+    }
+
+    private var sectionDeviceStorage: some View {
+        Section {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(formatBytes(usedSpace))
+                            .font(.system(.title2, design: .rounded).bold())
+                        Text(.localized("Used Of \(formatBytes(totalSpace))"))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    if isCalculating {
+                        ProgressView()
+                    } else {
+                        Button {
+                            calculateStorageData()
+                        } label: {
+                            Image(systemName: "arrow.clockwise.circle.fill")
+                                .font(.title2)
+                                .symbolRenderingMode(.hierarchical)
+                                .foregroundStyle(Color.accentColor)
+                        }
+                    }
+                }
+
+                ProgressView(value: Double(usedSpace), total: Double(max(totalSpace, 1)))
+                    .tint(.accentColor)
+                    .scaleEffect(y: 1.5)
+
+                HStack {
+                    Text(formatBytes(availableSpace) + " " + .localized("available"))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    if totalSpace > 0 {
+                        Text("\(Int((Double(usedSpace) / Double(totalSpace)) * 100))%")
+                            .font(.caption.bold())
+                            .foregroundStyle(.accentColor)
+                    }
+                }
+            }
+            .padding(.vertical, 6)
+        } header: {
+            Text(.localized("Device Storage"))
+        }
+    }
+
+    private var sectionTools: some View {
+        Section {
+            toolRow(icon: "chart.pie.fill", color: .purple, title: .localized("Storage Analyzer"), subtitle: .localized("Deep scan of all files")) {
+                showStorageAnalyzer = true
+            }
+            toolRow(icon: "doc.on.doc.fill", color: .blue, title: .localized("Duplicate Finder"), subtitle: duplicateFilesCount > 0 ? "\(duplicateFilesCount) " + .localized("found") : .localized("Scan for duplicates")) {
+                showDuplicateFinder = true
+            }
+            toolRow(icon: "doc.richtext.fill", color: .pink, title: .localized("Large Files"), subtitle: largeFilesCount > 0 ? "\(largeFilesCount) " + .localized("found") : .localized("Find files over 50MB")) {
+                showLargeFilesFinder = true
+            }
+        } header: {
+            Text(.localized("Tools"))
+        }
+    }
+
+    private var sectionStorageBreakdown: some View {
+        Section {
+            ForEach(storageCategories) { category in
+                HStack(spacing: 12) {
+                    Image(systemName: category.icon)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(category.color)
+                        .frame(width: 30, height: 30)
+                        .background(category.color.opacity(0.12), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+
+                    Text(category.name)
+                        .font(.subheadline)
+
+                    Spacer()
+
+                    Text(category.formattedSize)
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.secondary)
+
+                    if category.action != nil && category.size > 0 {
+                        Button {
+                            if let action = category.action {
+                                showResetAlert(
+                                    title: String(format: .localized("Clear %@"), category.name),
+                                    message: category.formattedSize,
+                                    action: action
+                                )
+                            }
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 18))
+                                .symbolRenderingMode(.hierarchical)
+                                .foregroundStyle(.red)
+                        }
+                        .buttonStyle(.borderless)
+                    }
+                }
+                .padding(.vertical, 3)
+            }
+        } header: {
+            Text(.localized("Storage Breakdown"))
+        }
+    }
+
+    private var sectionSmartCleanup: some View {
+        Section {
+            Picker(.localized("Remove items older than"), selection: $cleanupPeriod) {
+                ForEach(CleanupPeriod.allCases, id: \.self) { period in
+                    Text(period.displayName).tag(period)
+                }
+            }
+            .onChange(of: cleanupPeriod) { _ in
+                calculateReclaimableSpace()
+            }
+
+            HStack {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(.localized("Reclaimable Space"))
+                        .font(.subheadline.weight(.semibold))
+                    Text(formatBytes(reclaimableSpace))
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.orange)
+                }
+                Spacer()
+                Button {
+                    performCleanup()
+                } label: {
+                    Text(.localized("Clean"))
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 8)
+                        .background(Color.orange, in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .disabled(reclaimableSpace == 0 || isCalculating)
+                .opacity(reclaimableSpace == 0 || isCalculating ? 0.4 : 1.0)
+            }
+            .padding(.vertical, 4)
+        } header: {
+            Text(.localized("Smart Cleanup"))
+        }
+    }
+
+    private var sectionAdvancedTools: some View {
+        Section {
+            advancedToolButton(icon: "wifi.circle.fill", color: .blue, title: .localized("Clear Network Cache")) {
+                let cacheSize = URLCache.shared.currentDiskUsage
+                showResetAlert(
+                    title: .localized("Clear Network Cache"),
+                    message: formatBytes(Int64(cacheSize)),
+                    action: clearNetworkCache
+                )
+            }
+            advancedToolButton(icon: "folder.fill", color: .teal, title: .localized("Clear Work Cache")) {
+                showResetAlert(
+                    title: .localized("Clear Work Cache"),
+                    message: "",
+                    action: clearWorkCache
+                )
+            }
+            advancedToolButton(icon: "doc.text.fill", color: .indigo, title: .localized("Clear Logs")) {
+                showResetAlert(
+                    title: .localized("Clear Logs"),
+                    message: formatBytes(logsSize),
+                    action: clearLogs
+                )
+            }
+            advancedToolButton(icon: "globe", color: .purple, title: .localized("Reset Source Cache")) {
+                showResetAlert(
+                    title: .localized("Reset Source Cache"),
+                    message: "",
+                    action: resetSourceCache
+                )
+            }
+        } header: {
+            Text(.localized("Advanced Tools"))
+        }
+    }
+
+    private var sectionDangerZone: some View {
+        Section {
+            dangerButton(icon: "app.badge.checkmark", title: .localized("Delete All Signed Apps"), size: formatBytes(signedAppsSize)) {
+                showResetAlert(
+                    title: .localized("Delete All Signed Apps"),
+                    message: formatBytes(signedAppsSize),
+                    action: deleteSignedApps
+                )
+            }
+            dangerButton(icon: "arrow.down.app", title: .localized("Delete All Imported Apps"), size: formatBytes(importedAppsSize)) {
+                showResetAlert(
+                    title: .localized("Delete All Imported Apps"),
+                    message: formatBytes(importedAppsSize),
+                    action: deleteImportedApps
+                )
+            }
+            dangerButton(icon: "key.fill", title: .localized("Delete All Certificates"), size: formatBytes(certificatesSize)) {
+                showResetAlert(
+                    title: .localized("Delete All Certificates"),
+                    message: formatBytes(certificatesSize),
+                    action: resetCertificates
+                )
+            }
+            dangerButton(icon: "globe", title: .localized("Reset All Sources"), size: nil) {
+                showResetAlert(
+                    title: .localized("Reset All Sources"),
+                    message: "",
+                    action: resetSources
+                )
+            }
+        } header: {
+            Text(.localized("Danger Zone"))
+        } footer: {
+            Text(.localized("These actions cannot be undone."))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
     private func toolRow(icon: String, color: Color, title: String, subtitle: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
