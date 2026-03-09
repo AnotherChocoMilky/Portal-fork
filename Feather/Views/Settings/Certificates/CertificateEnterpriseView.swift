@@ -5,13 +5,20 @@ import SwiftUI
 struct CertificateEnterpriseView: View {
 	@Environment(\.dismiss) private var dismiss
 	@StateObject private var fetcher = CertificateEnterpriseFetcher.shared
-	@State private var importedIDs: Set<UUID> = []
-	@State private var importErrorMessage: String? = nil
 	@State private var certificates: [EnterpriseCertificate] = []
 	@State private var isExtracting: Bool = false
+	@State private var isInstalling: Bool = false
 	@State private var errorMessage: String? = nil
+	@State private var importErrorMessage: String? = nil
+	@State private var successCertName: String? = nil
 
 	private let extractor = EnterpriseCertExtracter()
+	private let expirationFormatter: DateFormatter = {
+		let f = DateFormatter()
+		f.dateStyle = .medium
+		f.timeStyle = .none
+		return f
+	}()
 
 	var body: some View {
 		NavigationStack {
@@ -19,23 +26,20 @@ struct CertificateEnterpriseView: View {
 				Color(UIColor.systemGroupedBackground)
 					.ignoresSafeArea()
 
-				VStack(spacing: 0) {
-					Text("Certificates Found: \(certificates.count)")
-						.font(.caption2)
-						.foregroundStyle(.secondary)
-						.padding(.vertical, 6)
-
-					Group {
-						if fetcher.isFetching || isExtracting {
-							loadingView
-						} else if let error = errorMessage ?? fetcher.errorMessage {
-							errorView(message: error)
-						} else if certificates.isEmpty {
-							emptyView
-						} else {
-							certificateList
-						}
+				Group {
+					if fetcher.isFetching || isExtracting {
+						loadingView
+					} else if let error = errorMessage ?? fetcher.errorMessage {
+						errorView(message: error)
+					} else if certificates.isEmpty {
+						emptyView
+					} else {
+						certificateScrollView
 					}
+				}
+
+				if isInstalling {
+					installOverlay
 				}
 			}
 			.navigationTitle("Enterprise Certificates")
@@ -73,6 +77,19 @@ struct CertificateEnterpriseView: View {
 					Text(msg)
 				}
 			}
+			.alert(
+				"Certificate Installed",
+				isPresented: Binding(
+					get: { successCertName != nil },
+					set: { if !$0 { successCertName = nil } }
+				)
+			) {
+				Button("OK") { successCertName = nil; restartApp() }
+			} message: {
+				if let name = successCertName {
+					Text("\(name) was added successfully saved into your device!")
+				}
+			}
 		}
 		.onAppear {
 			let loaded = EnterpriseCertExtracter.loadExtractedCertificates()
@@ -81,6 +98,91 @@ struct CertificateEnterpriseView: View {
 			} else {
 				startPipeline(forceRefresh: false)
 			}
+		}
+	}
+
+	// MARK: - Certificate scroll view
+
+	private var certificateScrollView: some View {
+		ScrollView {
+			VStack(spacing: 14) {
+				ForEach(certificates) { cert in
+					certificateCard(cert)
+				}
+				footerView
+					.padding(.top, 8)
+			}
+			.padding(.horizontal, 16)
+			.padding(.vertical, 12)
+		}
+	}
+
+	// MARK: - Certificate card
+
+	private func certificateCard(_ cert: EnterpriseCertificate) -> some View {
+		Button {
+			installCertificate(cert)
+		} label: {
+			HStack(spacing: 16) {
+				VStack(alignment: .leading, spacing: 6) {
+					Text(cert.certificateName)
+						.font(.system(size: 17, weight: .bold))
+						.foregroundStyle(.primary)
+					if let expDate = cert.expirationDate {
+						Text("Expires: \(expirationFormatter.string(from: expDate))")
+							.font(.subheadline)
+							.foregroundStyle(.secondary)
+					}
+				}
+
+				Spacer()
+
+				Image(systemName: "arrow.down.circle.fill")
+					.font(.system(size: 28))
+					.foregroundStyle(Color.accentColor)
+			}
+			.padding(16)
+			.background(Color(UIColor.secondarySystemGroupedBackground))
+			.clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+			.shadow(color: .black.opacity(0.06), radius: 4, x: 0, y: 2)
+		}
+		.buttonStyle(.plain)
+	}
+
+	// MARK: - Footer
+
+	private var footerView: some View {
+		Group {
+			Text("Add the certificate that works for your device. All these certificates are ")
+				.foregroundStyle(.secondary)
+			+ Text("REVOKED")
+				.bold()
+				.foregroundColor(.red)
+			+ Text(" but they still work since that's the method.")
+				.foregroundStyle(.secondary)
+		}
+		.font(.footnote)
+		.multilineTextAlignment(.center)
+		.padding(.horizontal, 8)
+	}
+
+	// MARK: - Install overlay
+
+	private var installOverlay: some View {
+		ZStack {
+			Color.black.opacity(0.35)
+				.ignoresSafeArea()
+			VStack(spacing: 16) {
+				ProgressView()
+					.scaleEffect(1.4)
+					.tint(.white)
+				Text("Installing certificate…")
+					.font(.subheadline)
+					.foregroundStyle(.white)
+			}
+			.padding(32)
+			.background(.ultraThinMaterial)
+			.clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
 		}
 	}
 
@@ -144,52 +246,10 @@ struct CertificateEnterpriseView: View {
 		.frame(maxWidth: .infinity, maxHeight: .infinity)
 	}
 
-	// MARK: - List
+	// MARK: - Install
 
-	private var certificateList: some View {
-		List(certificates) { cert in
-			Button {
-				importCertificate(cert)
-			} label: {
-				HStack(spacing: 16) {
-					ZStack {
-						RoundedRectangle(cornerRadius: 10, style: .continuous)
-							.fill(Color.accentColor.opacity(0.12))
-							.frame(width: 38, height: 38)
-						Image(systemName: "building.2.fill")
-							.font(.system(size: 16, weight: .semibold))
-							.foregroundStyle(Color.accentColor)
-					}
-
-					VStack(alignment: .leading, spacing: 3) {
-						Text(cert.certificateName)
-							.font(.system(size: 16, weight: .semibold))
-							.foregroundStyle(.primary)
-						Text("Tap to install certificate")
-							.font(.caption)
-							.foregroundStyle(.secondary)
-					}
-
-					Spacer()
-
-					if importedIDs.contains(cert.id) {
-						Image(systemName: "checkmark.circle.fill")
-							.font(.system(size: 20))
-							.foregroundStyle(.green)
-							.transition(.scale.combined(with: .opacity))
-					}
-				}
-				.padding(.vertical, 4)
-			}
-			.buttonStyle(.plain)
-			.animation(.spring(response: 0.3, dampingFraction: 0.7), value: importedIDs)
-		}
-		.listStyle(.insetGrouped)
-	}
-
-	// MARK: - Import
-
-	private func importCertificate(_ certificate: EnterpriseCertificate) {
+	private func installCertificate(_ certificate: EnterpriseCertificate) {
+		isInstalling = true
 		FR.handleCertificateFiles(
 			p12URL: certificate.p12URL,
 			provisionURL: certificate.provisionURL,
@@ -198,13 +258,22 @@ struct CertificateEnterpriseView: View {
 			isDefault: false
 		) { error in
 			Task { @MainActor in
+				isInstalling = false
 				if let error = error {
 					importErrorMessage = error.localizedDescription
 				} else {
-					importedIDs.insert(certificate.id)
 					HapticsManager.shared.success()
+					successCertName = certificate.certificateName
 				}
 			}
+		}
+	}
+
+	// MARK: - App restart
+
+	private func restartApp() {
+		DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+			exit(0)
 		}
 	}
 
@@ -226,7 +295,6 @@ struct CertificateEnterpriseView: View {
 			isExtracting = true
 			_ = try extractor.extractEnterpriseCertificates()
 			certificates = EnterpriseCertExtracter.loadExtractedCertificates()
-			importedIDs.removeAll()
 		} catch {
 			errorMessage = error.localizedDescription
 		}
@@ -234,3 +302,4 @@ struct CertificateEnterpriseView: View {
 		isExtracting = false
 	}
 }
+
