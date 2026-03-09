@@ -121,7 +121,7 @@ class PasswordChanger {
         // On iOS, use the bundled OpenSSL (via Zsign) to change the PKCS#12 password entirely in memory.
         // This avoids SecItemExport (unavailable on iOS for PKCS#12) and never touches the system keychain.
         var outputData: NSData?
-        let status = Zsign.changeP12Password(p12Data: p12Data as NSData, oldPassword: trimmedOldPassword as NSString, newPassword: trimmedNewPassword as NSString, outputData: &outputData)
+        let status = Zsign.changeP12Password(p12Data: p12Data, oldPassword: trimmedOldPassword, newPassword: trimmedNewPassword, outputData: &outputData)
 
         switch status {
         case Zsign.p12ChangeSuccess:
