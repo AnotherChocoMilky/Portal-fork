@@ -15,11 +15,11 @@ struct CertificatePasswordChangeView: View {
     @State private var _errorMessage: String? = nil
 
     private var _passwordsMatch: Bool {
-        _newPassword.trimmingCharacters(in: .whitespaces) == _confirmPassword.trimmingCharacters(in: .whitespaces)
+        _newPassword.trimmingCharacters(in: .whitespacesAndNewlines) == _confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     var processButtonDisabled: Bool {
-        _p12URL == nil || _newPassword.trimmingCharacters(in: .whitespaces).isEmpty || !_passwordsMatch || _isProcessing
+        _p12URL == nil || _newPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !_passwordsMatch || _isProcessing
     }
 
     var body: some View {
@@ -250,8 +250,8 @@ struct CertificatePasswordChangeView: View {
             return
         }
 
-        let trimmedNew = _newPassword.trimmingCharacters(in: .whitespaces)
-        let trimmedConfirm = _confirmPassword.trimmingCharacters(in: .whitespaces)
+        let trimmedNew = _newPassword.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedConfirm = _confirmPassword.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard trimmedNew == trimmedConfirm else {
             _errorMessage = "New passwords do not match."
