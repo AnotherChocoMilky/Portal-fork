@@ -53,8 +53,8 @@ extension ServerView {
                 
                 var description: String {
                         switch self {
-                        case .fullyLocal: return .localized("Sign and install on-device.")
-                        case .semiLocal: return .localized("Local signing, Wi-Fi install.")
+                        case .fullyLocal: return .localized("Sign and install on device.")
+                        case .semiLocal: return .localized("Local signing, WiFi install.")
                         case .semiLocalBackground: return .localized("Background local signing.")
                         }
                 }

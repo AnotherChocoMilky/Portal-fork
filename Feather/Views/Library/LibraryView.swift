@@ -149,7 +149,7 @@ struct LibraryView: View {
                 Button("Cancel", role: .cancel) { }
                 Button("Delete", role: .destructive) { deleteSelectedApps() }
             } message: {
-                Text("Are you sure you want to delete \(_selectedApps.count) selected app(s)?")
+                Text("Are you sure you want to delete \(_selectedApps.count) app(s)?")
             }
             .alert("Delete App", isPresented: $_showGestureDeleteConfirmation) {
                 Button("Cancel", role: .cancel) { }
@@ -836,7 +836,7 @@ struct LibraryDownloadHeaderView: View {
                     if downloadManager.manualDownloads.count > 1 {
                         HStack {
                             Spacer()
-                            Text(verbatim: "+\(downloadManager.manualDownloads.count - 1) more")
+                            Text(verbatim: "+\(downloadManager.manualDownloads.count - 1) More")
                                 .font(.caption2.bold())
                                 .foregroundColor(.secondary)
                                 .padding(.horizontal, 8)

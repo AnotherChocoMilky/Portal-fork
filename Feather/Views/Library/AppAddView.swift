@@ -28,11 +28,11 @@ struct AppAddView: View {
     var body: some View {
         VStack(spacing: 20) {
             VStack(spacing: 4) {
-                Text(String.localized("Import App"))
+                Text(String.localized("Sign App"))
                     .font(.system(size: 28, weight: .black, design: .rounded))
                     .foregroundStyle(.primary)
 
-                Text(String.localized("Choose a method to import your application"))
+                Text(String.localized("Choose between importing from files or downloading from a URL."))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

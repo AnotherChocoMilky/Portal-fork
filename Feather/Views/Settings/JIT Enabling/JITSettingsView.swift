@@ -1,5 +1,3 @@
-
-
 import SwiftUI
 import NimbleViews
 import IDeviceSwift
@@ -60,7 +58,7 @@ struct JITSettingsView: View {
                 dismiss()
             }
         } message: {
-            Text(String.localized("This is a EARLY feature, it might not work as expected and it also depends on the OS version of your iPhone or iPad. If it works for you, great. If not, well I don’t know what to say"))
+            Text(String.localized("This is a EARLY feature, it might not work as expected and it also depends on the OS version of your iPhone or iPad. If it works for you, great. If not, well I don’t know what to say."))
         }
         .onAppear {
             refreshStatus()
@@ -123,7 +121,7 @@ struct JITSettingsView: View {
                             .font(.subheadline)
                             .fontWeight(.semibold)
                             .foregroundStyle(.primary)
-                        Text(String.localized("Required for device connection"))
+                        Text(String.localized("Required For Device Connection"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -167,7 +165,7 @@ struct JITSettingsView: View {
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(.primary)
-                            Text(String.localized("Enable loopback VPN"))
+                            Text(String.localized("Enable Loopback VPN"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -196,7 +194,7 @@ struct JITSettingsView: View {
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(.primary)
-                            Text(String.localized("Required for loopback routing"))
+                            Text(String.localized("Required For Loopback Routing"))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -308,7 +306,7 @@ struct JITSettingsView: View {
                             .fontWeight(.semibold)
                             .foregroundStyle(.primary)
                         Text(selectedBundleID.isEmpty
-                             ? String.localized("Select an installed app")
+                             ? String.localized("Select An Installed App")
                              : selectedBundleID)
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -326,7 +324,7 @@ struct JITSettingsView: View {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
-                    Text(String.localized("JIT enabled successfully!"))
+                    Text(String.localized("JIT Enabled Successfully!"))
                         .font(.subheadline)
                         .foregroundStyle(.green)
                 }

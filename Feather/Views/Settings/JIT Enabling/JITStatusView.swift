@@ -1,5 +1,4 @@
 
-
 import SwiftUI
 import NimbleViews
 
@@ -13,7 +12,7 @@ struct JITStatusView: View {
             stepRow(
                 icon: "doc.badge.gearshape",
                 title: String.localized("Pairing File"),
-                subtitle: String.localized("Device pairing record loaded"),
+                subtitle: String.localized("Device Pairing Record Loaded"),
                 stepState: stepState(for: .validatingPairing)
             )
             Divider().padding(.leading, 56)
@@ -21,7 +20,7 @@ struct JITStatusView: View {
             stepRow(
                 icon: "network",
                 title: String.localized("VPN Tunnel"),
-                subtitle: String.localized("Loopback VPN active"),
+                subtitle: String.localized("Loopback VPN Active"),
                 stepState: stepState(for: .checkingVPN)
             )
             Divider().padding(.leading, 56)
@@ -29,7 +28,7 @@ struct JITStatusView: View {
             stepRow(
                 icon: "lock.shield",
                 title: String.localized("Lockdown Session"),
-                subtitle: String.localized("Authenticated device connection"),
+                subtitle: String.localized("Authenticated Device Connection"),
                 stepState: stepState(for: .connectingLockdown)
             )
             Divider().padding(.leading, 56)
@@ -37,7 +36,7 @@ struct JITStatusView: View {
             stepRow(
                 icon: "ant.circle",
                 title: String.localized("Debugserver"),
-                subtitle: String.localized("Attach and resume process"),
+                subtitle: String.localized("Attach And Resume Process"),
                 stepState: stepState(for: .connectingDebugServer)
             )
             Divider().padding(.leading, 56)
@@ -45,7 +44,7 @@ struct JITStatusView: View {
             stepRow(
                 icon: "bolt.circle.fill",
                 title: String.localized("JIT Enabled"),
-                subtitle: String.localized("Just-In-Time compilation active"),
+                subtitle: String.localized("Just-In-Time Compilation Active"),
                 stepState: stepState(for: .jitEnabled)
             )
         }
