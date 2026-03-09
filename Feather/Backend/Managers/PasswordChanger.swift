@@ -80,27 +80,36 @@ class PasswordChanger {
         var rawItems: CFArray?
         let importStatus = SecPKCS12Import(p12Data as CFData, importOptions, &rawItems)
 
-        guard importStatus == errSecSuccess else {
-            switch importStatus {
-            case errSecAuthFailed:
-                throw PasswordChangerError.authFailed
-            case errSecDecode:
-                // Data looks like DER (passed the 0x30 check) but the Security
-                // framework cannot decode it — most likely an unsupported encryption
-                // algorithm (e.g. PBES2/AES exported by newer macOS).
-                throw PasswordChangerError.unsupportedEncryption
-            case errSecParam:
-                throw PasswordChangerError.unsupportedEncryption
-            default:
-                throw PasswordChangerError.importFailed(importStatus)
+        // Primary import succeeded — extract identity as before
+        if importStatus == errSecSuccess,
+           let items = rawItems as? [[String: Any]], !items.isEmpty {
+            return try _extractValidationResult(from: items)
+        }
+
+        // Primary import failed — attempt fallback for recoverable errors instead
+        // of immediately assuming the file is invalid.
+        let recoverableErrors: Set<OSStatus> = [errSecAuthFailed, errSecDecode, errSecParam]
+        if recoverableErrors.contains(importStatus) {
+            if let result = try _fallbackValidation(p12Data: p12Data, password: trimmedPassword) {
+                return result
             }
         }
 
-        guard let items = rawItems as? [[String: Any]], !items.isEmpty else {
-            throw PasswordChangerError.noItemsFound
+        // Both primary and fallback failed — throw the appropriate error
+        switch importStatus {
+        case errSecAuthFailed:
+            throw PasswordChangerError.authFailed
+        case errSecDecode:
+            throw PasswordChangerError.unsupportedEncryption
+        case errSecParam:
+            throw PasswordChangerError.unsupportedEncryption
+        default:
+            throw PasswordChangerError.importFailed(importStatus)
         }
+    }
 
-        // Extract the signing identity
+    /// Extracts a `P12ValidationResult` from the items array returned by `SecPKCS12Import`.
+    private static func _extractValidationResult(from items: [[String: Any]]) throws -> P12ValidationResult {
         let identityValue = items[0][kSecImportItemIdentity as String] as AnyObject
         guard CFGetTypeID(identityValue) == SecIdentityGetTypeID() else {
             throw PasswordChangerError.noItemsFound
@@ -113,23 +122,15 @@ class PasswordChanger {
             throw PasswordChangerError.noItemsFound
         }
 
-        // Confirm the private key exists
         var privateKey: SecKey?
         guard SecIdentityCopyPrivateKey(identity, &privateKey) == errSecSuccess,
               privateKey != nil else {
             throw PasswordChangerError.noItemsFound
         }
 
-        // Signing identity name
         let signingIdentity = (SecCertificateCopySubjectSummary(cert) as String?) ?? "Unknown Identity"
-
-        // Team ID (extracted from the subject summary when it matches "… (XXXXXXXXXX)")
         let teamID = _extractTeamID(from: signingIdentity)
-
-        // Expiration date
         let expirationDate = _extractExpirationDate(from: cert)
-
-        // Trust evaluation
         let isVerified = _evaluateTrust(certificate: cert, items: items)
 
         return P12ValidationResult(
@@ -138,6 +139,85 @@ class PasswordChanger {
             expirationDate: expirationDate,
             isVerified: isVerified
         )
+    }
+
+    /// Attempts a fallback validation when `SecPKCS12Import` cannot decrypt the PKCS#12 container.
+    /// On macOS, uses `SecItemImport` with `.formatPKCS12` and `.itemTypeAggregate`.
+    /// On iOS, uses OpenSSL via Zsign to verify password validity.
+    /// Returns `nil` if the fallback cannot determine validity. Throws `.authFailed`
+    /// if the fallback confirms the password is incorrect.
+    private static func _fallbackValidation(p12Data: Data, password: String) throws -> P12ValidationResult? {
+        #if os(macOS)
+        var importedItems: CFArray?
+        var inputFormat = SecExternalFormat.formatPKCS12
+        var itemType = SecExternalItemType.itemTypeAggregate
+
+        var keyParams = SecItemImportExportKeyParameters()
+        keyParams.version = UInt32(kSecKeyImportExportParamsVersion)
+        let passwordCF = password as CFString
+        keyParams.passphrase = Unmanaged.passRetained(passwordCF)
+
+        let status = SecItemImport(
+            p12Data as CFData,
+            nil,
+            &inputFormat,
+            &itemType,
+            [],
+            &keyParams,
+            nil,
+            &importedItems
+        )
+        keyParams.passphrase?.release()
+
+        if status == errSecAuthFailed {
+            throw PasswordChangerError.authFailed
+        }
+        guard status == errSecSuccess, let items = importedItems as? [AnyObject] else {
+            return nil
+        }
+
+        // Iterate through the returned items to locate the SecIdentity
+        for item in items {
+            guard CFGetTypeID(item) == SecIdentityGetTypeID() else { continue }
+            let identity = item as! SecIdentity
+
+            var cert: SecCertificate?
+            guard SecIdentityCopyCertificate(identity, &cert) == errSecSuccess, let certificate = cert else { continue }
+            var key: SecKey?
+            guard SecIdentityCopyPrivateKey(identity, &key) == errSecSuccess, key != nil else { continue }
+
+            let signingIdentity = (SecCertificateCopySubjectSummary(certificate) as String?) ?? "Unknown Identity"
+            return P12ValidationResult(
+                signingIdentity: signingIdentity,
+                teamID: _extractTeamID(from: signingIdentity),
+                expirationDate: _extractExpirationDate(from: certificate),
+                isVerified: false
+            )
+        }
+        return nil
+        #else
+        // iOS: use OpenSSL (Zsign) to verify the password is correct
+        var outputData: NSData?
+        let zsignStatus = Zsign.changeP12Password(
+            p12Data: p12Data,
+            oldPassword: password,
+            newPassword: password,
+            outputData: &outputData
+        )
+        switch zsignStatus {
+        case Zsign.p12ChangeSuccess:
+            return P12ValidationResult(
+                signingIdentity: "Certificate Identity",
+                teamID: nil,
+                expirationDate: nil,
+                isVerified: false
+            )
+        case Zsign.p12ChangeAuthError:
+            throw PasswordChangerError.authFailed
+        default:
+            return nil
+        }
+        #endif
     }
 
     // MARK: - Password Change
@@ -158,61 +238,20 @@ class PasswordChanger {
         var rawItems: CFArray?
         let importStatus = SecPKCS12Import(p12Data as CFData, importOptions, &rawItems)
 
-        // Map common import errors to clear messages
-        guard importStatus == errSecSuccess else {
-            throw _mapImportError(importStatus, p12Data: p12Data)
+        if importStatus == errSecSuccess,
+           let items = rawItems as? [[String: Any]], !items.isEmpty {
+            // Primary import succeeded — extract identity and re-export
+            return try _exportWithNewPassword(items: items, newPassword: trimmedNewPassword)
         }
 
-        // Safely unwrap the returned array
-        guard let items = rawItems as? [[String: Any]], !items.isEmpty else {
-            throw PasswordChangerError.noItemsFound
-        }
-
-        // Extract SecIdentity using kSecImportItemIdentity and confirm both certificate and private key exist
-        guard let identity = items[0][kSecImportItemIdentity as String] as? SecIdentity else {
-            throw PasswordChangerError.noItemsFound
-        }
-
-        var certificate: SecCertificate?
-        guard SecIdentityCopyCertificate(identity, &certificate) == errSecSuccess, certificate != nil else {
-            throw PasswordChangerError.noItemsFound
-        }
-
-        var privateKey: SecKey?
-        guard SecIdentityCopyPrivateKey(identity, &privateKey) == errSecSuccess, privateKey != nil else {
-            throw PasswordChangerError.noItemsFound
-        }
-
-        // Build the export items array with identity and any intermediate certificates
-        var exportItems: [Any] = [identity]
-        if let certChain = items[0][kSecImportItemCertChain as String] as? [Any] {
-            exportItems.append(contentsOf: certChain)
-        }
-
-        var keyParams = SecItemImportExportKeyParameters()
-        keyParams.version = UInt32(kSecKeyImportExportParamsVersion)
-
-        // Provide the new password through kSecExportPassphrase
-        let passwordCF = trimmedNewPassword as CFString
-        keyParams.passphrase = Unmanaged.passRetained(passwordCF)
-
-        var exportedData: CFData?
-        let exportStatus = SecItemExport(
-            exportItems as CFArray,
-            SecExternalFormat.formatPKCS12,
-            [],
-            &keyParams,
-            &exportedData
+        // Primary import failed — attempt fallback using SecItemImport which supports
+        // additional PKCS#12 encryption variants (OpenSSL, legacy RC2, modern AES).
+        return try _fallbackChangePassword(
+            p12Data: p12Data,
+            oldPassword: trimmedOldPassword,
+            newPassword: trimmedNewPassword,
+            primaryStatus: importStatus
         )
-
-        // Release the retained CFString
-        keyParams.passphrase?.release()
-
-        guard exportStatus == errSecSuccess, let resultData = exportedData as Data? else {
-            throw PasswordChangerError.exportFailed(exportStatus)
-        }
-
-        return resultData
         #else
         // On iOS, use the bundled OpenSSL (via Zsign) to change the PKCS#12 password entirely in memory.
         // This avoids SecItemExport (unavailable on iOS for PKCS#12) and never touches the system keychain.
@@ -240,6 +279,140 @@ class PasswordChanger {
     }
 
     // MARK: - Private Helpers
+
+    #if os(macOS)
+    /// Exports a PKCS#12 container re-encrypted with a new password from the items
+    /// returned by `SecPKCS12Import`.
+    private static func _exportWithNewPassword(items: [[String: Any]], newPassword: String) throws -> Data {
+        guard let identity = items[0][kSecImportItemIdentity as String] as? SecIdentity else {
+            throw PasswordChangerError.noItemsFound
+        }
+
+        var certificate: SecCertificate?
+        guard SecIdentityCopyCertificate(identity, &certificate) == errSecSuccess, certificate != nil else {
+            throw PasswordChangerError.noItemsFound
+        }
+
+        var privateKey: SecKey?
+        guard SecIdentityCopyPrivateKey(identity, &privateKey) == errSecSuccess, privateKey != nil else {
+            throw PasswordChangerError.noItemsFound
+        }
+
+        var exportItems: [Any] = [identity]
+        if let certChain = items[0][kSecImportItemCertChain as String] as? [Any] {
+            exportItems.append(contentsOf: certChain)
+        }
+
+        var keyParams = SecItemImportExportKeyParameters()
+        keyParams.version = UInt32(kSecKeyImportExportParamsVersion)
+        let passwordCF = newPassword as CFString
+        keyParams.passphrase = Unmanaged.passRetained(passwordCF)
+
+        var exportedData: CFData?
+        let exportStatus = SecItemExport(
+            exportItems as CFArray,
+            SecExternalFormat.formatPKCS12,
+            [],
+            &keyParams,
+            &exportedData
+        )
+        keyParams.passphrase?.release()
+
+        guard exportStatus == errSecSuccess, let resultData = exportedData as Data? else {
+            throw PasswordChangerError.exportFailed(exportStatus)
+        }
+
+        return resultData
+    }
+
+    /// Fallback password change for macOS using `SecItemImport` / `SecItemExport`
+    /// when `SecPKCS12Import` cannot handle the container's encryption.
+    private static func _fallbackChangePassword(p12Data: Data, oldPassword: String, newPassword: String, primaryStatus: OSStatus) throws -> Data {
+        var importedItems: CFArray?
+        var inputFormat = SecExternalFormat.formatPKCS12
+        var itemType = SecExternalItemType.itemTypeAggregate
+
+        var importKeyParams = SecItemImportExportKeyParameters()
+        importKeyParams.version = UInt32(kSecKeyImportExportParamsVersion)
+        let importPasswordCF = oldPassword as CFString
+        importKeyParams.passphrase = Unmanaged.passRetained(importPasswordCF)
+
+        let fallbackStatus = SecItemImport(
+            p12Data as CFData,
+            nil,
+            &inputFormat,
+            &itemType,
+            [],
+            &importKeyParams,
+            nil,
+            &importedItems
+        )
+        importKeyParams.passphrase?.release()
+
+        guard fallbackStatus == errSecSuccess else {
+            // Fallback also failed — use the more accurate of the two error codes
+            if fallbackStatus == errSecAuthFailed || primaryStatus == errSecAuthFailed {
+                throw PasswordChangerError.authFailed
+            }
+            throw _mapImportError(primaryStatus, p12Data: p12Data)
+        }
+
+        guard let items = importedItems as? [AnyObject] else {
+            throw PasswordChangerError.noItemsFound
+        }
+
+        // Iterate through the returned array to locate the SecIdentity
+        var foundIdentity: SecIdentity?
+        var certChain: [SecCertificate] = []
+
+        for item in items {
+            if CFGetTypeID(item) == SecIdentityGetTypeID() {
+                foundIdentity = item as! SecIdentity
+            } else if CFGetTypeID(item) == SecCertificateGetTypeID() {
+                certChain.append(item as! SecCertificate)
+            }
+        }
+
+        guard let identity = foundIdentity else {
+            throw PasswordChangerError.noItemsFound
+        }
+
+        // Confirm the identity includes both a SecCertificate and SecKey
+        var cert: SecCertificate?
+        guard SecIdentityCopyCertificate(identity, &cert) == errSecSuccess, cert != nil else {
+            throw PasswordChangerError.noItemsFound
+        }
+        var key: SecKey?
+        guard SecIdentityCopyPrivateKey(identity, &key) == errSecSuccess, key != nil else {
+            throw PasswordChangerError.noItemsFound
+        }
+
+        // Re-export with .formatPKCS12 and the new password via kSecExportPassphrase
+        var exportItems: [Any] = [identity]
+        exportItems.append(contentsOf: certChain)
+
+        var exportKeyParams = SecItemImportExportKeyParameters()
+        exportKeyParams.version = UInt32(kSecKeyImportExportParamsVersion)
+        let exportPasswordCF = newPassword as CFString
+        exportKeyParams.passphrase = Unmanaged.passRetained(exportPasswordCF)
+
+        var exportedData: CFData?
+        let exportStatus = SecItemExport(
+            exportItems as CFArray,
+            .formatPKCS12,
+            [],
+            &exportKeyParams,
+            &exportedData
+        )
+        exportKeyParams.passphrase?.release()
+
+        guard exportStatus == errSecSuccess, let resultData = exportedData as Data? else {
+            throw PasswordChangerError.exportFailed(exportStatus)
+        }
+
+        return resultData
+    }
+    #endif
 
     /// Maps a `SecPKCS12Import` error to the appropriate `PasswordChangerError`,
     /// using a basic DER check to distinguish unsupported encryption from a
