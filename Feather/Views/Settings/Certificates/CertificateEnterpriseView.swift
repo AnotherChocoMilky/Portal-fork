@@ -154,12 +154,12 @@ struct CertificateEnterpriseView: View {
 	private var footerView: some View {
 		Group {
 			Text("Add the certificate that works for your device. All these certificates are ")
-				.foregroundStyle(.secondary)
+				.foregroundColor(.secondary)
 			+ Text("REVOKED")
 				.bold()
 				.foregroundColor(.red)
 			+ Text(" but they still work since that's the method.")
-				.foregroundStyle(.secondary)
+				.foregroundColor(.secondary)
 		}
 		.font(.footnote)
 		.multilineTextAlignment(.center)
