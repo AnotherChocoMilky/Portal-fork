@@ -117,48 +117,58 @@ struct ManageStorageView: View {
     private var sectionDeviceStorage: some View {
         Section {
             VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(formatBytes(usedSpace))
-                            .font(.system(.title2, design: .rounded).bold())
-                        Text(.localized("Used Of \(formatBytes(totalSpace))"))
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    if isCalculating {
-                        ProgressView()
-                    } else {
-                        Button {
-                            calculateStorageData()
-                        } label: {
-                            Image(systemName: "arrow.clockwise.circle.fill")
-                                .font(.title2)
-                                .symbolRenderingMode(.hierarchical)
-                                .foregroundStyle(Color.accentColor)
-                        }
-                    }
-                }
-
-                ProgressView(value: Double(usedSpace), total: Double(max(totalSpace, 1)))
-                    .tint(.accentColor)
-                    .scaleEffect(y: 1.5)
-
-                HStack {
-                    Text(formatBytes(availableSpace) + " " + .localized("available"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                    if totalSpace > 0 {
-                        Text("\(Int((Double(usedSpace) / Double(totalSpace)) * 100))%")
-                            .font(.caption.bold())
-                            .foregroundStyle(.accentColor)
-                    }
-                }
+                deviceStorageHeader
+                deviceStorageProgressBar
+                deviceStorageFooter
             }
             .padding(.vertical, 6)
         } header: {
             Text(.localized("Device Storage"))
+        }
+    }
+
+    private var deviceStorageHeader: some View {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(formatBytes(usedSpace))
+                    .font(.system(.title2, design: .rounded).bold())
+                Text(.localized("Used Of \(formatBytes(totalSpace))"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+            if isCalculating {
+                ProgressView()
+            } else {
+                Button {
+                    calculateStorageData()
+                } label: {
+                    Image(systemName: "arrow.clockwise.circle.fill")
+                        .font(.title2)
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+        }
+    }
+
+    private var deviceStorageProgressBar: some View {
+        ProgressView(value: Double(usedSpace), total: Double(max(totalSpace, 1)))
+            .tint(.accentColor)
+            .scaleEffect(y: 1.5)
+    }
+
+    private var deviceStorageFooter: some View {
+        HStack {
+            Text(formatBytes(availableSpace) + " " + .localized("available"))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Spacer()
+            if totalSpace > 0 {
+                Text("\(Int((Double(usedSpace) / Double(totalSpace)) * 100))%")
+                    .font(.caption.bold())
+                    .foregroundStyle(.accentColor)
+            }
         }
     }
 
