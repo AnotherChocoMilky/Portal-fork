@@ -71,17 +71,6 @@ struct AppearanceView: View {
                 EmptyView()
             }
 
-            // MARK: - Top View
-            Section {
-                NavigationLink(destination: TopViewAppearance()) {
-                    AppearanceRowLabel(icon: "uiwindow.split.2x1", title: "Top View", color: .blue)
-                }
-            } header: {
-                Label("Top View", systemImage: "rectangle.inset.topthird.filled")
-            } footer: {
-                Text("Customize the Top View that shows on the top of the screen when you take screenshots.")
-            }
-
             // MARK: - Display
             Section {
                 Toggle(isOn: $showIconsInAppearance) {
@@ -146,32 +135,9 @@ struct AppearanceView: View {
                             .foregroundStyle(Color.accentColor)
                     }
                 }
-                NavigationLink(destination: AllAppsCustomizationView()) {
-                    Label("All Apps", systemImage: "square.grid.2x2.fill")
-                        .foregroundStyle(Color.accentColor)
-                }
-                NavigationLink(destination: AppHideElementsView()) {
-                    Label("Hide UI Elements", systemImage: "eye.slash.fill")
-                        .foregroundStyle(Color.accentColor)
-                }
-                NavigationLink(destination: StatusBarCustomizationView()) {
-                    Label("Status Bar", systemImage: "rectangle.topthird.inset.filled")
-                        .foregroundStyle(Color.accentColor)
-                }
-                NavigationLink(destination: TabBarCustomizationView()) {
-                    Label("Tab Bar", systemImage: "dock.rectangle")
-                        .foregroundStyle(Color.accentColor)
-                }
                 NavigationLink(destination: LostView(onGoBack: { dismiss() })) {
                     Label("Gestures", systemImage: "hand.tap.fill")
                         .foregroundStyle(Color.accentColor)
-                }
-
-                if ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 16 {
-                    NavigationLink(destination: KeyboardCustomizationView()) {
-                        Label("Keyboard Backdrop", systemImage: "keyboard")
-                            .foregroundStyle(Color.accentColor)
-                    }
                 }
             } header: {
                 Label("Customization", systemImage: "slider.horizontal.3")

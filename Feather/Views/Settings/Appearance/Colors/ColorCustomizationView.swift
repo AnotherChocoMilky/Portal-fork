@@ -163,6 +163,38 @@ struct ColorCustomizationView: View {
                 Text("Advanced Styling")
             }
 
+            // MARK: - Customization
+            Section {
+                NavigationLink(destination: AllAppsCustomizationView()) {
+                    Label("All Apps", systemImage: "square.grid.2x2.fill")
+                        .foregroundStyle(Color.accentColor)
+                }
+                NavigationLink(destination: AppHideElementsView()) {
+                    Label("Hide UI Elements", systemImage: "eye.slash.fill")
+                        .foregroundStyle(Color.accentColor)
+                }
+                NavigationLink(destination: StatusBarCustomizationView()) {
+                    Label("Status Bar", systemImage: "rectangle.topthird.inset.filled")
+                        .foregroundStyle(Color.accentColor)
+                }
+                NavigationLink(destination: TabBarCustomizationView()) {
+                    Label("Tab Bar", systemImage: "dock.rectangle")
+                        .foregroundStyle(Color.accentColor)
+                }
+                if ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 16 {
+                    NavigationLink(destination: KeyboardCustomizationView()) {
+                        Label("Keyboard Backdrop", systemImage: "keyboard")
+                            .foregroundStyle(Color.accentColor)
+                    }
+                }
+                NavigationLink(destination: TopViewAppearance()) {
+                    Label("Top View", systemImage: "uiwindow.split.2x1")
+                        .foregroundStyle(Color.accentColor)
+                }
+            } header: {
+                Label("Customization", systemImage: "slider.horizontal.3")
+            }
+
             // MARK: - Actions
             Section {
                 Button {
