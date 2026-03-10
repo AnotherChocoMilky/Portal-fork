@@ -1,7 +1,7 @@
+// created by dylan on 3/9/26
+
 import Foundation
 import Zip
-
-// MARK: - Enterprise Certificate Model
 
 struct EnterpriseCertificate: Identifiable {
 	let id = UUID()
@@ -32,12 +32,9 @@ enum EnterpriseExtracterError: LocalizedError {
 
 final class EnterpriseCertExtracter {
 
-	/// Parses the ExpirationDate from a .mobileprovision file.
 	static func parseProvisionExpiration(provisionURL: URL) -> Date? {
 		guard let data = try? Data(contentsOf: provisionURL) else { return nil }
 
-		// mobileprovision files embed a plist as an XML section; locate it by finding
-		// the <?xml … tag and the matching </plist> closing tag.
 		guard let xmlStart = data.range(of: Data("<?xml".utf8)),
 			  let xmlEnd   = data.range(of: Data("</plist>".utf8)) else { return nil }
 
@@ -50,8 +47,6 @@ final class EnterpriseCertExtracter {
 		return dict["ExpirationDate"] as? Date
 	}
 
-	/// Reads already-extracted certificate folders from disk without re-extracting.
-	/// Path: Documents/Certificates/EnterpriseCerts/extracted/certificates
 	static func loadExtractedCertificates() -> [EnterpriseCertificate] {
 		let fm = FileManager.default
 

@@ -84,7 +84,7 @@ struct CoreSignHeaderView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "info.circle.fill")
                         .font(.system(size: 12))
-                    Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.0")
+                    Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "3.1")
                         .font(.system(size: 14, weight: .semibold, design: .rounded))
                 }
                 .foregroundStyle(Color.accentColor)

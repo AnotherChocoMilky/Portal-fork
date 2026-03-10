@@ -1,7 +1,6 @@
+// created by dylan on 3/9/26
+
 import Foundation
-
-// MARK: - Errors
-
 enum EnterpriseFetcherError: LocalizedError {
 	case downloadFailed
 
