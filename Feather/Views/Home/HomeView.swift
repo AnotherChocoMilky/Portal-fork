@@ -79,7 +79,7 @@ struct HomeView: View {
         "Tip: Use Default Frameworks so you can add frameworks or tweaks and they will be added automatically on every app you sign.",
         "Tip: Check certificate expiration dates regularly to avoid signing issues.",
         "Tip: Use the Files tab to manage your IPA files and tweaks.",
-        "Tip: You can import apps by opening IPA files directly in Portal.",
+        "Tip: You can import apps by opening IPA files directly in ChocoSign.",
         "Tip: You can customize the Status Bar to add widgets instead of the default one.",
     ]
     
@@ -522,7 +522,7 @@ struct HomeView: View {
                 VStack(spacing: size == .large ? 16 : 12) {
                     HStack(spacing: 12) {
                         StatusCard(
-                            title: "Portal Version",
+                            title: "ChocoSign Version",
                             value: "Version \(portalVersion)",
                             subtitle: "Build \(buildNumber)",
                             icon: "app.badge.checkmark.fill",
