@@ -360,7 +360,7 @@ struct HomeView: View {
                     .minimumScaleFactor(0.8)
                 
                 if !_compactMode {
-                    Text("Portal Information")
+                    Text("ChocoSign Information")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.secondary)
                         .onTapGesture {
